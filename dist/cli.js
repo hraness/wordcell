@@ -150,6 +150,18 @@ import {
 import"./index-5n05se68.js";
 import"./index-z1w83f81.js";
 
+// src/cli-intro.ts
+function terminalIntro(terminal) {
+  if (terminal.isTTY !== true || terminal.term === "dumb" || (terminal.columns ?? 80) < 48)
+    return "";
+  return ` .----.  /
+ | ===| /   wordcell
+ | ===|/   Markdown memory for your agents.
+ |____/
+
+`;
+}
+
 // src/cli-program.ts
 import { open } from "fs/promises";
 import { cpus, release, totalmem } from "os";
@@ -3618,6 +3630,8 @@ ${sanitizeTerminalText(usage)}`);
   }
   const command = parsed.value;
   if (command.kind === "help") {
+    if (output === defaultOutput2 && !jsonRequested)
+      output.stdout(terminalIntro({ isTTY: process.stdout.isTTY, columns: process.stdout.columns, term: process.env.TERM }));
     output.stdout(sanitizeTerminalText(usage));
     return 0;
   }

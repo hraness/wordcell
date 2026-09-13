@@ -3,7 +3,7 @@
   "contractVersion": 1,
   "source": {
     "repository": "https://github.com/hraness/design-kit",
-    "commit": "323756b9e65c2ad27d4ec148911410deb16dc320",
+    "commit": "0e089bc18f9a0409f0e74b1fb7192f468956e386",
     "export": "@hraness/design-kit/paper-theme.css"
   },
   "files": {

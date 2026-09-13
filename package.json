@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "description": "A knowledge base for coding agents, built from Markdown, backlinks, semantic search, and Git context.",
   "license": "MIT",
   "type": "module",
@@ -295,6 +295,7 @@
     "src/capture.ts",
     "src/url-intelligence.ts",
     "src/cli.ts",
+    "src/cli-intro.ts",
     "src/cli-program.ts",
     "src/clip/acquire.ts",
     "src/clip/archive-today.ts",

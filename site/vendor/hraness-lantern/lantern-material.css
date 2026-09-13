@@ -2,18 +2,18 @@
  * All paint is deterministic CSS. No texture is placed over meaningful content. */
 @layer base {
   [data-hraness-material="lantern"] {
-    --hraness-material-module: 4rem;
+    --hraness-material-module: 6rem;
     --hraness-material-warm: #d49a54;
     --hraness-material-cool: #8d9fc5;
     --hraness-material-plane: var(--surface, var(--ui-background, Canvas));
     --hraness-material-ink: var(--foreground, var(--ui-foreground, CanvasText));
     --hraness-material-muted: var(--muted, var(--ui-muted-foreground, CanvasText));
-    --hraness-material-seam: color-mix(in oklch, var(--hraness-material-ink) 16%, var(--hraness-material-plane));
-    --hraness-material-edge: color-mix(in oklch, white 28%, transparent);
+    --hraness-material-seam: color-mix(in oklch, var(--hraness-material-ink) 7%, var(--hraness-material-plane));
+    --hraness-material-edge: color-mix(in oklch, white 18%, transparent);
     --hraness-material-shade: color-mix(in oklch, black 14%, transparent);
     --hraness-material-warm-plane: color-mix(in oklch, var(--hraness-material-warm) 12%, var(--hraness-material-plane));
-    --hraness-material-inset: inset 0 1px 3px color-mix(in oklch, black 9%, transparent);
-    --hraness-material-lift: inset 0 1px 0 var(--hraness-material-edge), 0 2px 4px color-mix(in oklch, black 7%, transparent), 0 12px 32px color-mix(in oklch, black 5%, transparent);
+    --hraness-material-inset: inset 2px 3px 6px color-mix(in oklch, black 9%, transparent), inset -1px -1px 2px color-mix(in oklch, white 12%, transparent);
+    --hraness-material-lift: inset 0 1px 0 var(--hraness-material-edge), -3px -3px 10px color-mix(in oklch, white 4%, transparent), 2px 4px 8px color-mix(in oklch, black 7%, transparent), 8px 18px 40px color-mix(in oklch, black 9%, transparent);
     --hraness-material-focus: var(--focus, var(--ui-ring, Highlight));
     --hraness-material-duration: 160ms;
   }
@@ -65,18 +65,60 @@
     }
   }
 
-  /* Glazing is a background material, with one square module and a warm band
+  /* Glazing uses shaded faces rather than drawn seams, with a warm band
    * of transmitted light. Its edges suggest a rounded enclosure without
    * distorting the document, blurring text, or masking brand artwork. */
   :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-wall) {
     background-color: var(--background, var(--ui-background, Canvas));
     background-image:
-      repeating-linear-gradient(90deg, transparent 0, transparent calc(var(--hraness-material-module) - 2px), color-mix(in oklch, var(--hraness-material-ink) 9%, transparent) calc(var(--hraness-material-module) - 2px), color-mix(in oklch, white 16%, transparent) calc(var(--hraness-material-module) - 1px), transparent var(--hraness-material-module)),
-      repeating-linear-gradient(0deg, transparent 0, transparent calc(var(--hraness-material-module) - 2px), color-mix(in oklch, var(--hraness-material-ink) 9%, transparent) calc(var(--hraness-material-module) - 2px), color-mix(in oklch, white 16%, transparent) calc(var(--hraness-material-module) - 1px), transparent var(--hraness-material-module)),
-      radial-gradient(ellipse at 60% 110%, color-mix(in oklch, var(--hraness-material-warm) 32%, transparent), transparent 62%),
-      linear-gradient(110deg, color-mix(in oklch, var(--hraness-material-cool) 22%, transparent), transparent 28%, color-mix(in oklch, white 8%, transparent) 48%, transparent 70%, color-mix(in oklch, var(--hraness-material-cool) 16%, transparent));
-    background-position: center top;
+      var(--hraness-material-wall-grain, none),
+      var(--hraness-material-wall-cells, linear-gradient(145deg, color-mix(in oklch, white 5%, transparent), transparent 48%, color-mix(in oklch, black 7%, transparent))),
+      radial-gradient(ellipse at 60% 110%, color-mix(in oklch, var(--hraness-material-warm) 22%, transparent), transparent 68%),
+      linear-gradient(110deg, color-mix(in oklch, var(--hraness-material-cool) 14%, transparent), transparent 38%, color-mix(in oklch, white 4%, transparent) 65%, transparent);
+    background-size: 64px 64px, var(--hraness-material-wall-cell-size, var(--hraness-material-module)) var(--hraness-material-wall-cell-size, var(--hraness-material-module)), 100% 100%, 100% 100%;
+    background-position: 0 0, center top, center top, center top;
     color: var(--hraness-material-ink);
+  }
+
+  /* A terminal remains a readable document. Source lines scroll intact;
+   * only its enclosure catches light. Syntax spans inherit semantic colors. */
+  :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-terminal) {
+    min-inline-size: 0;
+    overflow: hidden;
+    border: 1px solid var(--hraness-material-seam);
+    border-radius: .875rem;
+    background: var(--hraness-material-plane);
+    color: var(--hraness-material-ink);
+    box-shadow: var(--hraness-material-lift);
+  }
+  :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-terminal__bar) {
+    padding: .8rem 1.25rem;
+    background: linear-gradient(to bottom, color-mix(in oklch, white 5%, var(--hraness-material-plane)), var(--hraness-material-plane));
+    box-shadow: inset 0 1px 0 var(--hraness-material-edge), 0 1px 3px color-mix(in oklch, black 8%, transparent);
+    color: var(--hraness-material-muted);
+    font: .8125rem/1.5 var(--font-mono, ui-monospace, monospace);
+  }
+  :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-code) {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    margin: 0;
+    padding: 1.25rem;
+    overflow: auto;
+    background: var(--hraness-material-plane);
+    color: var(--hraness-material-ink);
+    font: .875rem/1.75 var(--font-mono, ui-monospace, monospace);
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+    tab-size: 2;
+  }
+  :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-code) code {
+    background: none;
+    padding: 0;
+    font: inherit;
+    white-space: inherit;
+    overflow-wrap: inherit;
+    word-break: inherit;
   }
 
   /* Plain HTML control adapters. Compiled UI primitives use the public
@@ -145,7 +187,7 @@
       --hraness-material-inset: none;
       --hraness-material-lift: none;
     }
-    :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-wall, .hraness-material-chrome, .hraness-material-pane) {
+    :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-wall, .hraness-material-chrome, .hraness-material-pane, .hraness-material-terminal, .hraness-material-terminal__bar, .hraness-material-code) {
       --hraness-material-chrome-paint: Canvas;
       --hraness-material-chrome-blur: none;
       background-color: Canvas;

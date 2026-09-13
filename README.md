@@ -18,14 +18,14 @@ The CLI and TypeScript SDK run with Bun. Choose one installation source:
 
 ```sh
 # Canonical, versioned GitHub archive
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.1/hraness-wordcell-0.21.1.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.2/hraness-wordcell-0.21.2.tgz
 wordcell --help
 ```
 
 The same release is mirrored to [npm](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.21.1
+npm install --global --ignore-scripts @hraness/wordcell@0.21.2
 wordcell --help
 ```
 
@@ -39,7 +39,7 @@ Install the single public Agent Skill into your choice of compatible agent,
 including Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.21.1 --skill wordcell
+bunx skills add hraness/wordcell#v0.21.2 --skill wordcell
 ```
 
 Then ask:
@@ -161,7 +161,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.1/hraness-wordcell-0.21.1.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.2/hraness-wordcell-0.21.2.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph
