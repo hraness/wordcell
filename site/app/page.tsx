@@ -103,12 +103,7 @@ const navigation = [
 ] as const;
 
 function BrandMark() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="brand-mark">
-      <rect x="1" y="1" width="22" height="22" rx="5" fill="currentColor" />
-      <path d="M6 7h12M6 12h8M6 17h10" fill="none" stroke="var(--background)" strokeLinecap="round" strokeWidth="2.1" />
-    </svg>
-  );
+  return <span aria-hidden="true" className="brand-mark">📝</span>;
 }
 
 export default function Home() {

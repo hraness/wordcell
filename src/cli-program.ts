@@ -1,3 +1,4 @@
+import { terminalIntro } from "./cli-intro.js";
 import { open } from "node:fs/promises";
 import { cpus, release, totalmem } from "node:os";
 import { relative, resolve } from "node:path";
@@ -3535,6 +3536,7 @@ export async function main(
   }
   const command = parsed.value;
   if (command.kind === "help") {
+    if (output === defaultOutput && !jsonRequested) output.stdout(terminalIntro({ isTTY: process.stdout.isTTY, columns: process.stdout.columns, term: process.env.TERM }));
     output.stdout(sanitizeTerminalText(usage));
     return 0;
   }

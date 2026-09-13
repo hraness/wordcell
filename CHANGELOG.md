@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.2
+
+Adds a compact ASCII introduction to interactive root help and refreshes the shared site material and product icon. Piped help, JSON output, commands, graph proofs, and vault formats retain their existing behavior.
+
 ## 0.21.1
 
 Improves the README quick start, npm and Agent Skill discovery, and the shared site presentation. CLI, SDK, graph proofs, and vault formats retain their 0.21.0 behavior.

@@ -45,6 +45,9 @@ a:focus-visible {
 }
 
 .brand-mark {
+  display: inline-block;
+  font-size: 1.25em;
+  line-height: 1;
   color: var(--hraness-site-accent);
 }
 
