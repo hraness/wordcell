@@ -147,8 +147,11 @@ Markdown, YAML frontmatter, explicit wikilinks, and Git hold the record. Open
 the same files in Obsidian, a text editor, or ordinary file-search tools.
 Application code does not need to import Wordcell or its vault.
 
-QMD supplies optional local search. Oh supplies a disposable graph projection;
-only an explicit `wordcell graph rebuild --root kb` writes `.wordcell/oh.sqlite`.
+QMD supplies optional local search. [Oh](https://oh.computer), the Hraness
+record and memory kernel ([source](https://github.com/hraness/oh)), is embedded
+as a derived graph authority behind an engine-neutral port: only an explicit
+`wordcell graph rebuild --root kb` writes `.wordcell/oh.sqlite`, the file stays
+ignored and rebuildable, and nothing flows from the projection back into notes.
 Backlinks and typed relationships come from authored links. Percolation
 suggests connections for review and does not add inferred edges to notes.
 
