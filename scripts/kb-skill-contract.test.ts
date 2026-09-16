@@ -183,6 +183,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "references/percolate.md",
     "references/plan-structure.md",
     "references/plan.md",
+    "references/publish.md",
     "references/query.md",
     "references/refresh.md",
     "references/save-pdf.md",
@@ -228,6 +229,9 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "./pdf",
     "./percolate",
     "./portfolio",
+    "./publish",
+    "./publish-model",
+    "./publish-search",
     "./query",
     "./repository-memory",
     "./sdk",
@@ -257,6 +261,8 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     'export * from "./navigation.js";',
     'export * from "./oh-adoption.js";',
     'export * from "./percolate.js";',
+    'export * from "./publish.js";',
+    'export * from "./publish-model.js";',
     'export * from "./query.js";',
     'export * from "./repository-memory.js";',
     'export * from "./search.js";',
@@ -270,7 +276,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
   ]);
   const usage = /export const usage = `([\s\S]*?)`;/u.exec(cli)?.[1] ?? "";
   expect(createHash("sha256").update(usage).digest("hex"))
-    .toBe("cba9c9ad3815e80b6cc178b77d171f7ba5fb2b8c613607a49a5665ed283a8466");
+    .toBe("597c5aeb8c10199c22f14a181309eefd5d4a218c208de409f4b642c93d723aeb");
   const commandIdentities = usage
     .split("\n")
     .filter((line) => line.startsWith("  wordcell "))
@@ -313,6 +319,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "percolate",
     "portfolio audit",
     "portfolio search",
+    "publish",
     "refresh",
     "relation add",
     "relation list",

@@ -1,15 +1,15 @@
 // @bun
 import {
+  fuseRankedCandidates,
+  validateSearchQuery
+} from "./index-gm9t95d9.js";
+import {
   MAX_NOTE_UTF8_BYTES,
   MAX_SCANNED_NOTES,
   MAX_VAULT_UTF8_BYTES,
   VaultScanBudgetError,
   scanVault
 } from "./index-0k2x4nn9.js";
-import {
-  fuseRankedCandidates,
-  validateSearchQuery
-} from "./index-why54q5p.js";
 
 // src/semantic.ts
 import { createHash as createHash2 } from "crypto";

@@ -10,9 +10,9 @@ import {
 import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
 
 const packageName = "@hraness/wordcell";
-const maximumPackageFiles = 240;
+const maximumPackageFiles = 280;
 const maximumPackedBytes = 1_200_000;
-const maximumUnpackedBytes = 5_250_000;
+const maximumUnpackedBytes = 5_700_000;
 const importSpecifiers = [
   "@hraness/wordcell",
   "@hraness/wordcell/agent-context",
@@ -47,6 +47,9 @@ const importSpecifiers = [
   "@hraness/wordcell/pdf",
   "@hraness/wordcell/percolate",
   "@hraness/wordcell/portfolio",
+  "@hraness/wordcell/publish",
+  "@hraness/wordcell/publish-model",
+  "@hraness/wordcell/publish-search",
   "@hraness/wordcell/query",
   "@hraness/wordcell/repository-memory",
   "@hraness/wordcell/sdk",
@@ -69,6 +72,9 @@ const baselineRequiredNamedExports = {
   "@hraness/wordcell/clip/jobs": ["createCaptureJob", "openCaptureJobStore", "updateCaptureJob"],
   "@hraness/wordcell/clip/refresh": ["diffCaptureBundle"],
   "@hraness/wordcell/portfolio": ["openKnowledgePortfolio", "parsePortfolioRegistry", "parseQualifiedDocumentUri"],
+  "@hraness/wordcell/publish": ["publishVault"],
+  "@hraness/wordcell/publish-model": ["parseSiteManifestV1"],
+  "@hraness/wordcell/publish-search": ["publishQuery"],
   "@hraness/wordcell/search-rules": ["parseSearchRules", "prioritizeSearchHits"],
   "@hraness/wordcell/untrusted-content": ["createUntrustedToolResult", "projectUntrustedJson"],
 } as const;
@@ -94,6 +100,9 @@ const requiredPackageFiles = [
   "README.md",
   "dist/cli.js",
   "dist/evaluation-builder.js",
+  "dist/publish.js",
+  "dist/publish-reader/reader.js",
+  "dist/publish-reader/reader.css",
   "package.json",
   "skills/wordcell/AGENTS.md",
   "skills/wordcell/SKILL.md",

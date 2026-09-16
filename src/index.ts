@@ -11,6 +11,8 @@ export * from "./init.js";
 export * from "./navigation.js";
 export * from "./oh-adoption.js";
 export * from "./percolate.js";
+export * from "./publish.js";
+export * from "./publish-model.js";
 export * from "./query.js";
 export * from "./repository-memory.js";
 export * from "./search.js";

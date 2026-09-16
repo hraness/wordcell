@@ -1,0 +1,319 @@
+/* Wordcell reference reader — zero-dependency, system-font, light/dark. */
+
+:root {
+  --wordcell-bg: #ffffff;
+  --wordcell-fg: #1a1a1a;
+  --wordcell-muted: #5f6368;
+  --wordcell-border: #e1e4e8;
+  --wordcell-accent: #0b5bd3;
+  --wordcell-code-bg: #f6f8fa;
+  --wordcell-mark: #fff3bf;
+  --wordcell-overlay: rgba(15, 15, 15, 0.45);
+  --wordcell-panel: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wordcell-bg: #14151a;
+    --wordcell-fg: #e8e8e8;
+    --wordcell-muted: #9aa0a6;
+    --wordcell-border: #2d3138;
+    --wordcell-accent: #7aa5f8;
+    --wordcell-code-bg: #1d2025;
+    --wordcell-mark: #4d4200;
+    --wordcell-overlay: rgba(0, 0, 0, 0.6);
+    --wordcell-panel: #1d2025;
+  }
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--wordcell-bg);
+  color: var(--wordcell-fg);
+  font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--wordcell-border);
+}
+
+.site-title {
+  color: var(--wordcell-fg);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.search-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--wordcell-border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--wordcell-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.search-button kbd {
+  padding: 0 0.35rem;
+  border: 1px solid var(--wordcell-border);
+  border-radius: 0.25rem;
+  font: 0.75em ui-monospace, monospace;
+}
+
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.note h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.8rem;
+  line-height: 1.25;
+}
+
+.note-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.25rem 0 1rem;
+}
+
+.note-type,
+.note-tag {
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--wordcell-border);
+  border-radius: 999px;
+  color: var(--wordcell-muted);
+  font-size: 0.8rem;
+}
+
+.note-aliases {
+  color: var(--wordcell-muted);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.note-body a {
+  color: var(--wordcell-accent);
+}
+
+.note-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.note-body pre {
+  overflow-x: auto;
+  padding: 0.9rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--wordcell-code-bg);
+}
+
+.note-body code {
+  font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.note-body p code,
+.note-body li code,
+.note-body td code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.3rem;
+  background: var(--wordcell-code-bg);
+}
+
+.note-body blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--wordcell-border);
+  color: var(--wordcell-muted);
+}
+
+.note-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.note-body th,
+.note-body td {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--wordcell-border);
+  text-align: left;
+}
+
+.note-body mark {
+  background: var(--wordcell-mark);
+  color: inherit;
+}
+
+.note-body .unresolved {
+  color: var(--wordcell-muted);
+  border-bottom: 1px dashed var(--wordcell-border);
+}
+
+.note-body input[type="checkbox"] {
+  margin-right: 0.35rem;
+}
+
+.note-aside {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--wordcell-border);
+  display: grid;
+  gap: 1.25rem;
+}
+
+.note-aside h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--wordcell-muted);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.note-aside ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.note-aside a {
+  color: var(--wordcell-accent);
+  text-decoration: none;
+}
+
+.note-aside .predicate {
+  color: var(--wordcell-muted);
+  font-size: 0.85rem;
+}
+
+.catalog-group h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.05rem;
+  color: var(--wordcell-muted);
+  font-weight: 600;
+}
+
+.catalog-group ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: none;
+}
+
+.catalog-group a {
+  color: var(--wordcell-accent);
+  text-decoration: none;
+}
+
+.catalog-group a:hover {
+  text-decoration: underline;
+}
+
+.site-footer {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 2rem;
+  border-top: 1px solid var(--wordcell-border);
+  color: var(--wordcell-muted);
+  font-size: 0.85rem;
+}
+
+.site-footer a {
+  color: inherit;
+}
+
+.wordcell-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 1rem 1rem;
+  background: var(--wordcell-overlay);
+}
+
+.wordcell-search-panel {
+  width: 100%;
+  max-width: 36rem;
+  border: 1px solid var(--wordcell-border);
+  border-radius: 0.75rem;
+  background: var(--wordcell-panel);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.wordcell-search-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--wordcell-border);
+  background: transparent;
+  color: var(--wordcell-fg);
+  font: inherit;
+  outline: none;
+}
+
+.wordcell-search-status {
+  padding: 0.35rem 1rem;
+  color: var(--wordcell-muted);
+  font-size: 0.8rem;
+}
+
+.wordcell-search-results {
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.wordcell-search-results a {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--wordcell-fg);
+  text-decoration: none;
+}
+
+.wordcell-search-results a.active,
+.wordcell-search-results a:hover {
+  background: var(--wordcell-code-bg);
+}
+
+.wordcell-search-results .title {
+  display: block;
+  font-weight: 600;
+}
+
+.wordcell-search-results .snippet {
+  display: block;
+  color: var(--wordcell-muted);
+  font-size: 0.85rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wordcell-search-overlay {
+    animation: wordcell-fade-in 120ms ease-out;
+  }
+
+  @keyframes wordcell-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

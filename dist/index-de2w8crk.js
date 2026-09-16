@@ -18,7 +18,10 @@ import {
   inspectClipEnvironment,
   renderAdapterCapabilities,
   renderDoctorReport
-} from "./index-van48n3g.js";
+} from "./index-fc4dr114.js";
+import {
+  cloneBrowserProfile
+} from "./index-5n05se68.js";
 import {
   acquireBrowser,
   acquireCookieHttp,
@@ -26,7 +29,7 @@ import {
   acquireFile,
   acquireHttp,
   assertSafePersistentProfile
-} from "./index-jzcws0zn.js";
+} from "./index-g5vsqmdy.js";
 import {
   CONTENT_REWRITE_TRUNCATION_WARNING,
   buildClipMarkdown,
@@ -38,6 +41,14 @@ import {
   rewriteContentWithStatus,
   slugify
 } from "./index-hgve9rh2.js";
+import {
+  MAX_COOKIE_BYTES,
+  filterCookieProviderResult,
+  filterCookies,
+  readCookieFile,
+  renderCookieHeader,
+  renderNetscapeCookieJar
+} from "./index-2gv8y733.js";
 import {
   startNetworkProxy
 } from "./index-w2zc0vwa.js";
@@ -64,20 +75,9 @@ import {
   writeCaptureBundle
 } from "./index-mxxxytys.js";
 import {
-  MAX_COOKIE_BYTES,
-  filterCookieProviderResult,
-  filterCookies,
-  readCookieFile,
-  renderCookieHeader,
-  renderNetscapeCookieJar
-} from "./index-2gv8y733.js";
-import {
   sanitizeTerminalLine,
   sanitizeTerminalText
 } from "./index-1xxnjn0d.js";
-import {
-  cloneBrowserProfile
-} from "./index-5n05se68.js";
 
 // src/clip/capture.ts
 import {

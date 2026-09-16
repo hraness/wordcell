@@ -1,11 +1,13 @@
 // @bun
 import {
-  findKbPackageRoot,
   isolatedAgentBrowserEnvironment
-} from "./index-jzcws0zn.js";
+} from "./index-g5vsqmdy.js";
 import {
   BoundedByteBuffer
 } from "./index-gh719d91.js";
+import {
+  findKbPackageRoot
+} from "./index-4knsp9qj.js";
 
 // src/clip/doctor.ts
 import { chmodSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "fs";

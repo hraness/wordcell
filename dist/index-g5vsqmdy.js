@@ -3,6 +3,11 @@ import {
   classifyPlatformUrl
 } from "./index-hgve9rh2.js";
 import {
+  filterCookieProviderResult,
+  readCookieFile,
+  renderCookieHeader
+} from "./index-2gv8y733.js";
+import {
   startNetworkProxy
 } from "./index-w2zc0vwa.js";
 import {
@@ -20,63 +25,28 @@ import {
   sanitizeArtifactUrl
 } from "./index-mxxxytys.js";
 import {
-  filterCookieProviderResult,
-  readCookieFile,
-  renderCookieHeader
-} from "./index-2gv8y733.js";
+  findKbPackageRoot,
+  resolvePackageDirectory
+} from "./index-4knsp9qj.js";
 
 // src/clip/acquire.ts
 import {
   chmodSync,
-  existsSync as existsSync2,
+  existsSync,
   lstatSync,
   mkdtempSync,
-  readFileSync as readFileSync2,
+  readFileSync,
   realpathSync,
   rmSync,
   statSync,
   writeFileSync
 } from "fs";
 import { homedir, tmpdir } from "os";
-import { basename, dirname as dirname2, isAbsolute, join as join2, relative, resolve as resolve2, sep } from "path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "path";
 import { getCookies } from "@steipete/sweet-cookie";
-
-// src/clip/package-root.ts
-import { existsSync, readFileSync } from "fs";
-import { createRequire } from "module";
-import { dirname, join, resolve } from "path";
-function isPackageManifest(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-function findKbPackageRoot(startDirectory = import.meta.dir, dependencies = {}) {
-  const exists = dependencies.exists ?? existsSync;
-  const readText = dependencies.readText ?? ((path) => readFileSync(path, "utf8"));
-  let directory = resolve(startDirectory);
-  for (let depth = 0;depth < 8; depth += 1) {
-    const manifestPath = join(directory, "package.json");
-    if (exists(manifestPath)) {
-      try {
-        const parsed = JSON.parse(readText(manifestPath));
-        if (isPackageManifest(parsed) && typeof parsed.name === "string" && parsed.name === "@hraness/wordcell" && typeof parsed.version === "string")
-          return directory;
-      } catch {}
-    }
-    const parent = dirname(directory);
-    if (parent === directory)
-      break;
-    directory = parent;
-  }
-  throw new Error("Could not locate the wordcell package root.");
-}
-function resolvePackageDirectory(packageName, parentUrl = import.meta.url) {
-  const manifest = createRequire(parentUrl).resolve(`${packageName}/package.json`);
-  return dirname(manifest);
-}
-
-// src/clip/acquire.ts
-var agentBrowserBinDirectory = join2(resolvePackageDirectory("agent-browser"), "bin");
+var agentBrowserBinDirectory = join(resolvePackageDirectory("agent-browser"), "bin");
 function agentBrowserCommand() {
-  return [process.execPath, join2(agentBrowserBinDirectory, "agent-browser.js")];
+  return [process.execPath, join(agentBrowserBinDirectory, "agent-browser.js")];
 }
 var inheritedProxyKeys = new Set([
   "ALL_PROXY",
@@ -99,9 +69,9 @@ function isolatedAgentBrowserEnvironment(source, socketDirectory) {
   return environment;
 }
 function createAgentBrowserIsolation(directory) {
-  const configPath = join2(directory, "agent-browser.config.json");
+  const configPath = join(directory, "agent-browser.config.json");
   const socketRoot = process.platform === "win32" ? tmpdir() : "/tmp";
-  const socketDirectory = mkdtempSync(join2(socketRoot, "jc-ab-"));
+  const socketDirectory = mkdtempSync(join(socketRoot, "jc-ab-"));
   try {
     chmodSync(socketDirectory, 448);
     writeFileSync(configPath, `{}
@@ -209,7 +179,7 @@ async function runAgentBrowserBatch(globalArgs, commands, options) {
     throw new Error("agent-browser batch failed");
 }
 async function discoverChromeProfiles(timeoutMs = 15000) {
-  const directory = mkdtempSync(join2(tmpdir(), "hraness-wordcell-profiles-"));
+  const directory = mkdtempSync(join(tmpdir(), "hraness-wordcell-profiles-"));
   chmodSync(directory, 448);
   let socketDirectory = null;
   try {
@@ -501,10 +471,10 @@ function browserNavigationReachedTarget(target, before, after, navigationCommand
   return navigationCommandSucceeded && before !== null && navigationIdentity(before) !== afterIdentity;
 }
 async function terminateAgentBrowserSession(session, socketDirectory) {
-  const pidPath = join2(socketDirectory, `${session}.pid`);
-  if (!existsSync2(pidPath))
+  const pidPath = join(socketDirectory, `${session}.pid`);
+  if (!existsSync(pidPath))
     return;
-  const rawPid = readFileSync2(pidPath, "utf8").trim();
+  const rawPid = readFileSync(pidPath, "utf8").trim();
   if (!/^\d+$/.test(rawPid))
     return;
   const pid = Number(rawPid);
@@ -529,7 +499,7 @@ function pathInside(root, target) {
 }
 function canonicalPotentialPath(value, label) {
   const suffix = [];
-  let ancestor = resolve2(value);
+  let ancestor = resolve(value);
   while (true) {
     try {
       lstatSync(ancestor);
@@ -539,12 +509,12 @@ function canonicalPotentialPath(value, label) {
       } catch {
         throw new Error(`${label} contains an unresolved symbolic link.`);
       }
-      return resolve2(canonicalAncestor, ...suffix);
+      return resolve(canonicalAncestor, ...suffix);
     } catch (error) {
       if (error.code !== "ENOENT")
         throw error;
     }
-    const parent = dirname2(ancestor);
+    const parent = dirname(ancestor);
     if (parent === ancestor)
       throw new Error(`${label} has no resolvable filesystem ancestor.`);
     suffix.unshift(basename(ancestor));
@@ -555,7 +525,7 @@ function profilePath(value) {
   const pathLike = isAbsolute(value) || value.startsWith(`.${sep}`) || value.startsWith(`..${sep}`) || value.startsWith(`~${sep}`) || value.includes("/") || value.includes("\\");
   if (!pathLike)
     return null;
-  const expanded = value.startsWith(`~${sep}`) ? join2(homedir(), value.slice(2)) : resolve2(value);
+  const expanded = value.startsWith(`~${sep}`) ? join(homedir(), value.slice(2)) : resolve(value);
   return canonicalPotentialPath(expanded, "Persistent browser profile");
 }
 function assertSafePersistentProfile(options) {
@@ -828,7 +798,7 @@ async function acquireBrowser(options, temporaryDirectory, useDiscoveredProfile 
         warnings.push("Rendered text was truncated at its configured output boundary.");
       let screenshotPath;
       if ((options.evidence === "screenshot" || options.evidence === "all") && browserPageProvenanceIntact) {
-        const requestedScreenshotPath = join2(temporaryDirectory, "page.png");
+        const requestedScreenshotPath = join(temporaryDirectory, "page.png");
         screenshotPath = requestedScreenshotPath;
         try {
           await runBrowser(globalArgs, ["screenshot", requestedScreenshotPath], {
@@ -841,7 +811,7 @@ async function acquireBrowser(options, temporaryDirectory, useDiscoveredProfile 
             rmSync(requestedScreenshotPath, { force: true });
             warnings.push("Browser screenshot changed pages during capture and was discarded.");
             screenshotPath = undefined;
-          } else if (!existsSync2(requestedScreenshotPath)) {
+          } else if (!existsSync(requestedScreenshotPath)) {
             warnings.push("Browser screenshot was requested but agent-browser did not create it.");
             screenshotPath = undefined;
           }
@@ -1028,7 +998,7 @@ async function acquireFile(options) {
     if (stats.size > options.maxHtmlBytes) {
       throw new Error(`HTML input is ${stats.size} bytes; limit is ${options.maxHtmlBytes}`);
     }
-    return readFileSync2(options.htmlFile, "utf8");
+    return readFileSync(options.htmlFile, "utf8");
   })();
   return {
     body,
@@ -1039,4 +1009,4 @@ async function acquireFile(options) {
   };
 }
 
-export { findKbPackageRoot, agentBrowserCommand, isolatedAgentBrowserEnvironment, discoverChromeProfiles, mergeRenderedTextSnapshots, browserExpansionLimits, browserExpansionScript, readBrowserExpansionTelemetry, browserExpansionWarnings, browserExpansionStayedOnPage, browserNavigationReachedTarget, assertSafePersistentProfile, browserCookieCommands, seedOwnedBrowserCookies, browserProxyArguments, acquireBrowser, acquireHttp, acquireCookieHttp, createCookieRecordReader, createCookieHeaderReader, acquireCookieRecords, acquireCookieHeader, acquireFile };
+export { agentBrowserCommand, isolatedAgentBrowserEnvironment, discoverChromeProfiles, mergeRenderedTextSnapshots, browserExpansionLimits, browserExpansionScript, readBrowserExpansionTelemetry, browserExpansionWarnings, browserExpansionStayedOnPage, browserNavigationReachedTarget, assertSafePersistentProfile, browserCookieCommands, seedOwnedBrowserCookies, browserProxyArguments, acquireBrowser, acquireHttp, acquireCookieHttp, createCookieRecordReader, createCookieHeaderReader, acquireCookieRecords, acquireCookieHeader, acquireFile };

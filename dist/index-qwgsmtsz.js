@@ -1,7 +1,7 @@
 // @bun
 import {
   fuseRankedCandidates
-} from "./index-why54q5p.js";
+} from "./index-gm9t95d9.js";
 
 // src/benchmark.ts
 var MAX_BENCHMARK_CASES = 500;
