@@ -70,7 +70,7 @@ const trust = [
 const questions = [
   {
     question: "Where does my knowledge live?",
-    answer: "In a directory of Markdown files, conventionally kb/, committed beside your code. Wordcell reads and writes those files; it keeps no server, account, or hidden state.",
+    answer: "In a directory of Markdown files, conventionally kb/, committed beside your code. Wordcell reads and writes those files without a server or account. Optional support preferences are stored separately on this machine.",
   },
   {
     question: "What changed with the Wordcell name?",
@@ -317,14 +317,14 @@ wordcell check --root kb`}</code></pre>
 
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io" />
 
-      <footer className="site-footer">
+      <div className="site-footer">
         <p>Wordcell is open source for developers and the agents working beside them.</p>
         <nav aria-label="Project links">
           <a href="/docs">Docs</a>
           <a href={repository}>hraness/wordcell</a>
           <a href="https://hraness.com/projects">Hraness projects</a>
         </nav>
-      </footer>
+      </div>
     </div>
   );
 }

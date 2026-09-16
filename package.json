@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.21.2",
+  "version": "0.21.3",
   "description": "A knowledge base for coding agents, built from Markdown, backlinks, semantic search, and Git context.",
   "license": "MIT",
   "type": "module",
@@ -402,7 +402,9 @@
     "src/oh/schema.ts",
     "src/oh/snapshot.ts",
     "src/oh/validation.ts",
-    "assets/agent-skill.svg"
+    "assets/agent-skill.svg",
+    "src/support.ts",
+    "src/support-profile.ts"
   ],
   "scripts": {
     "kb:refresh": "bunx --bun github:hraness/kb#v0.15.1 refresh --root kb",
@@ -431,7 +433,8 @@
     "defuddle": "0.19.1",
     "yaml": "^2.9.0",
     "zod": "^4.4.3",
-    "effect": "3.22.1"
+    "effect": "3.22.1",
+    "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

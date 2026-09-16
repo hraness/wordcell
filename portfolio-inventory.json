@@ -8,7 +8,7 @@
       "name": "@hraness/wordcell",
       "path": ".",
       "visibility": "public",
-      "version": "0.21.2"
+      "version": "0.21.3"
     }
   ],
   "dependencies": [
@@ -18,6 +18,13 @@
       "specifier": "https://github.com/hraness/oh/releases/download/v0.4.3/hraness-oh-0.4.3.tgz",
       "to": "@hraness/oh",
       "sourceRepository": "hraness/oh"
+    },
+    {
+      "from": "@hraness/wordcell",
+      "scope": "runtime",
+      "specifier": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0",
+      "to": "@hraness/support-foundation",
+      "sourceRepository": "hraness/support-foundation"
     },
     {
       "from": "@hraness/wordcell",

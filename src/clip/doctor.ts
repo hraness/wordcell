@@ -172,6 +172,8 @@ async function readBoundedStream(stream: ReadableStream<Uint8Array>, maxBytes: n
 
 export const runDiagnosticCommand: DiagnosticCommandRunner = async (specification) => {
   const child = Bun.spawn([...specification.command], {
+    // Bun otherwise inherits its launch-time environment instead of current CLI preferences.
+    env: process.env,
     stdin: "ignore",
     stdout: "pipe",
     stderr: "pipe",

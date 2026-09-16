@@ -274,6 +274,8 @@ export const runMediaCommand: MediaCommandRunner = async (specification) => {
   if (executable === undefined) throw new Error("media command is empty");
   const useProcessGroup = process.platform !== "win32";
   const child = spawn(executable, specification.command.slice(1), {
+    // Bun otherwise inherits its launch-time environment instead of current CLI preferences.
+    env: process.env,
     ...(specification.cwd === undefined ? {} : { cwd: specification.cwd }),
     detached: useProcessGroup,
     stdio: ["pipe", "pipe", "pipe"],

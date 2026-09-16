@@ -2,7 +2,7 @@
 import {
   findKbPackageRoot,
   isolatedAgentBrowserEnvironment
-} from "./index-x6m57nfc.js";
+} from "./index-jzcws0zn.js";
 import {
   BoundedByteBuffer
 } from "./index-gh719d91.js";
@@ -51,6 +51,7 @@ async function readBoundedStream(stream, maxBytes) {
 }
 var runDiagnosticCommand = async (specification) => {
   const child = Bun.spawn([...specification.command], {
+    env: process.env,
     stdin: "ignore",
     stdout: "pipe",
     stderr: "pipe",

@@ -18,14 +18,14 @@ The CLI and TypeScript SDK run with Bun. Choose one installation source:
 
 ```sh
 # Canonical, versioned GitHub archive
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.2/hraness-wordcell-0.21.2.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.3/hraness-wordcell-0.21.3.tgz
 wordcell --help
 ```
 
 The same release is mirrored to [npm](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.21.2
+npm install --global --ignore-scripts @hraness/wordcell@0.21.3
 wordcell --help
 ```
 
@@ -39,7 +39,7 @@ Install the single public Agent Skill into your choice of compatible agent,
 including Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.21.2 --skill wordcell
+bunx skills add hraness/wordcell#v0.21.3 --skill wordcell
 ```
 
 Then ask:
@@ -164,7 +164,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.2/hraness-wordcell-0.21.2.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.3/hraness-wordcell-0.21.3.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph
@@ -237,3 +237,24 @@ See [Contributing](https://github.com/hraness/wordcell/blob/main/CONTRIBUTING.md
 [Install Wordcell from GitHub Releases](https://github.com/hraness/wordcell/releases) ·
 [Wordcell source on GitHub](https://github.com/hraness/wordcell) ·
 [Wordcell overview](https://wordcell.io)
+
+## Optional development support
+
+`wordcell support` shows optional development support for Wordcell. Features stay
+free and no account is required. Accounts presents current terms; the person
+confirms any payment in their browser. Wordcell has no product newsletter and
+does not look up an email address for support.
+
+After useful standalone work, agents can receive a discovery record on stderr.
+Read `wordcell support protocol --json` for the shared closeout procedure.
+Help, diagnostics, evaluation, SDK calls and nested commands stay quiet.
+`HRANESS_SUPPORT=off` or `HRANESS_SUPPORT_AUDIENCE=off` suppresses incidental
+invitations. Explicit human terminal rendering requires
+`HRANESS_SUPPORT_AUDIENCE=human`; the default audience is an agent, including in
+a pseudo-terminal.
+
+`wordcell support dismiss` disables invitations across participating tools on
+this machine. `snooze` pauses them for thirty days, `enable` restores them, and
+`status --json` shows their separate local preferences. These commands do not
+change a vault, sign up or pay. Acknowledged invitations share a seven-day
+cooldown; discovery itself does not consume it.

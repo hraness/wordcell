@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.3
+
+Adds optional development support to the standalone CLI, public Agent Skill and website. Agents receive a throttled stderr discovery record after useful work and use the shared human-facing closeout protocol. SDK calls, nested commands, diagnostics and evaluation stay quiet. Features remain free; the person confirms any payment in Accounts.
+
 ## 0.21.2
 
 Adds a compact ASCII introduction to interactive root help and refreshes the shared site material and product icon. Piped help, JSON output, commands, graph proofs, and vault formats retain their existing behavior.

@@ -256,6 +256,12 @@ Usage:
   wordcell agents audit [--root <vault>] [--repo <repository>] [--json]
   wordcell doctor [--json]
   wordcell adapters [--json]
+  wordcell support [--json | protocol --json | offer --json | shown <id> | release <id> | dismiss | snooze | enable | status --json]
+
+Optional support uses separate local preferences. HRANESS_SUPPORT=off or
+HRANESS_SUPPORT_AUDIENCE=off keeps invitations quiet; explicit support remains available.
+Agents receive discovery on stderr after useful standalone work. Human mode requires
+HRANESS_SUPPORT_AUDIENCE=human and an interactive stderr. No command signs up or pays.
 
 Run \`wordcell clip --help\` for web capture options or \`wordcell pdf --help\` for PDF conversion options.
 `;

@@ -125,6 +125,7 @@ async function readBoundedStream(stream, maxBytes) {
 }
 async function runCommand(command, timeoutMs, maxOutputBytes, isolation, stdin) {
   const child = Bun.spawn([...command], {
+    env: process.env,
     stdin: stdin === undefined ? "ignore" : new Blob([stdin]),
     stdout: "pipe",
     stderr: "pipe",

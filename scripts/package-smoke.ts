@@ -288,6 +288,22 @@ async function verifyInstalledHelp(binary: string, cwd: string, expected: string
   if (stderr !== "") throw new Error(`Installed ${binary} emitted unexpected diagnostics: ${JSON.stringify(stderr)}`);
 }
 
+async function verifyInstalledSupport(cwd: string): Promise<void> {
+  const child = Bun.spawn([join(cwd, "node_modules", ".bin", "wordcell"), "support", "protocol", "--json"], {
+    cwd, env: environment, stdout: "pipe", stderr: "pipe",
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([
+    child.exited, new Response(child.stdout).text(), new Response(child.stderr).text(),
+  ]);
+  const protocol = JSON.parse(stdout);
+  if (exitCode !== 0 || stderr !== ""
+    || protocol.offer?.product?.id !== "kb"
+    || JSON.stringify(protocol.commands?.offer) !== JSON.stringify(["wordcell", "support", "offer", "--json"])
+    || protocol.offer?.actions?.length !== 1 || protocol.offer.actions[0].kind !== "support") {
+    throw new Error("Installed Wordcell support protocol is invalid.");
+  }
+}
+
 function resolveGenuineNodeExecutable(): string {
   const executableName = process.platform === "win32" ? "node.exe" : "node";
   const identityProbe = [
@@ -550,6 +566,9 @@ const work = await mkdtemp(join(tmpdir(), "hraness-package-smoke-"));
 const temporary = join(work, "tmp");
 const environment = {
   ...process.env,
+  HRANESS_SUPPORT: "off",
+  HRANESS_SUPPORT_EMAIL: "off",
+  XDG_STATE_HOME: join(work, "support-state"),
   BUN_TMPDIR: temporary,
   TMPDIR: temporary,
   npm_config_audit: "false",
@@ -642,6 +661,7 @@ try {
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], npmConsumer);
   for (const installed of [consumer, npmConsumer]) {
     await verifyInstalledHelp("wordcell", installed, "wordcell init [directory]");
+    await verifyInstalledSupport(installed);
     await run([join(installed, "node_modules", ".bin", "wordcell-evaluation-builder"), "--help"], installed);
     const graphRoot = join(installed, "graph-vault");
     await mkdir(graphRoot);
