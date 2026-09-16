@@ -598,5 +598,11 @@ export function renderMarkdownToHtml(content: string, ctx: PublishRenderContext)
 }
 
 function stripMarkup(html: string): string {
-  return html.replace(/<[^>]*>/gu, "");
+  let previous = html;
+  let next = html.replace(/<[^>]*>/gu, "");
+  while (next !== previous) {
+    previous = next;
+    next = next.replace(/<[^>]*>/gu, "");
+  }
+  return next;
 }

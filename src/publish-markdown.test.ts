@@ -121,4 +121,10 @@ describe("renderMarkdownToHtml", () => {
     expect(html).toContain('id="repeat"');
     expect(html).toContain('id="repeat-2"');
   });
+
+  test("heading anchors strip nested markup to a stable slug", () => {
+    const html = renderMarkdownToHtml("# `code` and <scr<script>ipt>\n", context());
+    expect(html).toContain('id="codeand-lt-scr-lt-script-gt-ipt-gt"');
+    expect(html).not.toContain("<script");
+  });
 });

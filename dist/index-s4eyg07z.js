@@ -681,7 +681,13 @@ ${renderInline(raw.trim(), ctx)}`);
 `);
 }
 function stripMarkup(html) {
-  return html.replace(/<[^>]*>/gu, "");
+  let previous = html;
+  let next = html.replace(/<[^>]*>/gu, "");
+  while (next !== previous) {
+    previous = next;
+    next = next.replace(/<[^>]*>/gu, "");
+  }
+  return next;
 }
 
 // src/publish-pages.ts

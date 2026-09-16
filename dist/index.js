@@ -151,7 +151,7 @@ import {
   publishVault,
   renderPublishReportText,
   serializeSiteFile
-} from "./index-cw7n3w4a.js";
+} from "./index-s4eyg07z.js";
 import {
   MAX_NOTE_UTF8_BYTES,
   MAX_SCANNED_NOTES,
