@@ -42,7 +42,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-hraness-theme="paper" data-hraness-material="lantern">
-      <body>{children}<HranessSiteFooter placement="flow" mailingList={{ kind: "none" }} support={supportProfile} /></body>
+      <body>
+        {children}
+        <div className="network-footer">
+          <HranessSiteFooter placement="flow" mailingList={{ kind: "none" }} support={supportProfile} />
+        </div>
+      </body>
     </html>
   );
 }

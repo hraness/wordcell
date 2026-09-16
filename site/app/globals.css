@@ -132,6 +132,13 @@ a:focus-visible {
 
 /* Ask AI row and footer */
 
+@media (width < 47.5rem) {
+  .network-footer {
+    /* The compact consent note floats above the shared bar. */
+    padding-block-start: 2.5rem;
+  }
+}
+
 .ask-ai,
 .site-footer {
   inline-size: min(100%, var(--hraness-marketing-measure));
