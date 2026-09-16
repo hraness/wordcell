@@ -8,11 +8,11 @@ import {
   scanVault
 } from "./index-0k2x4nn9.js";
 import {
-  acquireFileLease
-} from "./index-3rm7cz6h.js";
-import {
   analyzeAuthoredRepositoryScopes
 } from "./index-06c9ctr6.js";
+import {
+  acquireFileLease
+} from "./index-3rm7cz6h.js";
 import {
   VaultAnalysisBudgetError,
   analyzeVault,

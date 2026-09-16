@@ -5,27 +5,27 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   validateKnowledgeBaseSearchHistory
-} from "./index-vdw5yjfa.js";
+} from "./index-s6rqvzsz.js";
 import {
   expandSearchRequest,
   parseSearchRules
 } from "./index-adx6khj5.js";
 import {
+  indexGitHistory
+} from "./index-1gwbassd.js";
+import {
+  validateSearchQuery
+} from "./index-gm9t95d9.js";
+import {
   scanVault
 } from "./index-0k2x4nn9.js";
 import {
-  indexGitHistory
-} from "./index-1gwbassd.js";
+  validateQueryOptions
+} from "./index-48pz4jpc.js";
 import {
   MAX_ATTACHMENT_REFERENCES,
   validateMarkdownAttachments
 } from "./index-x3fthpsc.js";
-import {
-  validateSearchQuery
-} from "./index-why54q5p.js";
-import {
-  validateQueryOptions
-} from "./index-48pz4jpc.js";
 import {
   documentIdState,
   parseQualifiedDocumentUri,

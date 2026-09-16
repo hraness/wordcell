@@ -97,6 +97,11 @@ import {
   type PortfolioSearchResult,
 } from "./portfolio.js";
 import {
+  publishVault,
+  renderPublishReportText,
+  type PublishSelectionInput,
+} from "./publish.js";
+import {
   MAX_AUTHORIZED_VAULTS,
   loadPortfolioRegistry,
   snapshotPortfolioRegistry,
@@ -249,6 +254,7 @@ Usage:
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
   wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
+  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--force] [--json]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
   wordcell agents identity <repository-scope> [--json]
@@ -446,6 +452,23 @@ type ParsedCommand =
       readonly minSupport: number;
       readonly limit: number;
       readonly json: boolean;
+    }
+  | {
+      readonly kind: "publish";
+      readonly root: string;
+      readonly out: string;
+      readonly index?: string;
+      readonly title?: string;
+      readonly description?: string;
+      readonly basePath?: string;
+      readonly baseUrl?: string;
+      readonly noindex: boolean;
+      readonly indexContent: boolean;
+      readonly deterministic: boolean;
+      readonly dryRun: boolean;
+      readonly force: boolean;
+      readonly selection: PublishSelectionInput;
+      readonly json: boolean;
     };
 
 type ParseResult =
@@ -479,6 +502,7 @@ type CliDependencies = GraphCliDependencies & {
   readonly buildRepositoryMemoryContext?: typeof buildRepositoryMemoryContext;
   readonly auditAgentGuideRepository?: typeof auditAgentGuideRepository;
   readonly validateMarkdownAttachments?: typeof validateMarkdownAttachments;
+  readonly publishVault?: typeof publishVault;
 };
 
 function safe(value: string): string {
@@ -862,6 +886,144 @@ function parseListCommand(arguments_: readonly string[]): ParseResult {
       direction,
       ...(limit === undefined ? {} : { limit }),
       json,
+    },
+  };
+}
+
+function parsePublishCommand(arguments_: readonly string[]): ParseResult {
+  let root = ".";
+  let out: string | undefined;
+  let index: string | undefined;
+  let title: string | undefined;
+  let description: string | undefined;
+  let basePath: string | undefined;
+  let baseUrl: string | undefined;
+  let noindex = false;
+  let indexContent = true;
+  let deterministic = false;
+  let dryRun = false;
+  let force = false;
+  let json = false;
+  let from: string | undefined;
+  let depth = 1;
+  let direction: LinkDirection = "both";
+  const includes: string[] = [];
+  const excludes: string[] = [];
+  const filters: MetadataFilter[] = [];
+  const tags: string[] = [];
+  const repositoryScopes: string[] = [];
+
+  for (let cursor = 0; cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined) continue;
+    if (argument === "--json") { json = true; continue; }
+    if (argument === "--noindex") { noindex = true; continue; }
+    if (argument === "--no-index-content") { indexContent = false; continue; }
+    if (argument === "--deterministic") { deterministic = true; continue; }
+    if (argument === "--dry-run") { dryRun = true; continue; }
+    if (argument === "--force") { force = true; continue; }
+    if (
+      argument === "--root" || argument === "--out" || argument === "--index"
+      || argument === "--title" || argument === "--description"
+      || argument === "--base-path" || argument === "--base-url"
+      || argument === "--include" || argument === "--exclude"
+      || argument === "--where" || argument === "--has" || argument === "--tag"
+      || argument === "--scope" || argument === "--repository-scope"
+      || argument === "--from" || argument === "--depth" || argument === "--direction"
+    ) {
+      const value = readValue(arguments_, cursor);
+      if (value === null) return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root") root = value;
+      else if (argument === "--out") out = value;
+      else if (argument === "--index") index = value;
+      else if (argument === "--title") title = value;
+      else if (argument === "--description") description = value;
+      else if (argument === "--base-path") basePath = value;
+      else if (argument === "--base-url") baseUrl = value;
+      else if (argument === "--include") includes.push(value);
+      else if (argument === "--exclude") excludes.push(value);
+      else if (argument === "--from") from = value;
+      else if (argument === "--depth") {
+        const parsed = Number(value);
+        if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > 10) {
+          return { ok: false, message: "--depth must be an integer from 1 through 10" };
+        }
+        depth = parsed;
+      } else if (argument === "--direction") {
+        if (value !== "in" && value !== "out" && value !== "both") {
+          return { ok: false, message: "--direction must be in, out, or both" };
+        }
+        direction = value;
+      } else if (argument === "--tag") {
+        if (tags.length >= MAX_QUERY_TAGS) {
+          return { ok: false, message: `Query tags may contain at most ${MAX_QUERY_TAGS} entries.` };
+        }
+        tags.push(value);
+      } else if (argument === "--scope" || argument === "--repository-scope") {
+        if (repositoryScopes.length >= MAX_REPOSITORY_SCOPES) {
+          return { ok: false, message: `Repository scope filters may contain at most ${MAX_REPOSITORY_SCOPES} entries.` };
+        }
+        repositoryScopes.push(value);
+      } else if (argument === "--has") {
+        if (value.trim() === "") return { ok: false, message: "--has requires a metadata path" };
+        if (filters.length >= MAX_QUERY_FILTERS) {
+          return { ok: false, message: `Query filters may contain at most ${MAX_QUERY_FILTERS} entries.` };
+        }
+        filters.push({ kind: "exists", path: value });
+      } else {
+        const equals = value.indexOf("=");
+        const path = equals === -1 ? "" : value.slice(0, equals).trim();
+        if (path === "") return { ok: false, message: "--where requires path=value" };
+        const scalar = metadataScalar(value.slice(equals + 1));
+        if (!scalar.ok) return scalar;
+        if (filters.length >= MAX_QUERY_FILTERS) {
+          return { ok: false, message: `Query filters may contain at most ${MAX_QUERY_FILTERS} entries.` };
+        }
+        filters.push({ kind: "equals", path, value: scalar.value });
+      }
+      cursor += 1;
+      continue;
+    }
+    return {
+      ok: false,
+      message: argument.startsWith("--")
+        ? "unknown publish option"
+        : "publish does not accept positional arguments",
+    };
+  }
+
+  if (out === undefined) return { ok: false, message: "publish requires --out <directory>" };
+  try {
+    validateQueryOptions({ filters, tags, repositoryScopes });
+  } catch (error: unknown) {
+    return { ok: false, message: error instanceof Error ? error.message : String(error) };
+  }
+  const selection: PublishSelectionInput = {
+    includes,
+    excludes,
+    filters,
+    tags,
+    repositoryScopes,
+    ...(from === undefined ? {} : { from: { note: from, depth, direction } }),
+  };
+  return {
+    ok: true,
+    value: {
+      kind: "publish",
+      root,
+      out,
+      noindex,
+      indexContent,
+      deterministic,
+      dryRun,
+      force,
+      selection,
+      json,
+      ...(index === undefined ? {} : { index }),
+      ...(title === undefined ? {} : { title }),
+      ...(description === undefined ? {} : { description }),
+      ...(basePath === undefined ? {} : { basePath }),
+      ...(baseUrl === undefined ? {} : { baseUrl }),
     },
   };
 }
@@ -1938,6 +2100,7 @@ export function parseArguments(arguments_: readonly string[]): ParseResult {
   if (command === "note") return parseNoteCommand(arguments_.slice(1));
   if (command === "relation") return parseRelationCommand(arguments_.slice(1));
   if (command === "percolate") return parsePercolateCommand(arguments_.slice(1));
+  if (command === "publish") return parsePublishCommand(arguments_.slice(1));
   return { ok: false, message: "unknown command" };
 }
 
@@ -2834,6 +2997,32 @@ async function runList(
   return 0;
 }
 
+async function runPublish(
+  command: Extract<ParsedCommand, { readonly kind: "publish" }>,
+  output: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  const result = await (dependencies.publishVault ?? publishVault)({
+    root: command.root,
+    out: command.out,
+    noindex: command.noindex,
+    indexContent: command.indexContent,
+    deterministic: command.deterministic,
+    dryRun: command.dryRun,
+    force: command.force,
+    selection: command.selection,
+    ...(command.index === undefined ? {} : { index: command.index }),
+    ...(command.title === undefined ? {} : { title: command.title }),
+    ...(command.description === undefined ? {} : { description: command.description }),
+    ...(command.basePath === undefined ? {} : { basePath: command.basePath }),
+    ...(command.baseUrl === undefined ? {} : { baseUrl: command.baseUrl }),
+  });
+  output.stdout(command.json
+    ? terminalSafeJson(result.report)
+    : sanitizeTerminalText(renderPublishReportText(result.report, command.dryRun)));
+  return 0;
+}
+
 async function runCatalog(
   command: Extract<ParsedCommand, { readonly kind: "catalog" }>,
   output: Output,
@@ -3580,6 +3769,7 @@ export async function main(
     }
     if (command.kind === "percolate") return await runPercolate(command, output, dependencies);
     if (command.kind === "list") return await runList(command, output, dependencies);
+    if (command.kind === "publish") return await runPublish(command, output, dependencies);
     if (command.kind === "inbox") return await runInbox(command, output, dependencies);
     if (command.kind === "catalog") return await runCatalog(command, output, dependencies);
     return await runVault(command, output, dependencies);

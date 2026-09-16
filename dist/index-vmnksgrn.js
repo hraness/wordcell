@@ -4,21 +4,27 @@ import {
   createRustMetadataSearchProvider
 } from "./index-bcknqxrq.js";
 import {
+  main as main2
+} from "./index-054mb7d3.js";
+import {
   MAX_AUTHORIZED_VAULTS,
   auditKnowledgePortfolio,
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-51bap0mq.js";
-import {
-  main as main2
-} from "./index-054mb7d3.js";
+} from "./index-j54ye6rz.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
 import {
+  main
+} from "./index-de2w8crk.js";
+import {
   verifyCaptureBundle
 } from "./index-npg9z1a4.js";
+import {
+  redactSensitiveText
+} from "./index-mxxxytys.js";
 import {
   initVault
 } from "./index-23z4zxgg.js";
@@ -30,7 +36,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-pbr6rv47.js";
+} from "./index-z7w4bmh1.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -38,7 +44,7 @@ import {
   MAX_SEARCH_RELATED_SEEDS,
   MAX_SEARCH_RESULTS,
   openKnowledgeBase
-} from "./index-vdw5yjfa.js";
+} from "./index-s6rqvzsz.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -49,29 +55,7 @@ import {
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
   sha256EmbeddingModelFile
-} from "./index-115b07ap.js";
-import {
-  percolateWithGraph
-} from "./index-bgfzwt4h.js";
-import {
-  queryGraph,
-  rebuildGraph,
-  verifyGraph
-} from "./index-bcfn9xah.js";
-import {
-  validateGraphQueryRequest
-} from "./index-11621h23.js";
-import {
-  refreshVault,
-  scanVault
-} from "./index-0k2x4nn9.js";
-import {
-  MAX_PERCOLATION_MENTIONS,
-  MAX_PERCOLATION_MENTION_PAIRS,
-  MAX_PERCOLATION_NOTES,
-  MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
-  percolateVault
-} from "./index-nd6nynv2.js";
+} from "./index-trgxvmy6.js";
 import {
   MAX_EVALUATION_RESULTS_PER_QUERY,
   MAX_EVALUATION_TIMEOUT_MS,
@@ -80,19 +64,41 @@ import {
   runRetrievalEvaluation
 } from "./index-b88v3vtm.js";
 import {
-  auditAgentGuideRepository
-} from "./index-hya40gb2.js";
+  percolateWithGraph
+} from "./index-yq0ejabe.js";
 import {
-  validateMarkdownAttachments
-} from "./index-x3fthpsc.js";
+  MAX_PERCOLATION_MENTIONS,
+  MAX_PERCOLATION_MENTION_PAIRS,
+  MAX_PERCOLATION_NOTES,
+  MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
+  percolateVault
+} from "./index-nd6nynv2.js";
 import {
-  addNoteRelation,
-  createNote,
-  removeNoteRelation
-} from "./index-6sw24nvv.js";
+  queryGraph,
+  rebuildGraph,
+  verifyGraph
+} from "./index-35n3cjhk.js";
+import {
+  validateGraphQueryRequest
+} from "./index-11621h23.js";
 import {
   validateSearchQuery
-} from "./index-why54q5p.js";
+} from "./index-gm9t95d9.js";
+import {
+  sanitizeTerminalLine,
+  sanitizeTerminalText
+} from "./index-1xxnjn0d.js";
+import {
+  publishVault,
+  renderPublishReportText
+} from "./index-cw7n3w4a.js";
+import {
+  refreshVault,
+  scanVault
+} from "./index-0k2x4nn9.js";
+import {
+  navigateLinks
+} from "./index-d13v9ckt.js";
 import {
   MAX_QUERY_FILTERS,
   MAX_QUERY_TAGS,
@@ -105,8 +111,11 @@ import {
   repositoryMemoryGroupKeys
 } from "./index-06c9ctr6.js";
 import {
-  navigateLinks
-} from "./index-d13v9ckt.js";
+  findKbPackageRoot
+} from "./index-4knsp9qj.js";
+import {
+  auditAgentGuideRepository
+} from "./index-hya40gb2.js";
 import {
   agentContextGuidePath,
   agentContextMarkerForScope,
@@ -117,23 +126,18 @@ import {
   normalizeRepositoryScope
 } from "./index-5vwpzb5a.js";
 import {
+  validateMarkdownAttachments
+} from "./index-x3fthpsc.js";
+import {
+  addNoteRelation,
+  createNote,
+  removeNoteRelation
+} from "./index-6sw24nvv.js";
+import {
   lookupNote,
   parseVaultKey,
   renderCatalog
 } from "./index-ekpwvbra.js";
-import {
-  main
-} from "./index-9zcpdbjg.js";
-import {
-  findKbPackageRoot
-} from "./index-jzcws0zn.js";
-import {
-  redactSensitiveText
-} from "./index-mxxxytys.js";
-import {
-  sanitizeTerminalLine,
-  sanitizeTerminalText
-} from "./index-1xxnjn0d.js";
 
 // src/clip/url-metadata-cli.ts
 import { resolve as resolve2 } from "path";
@@ -977,6 +981,7 @@ Usage:
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
   wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
+  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--force] [--json]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
   wordcell agents identity <repository-scope> [--json]
@@ -1364,6 +1369,165 @@ function parseListCommand(arguments_) {
       direction,
       ...limit === undefined ? {} : { limit },
       json
+    }
+  };
+}
+function parsePublishCommand(arguments_) {
+  let root = ".";
+  let out;
+  let index;
+  let title;
+  let description;
+  let basePath;
+  let baseUrl;
+  let noindex = false;
+  let indexContent = true;
+  let deterministic = false;
+  let dryRun = false;
+  let force = false;
+  let json = false;
+  let from;
+  let depth = 1;
+  let direction = "both";
+  const includes = [];
+  const excludes = [];
+  const filters = [];
+  const tags = [];
+  const repositoryScopes = [];
+  for (let cursor = 0;cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined)
+      continue;
+    if (argument === "--json") {
+      json = true;
+      continue;
+    }
+    if (argument === "--noindex") {
+      noindex = true;
+      continue;
+    }
+    if (argument === "--no-index-content") {
+      indexContent = false;
+      continue;
+    }
+    if (argument === "--deterministic") {
+      deterministic = true;
+      continue;
+    }
+    if (argument === "--dry-run") {
+      dryRun = true;
+      continue;
+    }
+    if (argument === "--force") {
+      force = true;
+      continue;
+    }
+    if (argument === "--root" || argument === "--out" || argument === "--index" || argument === "--title" || argument === "--description" || argument === "--base-path" || argument === "--base-url" || argument === "--include" || argument === "--exclude" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--from" || argument === "--depth" || argument === "--direction") {
+      const value = readValue(arguments_, cursor);
+      if (value === null)
+        return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root")
+        root = value;
+      else if (argument === "--out")
+        out = value;
+      else if (argument === "--index")
+        index = value;
+      else if (argument === "--title")
+        title = value;
+      else if (argument === "--description")
+        description = value;
+      else if (argument === "--base-path")
+        basePath = value;
+      else if (argument === "--base-url")
+        baseUrl = value;
+      else if (argument === "--include")
+        includes.push(value);
+      else if (argument === "--exclude")
+        excludes.push(value);
+      else if (argument === "--from")
+        from = value;
+      else if (argument === "--depth") {
+        const parsed = Number(value);
+        if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > 10) {
+          return { ok: false, message: "--depth must be an integer from 1 through 10" };
+        }
+        depth = parsed;
+      } else if (argument === "--direction") {
+        if (value !== "in" && value !== "out" && value !== "both") {
+          return { ok: false, message: "--direction must be in, out, or both" };
+        }
+        direction = value;
+      } else if (argument === "--tag") {
+        if (tags.length >= MAX_QUERY_TAGS) {
+          return { ok: false, message: `Query tags may contain at most ${MAX_QUERY_TAGS} entries.` };
+        }
+        tags.push(value);
+      } else if (argument === "--scope" || argument === "--repository-scope") {
+        if (repositoryScopes.length >= MAX_REPOSITORY_SCOPES) {
+          return { ok: false, message: `Repository scope filters may contain at most ${MAX_REPOSITORY_SCOPES} entries.` };
+        }
+        repositoryScopes.push(value);
+      } else if (argument === "--has") {
+        if (value.trim() === "")
+          return { ok: false, message: "--has requires a metadata path" };
+        if (filters.length >= MAX_QUERY_FILTERS) {
+          return { ok: false, message: `Query filters may contain at most ${MAX_QUERY_FILTERS} entries.` };
+        }
+        filters.push({ kind: "exists", path: value });
+      } else {
+        const equals = value.indexOf("=");
+        const path = equals === -1 ? "" : value.slice(0, equals).trim();
+        if (path === "")
+          return { ok: false, message: "--where requires path=value" };
+        const scalar = metadataScalar(value.slice(equals + 1));
+        if (!scalar.ok)
+          return scalar;
+        if (filters.length >= MAX_QUERY_FILTERS) {
+          return { ok: false, message: `Query filters may contain at most ${MAX_QUERY_FILTERS} entries.` };
+        }
+        filters.push({ kind: "equals", path, value: scalar.value });
+      }
+      cursor += 1;
+      continue;
+    }
+    return {
+      ok: false,
+      message: argument.startsWith("--") ? "unknown publish option" : "publish does not accept positional arguments"
+    };
+  }
+  if (out === undefined)
+    return { ok: false, message: "publish requires --out <directory>" };
+  try {
+    validateQueryOptions({ filters, tags, repositoryScopes });
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : String(error) };
+  }
+  const selection = {
+    includes,
+    excludes,
+    filters,
+    tags,
+    repositoryScopes,
+    ...from === undefined ? {} : { from: { note: from, depth, direction } }
+  };
+  return {
+    ok: true,
+    value: {
+      kind: "publish",
+      root,
+      out,
+      noindex,
+      indexContent,
+      deterministic,
+      dryRun,
+      force,
+      selection,
+      json,
+      ...index === undefined ? {} : { index },
+      ...title === undefined ? {} : { title },
+      ...description === undefined ? {} : { description },
+      ...basePath === undefined ? {} : { basePath },
+      ...baseUrl === undefined ? {} : { baseUrl }
     }
   };
 }
@@ -2420,6 +2584,8 @@ function parseArguments(arguments_) {
     return parseRelationCommand(arguments_.slice(1));
   if (command === "percolate")
     return parsePercolateCommand(arguments_.slice(1));
+  if (command === "publish")
+    return parsePublishCommand(arguments_.slice(1));
   return { ok: false, message: "unknown command" };
 }
 function embeddingCount(result) {
@@ -3104,6 +3270,25 @@ async function runList(command, output, dependencies) {
   output.stdout(command.json ? terminalSafeJson({ root: snapshot.root, count: rows.length, notes: rows }) : sanitizeTerminalText(renderList(rows)));
   return 0;
 }
+async function runPublish(command, output, dependencies) {
+  const result = await (dependencies.publishVault ?? publishVault)({
+    root: command.root,
+    out: command.out,
+    noindex: command.noindex,
+    indexContent: command.indexContent,
+    deterministic: command.deterministic,
+    dryRun: command.dryRun,
+    force: command.force,
+    selection: command.selection,
+    ...command.index === undefined ? {} : { index: command.index },
+    ...command.title === undefined ? {} : { title: command.title },
+    ...command.description === undefined ? {} : { description: command.description },
+    ...command.basePath === undefined ? {} : { basePath: command.basePath },
+    ...command.baseUrl === undefined ? {} : { baseUrl: command.baseUrl }
+  });
+  output.stdout(command.json ? terminalSafeJson(result.report) : sanitizeTerminalText(renderPublishReportText(result.report, command.dryRun)));
+  return 0;
+}
 async function runCatalog(command, output, dependencies) {
   const snapshot = await (dependencies.scanVault ?? scanVault)(command.root, command.options);
   const relativeIndex = relative(snapshot.root, snapshot.indexPath).split("\\").join("/");
@@ -3673,6 +3858,8 @@ ${sanitizeTerminalText(usage)}`);
       return await runPercolate(command, output, dependencies);
     if (command.kind === "list")
       return await runList(command, output, dependencies);
+    if (command.kind === "publish")
+      return await runPublish(command, output, dependencies);
     if (command.kind === "inbox")
       return await runInbox(command, output, dependencies);
     if (command.kind === "catalog")

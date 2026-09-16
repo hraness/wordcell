@@ -1,9 +1,9 @@
 <!-- kb:context scopes/repository--cdb4ee2aea69 -->
 # Contents
 
-- `src/` – deterministic Markdown graph and attachment analysis, typed metadata and exact repository-scope queries, local hybrid retrieval, bounded Git provenance, code-mode sessions and DAG workflows, frozen-corpus evaluation authoring and execution, safe single-note authoring, percolation, repository-memory routing and audits, the advisory source inbox, structural navigation, initialization, CLI, capture, URL intelligence, and diagnostic code with colocated tests.
+- `src/` – deterministic Markdown graph and attachment analysis, typed metadata and exact repository-scope queries, local hybrid retrieval, bounded Git provenance, code-mode sessions and DAG workflows, frozen-corpus evaluation authoring and execution, safe single-note authoring, percolation, repository-memory routing and audits, the advisory source inbox, structural navigation, static `hraness.wordcell.site.v1` publication, initialization, CLI, capture, URL intelligence, and diagnostic code with colocated tests.
 - `src/workflows/` – reusable code-mode decision-context, change-explanation, and plan-radar workflows with bounded parallel execution.
-- `dist/` – committed Bun-targeted ESM entrypoints plus the compiled Defuddle worker.
+- `dist/` – committed Bun-targeted ESM entrypoints plus the compiled Defuddle worker and the browser-targeted publish reader bundle.
 - `skills/wordcell/` – the single public Agent Skill for querying, capturing into, planning in, percolating, refreshing, and validating a hraness/wordcell vault, with focused workflow references loaded on demand.
 - `.agents/skills/` – internal plan authoring, phased execution, implementation, and independent review workflows.
 - `kb/` – this source repository's authored rationale, maintained synthesis, and implementation plans; it is separate from the package's graph implementation and fixtures.

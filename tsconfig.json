@@ -99,6 +99,15 @@
       "@hraness/wordcell/percolate": [
         "./src/percolate.ts"
       ],
+      "@hraness/wordcell/publish": [
+        "./src/publish.ts"
+      ],
+      "@hraness/wordcell/publish-model": [
+        "./src/publish-model.ts"
+      ],
+      "@hraness/wordcell/publish-search": [
+        "./src/publish-search.ts"
+      ],
       "@hraness/wordcell/portfolio": [
         "./src/portfolio.ts"
       ],

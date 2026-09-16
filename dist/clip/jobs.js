@@ -1,14 +1,14 @@
 // @bun
 import {
-  acquireFileLease
-} from "../index-3rm7cz6h.js";
-import {
   redactSensitiveText
 } from "../index-mxxxytys.js";
 import {
   sanitizeTerminalLine,
   sanitizeTerminalText
 } from "../index-1xxnjn0d.js";
+import {
+  acquireFileLease
+} from "../index-3rm7cz6h.js";
 import"../index-z1w83f81.js";
 
 // src/clip/jobs.ts

@@ -7,6 +7,7 @@
 - `references/save-pdf.md` and `pdf-review.md` – PDF ingestion, OCR, image evidence, and mixed-media review.
 - `references/plan.md` and `plan-structure.md` – durable plan authoring and its adaptable Markdown contract.
 - `references/percolate.md` and `refresh.md` – evidence-backed graph edits, catalog maintenance, and vault validation.
+- `references/publish.md` – static `hraness.wordcell.site.v1` publication of a vault or selected subsection.
 - `templates/companion-skill.template.md` – inert, copyable starting point for an approved companion skill.
 - `agents/openai.yaml` – user-facing skill metadata and invocation prompt.
 

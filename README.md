@@ -125,6 +125,7 @@ neither the vault nor a hosted knowledge service.
 | Capture a source | `wordcell clip https://example.com/article --output kb/articles` | Reads the selected URL and writes a Markdown bundle with a capture receipt. |
 | Capture a PDF | `wordcell pdf /absolute/path/to/document.pdf --output kb/articles` | Preserves the original PDF and extracted evidence; Poppler is required. |
 | Check the vault | `wordcell check --root kb` | Reports structural and attachment problems without editing files. |
+| Publish a site | `wordcell publish --root kb --out site/` | Emits a self-contained static site with read-only pages and browser-local search; hosts from object storage with no server. |
 
 Use `--json` for structured output and `wordcell --help` for the complete command
 surface. [Full command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md#command-surface).

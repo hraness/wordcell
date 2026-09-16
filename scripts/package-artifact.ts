@@ -9,9 +9,9 @@ const ustarSignature = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00, 0x30, 0x
 
 const packageBudget = Object.freeze({
   entryCount: { min: 190, max: 420 },
-  fileCount: { min: 190, max: 240 },
+  fileCount: { min: 190, max: 280 },
   packedBytes: { min: 950_000, max: 1_200_000 },
-  unpackedBytes: { min: 4_500_000, max: 5_250_000 },
+  unpackedBytes: { min: 4_500_000, max: 5_700_000 },
 });
 
 const requiredPaths = Object.freeze([
@@ -23,9 +23,15 @@ const requiredPaths = Object.freeze([
   "dist/graph-percolation.js",
   "dist/evaluation-builder.js",
   "dist/index.js",
+  "dist/publish.js",
+  "dist/publish-model.js",
+  "dist/publish-search.js",
+  "dist/publish-reader/reader.js",
+  "dist/publish-reader/reader.css",
   "skills/wordcell/AGENTS.md",
   "skills/wordcell/SKILL.md",
   "skills/wordcell/agents/openai.yaml",
+  "skills/wordcell/references/publish.md",
   "skills/wordcell/references/query.md",
   "skills/wordcell/references/save-url.md",
   "src/cli.ts",
@@ -43,6 +49,15 @@ const requiredPaths = Object.freeze([
   "src/graph-query.ts",
   "src/graph-cli.ts",
   "src/graph-percolation.ts",
+  "src/publish.ts",
+  "src/publish-index.ts",
+  "src/publish-markdown.ts",
+  "src/publish-model.ts",
+  "src/publish-pages.ts",
+  "src/publish-search.ts",
+  "src/publish-select.ts",
+  "src/publish-reader/reader.ts",
+  "src/publish-reader/reader.css",
   "src/oh/authority.ts",
   "src/oh/programs.ts",
   "src/oh/schema.ts",

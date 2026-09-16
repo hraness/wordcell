@@ -11,6 +11,12 @@ import {
   workflowFromUnknown
 } from "./index-h170byqw.js";
 import {
+  createRepresentativeRetrievalFixture,
+  createSyntheticRankFusionFixture,
+  evaluateRanking,
+  evaluateRetrievalBenchmark
+} from "./index-qwgsmtsz.js";
+import {
   initVault
 } from "./index-23z4zxgg.js";
 import {
@@ -26,7 +32,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-pbr6rv47.js";
+} from "./index-z7w4bmh1.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -38,8 +44,7 @@ import {
   packSearchContext,
   packUntrustedSearchContext,
   validateKnowledgeBaseSearchHistory
-} from "./index-vdw5yjfa.js";
-import"./index-4j3tt0c3.js";
+} from "./index-s6rqvzsz.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -56,33 +61,28 @@ import {
   searchSemanticVault,
   semanticDatabasePath,
   sha256EmbeddingModelFile
-} from "./index-115b07ap.js";
+} from "./index-trgxvmy6.js";
+import"./index-4j3tt0c3.js";
+import {
+  MAX_BOOTSTRAP_RESAMPLES,
+  MAX_EVALUATION_DIAGNOSTICS,
+  MAX_EVALUATION_EVIDENCE_BYTES,
+  MAX_EVALUATION_QRELS_PER_QUERY,
+  MAX_EVALUATION_QUERIES,
+  MAX_EVALUATION_RESULTS_PER_QUERY,
+  MAX_EVALUATION_RETRIEVERS,
+  MAX_EVALUATION_TEXT_BYTES,
+  MAX_EVALUATION_TIMEOUT_MS,
+  RETRIEVAL_EVALUATION_REPORT_VERSION,
+  RETRIEVAL_EVALUATION_SCHEMA_VERSION,
+  buildRetrievalEvaluationReport,
+  pairedBootstrapConfidenceInterval,
+  parseRetrievalEvaluationCorpus,
+  runRetrievalEvaluation
+} from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-bgfzwt4h.js";
-import {
-  createGraphSnapshot,
-  openGraphAuthority,
-  queryGraph,
-  rebuildGraph,
-  verifyGraph
-} from "./index-bcfn9xah.js";
-import {
-  GRAPH_LIMITS,
-  GraphAuthorityError,
-  validateGraphQueryRequest
-} from "./index-11621h23.js";
-import {
-  MAX_NOTE_UTF8_BYTES,
-  MAX_SCANNED_NOTES,
-  MAX_VAULT_UTF8_BYTES,
-  VaultScanBudgetError,
-  defaultIgnoredDirectories,
-  markdownFiles,
-  readVaultNotes,
-  refreshVault,
-  scanVault
-} from "./index-0k2x4nn9.js";
+} from "./index-yq0ejabe.js";
 import {
   DEFAULT_PERCOLATION_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
@@ -105,6 +105,18 @@ import {
   percolateVault
 } from "./index-nd6nynv2.js";
 import {
+  createGraphSnapshot,
+  openGraphAuthority,
+  queryGraph,
+  rebuildGraph,
+  verifyGraph
+} from "./index-35n3cjhk.js";
+import {
+  GRAPH_LIMITS,
+  GraphAuthorityError,
+  validateGraphQueryRequest
+} from "./index-11621h23.js";
+import {
   GitHistoryError,
   MAX_GIT_HISTORY_COMMITS,
   MAX_GIT_HISTORY_NOTES,
@@ -124,69 +136,39 @@ import {
   validateSearchGitHistoryOptions
 } from "./index-1gwbassd.js";
 import {
-  MAX_BOOTSTRAP_RESAMPLES,
-  MAX_EVALUATION_DIAGNOSTICS,
-  MAX_EVALUATION_EVIDENCE_BYTES,
-  MAX_EVALUATION_QRELS_PER_QUERY,
-  MAX_EVALUATION_QUERIES,
-  MAX_EVALUATION_RESULTS_PER_QUERY,
-  MAX_EVALUATION_RETRIEVERS,
-  MAX_EVALUATION_TEXT_BYTES,
-  MAX_EVALUATION_TIMEOUT_MS,
-  RETRIEVAL_EVALUATION_REPORT_VERSION,
-  RETRIEVAL_EVALUATION_SCHEMA_VERSION,
-  buildRetrievalEvaluationReport,
-  pairedBootstrapConfidenceInterval,
-  parseRetrievalEvaluationCorpus,
-  runRetrievalEvaluation
-} from "./index-b88v3vtm.js";
-import {
-  auditAgentGuideRepository,
-  auditAgentGuideSource,
-  auditAgentGuides,
-  compareAgentGuideAudits,
-  defaultAgentGuideIgnoredDirectories,
-  discoverAgentGuides
-} from "./index-hya40gb2.js";
-import {
-  MAX_ATTACHMENT_PATH_BYTES,
-  MAX_ATTACHMENT_REFERENCES,
-  MAX_ATTACHMENT_SCAN_ENTRIES,
-  MAX_ATTACHMENT_SOURCE_BYTES,
-  parseLocalAttachmentReferences,
-  validateAttachmentReferences,
-  validateMarkdownAttachments
-} from "./index-x3fthpsc.js";
-import {
-  InvalidCanonicalNoteIdError,
-  NoteAlreadyExistsError,
-  NoteRecoveryRequiredError,
-  NoteRevisionConflictError,
-  addNoteRelation,
-  canonicalNoteId,
-  canonicalRelationTarget,
-  createConceptNote,
-  createNote,
-  listNoteRelations,
-  normalizeRelationPredicate,
-  noteRevision,
-  removeNoteRelation
-} from "./index-6sw24nvv.js";
-import"./index-3rm7cz6h.js";
-import {
-  createRepresentativeRetrievalFixture,
-  createSyntheticRankFusionFixture,
-  evaluateRanking,
-  evaluateRetrievalBenchmark
-} from "./index-3ehtt59c.js";
-import {
   MAX_SEARCH_QUERY_BYTES,
   MAX_SEARCH_QUERY_TERMS,
   buildGraphContext,
   fuseRankedCandidates,
   searchExactVault,
   validateSearchQuery
-} from "./index-why54q5p.js";
+} from "./index-gm9t95d9.js";
+import"./index-1xxnjn0d.js";
+import {
+  MAX_SITE_BYTES,
+  WORDCELL_PUBLISH_GENERATOR,
+  projectVault,
+  publishVault,
+  renderPublishReportText,
+  serializeSiteFile
+} from "./index-cw7n3w4a.js";
+import {
+  MAX_NOTE_UTF8_BYTES,
+  MAX_SCANNED_NOTES,
+  MAX_VAULT_UTF8_BYTES,
+  VaultScanBudgetError,
+  defaultIgnoredDirectories,
+  markdownFiles,
+  readVaultNotes,
+  refreshVault,
+  scanVault
+} from "./index-0k2x4nn9.js";
+import {
+  MAX_NAVIGATION_INDEXED_CONNECTIONS,
+  MAX_NAVIGATION_RETURNED_CONNECTIONS,
+  NavigationBudgetError,
+  navigateLinks
+} from "./index-d13v9ckt.js";
 import {
   MAX_QUERY_FILTERS,
   MAX_QUERY_FILTER_VALUES,
@@ -229,12 +211,33 @@ import {
   terminalPlanStatuses,
   validateRepositoryScopeSelection
 } from "./index-06c9ctr6.js";
+import"./index-4knsp9qj.js";
 import {
-  MAX_NAVIGATION_INDEXED_CONNECTIONS,
-  MAX_NAVIGATION_RETURNED_CONNECTIONS,
-  NavigationBudgetError,
-  navigateLinks
-} from "./index-d13v9ckt.js";
+  WORDCELL_SITE_CATALOG_FORMAT_V1,
+  WORDCELL_SITE_DOCS_FORMAT_V1,
+  WORDCELL_SITE_FORMAT_V1,
+  WORDCELL_SITE_GRAPH_FORMAT_V1,
+  WORDCELL_SITE_LIMITS_V1,
+  WORDCELL_SITE_NOTE_FORMAT_V1,
+  WORDCELL_SITE_POSTINGS_FORMAT_V1,
+  WORDCELL_SITE_TERMS_FORMAT_V1,
+  parseSiteCatalogV1,
+  parseSiteDocsV1,
+  parseSiteGraphV1,
+  parseSiteManifestV1,
+  parseSiteNoteV1,
+  parseSitePostingsV1,
+  parseSiteTermsV1
+} from "./index-66pshdtx.js";
+import"./index-s8ytxd6f.js";
+import {
+  auditAgentGuideRepository,
+  auditAgentGuideSource,
+  auditAgentGuides,
+  compareAgentGuideAudits,
+  defaultAgentGuideIgnoredDirectories,
+  discoverAgentGuides
+} from "./index-hya40gb2.js";
 import {
   AgentContextRepositoryPathError,
   RepositoryScopeError,
@@ -252,6 +255,31 @@ import {
   normalizeRepositoryScope,
   parseAgentContextMarker
 } from "./index-5vwpzb5a.js";
+import {
+  MAX_ATTACHMENT_PATH_BYTES,
+  MAX_ATTACHMENT_REFERENCES,
+  MAX_ATTACHMENT_SCAN_ENTRIES,
+  MAX_ATTACHMENT_SOURCE_BYTES,
+  parseLocalAttachmentReferences,
+  validateAttachmentReferences,
+  validateMarkdownAttachments
+} from "./index-x3fthpsc.js";
+import {
+  InvalidCanonicalNoteIdError,
+  NoteAlreadyExistsError,
+  NoteRecoveryRequiredError,
+  NoteRevisionConflictError,
+  addNoteRelation,
+  canonicalNoteId,
+  canonicalRelationTarget,
+  createConceptNote,
+  createNote,
+  listNoteRelations,
+  normalizeRelationPredicate,
+  noteRevision,
+  removeNoteRelation
+} from "./index-6sw24nvv.js";
+import"./index-3rm7cz6h.js";
 import {
   MAX_ANALYZED_NOTES,
   MAX_CONNECTION_OBSERVATIONS,
@@ -272,7 +300,6 @@ import {
   searchableMarkdown,
   wikiLinks
 } from "./index-ekpwvbra.js";
-import"./index-1xxnjn0d.js";
 import"./index-z1w83f81.js";
 // src/oh-adoption.ts
 import { createHash } from "crypto";
@@ -600,6 +627,7 @@ export {
   terminalPlanStatuses,
   sourceInbox,
   sha256EmbeddingModelFile,
+  serializeSiteFile,
   semanticDatabasePath,
   searchableMarkdown,
   searchSemanticVault,
@@ -613,6 +641,7 @@ export {
   repositoryScopeMatchesPath,
   repositoryMemoryGroupKeys,
   replaceCatalog,
+  renderPublishReportText,
   renderCatalog,
   removeNoteRelation,
   refreshVault,
@@ -623,9 +652,18 @@ export {
   queryVault,
   queryGraph,
   qmdIndexerVersion,
+  publishVault,
+  projectVault,
   planStatuses,
   percolateWithGraph,
   percolateVault,
+  parseSiteTermsV1,
+  parseSitePostingsV1,
+  parseSiteNoteV1,
+  parseSiteManifestV1,
+  parseSiteGraphV1,
+  parseSiteDocsV1,
+  parseSiteCatalogV1,
   parseRetrievalEvaluationCorpus,
   parsePercolationResultV2,
   parsePercolationResultV1,
@@ -714,6 +752,15 @@ export {
   addNoteRelation,
   activePlanStatuses,
   WorkflowRunError,
+  WORDCELL_SITE_TERMS_FORMAT_V1,
+  WORDCELL_SITE_POSTINGS_FORMAT_V1,
+  WORDCELL_SITE_NOTE_FORMAT_V1,
+  WORDCELL_SITE_LIMITS_V1,
+  WORDCELL_SITE_GRAPH_FORMAT_V1,
+  WORDCELL_SITE_FORMAT_V1,
+  WORDCELL_SITE_DOCS_FORMAT_V1,
+  WORDCELL_SITE_CATALOG_FORMAT_V1,
+  WORDCELL_PUBLISH_GENERATOR,
   VaultScanBudgetError,
   VaultAnalysisBudgetError,
   RepositoryScopesError,
@@ -735,6 +782,7 @@ export {
   MAX_SOURCE_INBOX_NOTES,
   MAX_SOURCE_INBOX_CONNECTIONS,
   MAX_SOURCE_DISPOSITION_EVIDENCE,
+  MAX_SITE_BYTES,
   MAX_SEMANTIC_DATABASE_IDENTITY_BYTES,
   MAX_SEARCH_RESULTS,
   MAX_SEARCH_RELATED_SEEDS,
