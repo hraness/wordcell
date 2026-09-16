@@ -91,7 +91,7 @@ import {
 import {
   publishVault,
   renderPublishReportText
-} from "./index-s4eyg07z.js";
+} from "./index-0a695x2x.js";
 import {
   refreshVault,
   scanVault

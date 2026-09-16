@@ -681,13 +681,18 @@ ${renderInline(raw.trim(), ctx)}`);
 `);
 }
 function stripMarkup(html) {
-  let previous = html;
-  let next = html.replace(/<[^>]*>/gu, "");
-  while (next !== previous) {
-    previous = next;
-    next = next.replace(/<[^>]*>/gu, "");
+  const text = html.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", '"').replaceAll("&#39;", "'").replaceAll("&amp;", "&");
+  let stripped = "";
+  let inTag = false;
+  for (const character of text) {
+    if (character === "<")
+      inTag = true;
+    else if (character === ">")
+      inTag = false;
+    else if (!inTag)
+      stripped += character;
   }
-  return next;
+  return stripped;
 }
 
 // src/publish-pages.ts

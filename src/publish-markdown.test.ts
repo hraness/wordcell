@@ -124,7 +124,7 @@ describe("renderMarkdownToHtml", () => {
 
   test("heading anchors strip nested markup to a stable slug", () => {
     const html = renderMarkdownToHtml("# `code` and <scr<script>ipt>\n", context());
-    expect(html).toContain('id="codeand-lt-scr-lt-script-gt-ipt-gt"');
+    expect(html).toContain('id="codeand-ipt"');
     expect(html).not.toContain("<script");
   });
 });
