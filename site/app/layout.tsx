@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import { supportProfile } from "../../src/support-profile";
-import "@hraness/site-footer/styles.css";
 import "./globals.css";
 
 const title = "Wordcell: a knowledge base for coding agents";

@@ -6,6 +6,7 @@
 @import "../vendor/paper-theme/paper-theme.css";
 @import "../vendor/hraness-marketing/product-marketing-preset.css";
 @import "../vendor/hraness-lantern/lantern-material.css";
+@import "@hraness/site-footer/styles.css";
 
 :root {
   --inverse-background: #14202a;

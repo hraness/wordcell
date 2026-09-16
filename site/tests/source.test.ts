@@ -104,3 +104,12 @@ test("loads the immutable material after Paper and editorial styling", async () 
   expect(checker).toContain('import { checkLanternMaterialSnapshot } from "../vendor/hraness-lantern/check.mjs"');
   expect(checker).toContain("await checkLanternMaterialSnapshot();");
 });
+
+test("registers the footer layer after UI layers in one stylesheet", async () => {
+  const [css, layout] = await Promise.all([read("app/globals.css"), read("app/layout.tsx")]);
+  const footer = '@import "@hraness/site-footer/styles.css";';
+  expect(css).toContain(footer);
+  expect(css.indexOf(footer)).toBeGreaterThan(css.indexOf('@import "@hraness/ui/styles.css";'));
+  expect(css.indexOf(footer)).toBeGreaterThan(css.indexOf('lantern-material.css";'));
+  expect(layout).not.toContain('import "@hraness/site-footer/styles.css"');
+});
