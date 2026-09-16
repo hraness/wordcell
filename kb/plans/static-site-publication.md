@@ -86,10 +86,19 @@ confinement including symlink resolution, `index.html` directory mapping, and
 the published `404.html` fallback. Production hosting stays with the object
 store or CDN.
 
+The consumer seam was verified by spike: `parseNote` + `analyzeVault` +
+`projectVault` run entirely in memory — a synthetic sponge-shaped corpus
+(`editions/` and `entities/` units with frontmatter and wikilinks) produced a
+complete `hraness.wordcell.site.v1` file map with resolved cross-links, no
+filesystem involved. A second consumer supplies only markdown-shaped units,
+`resolveAssetPath`, `readAsset`, and an optional `readerFiles` override; the
+output `files` map goes to any sink.
+
 ## Durable memory
 
 The publication artifact is deliberately a self-contained file contract rather
 than an Oh store object, so a second consumer can emit or consume it without
-importing the engine. Promoting that shared seam is tracked as a future
-sponge-side adoption spike; no maintained note is warranted until a second
-concrete consumer exists.
+importing the engine. The in-memory `projectVault` boundary is the adoption
+seam: a sponge public-edition mirror needs only a BlockNote→Markdown step,
+note-id mapping, and asset IO on its side. No maintained note is warranted
+until a second concrete consumer commits to the contract.
