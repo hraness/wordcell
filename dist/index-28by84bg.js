@@ -909,6 +909,150 @@ Snapshot: ${value.revision}
   };
 }
 
+// src/serve.ts
+import { realpath, stat } from "fs/promises";
+import { join as join2, sep } from "path";
+var MAX_PATH_BYTES = 8 * 1024;
+var CONTENT_TYPES = Object.freeze({
+  ".avif": "image/avif",
+  ".css": "text/css; charset=utf-8",
+  ".gif": "image/gif",
+  ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".map": "application/json; charset=utf-8",
+  ".mp3": "audio/mpeg",
+  ".mp4": "video/mp4",
+  ".pdf": "application/pdf",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".txt": "text/plain; charset=utf-8",
+  ".wasm": "application/wasm",
+  ".wav": "audio/wav",
+  ".webm": "video/webm",
+  ".webp": "image/webp",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".xml": "application/xml; charset=utf-8"
+});
+function contentType(path) {
+  const extension = path.slice(path.lastIndexOf("."));
+  return CONTENT_TYPES[extension] ?? "application/octet-stream";
+}
+async function regularFileUnder(rootReal, candidate) {
+  let resolved;
+  try {
+    resolved = await realpath(candidate);
+  } catch {
+    return null;
+  }
+  if (resolved !== rootReal && !resolved.startsWith(`${rootReal}${sep}`))
+    return null;
+  try {
+    return (await stat(resolved)).isFile() ? resolved : null;
+  } catch {
+    return null;
+  }
+}
+async function resolveRequest(rootReal, pathname) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+  if (decoded.includes("\x00") || decoded.includes("\\"))
+    return null;
+  const segments = decoded.split("/").filter((segment) => segment !== "" && segment !== ".");
+  if (segments.some((segment) => segment === ".."))
+    return null;
+  const relative = segments.join("/");
+  const candidates = [
+    join2(rootReal, relative),
+    join2(rootReal, relative, "index.html")
+  ];
+  for (const candidate of candidates) {
+    const file = await regularFileUnder(rootReal, candidate);
+    if (file !== null)
+      return file;
+  }
+  return null;
+}
+async function createServeHandler(root) {
+  const rootReal = await realpath(root);
+  return async (request) => {
+    const method = request.method.toUpperCase();
+    if (method !== "GET" && method !== "HEAD") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+    let pathname;
+    try {
+      pathname = new URL(request.url).pathname;
+    } catch {
+      return new Response("Bad request", { status: 400 });
+    }
+    if (pathname.length > MAX_PATH_BYTES) {
+      return new Response("URI too long", { status: 414 });
+    }
+    const head = method === "HEAD";
+    const file = await resolveRequest(rootReal, pathname);
+    if (file !== null) {
+      const body = Bun.file(file);
+      return new Response(head ? null : body, {
+        headers: {
+          "Cache-Control": "no-store",
+          "Content-Length": String(body.size),
+          "Content-Type": contentType(file)
+        }
+      });
+    }
+    const notFound = await regularFileUnder(rootReal, join2(rootReal, "404.html"));
+    if (notFound !== null) {
+      const body = Bun.file(notFound);
+      return new Response(head ? null : body, {
+        status: 404,
+        headers: {
+          "Cache-Control": "no-store",
+          "Content-Length": String(body.size),
+          "Content-Type": "text/html; charset=utf-8"
+        }
+      });
+    }
+    return new Response(head ? null : "Not found", {
+      status: 404,
+      headers: { "Cache-Control": "no-store" }
+    });
+  };
+}
+async function serveSite(options, io = {}) {
+  const host = options.host ?? "127.0.0.1";
+  const port = options.port ?? 8080;
+  if (!Number.isSafeInteger(port) || port < 0 || port > 65535) {
+    throw new Error("Port must be an integer from 0 through 65535");
+  }
+  const rootReal = await realpath(options.root);
+  if (!(await stat(rootReal)).isDirectory()) {
+    throw new Error(`Site root is not a directory: ${options.root}`);
+  }
+  const listen = io.listen ?? ((init) => Bun.serve(init));
+  const server = listen({
+    hostname: host,
+    port,
+    fetch: await createServeHandler(rootReal)
+  });
+  const boundPort = server.port ?? port;
+  return Object.freeze({
+    root: rootReal,
+    host,
+    port: boundPort,
+    url: `http://${host}:${String(boundPort)}/`,
+    close: () => server.stop()
+  });
+}
+
 // src/cli-program.ts
 var defaultOutput2 = {
   stdout: (value) => process.stdout.write(value),
@@ -982,6 +1126,7 @@ Usage:
   wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
   wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--force] [--json]
+  wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
   wordcell agents identity <repository-scope> [--json]
@@ -1530,6 +1675,46 @@ function parsePublishCommand(arguments_) {
       ...baseUrl === undefined ? {} : { baseUrl }
     }
   };
+}
+function parseServeCommand(arguments_) {
+  let root;
+  let host = "127.0.0.1";
+  let port = 8080;
+  let json = false;
+  for (let cursor = 0;cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined)
+      continue;
+    if (argument === "--json") {
+      json = true;
+      continue;
+    }
+    if (argument === "--root" || argument === "--host" || argument === "--port") {
+      const value = readValue(arguments_, cursor);
+      if (value === null)
+        return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root")
+        root = value;
+      else if (argument === "--host")
+        host = value;
+      else {
+        const parsed = Number(value);
+        if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 65535) {
+          return { ok: false, message: "--port must be an integer from 0 through 65535" };
+        }
+        port = parsed;
+      }
+      cursor += 1;
+      continue;
+    }
+    return {
+      ok: false,
+      message: argument.startsWith("--") ? "unknown serve option" : "serve does not accept positional arguments"
+    };
+  }
+  if (root === undefined)
+    return { ok: false, message: "serve requires --root <directory>" };
+  return { ok: true, value: { kind: "serve", root, host, port, json } };
 }
 function parseInboxCommand(arguments_) {
   let root = ".";
@@ -2586,6 +2771,8 @@ function parseArguments(arguments_) {
     return parsePercolateCommand(arguments_.slice(1));
   if (command === "publish")
     return parsePublishCommand(arguments_.slice(1));
+  if (command === "serve")
+    return parseServeCommand(arguments_.slice(1));
   return { ok: false, message: "unknown command" };
 }
 function embeddingCount(result) {
@@ -3289,6 +3476,16 @@ async function runPublish(command, output, dependencies) {
   output.stdout(command.json ? terminalSafeJson(result.report) : sanitizeTerminalText(renderPublishReportText(result.report, command.dryRun)));
   return 0;
 }
+async function runServe(command, output, dependencies) {
+  const site = await (dependencies.serveSite ?? serveSite)({
+    root: command.root,
+    host: command.host,
+    port: command.port
+  });
+  output.stdout(command.json ? terminalSafeJson({ root: site.root, host: site.host, port: site.port, url: site.url }) : `Serving ${safe(site.root)} at ${safe(site.url)}
+`);
+  return 0;
+}
 async function runCatalog(command, output, dependencies) {
   const snapshot = await (dependencies.scanVault ?? scanVault)(command.root, command.options);
   const relativeIndex = relative(snapshot.root, snapshot.indexPath).split("\\").join("/");
@@ -3860,6 +4057,8 @@ ${sanitizeTerminalText(usage)}`);
       return await runList(command, output, dependencies);
     if (command.kind === "publish")
       return await runPublish(command, output, dependencies);
+    if (command.kind === "serve")
+      return await runServe(command, output, dependencies);
     if (command.kind === "inbox")
       return await runInbox(command, output, dependencies);
     if (command.kind === "catalog")

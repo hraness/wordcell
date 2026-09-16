@@ -80,6 +80,12 @@ Two delivery findings worth recording: the `site` job regenerates
 at fixpoint — anchor derivation now decodes entities and removes tag spans
 with a character scanner.
 
+A follow-up added `wordcell serve` (`src/serve.ts`): a loopback-default static
+preview server over the emitted directory — `GET`/`HEAD` only, realpath
+confinement including symlink resolution, `index.html` directory mapping, and
+the published `404.html` fallback. Production hosting stays with the object
+store or CDN.
+
 ## Durable memory
 
 The publication artifact is deliberately a self-contained file contract rather
