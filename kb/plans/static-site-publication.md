@@ -3,7 +3,7 @@ title: Static site publication
 description: Publish a vault or a selected subsection as a self-contained hraness.wordcell.site.v1 static artifact with read-only pages and browser-local search.
 type: plan
 area: publication
-status: in-progress
+status: completed
 tags:
   - publishing
   - static-site
@@ -62,3 +62,28 @@ Colocated named tests cover contract parsing, selection, slugging, rendering,
 indexing, and the filesystem pipeline; `src/publish.property.test.ts` covers
 slug uniqueness and determinism, path confinement, parser round trips, and
 doc-table selection fidelity. `bun run check` gates the change.
+
+## Result
+
+Shipped in [hraness/wordcell#57](https://github.com/hraness/wordcell/pull/57)
+(`3ed3834`): the `publish` command, the `hraness.wordcell.site.*` contract
+family, the restricted renderer, the index builder, the vendored reader, and
+`docs/publish.md` plus `skills/wordcell/references/publish.md`. Full
+`bun run check` passed on the merged tree (1,426 tests), and an end-to-end
+publish of this vault produced six notes, 1,259 terms, resolved wikilinks, and
+working browser-local search over a plain HTTP static server.
+
+Two delivery findings worth recording: the `site` job regenerates
+`site/app/readme.generated.ts` from `README.md`, so README edits must run
+`bun run sync:readme` inside `site/`; and CodeQL's
+`js/incomplete-multi-character-sanitization` rejects regex tag stripping even
+at fixpoint — anchor derivation now decodes entities and removes tag spans
+with a character scanner.
+
+## Durable memory
+
+The publication artifact is deliberately a self-contained file contract rather
+than an Oh store object, so a second consumer can emit or consume it without
+importing the engine. Promoting that shared seam is tracked as a future
+sponge-side adoption spike; no maintained note is warranted until a second
+concrete consumer exists.
