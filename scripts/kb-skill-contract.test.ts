@@ -276,7 +276,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
   ]);
   const usage = /export const usage = `([\s\S]*?)`;/u.exec(cli)?.[1] ?? "";
   expect(createHash("sha256").update(usage).digest("hex"))
-    .toBe("597c5aeb8c10199c22f14a181309eefd5d4a218c208de409f4b642c93d723aeb");
+    .toBe("18d1c8428c3859c8460e8a003cd65d5fe21cf883d68aab55064df29861f82603");
   const commandIdentities = usage
     .split("\n")
     .filter((line) => line.startsWith("  wordcell "))
@@ -325,6 +325,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "relation list",
     "relation remove",
     "search",
+    "serve",
     "support",
     "url-metadata backfill",
     "url-metadata tool",

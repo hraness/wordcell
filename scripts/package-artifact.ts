@@ -58,6 +58,7 @@ const requiredPaths = Object.freeze([
   "src/publish-select.ts",
   "src/publish-reader/reader.ts",
   "src/publish-reader/reader.css",
+  "src/serve.ts",
   "src/oh/authority.ts",
   "src/oh/programs.ts",
   "src/oh/schema.ts",

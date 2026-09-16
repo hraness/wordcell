@@ -101,6 +101,7 @@ import {
   renderPublishReportText,
   type PublishSelectionInput,
 } from "./publish.js";
+import { serveSite } from "./serve.js";
 import {
   MAX_AUTHORIZED_VAULTS,
   loadPortfolioRegistry,
@@ -255,6 +256,7 @@ Usage:
   wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
   wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--force] [--json]
+  wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
   wordcell agents identity <repository-scope> [--json]
@@ -469,6 +471,13 @@ type ParsedCommand =
       readonly force: boolean;
       readonly selection: PublishSelectionInput;
       readonly json: boolean;
+    }
+  | {
+      readonly kind: "serve";
+      readonly root: string;
+      readonly host: string;
+      readonly port: number;
+      readonly json: boolean;
     };
 
 type ParseResult =
@@ -503,6 +512,7 @@ type CliDependencies = GraphCliDependencies & {
   readonly auditAgentGuideRepository?: typeof auditAgentGuideRepository;
   readonly validateMarkdownAttachments?: typeof validateMarkdownAttachments;
   readonly publishVault?: typeof publishVault;
+  readonly serveSite?: typeof serveSite;
 };
 
 function safe(value: string): string {
@@ -1026,6 +1036,41 @@ function parsePublishCommand(arguments_: readonly string[]): ParseResult {
       ...(baseUrl === undefined ? {} : { baseUrl }),
     },
   };
+}
+
+function parseServeCommand(arguments_: readonly string[]): ParseResult {
+  let root: string | undefined;
+  let host = "127.0.0.1";
+  let port = 8080;
+  let json = false;
+  for (let cursor = 0; cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined) continue;
+    if (argument === "--json") { json = true; continue; }
+    if (argument === "--root" || argument === "--host" || argument === "--port") {
+      const value = readValue(arguments_, cursor);
+      if (value === null) return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root") root = value;
+      else if (argument === "--host") host = value;
+      else {
+        const parsed = Number(value);
+        if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 65_535) {
+          return { ok: false, message: "--port must be an integer from 0 through 65535" };
+        }
+        port = parsed;
+      }
+      cursor += 1;
+      continue;
+    }
+    return {
+      ok: false,
+      message: argument.startsWith("--")
+        ? "unknown serve option"
+        : "serve does not accept positional arguments",
+    };
+  }
+  if (root === undefined) return { ok: false, message: "serve requires --root <directory>" };
+  return { ok: true, value: { kind: "serve", root, host, port, json } };
 }
 
 function parseInboxCommand(arguments_: readonly string[]): ParseResult {
@@ -2101,6 +2146,7 @@ export function parseArguments(arguments_: readonly string[]): ParseResult {
   if (command === "relation") return parseRelationCommand(arguments_.slice(1));
   if (command === "percolate") return parsePercolateCommand(arguments_.slice(1));
   if (command === "publish") return parsePublishCommand(arguments_.slice(1));
+  if (command === "serve") return parseServeCommand(arguments_.slice(1));
   return { ok: false, message: "unknown command" };
 }
 
@@ -3023,6 +3069,22 @@ async function runPublish(
   return 0;
 }
 
+async function runServe(
+  command: Extract<ParsedCommand, { readonly kind: "serve" }>,
+  output: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  const site = await (dependencies.serveSite ?? serveSite)({
+    root: command.root,
+    host: command.host,
+    port: command.port,
+  });
+  output.stdout(command.json
+    ? terminalSafeJson({ root: site.root, host: site.host, port: site.port, url: site.url })
+    : `Serving ${safe(site.root)} at ${safe(site.url)}\n`);
+  return 0;
+}
+
 async function runCatalog(
   command: Extract<ParsedCommand, { readonly kind: "catalog" }>,
   output: Output,
@@ -3770,6 +3832,7 @@ export async function main(
     if (command.kind === "percolate") return await runPercolate(command, output, dependencies);
     if (command.kind === "list") return await runList(command, output, dependencies);
     if (command.kind === "publish") return await runPublish(command, output, dependencies);
+    if (command.kind === "serve") return await runServe(command, output, dependencies);
     if (command.kind === "inbox") return await runInbox(command, output, dependencies);
     if (command.kind === "catalog") return await runCatalog(command, output, dependencies);
     return await runVault(command, output, dependencies);

@@ -118,7 +118,17 @@ rclone sync site/ remote:handbook
 ```
 
 Serve under a subpath by passing `--base-path` at publish time. For a local
-preview, any static file server works:
+preview, `wordcell serve` binds a static file server to the output directory:
+
+```sh
+wordcell serve --root site --port 8080
+```
+
+The server defaults to the loopback interface (`--host` overrides), maps
+directories to `index.html`, returns the published `404.html` for missing
+paths, confines requests and symlinks to the root, and answers `GET` and
+`HEAD` only. It is a preview tool — production hosting stays with the object
+store or CDN — and any other static file server works too:
 
 ```sh
 python3 -m http.server --directory site 8080
