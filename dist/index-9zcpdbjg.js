@@ -18,7 +18,7 @@ import {
   inspectClipEnvironment,
   renderAdapterCapabilities,
   renderDoctorReport
-} from "./index-by0pbant.js";
+} from "./index-van48n3g.js";
 import {
   acquireBrowser,
   acquireCookieHttp,
@@ -26,7 +26,7 @@ import {
   acquireFile,
   acquireHttp,
   assertSafePersistentProfile
-} from "./index-x6m57nfc.js";
+} from "./index-jzcws0zn.js";
 import {
   CONTENT_REWRITE_TRUNCATION_WARNING,
   buildClipMarkdown,
@@ -218,6 +218,7 @@ var runMediaCommand = async (specification) => {
     throw new Error("media command is empty");
   const useProcessGroup = process.platform !== "win32";
   const child = spawn(executable, specification.command.slice(1), {
+    env: process.env,
     ...specification.cwd === undefined ? {} : { cwd: specification.cwd },
     detached: useProcessGroup,
     stdio: ["pipe", "pipe", "pipe"],

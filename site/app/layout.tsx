@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { HranessSiteFooter } from "@hraness/site-footer/react";
+import { supportProfile } from "../../src/support-profile";
 import "./globals.css";
 
 const title = "Wordcell: a knowledge base for coding agents";
@@ -40,7 +42,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-hraness-theme="paper" data-hraness-material="lantern">
-      <body>{children}</body>
+      <body>
+        {children}
+        <div className="network-footer">
+          <HranessSiteFooter placement="flow" mailingList={{ kind: "none" }} support={supportProfile} />
+        </div>
+      </body>
     </html>
   );
 }

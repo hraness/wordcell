@@ -146,6 +146,8 @@ async function runCommand(
   stdin?: string,
 ): Promise<CommandResult> {
   const child = Bun.spawn([...command], {
+    // Bun otherwise inherits its launch-time environment instead of current CLI preferences.
+    env: process.env,
     stdin: stdin === undefined ? "ignore" : new Blob([stdin]),
     stdout: "pipe",
     stderr: "pipe",
