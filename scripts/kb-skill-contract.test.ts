@@ -318,6 +318,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "relation list",
     "relation remove",
     "search",
+    "support",
     "url-metadata backfill",
     "url-metadata tool",
   ]);
