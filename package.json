@@ -376,6 +376,8 @@
     "src/navigation.ts",
     "src/note-lock.ts",
     "src/oh-adoption.ts",
+    "src/oh/canonical-rust.ts",
+    "src/oh/projection-rust.ts",
     "src/percolate.ts",
     "src/portfolio.ts",
     "src/publish.ts",
