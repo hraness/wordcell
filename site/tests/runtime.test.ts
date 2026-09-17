@@ -96,22 +96,35 @@ describe("built Wordcell site", () => {
   test("serves the homepage, docs, and static discovery files through Next", async () => {
     const server = await startBuiltSite();
     try {
-      const [homeResponse, docsResponse, robotsResponse, missingResponse] = await Promise.all([
+      const [homeResponse, docsResponse, robotsResponse, llmsResponse, missingResponse] = await Promise.all([
         fetch(`${server.origin}/`, { redirect: "manual" }),
         fetch(`${server.origin}/docs`, { redirect: "manual" }),
         fetch(`${server.origin}/robots.txt`, { redirect: "manual" }),
+        fetch(`${server.origin}/llms.txt`, { redirect: "manual" }),
         fetch(`${server.origin}/missing`, { redirect: "manual" }),
       ]);
-      const [home, docs, robots] = await Promise.all([homeResponse.text(), docsResponse.text(), robotsResponse.text()]);
+      const [home, docs, robots, llms] = await Promise.all([
+        homeResponse.text(), docsResponse.text(), robotsResponse.text(), llmsResponse.text(),
+      ]);
       expect(homeResponse.status).toBe(200);
       expect(home).toContain(publishedRelease === null ? "First Wordcell release in preparation" : `Current verified release · v${publishedRelease.version}`);
       expect(home).toContain('<link rel="canonical" href="https://wordcell.io"');
       expect(home).toContain('aria-label="Ask AI about this"');
+      for (const page of [home, docs]) {
+        expect(page).toContain('<meta property="og:image"');
+        expect(page).toContain('<meta property="og:site_name" content="Wordcell"');
+        expect(page).toContain('<meta name="twitter:card" content="summary_large_image"');
+        expect(page).toContain('<meta name="twitter:image"');
+      }
       expect(docsResponse.status).toBe(200);
       expect(docs).toContain('<link rel="canonical" href="https://wordcell.io/docs"');
+      expect(docs).toContain('<meta name="twitter:title" content="Wordcell documentation"');
       expect(docs).toContain('id="install"');
       expect(robotsResponse.status).toBe(200);
       expect(robots).toContain("Sitemap: https://wordcell.io/sitemap.xml");
+      expect(llmsResponse.status).toBe(200);
+      expect(llms).toContain("# wordcell");
+      expect(llms).toContain("https://wordcell.io/docs");
       expect(missingResponse.status).toBe(404);
     } finally {
       await stopBuiltSite(server);

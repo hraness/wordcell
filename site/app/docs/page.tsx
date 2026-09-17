@@ -5,15 +5,24 @@ import { publishedRelease } from "../publication";
 import { WordcellContentFooter } from "../site-footer";
 import { readmeHtml, readmeTitle } from "../readme.generated";
 
+const docsTitle = `${readmeTitle} documentation`;
+const docsDescription = "The complete Wordcell README: installation, vault format, command surface, capture, graph, skills, and release notes.";
+
 export const metadata: Metadata = {
-  title: `${readmeTitle} documentation`,
-  description: "The complete Wordcell README: installation, vault format, command surface, capture, graph, skills, and release notes.",
+  title: docsTitle,
+  description: docsDescription,
   alternates: { canonical: "/docs" },
   openGraph: {
-    title: `${readmeTitle} documentation`,
-    description: "The complete Wordcell README.",
+    title: docsTitle,
+    description: docsDescription,
+    siteName: "Wordcell",
     type: "article",
     url: "/docs",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: docsTitle,
+    description: docsDescription,
   },
 };
 
