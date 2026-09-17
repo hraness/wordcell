@@ -1,40 +1,35 @@
-import { ImageResponse } from "next/og";
+import {
+  createSocialImageResponse,
+  socialImageContentType as contentType,
+  socialImageSize as size,
+} from "@hraness/web-discovery/social-image";
 
 export const alt = "Wordcell: a knowledge base for coding agents";
-export const size = { height: 630, width: 1200 };
-export const contentType = "image/png";
+export { contentType, size };
+
+function WordcellMark() {
+  return (
+    <svg aria-label="Wordcell mark" height="42" role="img" viewBox="0 0 42 42" width="42">
+      <rect fill="none" height="14" stroke="currentColor" strokeWidth="3" width="14" x="5" y="5" />
+      <rect fill="currentColor" height="14" width="14" x="23" y="5" />
+      <rect fill="currentColor" height="14" width="14" x="5" y="23" />
+      <rect fill="none" height="14" stroke="currentColor" strokeWidth="3" width="14" x="23" y="23" />
+    </svg>
+  );
+}
 
 export default function OpengraphImage() {
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          background: "#f8f7f4",
-          color: "#1c1a18",
-          display: "flex",
-          flexDirection: "column",
-          fontFamily: "serif",
-          height: "100%",
-          justifyContent: "space-between",
-          padding: "72px 80px",
-          width: "100%",
-        }}
-      >
-        <div style={{ color: "#8a857e", fontSize: 28, letterSpacing: 2, textTransform: "uppercase" }}>
-          Wordcell
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 1.1 }}>
-            A knowledge base for coding agents
-          </div>
-          <div style={{ color: "#4a463f", fontSize: 32, lineHeight: 1.35 }}>
-            Markdown, backlinks, semantic search, and Git context — inspectable
-            memory your agents can recover across sessions.
-          </div>
-        </div>
-        <div style={{ color: "#8a857e", fontSize: 26 }}>wordcell.io</div>
-      </div>
-    ),
-    size,
-  );
+  return createSocialImageResponse({
+    description: "Markdown, backlinks, semantic search, and Git context: inspectable memory your agents can recover across sessions.",
+    domain: "wordcell.io",
+    eyebrow: "Wordcell",
+    mark: <WordcellMark />,
+    theme: {
+      accent: "#356A54",
+      background: "#F8F7F4",
+      foreground: "#1C1A18",
+      muted: "#6A655E",
+    },
+    title: "A knowledge base for coding agents",
+  });
 }
