@@ -14,6 +14,13 @@
   "dependencies": [
     {
       "from": "@hraness/wordcell",
+      "scope": "development",
+      "specifier": "github:hraness/build-governance#v0.1.0",
+      "to": "@hraness/build-governance",
+      "sourceRepository": "hraness/build-governance"
+    },
+    {
+      "from": "@hraness/wordcell",
       "scope": "runtime",
       "specifier": "https://github.com/hraness/oh/releases/download/v0.4.3/hraness-oh-0.4.3.tgz",
       "to": "@hraness/oh",
