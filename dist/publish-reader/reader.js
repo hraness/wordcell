@@ -1,9 +1,11 @@
 // src/publish-model.ts
 var WORDCELL_SITE_FORMAT_V1 = "hraness.wordcell.site.v1";
+var WORDCELL_SITE_CATALOG_FORMAT_V1 = "hraness.wordcell.site-catalog.v1";
 var WORDCELL_SITE_DOCS_FORMAT_V1 = "hraness.wordcell.site-docs.v1";
 var WORDCELL_SITE_TERMS_FORMAT_V1 = "hraness.wordcell.site-terms.v1";
 var WORDCELL_SITE_POSTINGS_FORMAT_V1 = "hraness.wordcell.site-postings.v1";
 var WORDCELL_SITE_NOTE_FORMAT_V1 = "hraness.wordcell.site-note.v1";
+var WORDCELL_SITE_GRAPH_FORMAT_V1 = "hraness.wordcell.site-graph.v1";
 var WORDCELL_SITE_LIMITS_V1 = Object.freeze({
   notes: 1e4,
   assets: 1e4,
@@ -150,6 +152,30 @@ function parseSiteManifestV1(value) {
     truncated: Object.freeze({ ...truncated })
   };
 }
+function parseSiteCatalogV1(value) {
+  if (!isRecord(value))
+    throw new TypeError("catalog must be an object");
+  exactKeys(value, ["format", "entries"], [], "catalog");
+  if (value.format !== WORDCELL_SITE_CATALOG_FORMAT_V1) {
+    throw new TypeError(`catalog format must be ${WORDCELL_SITE_CATALOG_FORMAT_V1}`);
+  }
+  if (!Array.isArray(value.entries) || value.entries.length > WORDCELL_SITE_LIMITS_V1.notes) {
+    throw new TypeError("catalog.entries must be a bounded array");
+  }
+  const entries = value.entries.map((entry, index) => {
+    if (!isRecord(entry))
+      throw new TypeError(`catalog entry ${index} must be an object`);
+    exactKeys(entry, ["i", "s", "t"], ["type", "g"], `catalog entry ${index}`);
+    return {
+      i: boundedCount(entry.i, WORDCELL_SITE_LIMITS_V1.notes, `catalog entry ${index}.i`),
+      s: boundedText(entry.s, 1024, `catalog entry ${index}.s`),
+      t: boundedText(entry.t, WORDCELL_SITE_LIMITS_V1.titleBytes, `catalog entry ${index}.t`),
+      ...entry.type === undefined ? {} : { type: boundedText(entry.type, 256, `catalog entry ${index}.type`) },
+      ...entry.g === undefined ? {} : { g: stringArray(entry.g, 128, `catalog entry ${index}.g`) }
+    };
+  });
+  return { format: WORDCELL_SITE_CATALOG_FORMAT_V1, entries };
+}
 function docFields(value, field) {
   if (!isRecord(value))
     throw new TypeError(`${field} must be an object`);
@@ -284,6 +310,166 @@ function noteRelations(value, field) {
     };
   });
 }
+function parseSiteGraphV1(value) {
+  if (!isRecord(value))
+    throw new TypeError("graph must be an object");
+  exactKeys(value, ["format", "edges"], [], "graph");
+  if (value.format !== WORDCELL_SITE_GRAPH_FORMAT_V1) {
+    throw new TypeError(`graph format must be ${WORDCELL_SITE_GRAPH_FORMAT_V1}`);
+  }
+  if (!Array.isArray(value.edges) || value.edges.length > 1e6) {
+    throw new TypeError("graph.edges must be a bounded array");
+  }
+  const edges = value.edges.map((entry, index) => {
+    if (!isRecord(entry))
+      throw new TypeError(`graph edge ${index} must be an object`);
+    exactKeys(entry, ["s", "t", "k"], ["p"], `graph edge ${index}`);
+    if (entry.k !== "link" && entry.k !== "relation") {
+      throw new TypeError(`graph edge ${index}.k must be link or relation`);
+    }
+    return {
+      s: boundedCount(entry.s, WORDCELL_SITE_LIMITS_V1.notes, `graph edge ${index}.s`),
+      t: boundedCount(entry.t, WORDCELL_SITE_LIMITS_V1.notes, `graph edge ${index}.t`),
+      k: entry.k,
+      ...entry.p === undefined ? {} : { p: boundedText(entry.p, 256, `graph edge ${index}.p`) }
+    };
+  });
+  return { format: WORDCELL_SITE_GRAPH_FORMAT_V1, edges };
+}
+
+// src/publish-graph.ts
+var WORDCELL_SITE_GRAPH_VIEW_LIMIT = 1000;
+function mulberry32(seed) {
+  let state = seed | 0;
+  return () => {
+    state = state + 1831565813 | 0;
+    let value = Math.imul(state ^ state >>> 15, 1 | state);
+    value = value + Math.imul(value ^ value >>> 7, 61 | value) ^ value;
+    return ((value ^ value >>> 14) >>> 0) / 4294967296;
+  };
+}
+function siteGraphSeed(slugs, edges) {
+  let hash = 2166136261;
+  const mix = (text) => {
+    for (let index = 0;index < text.length; index += 1) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+  };
+  for (const slug of slugs) {
+    mix(slug);
+    mix(`
+`);
+  }
+  mix("\x00");
+  for (const edge of edges) {
+    mix(`${String(edge.s)}-${String(edge.t)},`);
+  }
+  return hash >>> 0;
+}
+function layoutSiteGraph(nodeCount, edges, options) {
+  if (nodeCount <= 0)
+    return [];
+  const width = options.width ?? 1000;
+  const height = options.height ?? 700;
+  const iterations = options.iterations ?? Math.max(80, Math.min(260, 24000 / nodeCount));
+  const random = mulberry32(options.seed);
+  const x = new Float64Array(nodeCount);
+  const y = new Float64Array(nodeCount);
+  const dx = new Float64Array(nodeCount);
+  const dy = new Float64Array(nodeCount);
+  for (let index = 0;index < nodeCount; index += 1) {
+    x[index] = (random() - 0.5) * width;
+    y[index] = (random() - 0.5) * height;
+  }
+  if (nodeCount === 1) {
+    x[0] = 0;
+    y[0] = 0;
+    return [{ x: 0, y: 0 }];
+  }
+  const pairs = new Set;
+  const deduped = [];
+  for (const edge of edges) {
+    const s = Math.min(edge.s, edge.t);
+    const t = Math.max(edge.s, edge.t);
+    if (s === t || s < 0 || t >= nodeCount)
+      continue;
+    const key = s * nodeCount + t;
+    if (pairs.has(key))
+      continue;
+    pairs.add(key);
+    deduped.push({ s, t });
+  }
+  const area = width * height;
+  const k = Math.sqrt(area / nodeCount);
+  const centerX = 0;
+  const centerY = 0;
+  const epsilon = 0.01;
+  const gravity = 0.05;
+  let temperature = k * 2;
+  for (let iteration = 0;iteration < iterations; iteration += 1) {
+    dx.fill(0);
+    dy.fill(0);
+    for (let i = 0;i < nodeCount; i += 1) {
+      for (let j = i + 1;j < nodeCount; j += 1) {
+        const deltaX = (x[i] ?? 0) - (x[j] ?? 0);
+        const deltaY = (y[i] ?? 0) - (y[j] ?? 0);
+        const distance = Math.max(Math.sqrt(deltaX * deltaX + deltaY * deltaY), epsilon);
+        const force = k * k / distance;
+        const ux = deltaX / distance * force;
+        const uy = deltaY / distance * force;
+        dx[i] = (dx[i] ?? 0) + ux;
+        dy[i] = (dy[i] ?? 0) + uy;
+        dx[j] = (dx[j] ?? 0) - ux;
+        dy[j] = (dy[j] ?? 0) - uy;
+      }
+    }
+    for (const edge of deduped) {
+      const deltaX = (x[edge.s] ?? 0) - (x[edge.t] ?? 0);
+      const deltaY = (y[edge.s] ?? 0) - (y[edge.t] ?? 0);
+      const distance = Math.max(Math.sqrt(deltaX * deltaX + deltaY * deltaY), epsilon);
+      const force = distance * distance / k;
+      const ux = deltaX / distance * force;
+      const uy = deltaY / distance * force;
+      dx[edge.s] = (dx[edge.s] ?? 0) - ux;
+      dy[edge.s] = (dy[edge.s] ?? 0) - uy;
+      dx[edge.t] = (dx[edge.t] ?? 0) + ux;
+      dy[edge.t] = (dy[edge.t] ?? 0) + uy;
+    }
+    for (let i = 0;i < nodeCount; i += 1) {
+      dx[i] = (dx[i] ?? 0) + (centerX - (x[i] ?? 0)) * gravity;
+      dy[i] = (dy[i] ?? 0) + (centerY - (y[i] ?? 0)) * gravity;
+    }
+    for (let i = 0;i < nodeCount; i += 1) {
+      const moveX = dx[i] ?? 0;
+      const moveY = dy[i] ?? 0;
+      const length = Math.sqrt(moveX * moveX + moveY * moveY);
+      if (length === 0)
+        continue;
+      const bounded = Math.min(length, temperature);
+      x[i] = (x[i] ?? 0) + moveX / length * bounded;
+      y[i] = (y[i] ?? 0) + moveY / length * bounded;
+    }
+    temperature *= 1 - (iteration + 1) / iterations;
+  }
+  const points = [];
+  for (let index = 0;index < nodeCount; index += 1) {
+    points.push({ x: x[index] ?? 0, y: y[index] ?? 0 });
+  }
+  return points;
+}
+function siteGraphDegrees(nodeCount, edges) {
+  const degree = new Array(Math.max(0, nodeCount)).fill(0);
+  for (const edge of edges) {
+    if (edge.s === edge.t || edge.s < 0 || edge.t < 0)
+      continue;
+    if (edge.s >= nodeCount || edge.t >= nodeCount)
+      continue;
+    degree[edge.s] = (degree[edge.s] ?? 0) + 1;
+    degree[edge.t] = (degree[edge.t] ?? 0) + 1;
+  }
+  return degree;
+}
 
 // src/publish-search.ts
 var PUBLISH_FIELD_TITLE = 1;
@@ -322,6 +508,116 @@ function publishUtf8Bytes(value) {
 }
 function publishNormalize(value) {
   return value.normalize("NFC").toLocaleLowerCase("en-US");
+}
+var MAX_PUBLISH_QUERY_FILTERS = 8;
+var FILTER_PATTERN = /^(tag|type|path):(\S+)$/u;
+function trimSlashes(value) {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value.charCodeAt(start) === 47)
+    start += 1;
+  while (end > start && value.charCodeAt(end - 1) === 47)
+    end -= 1;
+  return value.slice(start, end);
+}
+function publishQueryParts(raw) {
+  const tags = [];
+  const types = [];
+  const paths = [];
+  const rest = [];
+  for (const token of raw.split(/\s+/u)) {
+    if (token === "")
+      continue;
+    const match = FILTER_PATTERN.exec(token);
+    const value = match === null ? "" : publishNormalize(trimSlashes(match[2] ?? ""));
+    if (match === null || value === "") {
+      rest.push(token);
+      continue;
+    }
+    const bucket = match[1] === "tag" ? tags : match[1] === "type" ? types : paths;
+    if (bucket.length < MAX_PUBLISH_QUERY_FILTERS)
+      bucket.push(value);
+    else
+      rest.push(token);
+  }
+  return { filters: { tags, types, paths }, text: rest.join(" ") };
+}
+function publishDocMatchesFilters(doc, filters, type) {
+  if (filters.tags.length > 0) {
+    const tags = doc.f.g === "" ? [] : doc.f.g.split(`
+`);
+    for (const tag of filters.tags) {
+      if (!tags.includes(publishNormalize(tag)))
+        return false;
+    }
+  }
+  if (filters.types.length > 0) {
+    const docType = publishNormalize(type === undefined || type === "" ? "note" : type);
+    for (const wanted of filters.types) {
+      if (docType !== publishNormalize(wanted))
+        return false;
+    }
+  }
+  if (filters.paths.length > 0) {
+    const slug = publishNormalize(doc.s);
+    const fields = doc.f.p === "" ? [] : doc.f.p.split(`
+`);
+    for (const value of filters.paths) {
+      const prefix = publishNormalize(trimSlashes(value));
+      const boundary = `${prefix}/`;
+      const inSlug = slug === prefix || slug.startsWith(boundary);
+      const inFields = fields.some((line) => line === prefix || line.startsWith(boundary));
+      if (!inSlug && !inFields)
+        return false;
+    }
+  }
+  return true;
+}
+var MAX_PUBLISH_MARK_RANGES = 32;
+function publishMarkRanges(text, terms, maximum = MAX_PUBLISH_MARK_RANGES) {
+  const display = text.normalize("NFC");
+  let normalized = "";
+  const map = [];
+  for (let offset = 0;offset < display.length; ) {
+    const point = display.codePointAt(offset) ?? 0;
+    const character = String.fromCodePoint(point);
+    const lowered = character.toLocaleLowerCase("en-US");
+    for (let index = 0;index < lowered.length; index += 1)
+      map.push(offset);
+    normalized += lowered;
+    offset += character.length;
+  }
+  const ranges = [];
+  for (const term of terms) {
+    const needle = publishNormalize(term);
+    if (needle === "")
+      continue;
+    let from = 0;
+    while (ranges.length < maximum) {
+      const hit = normalized.indexOf(needle, from);
+      if (hit === -1)
+        break;
+      const start = map[hit] ?? 0;
+      const tail = hit + needle.length;
+      const end = tail >= map.length ? display.length : map[tail] ?? display.length;
+      if (end > start)
+        ranges.push({ start, end });
+      from = tail === 0 ? 1 : tail;
+    }
+    if (ranges.length >= maximum)
+      break;
+  }
+  ranges.sort((left, right) => left.start - right.start || left.end - right.end);
+  const merged = [];
+  for (const range of ranges) {
+    const last = merged[merged.length - 1];
+    if (last !== undefined && range.start <= last.end) {
+      merged[merged.length - 1] = { start: last.start, end: Math.max(last.end, range.end) };
+    } else {
+      merged.push(range);
+    }
+  }
+  return merged;
 }
 function publishQuery(value) {
   if (typeof value !== "string") {
@@ -503,7 +799,8 @@ async function loadIndex(base) {
     docs: docs.docs,
     terms: terms.terms,
     postings: new Map,
-    notes: new Map
+    notes: new Map,
+    catalog: undefined
   };
 }
 async function loadShard(index, base, shard) {
@@ -514,6 +811,15 @@ async function loadShard(index, base, shard) {
   const postings = raw === undefined ? new Map : new Map(Object.entries(parseSitePostingsV1(raw).postings));
   index.postings.set(shard, postings);
   return postings;
+}
+async function loadCatalog(index, base) {
+  if (index.catalog !== undefined)
+    return index.catalog;
+  const raw = await fetchJson(base, index.manifest.paths.catalog);
+  if (raw === undefined)
+    return;
+  index.catalog = parseSiteCatalogV1(raw);
+  return index.catalog;
 }
 async function hydrate(index, base, slug) {
   const cached = index.notes.get(slug);
@@ -527,12 +833,28 @@ async function hydrate(index, base, slug) {
   index.notes.set(slug, note);
   return note;
 }
+var FILTER_ONLY_SCORE = Object.freeze({
+  score: 0,
+  identity: false,
+  phraseMatched: false,
+  matchedTerms: 0
+});
+function hasFilters(filters) {
+  return filters.tags.length + filters.types.length + filters.paths.length > 0;
+}
 async function search(index, base, raw) {
-  const query = publishQuery(raw);
-  if (query.terms.length === 0 && query.normalized === "")
+  const { filters, text } = publishQueryParts(raw);
+  const filtered = hasFilters(filters);
+  const query = publishQuery(text);
+  if (!filtered && query.terms.length === 0 && query.normalized === "")
     return [];
+  let typeByIndex;
+  if (filters.types.length > 0) {
+    const catalog = await loadCatalog(index, base);
+    typeByIndex = new Map((catalog?.entries ?? []).map((entry) => [entry.i, entry.type ?? "note"]));
+  }
   const postingsHits = new Map;
-  if (index.manifest.search.content === "shards") {
+  if (index.manifest.search.content === "shards" && query.terms.length > 0) {
     const expandedByTerm = new Map;
     const shards = new Set;
     for (const term of query.terms) {
@@ -556,6 +878,12 @@ async function search(index, base, raw) {
   }
   const hits = [];
   for (const doc of index.docs) {
+    if (!publishDocMatchesFilters(doc, filters, typeByIndex?.get(doc.i)))
+      continue;
+    if (query.terms.length === 0 && query.normalized === "") {
+      hits.push({ doc, score: FILTER_ONLY_SCORE });
+      continue;
+    }
     const inline = index.manifest.search.content === "inline" ? doc.x : undefined;
     const contentTerms = inline !== undefined ? new Set(query.terms.filter((term) => inline.includes(term))) : postingsHits.get(doc.i) ?? new Set;
     const scored = scorePublishDocument({ doc, contentTerms, ...inline === undefined ? {} : { contentText: inline } }, query);
@@ -574,6 +902,27 @@ function snippetFor(index, doc, query) {
   const text = hydrated?.text ?? doc.x;
   return text === undefined ? doc.p : publishSnippet(text, query, doc.p);
 }
+function appendMarked(parent, text, terms) {
+  const display = text.normalize("NFC");
+  const ranges = publishMarkRanges(display, terms);
+  if (ranges.length === 0) {
+    parent.appendChild(dom.document.createTextNode(display));
+    return;
+  }
+  let cursor = 0;
+  for (const range of ranges) {
+    if (range.start > cursor) {
+      parent.appendChild(dom.document.createTextNode(display.slice(cursor, range.start)));
+    }
+    const mark = dom.document.createElement("mark");
+    mark.textContent = display.slice(range.start, range.end);
+    parent.appendChild(mark);
+    cursor = range.end;
+  }
+  if (cursor < display.length) {
+    parent.appendChild(dom.document.createTextNode(display.slice(cursor)));
+  }
+}
 function buildOverlay(base) {
   const overlay = dom.document.createElement("div");
   overlay.className = "wordcell-search-overlay";
@@ -584,7 +933,7 @@ function buildOverlay(base) {
   panel.className = "wordcell-search-panel";
   const input = dom.document.createElement("input");
   input.type = "search";
-  input.placeholder = "Search this site…";
+  input.placeholder = "Search this site… (tag:, type:, path:)";
   input.setAttribute("aria-label", "Search this site");
   input.setAttribute("autocomplete", "off");
   input.setAttribute("spellcheck", "false");
@@ -606,10 +955,11 @@ function buildOverlay(base) {
     list.innerHTML = "";
     let query;
     try {
-      query = publishQuery(input.value);
+      query = publishQuery(publishQueryParts(input.value).text);
     } catch {
       query = undefined;
     }
+    const terms = query?.terms ?? [];
     for (const [position, hit] of hits.entries()) {
       const item = dom.document.createElement("li");
       const link = dom.document.createElement("a");
@@ -617,16 +967,17 @@ function buildOverlay(base) {
       link.className = position === active ? "active" : "";
       const title = dom.document.createElement("span");
       title.className = "title";
-      title.textContent = hit.doc.t;
+      appendMarked(title, hit.doc.t, terms);
       const snippet = dom.document.createElement("span");
       snippet.className = "snippet";
-      snippet.textContent = index === undefined || query === undefined ? hit.doc.p : snippetFor(index, hit.doc, query);
+      const snippetText = index === undefined || query === undefined || query.terms.length === 0 ? hit.doc.p : snippetFor(index, hit.doc, query);
+      appendMarked(snippet, snippetText, terms);
       link.appendChild(title);
       link.appendChild(snippet);
       item.appendChild(link);
       list.appendChild(item);
     }
-    status.textContent = hits.length === 0 ? input.value.trim() === "" ? "Type to search." : "No results." : `${hits.length} result${hits.length === 1 ? "" : "s"}`;
+    status.textContent = hits.length === 0 ? input.value.trim() === "" ? "Type to search. Filter with tag:, type:, path:." : "No results." : `${hits.length} result${hits.length === 1 ? "" : "s"}`;
   };
   const run = () => {
     (async () => {
@@ -696,6 +1047,332 @@ function buildOverlay(base) {
     }
   };
 }
+var GRAPH_MIN_SCALE = 0.05;
+var GRAPH_MAX_SCALE = 8;
+function cssVar(shell, name, fallback) {
+  const value = dom.getComputedStyle?.(shell).getPropertyValue(name).trim();
+  return value === undefined || value === "" ? fallback : value;
+}
+function graphTheme(shell) {
+  return {
+    bg: cssVar(shell, "--wordcell-bg", "#ffffff"),
+    fg: cssVar(shell, "--wordcell-fg", "#1a1a1a"),
+    muted: cssVar(shell, "--wordcell-muted", "#5f6368"),
+    border: cssVar(shell, "--wordcell-border", "#e1e4e8"),
+    accent: cssVar(shell, "--wordcell-accent", "#0b5bd3")
+  };
+}
+function fitView(points, width, height) {
+  let minX = 0;
+  let minY = 0;
+  let maxX = 0;
+  let maxY = 0;
+  for (const point of points) {
+    minX = Math.min(minX, point.x);
+    maxX = Math.max(maxX, point.x);
+    minY = Math.min(minY, point.y);
+    maxY = Math.max(maxY, point.y);
+  }
+  const spanX = Math.max(maxX - minX, 40);
+  const spanY = Math.max(maxY - minY, 40);
+  const margin = 48;
+  const scale = Math.min(GRAPH_MAX_SCALE, Math.max(GRAPH_MIN_SCALE, Math.min((width - margin * 2) / spanX, (height - margin * 2) / spanY)));
+  return {
+    scale,
+    tx: width / 2 - (minX + maxX) / 2 * scale,
+    ty: height / 2 - (minY + maxY) / 2 * scale,
+    hover: -1,
+    focus: -1
+  };
+}
+function drawGraph(context, ratio, theme, view, points, titles, degrees, edges, neighborFocus) {
+  const { scale, tx, ty } = view;
+  context.setTransform(scale * ratio, 0, 0, scale * ratio, tx * ratio, ty * ratio);
+  const inv = 1 / scale;
+  for (const edge of edges) {
+    const a = points[edge.s];
+    const b = points[edge.t];
+    if (a === undefined || b === undefined)
+      continue;
+    const focused = view.focus >= 0 && (edge.s === view.focus || edge.t === view.focus);
+    const hovered = view.hover >= 0 && (edge.s === view.hover || edge.t === view.hover);
+    context.beginPath();
+    context.moveTo(a.x, a.y);
+    context.lineTo(b.x, b.y);
+    context.lineWidth = (focused || hovered ? 1.8 : 1) * inv;
+    context.strokeStyle = focused || hovered ? theme.accent : theme.border;
+    context.globalAlpha = focused || hovered ? 1 : 0.7;
+    context.setLineDash(edge.kind === "relation" ? [4 * inv, 3 * inv] : []);
+    context.stroke();
+  }
+  context.setLineDash([]);
+  context.globalAlpha = 1;
+  const labelEverywhere = points.length <= 48;
+  for (const [index, point] of points.entries()) {
+    const degree = degrees[index] ?? 0;
+    const radius = Math.min(9, 3 + degree * 0.8);
+    const active = index === view.hover || index === view.focus || neighborFocus.has(index);
+    context.beginPath();
+    context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+    context.fillStyle = active ? theme.accent : theme.muted;
+    context.fill();
+    context.lineWidth = 1.2 * inv;
+    context.strokeStyle = theme.bg;
+    context.stroke();
+  }
+  context.font = `${11 / scale}px ui-sans-serif, system-ui, sans-serif`;
+  context.textAlign = "center";
+  context.textBaseline = "top";
+  for (const [index, point] of points.entries()) {
+    const degree = degrees[index] ?? 0;
+    const active = index === view.hover || index === view.focus || neighborFocus.has(index);
+    if (!labelEverywhere && !active && degree < 3)
+      continue;
+    context.fillStyle = active ? theme.fg : theme.muted;
+    context.fillText(titles[index] ?? "", point.x, point.y + Math.min(9, 3 + degree * 0.8) + 4 * inv);
+  }
+}
+function initGraph(base) {
+  const shell = dom.document.querySelector("[data-wordcell-graph]");
+  if (shell === null)
+    return;
+  const canvas = shell.querySelector("[data-wordcell-graph-canvas]");
+  const status = shell.querySelector("[data-wordcell-graph-status]");
+  const reset = shell.querySelector("[data-wordcell-graph-reset]");
+  if (canvas === null)
+    return;
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    if (status !== null)
+      status.textContent = "Canvas is unavailable; every note is listed below.";
+    return;
+  }
+  (async () => {
+    const manifestRaw = await fetchJson(base, "manifest.json");
+    if (manifestRaw === undefined)
+      throw new Error("manifest fetch failed");
+    const manifest = parseSiteManifestV1(manifestRaw);
+    const [catalogRaw, graphRaw] = await Promise.all([
+      fetchJson(base, manifest.paths.catalog),
+      fetchJson(base, manifest.paths.graph)
+    ]);
+    if (catalogRaw === undefined || graphRaw === undefined)
+      throw new Error("graph data fetch failed");
+    const catalog = parseSiteCatalogV1(catalogRaw);
+    const graph = parseSiteGraphV1(graphRaw);
+    const nodes = catalog.entries;
+    if (nodes.length > WORDCELL_SITE_GRAPH_VIEW_LIMIT) {
+      if (status !== null) {
+        status.textContent = `This site has ${nodes.length} notes — over the ${WORDCELL_SITE_GRAPH_VIEW_LIMIT}-node interactive limit. Every note is listed below.`;
+      }
+      return;
+    }
+    const edges = [];
+    const drawn = [];
+    for (const edge of graph.edges) {
+      if (edge.s === edge.t || edge.s < 0 || edge.t < 0)
+        continue;
+      if (edge.s >= nodes.length || edge.t >= nodes.length)
+        continue;
+      edges.push({ s: edge.s, t: edge.t });
+      drawn.push({ s: edge.s, t: edge.t, kind: edge.k });
+    }
+    const slugs = nodes.map((entry) => entry.s);
+    const titles = nodes.map((entry) => entry.t);
+    const seed = siteGraphSeed(slugs, edges);
+    const points = layoutSiteGraph(nodes.length, edges, { seed });
+    const degrees = siteGraphDegrees(nodes.length, edges);
+    const hrefFor = (index) => resultHref(base, slugs[index] ?? "");
+    const rect = canvas.getBoundingClientRect();
+    const ratio = dom.devicePixelRatio ?? 1;
+    const cssWidth = Math.max(320, rect.width || 960);
+    const cssHeight = Math.max(280, rect.height || 560);
+    canvas.width = Math.round(cssWidth * ratio);
+    canvas.height = Math.round(cssHeight * ratio);
+    let view = fitView(points, cssWidth, cssHeight);
+    const theme = { current: graphTheme(shell) };
+    let focusNeighbors = new Set;
+    const neighborsOf = (index) => {
+      const neighbors = new Set;
+      for (const edge of drawn) {
+        if (edge.s === index)
+          neighbors.add(edge.t);
+        if (edge.t === index)
+          neighbors.add(edge.s);
+      }
+      return neighbors;
+    };
+    const draw = () => {
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.fillStyle = theme.current.bg;
+      context.fillRect(0, 0, cssWidth, cssHeight);
+      drawGraph(context, ratio, theme.current, view, points, titles, degrees, drawn, focusNeighbors);
+    };
+    let scheduled = false;
+    const redraw = () => {
+      if (dom.requestAnimationFrame === undefined) {
+        draw();
+        return;
+      }
+      if (scheduled)
+        return;
+      scheduled = true;
+      dom.requestAnimationFrame(() => {
+        scheduled = false;
+        draw();
+      });
+    };
+    const nodeAt = (clientX, clientY) => {
+      const bounds = canvas.getBoundingClientRect();
+      const px = clientX - bounds.left;
+      const py = clientY - bounds.top;
+      let best = -1;
+      let bestDistance = 14;
+      for (const [index, point] of points.entries()) {
+        const sx = point.x * view.scale + view.tx;
+        const sy = point.y * view.scale + view.ty;
+        const distance = Math.sqrt((sx - px) * (sx - px) + (sy - py) * (sy - py));
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = index;
+        }
+      }
+      return best;
+    };
+    const focusSlug = () => {
+      const hash = dom.location.hash ?? "";
+      const match = /^#n=(.+)$/u.exec(hash);
+      if (match === null)
+        return;
+      let slug = match[1] ?? "";
+      try {
+        slug = decodeURIComponent(slug);
+      } catch {
+        return;
+      }
+      const index = slugs.indexOf(slug);
+      if (index === -1)
+        return;
+      view.focus = index;
+      focusNeighbors = neighborsOf(index);
+      const point = points[index];
+      if (point !== undefined) {
+        view.tx = cssWidth / 2 - point.x * view.scale;
+        view.ty = cssHeight / 2 - point.y * view.scale;
+      }
+      redraw();
+    };
+    let dragFrom;
+    let dragged = false;
+    canvas.addEventListener("pointerdown", (event) => {
+      dragFrom = { x: event.clientX ?? 0, y: event.clientY ?? 0 };
+      dragged = false;
+      canvas.style.cursor = "grabbing";
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      const clientX = event.clientX ?? 0;
+      const clientY = event.clientY ?? 0;
+      if (dragFrom !== undefined) {
+        const deltaX = clientX - dragFrom.x;
+        const deltaY = clientY - dragFrom.y;
+        if (Math.abs(deltaX) + Math.abs(deltaY) > 4)
+          dragged = true;
+        if (dragged) {
+          view.tx += deltaX;
+          view.ty += deltaY;
+          dragFrom = { x: clientX, y: clientY };
+          redraw();
+        }
+        return;
+      }
+      const hit = nodeAt(clientX, clientY);
+      if (hit !== view.hover) {
+        view.hover = hit;
+        canvas.style.cursor = hit >= 0 ? "pointer" : "grab";
+        redraw();
+      }
+    });
+    canvas.addEventListener("pointerup", (event) => {
+      canvas.style.cursor = "grab";
+      const wasDrag = dragged;
+      dragFrom = undefined;
+      dragged = false;
+      if (wasDrag)
+        return;
+      const hit = nodeAt(event.clientX ?? 0, event.clientY ?? 0);
+      if (hit >= 0)
+        dom.location.assign(hrefFor(hit));
+    });
+    canvas.addEventListener("pointerleave", () => {
+      dragFrom = undefined;
+      dragged = false;
+      if (view.hover !== -1) {
+        view.hover = -1;
+        redraw();
+      }
+    });
+    canvas.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      const bounds = canvas.getBoundingClientRect();
+      const px = (event.clientX ?? 0) - bounds.left;
+      const py = (event.clientY ?? 0) - bounds.top;
+      const factor = Math.exp(-(event.deltaY ?? 0) * 0.0015);
+      const next = Math.min(GRAPH_MAX_SCALE, Math.max(GRAPH_MIN_SCALE, view.scale * factor));
+      const applied = next / view.scale;
+      view.tx = px - (px - view.tx) * applied;
+      view.ty = py - (py - view.ty) * applied;
+      view.scale = next;
+      redraw();
+    });
+    canvas.addEventListener("keydown", (event) => {
+      const panStep = 48;
+      if (event.key === "ArrowLeft")
+        view.tx += panStep;
+      else if (event.key === "ArrowRight")
+        view.tx -= panStep;
+      else if (event.key === "ArrowUp")
+        view.ty += panStep;
+      else if (event.key === "ArrowDown")
+        view.ty -= panStep;
+      else if (event.key === "+" || event.key === "=") {
+        view.scale = Math.min(GRAPH_MAX_SCALE, view.scale * 1.25);
+      } else if (event.key === "-" || event.key === "_") {
+        view.scale = Math.max(GRAPH_MIN_SCALE, view.scale / 1.25);
+      } else if (event.key === "0" || event.key === "Escape") {
+        view = fitView(points, cssWidth, cssHeight);
+      } else if (event.key === "Enter") {
+        const target = view.hover >= 0 ? view.hover : view.focus;
+        if (target < 0)
+          return;
+        dom.location.assign(hrefFor(target));
+      } else {
+        return;
+      }
+      event.preventDefault();
+      redraw();
+    });
+    reset?.addEventListener("click", () => {
+      view = fitView(points, cssWidth, cssHeight);
+      redraw();
+    });
+    dom.matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      theme.current = graphTheme(shell);
+      redraw();
+    });
+    if (status !== null)
+      status.hidden = true;
+    dom.addEventListener?.("hashchange", focusSlug);
+    focusSlug();
+    draw();
+  })().catch(() => {
+    if (status !== null) {
+      status.hidden = false;
+      status.textContent = "The graph data could not be loaded; every note is listed below.";
+    }
+  });
+}
 function start() {
   const content = dom.document.querySelector('meta[name="wordcell:base"]')?.getAttribute("content") ?? "./";
   const base = content.endsWith("/") ? content : `${content}/`;
@@ -711,6 +1388,7 @@ function start() {
     if (event.key === "Escape")
       overlay.close();
   });
+  initGraph(base);
 }
 if (dom.document.querySelector("[data-wordcell-search]") !== null) {
   start();

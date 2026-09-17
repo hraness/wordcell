@@ -52,7 +52,7 @@ async function makeVault(): Promise<string> {
   );
   await writeFile(
     join(root, "docs", "beta.md"),
-    "---\ntags: [public]\n---\n# Beta\n\nBeta body with a searchable needle. Back to [[docs/alpha]].\n",
+    "---\ntags: [public]\n---\n# Beta\n\nBeta body with a searchable needle. Back to [[docs/alpha]].\n\n## Details\n\nMore beta.\n",
     "utf8",
   );
   await writeFile(
@@ -108,6 +108,7 @@ describe("publishVault", () => {
         "robots.txt",
         "n/docs/alpha/index.html",
         "n/docs/beta/index.html",
+        "graph/index.html",
         "reader/reader.js",
         "reader/reader.css",
       ]) {
@@ -117,6 +118,25 @@ describe("publishVault", () => {
       const alphaHtml = await readFile(join(out, "n/docs/alpha/index.html"), "utf8");
       expect(alphaHtml).toContain("Alpha");
       expect(alphaHtml).toContain("Beta");
+
+      // Note chrome: sidebar tree, breadcrumbs, and per-note TOC.
+      expect(alphaHtml).toContain('class="site-nav"');
+      expect(alphaHtml).toContain('aria-current="page"');
+      expect(alphaHtml).toContain('class="breadcrumbs"');
+      expect(alphaHtml).toContain('href="../../../graph/"');
+      const alphaNav = alphaHtml.indexOf('class="site-nav"');
+      expect(alphaHtml.slice(alphaNav)).toContain("docs/beta");
+
+      const graphHtml = await readFile(join(out, "graph/index.html"), "utf8");
+      expect(graphHtml).toContain("data-wordcell-graph");
+      expect(graphHtml).toContain('aria-current="page"');
+      expect(graphHtml).toContain('class="graph-index"');
+      expect(graphHtml).toContain("docs/alpha");
+
+      // Two authored headings produce a per-note table of contents.
+      const betaHtml = await readFile(join(out, "n/docs/beta/index.html"), "utf8");
+      expect(betaHtml).toContain('class="note-toc"');
+      expect(betaHtml).toContain('href="#details"');
 
       // Nothing outside the selection leaked into structured artifacts.
       const catalogText = await readFile(join(out, "catalog.json"), "utf8");

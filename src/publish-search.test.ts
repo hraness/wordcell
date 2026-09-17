@@ -3,15 +3,19 @@ import { describe, expect, test } from "bun:test";
 import {
   MAX_PUBLISH_PREFIX_EXPANSIONS,
   MAX_PUBLISH_QUERY_BYTES,
+  MAX_PUBLISH_QUERY_FILTERS,
   MAX_PUBLISH_QUERY_TERMS,
   PUBLISH_FIELD_CONTENT,
   PUBLISH_FIELD_METADATA,
   PUBLISH_FIELD_TITLE,
   PUBLISH_SEARCH_WEIGHTS_V1,
   comparePublishScores,
+  publishDocMatchesFilters,
+  publishMarkRanges,
   publishNormalize,
   publishPrefixTerms,
   publishQuery,
+  publishQueryParts,
   publishShardName,
   publishSnippet,
   publishUtf8Bytes,
@@ -187,5 +191,162 @@ describe("publishSnippet", () => {
   test("falls back when no term matches", () => {
     expect(publishSnippet("nothing here", publishQuery("absent"), "the fallback"))
       .toBe("the fallback");
+  });
+});
+
+describe("publishQueryParts", () => {
+  test("splits tag/type/path filters from free text", () => {
+    const parts = publishQueryParts("alpha tag:Public type:concept path:docs/");
+    expect(parts.filters.tags).toEqual(["public"]);
+    expect(parts.filters.types).toEqual(["concept"]);
+    expect(parts.filters.paths).toEqual(["docs"]);
+    expect(parts.text).toBe("alpha");
+  });
+
+  test("keeps malformed or unknown name: tokens as free text", () => {
+    const parts = publishQueryParts("tag: foo:bar path:");
+    expect(parts.filters.tags).toEqual([]);
+    expect(parts.filters.paths).toEqual([]);
+    expect(parts.text).toBe("tag: foo:bar path:");
+  });
+
+  test("strips leading and trailing slashes from path values", () => {
+    expect(publishQueryParts("path:/docs/").filters.paths).toEqual(["docs"]);
+  });
+
+  test("bounds each filter family and overflows into free text", () => {
+    const raw = Array.from(
+      { length: MAX_PUBLISH_QUERY_FILTERS + 2 },
+      (_, index) => `tag:t${index}`,
+    ).join(" ");
+    const parts = publishQueryParts(raw);
+    expect(parts.filters.tags).toHaveLength(MAX_PUBLISH_QUERY_FILTERS);
+    expect(parts.text).toBe("tag:t8 tag:t9");
+  });
+
+  test("an empty query yields empty filters and text", () => {
+    const parts = publishQueryParts("   ");
+    expect(parts.text).toBe("");
+    expect(parts.filters.tags).toEqual([]);
+    expect(parts.filters.types).toEqual([]);
+    expect(parts.filters.paths).toEqual([]);
+  });
+});
+
+describe("publishDocMatchesFilters", () => {
+  const target = {
+    ...doc(0, { g: "public\nhandbook", p: "docs/alpha\ndocs/alpha" }),
+    s: "docs/alpha",
+  };
+
+  test("tag filters require every normalized tag line", () => {
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: ["public"], types: [], paths: [] },
+      undefined,
+    )).toBe(true);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: ["public", "missing"], types: [], paths: [] },
+      undefined,
+    )).toBe(false);
+  });
+
+  test("type filters compare against the catalog type, defaulting to note", () => {
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: ["concept"], paths: [] },
+      "concept",
+    )).toBe(true);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: ["Concept"], paths: [] },
+      "concept",
+    )).toBe(true);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: ["note"], paths: [] },
+      undefined,
+    )).toBe(true);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: ["concept"], paths: [] },
+      undefined,
+    )).toBe(false);
+  });
+
+  test("path filters match on segment boundaries only", () => {
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: [], paths: ["docs"] },
+      undefined,
+    )).toBe(true);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: [], paths: ["docs/alpha"] },
+      undefined,
+    )).toBe(true);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: [], paths: ["doc"] },
+      undefined,
+    )).toBe(false);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: [], types: [], paths: ["alpha"] },
+      undefined,
+    )).toBe(false);
+  });
+
+  test("hostile values never throw and never match", () => {
+    const hostile = publishQueryParts("tag:<script> path:../.. type:x");
+    expect(publishDocMatchesFilters(target, hostile.filters, "note")).toBe(false);
+    expect(publishDocMatchesFilters(
+      target,
+      { tags: ["<img src=x>"], types: [], paths: [] },
+      "note",
+    )).toBe(false);
+  });
+});
+
+describe("publishMarkRanges", () => {
+  test("maps normalized term hits back to display ranges", () => {
+    const ranges = publishMarkRanges("The Alpha Beta Guide", ["alpha", "guide"]);
+    expect(ranges).toEqual([
+      { start: 4, end: 9 },
+      { start: 15, end: 20 },
+    ]);
+    expect("The Alpha Beta Guide".slice(4, 9)).toBe("Alpha");
+  });
+
+  test("case-folds across unicode and merges overlaps", () => {
+    const ranges = publishMarkRanges("café CAFÉ", ["café"]);
+    expect(ranges).toEqual([{ start: 0, end: 4 }, { start: 5, end: 9 }]);
+    const merged = publishMarkRanges("ababab", ["ab", "ba"]);
+    expect(merged).toEqual([{ start: 0, end: 6 }]);
+  });
+
+  test("case-folding expansions map back without zero-width ranges", () => {
+    // İ lowercases to i̇ (two UTF-16 units): matches stay inside the text.
+    const ranges = publishMarkRanges("İx i̇y", ["i̇"]);
+    for (const range of ranges) {
+      expect(range.end).toBeGreaterThan(range.start);
+      expect(range.end).toBeLessThanOrEqual(6);
+    }
+  });
+
+  test("bounds the range count and returns [] without terms", () => {
+    expect(publishMarkRanges("anything", [])).toEqual([]);
+    const dense = "a ".repeat(64);
+    expect(publishMarkRanges(dense, ["a"]).length)
+      .toBeLessThanOrEqual(32);
+  });
+
+  test("never emits a range covering hostile markup text", () => {
+    const text = "<script>alert(1)</script>";
+    for (const range of publishMarkRanges(text, ["script", "alert"])) {
+      expect(range.start).toBeGreaterThanOrEqual(0);
+      expect(range.end).toBeLessThanOrEqual(text.normalize("NFC").length);
+    }
   });
 });

@@ -3,13 +3,25 @@ import fc from "fast-check";
 
 import { parseNote } from "./graph.js";
 import {
+  layoutSiteGraph,
+  siteGraphSeed,
+} from "./publish-graph.js";
+import {
   parseSiteDocsV1,
   parseSiteTermsV1,
 } from "./publish-model.js";
+import {
+  pruneSiteNav,
+  siteNavFromCatalog,
+  type SiteNavNode,
+} from "./publish-nav.js";
 import { buildSiteIndex } from "./publish-index.js";
 import {
+  publishMarkRanges,
+  publishNormalize,
   publishPrefixTerms,
   publishQuery,
+  publishQueryParts,
   publishShardName,
 } from "./publish-search.js";
 import {
@@ -157,6 +169,132 @@ describe("publish index properties", () => {
         for (const slug of emittedSlugs) {
           expect([...slugs.values()]).toContain(slug);
         }
+      },
+    ));
+  });
+});
+
+describe("publish nav properties", () => {
+  const slugList = fc.uniqueArray(
+    fc.array(segment, { minLength: 1, maxLength: 4 }).map((parts) => parts.join("/")),
+    { minLength: 0, maxLength: 60 },
+  );
+
+  test("the tree is input-order invariant and covers every non-root slug", () => {
+    fc.assert(fc.property(
+      slugList,
+      fc.array(fc.nat(), { minLength: 1, maxLength: 1 }),
+      (slugs, seed) => {
+        const entries = slugs.map((slug, index) => ({
+          i: index,
+          s: slug,
+          t: `T${index}`,
+        }));
+        const first = siteNavFromCatalog(entries);
+        const shuffled = [...entries].toSorted(() => (seed[0] ?? 0) % 2 === 0 ? 1 : -1);
+        const second = siteNavFromCatalog(shuffled);
+        const flatten = (nodes: readonly SiteNavNode[]): string[] =>
+          nodes.flatMap((node) => [node.path, ...flatten(node.children)]);
+        expect(flatten(first.nodes)).toEqual(flatten(second.nodes));
+        for (const slug of slugs) {
+          if (slug === "") continue;
+          expect(flatten(first.nodes)).toContain(slug);
+        }
+      },
+    ));
+  });
+
+  test("pruning keeps the current path and stays bounded", () => {
+    fc.assert(fc.property(
+      slugList,
+      (slugs) => {
+        const entries = slugs.map((slug, index) => ({ i: index, s: slug, t: `T${index}` }));
+        const tree = siteNavFromCatalog(entries);
+        const current = slugs.find((slug) => slug !== "") ?? "";
+        const pruned = pruneSiteNav(tree, current, 24, 128);
+        const flatten = (nodes: readonly SiteNavNode[]): string[] =>
+          nodes.flatMap((node) => [node.path, ...flatten(node.children)]);
+        const paths = flatten(pruned.nodes);
+        if (current !== "") {
+          const segments = current.split("/");
+          for (let depth = 1; depth <= segments.length; depth += 1) {
+            expect(paths).toContain(segments.slice(0, depth).join("/"));
+          }
+        }
+        expect(paths.length).toBeLessThanOrEqual(128 + 64);
+      },
+    ));
+  });
+});
+
+describe("publish query filter properties", () => {
+  test("filters are bounded and every free-text token survives verbatim", () => {
+    fc.assert(fc.property(
+      fc.array(fc.stringMatching(/^\S{1,16}$/), { maxLength: 24 }),
+      (tokens) => {
+        const parts = publishQueryParts(tokens.join(" "));
+        expect(parts.filters.tags.length).toBeLessThanOrEqual(8);
+        expect(parts.filters.types.length).toBeLessThanOrEqual(8);
+        expect(parts.filters.paths.length).toBeLessThanOrEqual(8);
+        for (const token of parts.text.split(/\s+/u)) {
+          if (token === "") continue;
+          expect(tokens).toContain(token);
+        }
+      },
+    ));
+  });
+});
+
+describe("publish mark-range properties", () => {
+  test("ranges are sorted, disjoint, and inside the normalized text", () => {
+    fc.assert(fc.property(
+      fc.stringMatching(/^[a-z0-9 ]{0,80}$/),
+      fc.array(fc.stringMatching(/^[a-z0-9]{1,6}$/), { maxLength: 6 }),
+      (text, terms) => {
+        const normalized = text.normalize("NFC");
+        const ranges = publishMarkRanges(text, terms);
+        let previousEnd = 0;
+        for (const range of ranges) {
+          expect(range.start).toBeGreaterThanOrEqual(previousEnd);
+          expect(range.start).toBeLessThan(range.end);
+          expect(range.end).toBeLessThanOrEqual(normalized.length);
+          previousEnd = range.end;
+          const slice = publishNormalize(normalized.slice(range.start, range.end));
+          expect(terms.some((term) => slice.includes(term))).toBe(true);
+        }
+      },
+    ));
+  });
+});
+
+describe("publish graph layout properties", () => {
+  test("layouts are deterministic and finite for arbitrary graphs", () => {
+    fc.assert(fc.property(
+      fc.integer({ min: 0, max: 48 }),
+      fc.array(
+        fc.tuple(fc.nat(), fc.nat()).map(([s, t]) => ({ s, t })),
+        { maxLength: 64 },
+      ),
+      fc.nat(),
+      (nodeCount, edges, seed) => {
+        const first = layoutSiteGraph(nodeCount, edges, { seed });
+        const second = layoutSiteGraph(nodeCount, edges, { seed });
+        expect(first).toEqual(second);
+        expect(first).toHaveLength(nodeCount);
+        for (const point of first) {
+          expect(Number.isFinite(point.x)).toBe(true);
+          expect(Number.isFinite(point.y)).toBe(true);
+        }
+      },
+    ));
+  });
+
+  test("the seed depends on the slugs and edges", () => {
+    fc.assert(fc.property(
+      fc.array(segment, { minLength: 1, maxLength: 8 }),
+      fc.array(fc.tuple(fc.nat(), fc.nat()).map(([s, t]) => ({ s, t })), { maxLength: 16 }),
+      (slugs, edges) => {
+        expect(siteGraphSeed(slugs, edges)).toBe(siteGraphSeed(slugs, edges));
       },
     ));
   });

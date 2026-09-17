@@ -86,6 +86,18 @@ confinement including symlink resolution, `index.html` directory mapping, and
 the published `404.html` fallback. Production hosting stays with the object
 store or CDN.
 
+A later reader-surface follow-up upgraded the published experience without
+changing the `hraness.wordcell.site.v1` contract: a prerendered sidebar tree
+pruned around the current page, breadcrumbs, and per-note tables of contents
+derived from emitted heading anchors (`src/publish-nav.ts`); a `graph/` page
+with a prerendered note index plus an interactive canvas map over
+`graph.json` — seeded deterministic layout, pan/zoom, neighborhood focus, and
+`graph/#n=<slug>` deep links (`src/publish-graph.ts`); and search field
+filters `tag:`/`type:`/`path:` with `<mark>` highlighting built from DOM text
+nodes (`publishQueryParts`, `publishDocMatchesFilters`, `publishMarkRanges` in
+`src/publish-search.ts`). Everything remains additive: pages read without
+JavaScript and the reader only enhances.
+
 The consumer seam was verified by spike: `parseNote` + `analyzeVault` +
 `projectVault` run entirely in memory — a synthetic sponge-shaped corpus
 (`editions/` and `entities/` units with frontmatter and wikilinks) produced a

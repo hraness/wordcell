@@ -37,6 +37,116 @@ function publishUtf8Bytes(value) {
 function publishNormalize(value) {
   return value.normalize("NFC").toLocaleLowerCase("en-US");
 }
+var MAX_PUBLISH_QUERY_FILTERS = 8;
+var FILTER_PATTERN = /^(tag|type|path):(\S+)$/u;
+function trimSlashes(value) {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value.charCodeAt(start) === 47)
+    start += 1;
+  while (end > start && value.charCodeAt(end - 1) === 47)
+    end -= 1;
+  return value.slice(start, end);
+}
+function publishQueryParts(raw) {
+  const tags = [];
+  const types = [];
+  const paths = [];
+  const rest = [];
+  for (const token of raw.split(/\s+/u)) {
+    if (token === "")
+      continue;
+    const match = FILTER_PATTERN.exec(token);
+    const value = match === null ? "" : publishNormalize(trimSlashes(match[2] ?? ""));
+    if (match === null || value === "") {
+      rest.push(token);
+      continue;
+    }
+    const bucket = match[1] === "tag" ? tags : match[1] === "type" ? types : paths;
+    if (bucket.length < MAX_PUBLISH_QUERY_FILTERS)
+      bucket.push(value);
+    else
+      rest.push(token);
+  }
+  return { filters: { tags, types, paths }, text: rest.join(" ") };
+}
+function publishDocMatchesFilters(doc, filters, type) {
+  if (filters.tags.length > 0) {
+    const tags = doc.f.g === "" ? [] : doc.f.g.split(`
+`);
+    for (const tag of filters.tags) {
+      if (!tags.includes(publishNormalize(tag)))
+        return false;
+    }
+  }
+  if (filters.types.length > 0) {
+    const docType = publishNormalize(type === undefined || type === "" ? "note" : type);
+    for (const wanted of filters.types) {
+      if (docType !== publishNormalize(wanted))
+        return false;
+    }
+  }
+  if (filters.paths.length > 0) {
+    const slug = publishNormalize(doc.s);
+    const fields = doc.f.p === "" ? [] : doc.f.p.split(`
+`);
+    for (const value of filters.paths) {
+      const prefix = publishNormalize(trimSlashes(value));
+      const boundary = `${prefix}/`;
+      const inSlug = slug === prefix || slug.startsWith(boundary);
+      const inFields = fields.some((line) => line === prefix || line.startsWith(boundary));
+      if (!inSlug && !inFields)
+        return false;
+    }
+  }
+  return true;
+}
+var MAX_PUBLISH_MARK_RANGES = 32;
+function publishMarkRanges(text, terms, maximum = MAX_PUBLISH_MARK_RANGES) {
+  const display = text.normalize("NFC");
+  let normalized = "";
+  const map = [];
+  for (let offset = 0;offset < display.length; ) {
+    const point = display.codePointAt(offset) ?? 0;
+    const character = String.fromCodePoint(point);
+    const lowered = character.toLocaleLowerCase("en-US");
+    for (let index = 0;index < lowered.length; index += 1)
+      map.push(offset);
+    normalized += lowered;
+    offset += character.length;
+  }
+  const ranges = [];
+  for (const term of terms) {
+    const needle = publishNormalize(term);
+    if (needle === "")
+      continue;
+    let from = 0;
+    while (ranges.length < maximum) {
+      const hit = normalized.indexOf(needle, from);
+      if (hit === -1)
+        break;
+      const start = map[hit] ?? 0;
+      const tail = hit + needle.length;
+      const end = tail >= map.length ? display.length : map[tail] ?? display.length;
+      if (end > start)
+        ranges.push({ start, end });
+      from = tail === 0 ? 1 : tail;
+    }
+    if (ranges.length >= maximum)
+      break;
+  }
+  ranges.sort((left, right) => left.start - right.start || left.end - right.end);
+  const merged = [];
+  for (const range of ranges) {
+    const last = merged[merged.length - 1];
+    if (last !== undefined && range.start <= last.end) {
+      merged[merged.length - 1] = { start: last.start, end: Math.max(last.end, range.end) };
+    } else {
+      merged.push(range);
+    }
+  }
+  return merged;
+}
 function publishQuery(value) {
   if (typeof value !== "string") {
     throw new TypeError("Search query must be a string.");
@@ -193,4 +303,4 @@ function publishSnippet(text, query, fallback, windowBytes = 160) {
   return `${start > 0 ? "\u2026" : ""}${snippet}${end < text.length ? "\u2026" : ""}`;
 }
 
-export { PUBLISH_FIELD_TITLE, PUBLISH_FIELD_ALIAS, PUBLISH_FIELD_PATH, PUBLISH_FIELD_TAG, PUBLISH_FIELD_METADATA, PUBLISH_FIELD_CONTENT, PUBLISH_SEARCH_WEIGHTS_V1, MAX_PUBLISH_QUERY_BYTES, MAX_PUBLISH_QUERY_TERMS, MAX_PUBLISH_PREFIX_EXPANSIONS, publishUtf8Bytes, publishNormalize, publishQuery, publishShardName, publishPrefixTerms, scorePublishDocument, comparePublishScores, publishSnippet };
+export { PUBLISH_FIELD_TITLE, PUBLISH_FIELD_ALIAS, PUBLISH_FIELD_PATH, PUBLISH_FIELD_TAG, PUBLISH_FIELD_METADATA, PUBLISH_FIELD_CONTENT, PUBLISH_SEARCH_WEIGHTS_V1, MAX_PUBLISH_QUERY_BYTES, MAX_PUBLISH_QUERY_TERMS, MAX_PUBLISH_PREFIX_EXPANSIONS, publishUtf8Bytes, publishNormalize, MAX_PUBLISH_QUERY_FILTERS, publishQueryParts, publishDocMatchesFilters, MAX_PUBLISH_MARK_RANGES, publishMarkRanges, publishQuery, publishShardName, publishPrefixTerms, scorePublishDocument, comparePublishScores, publishSnippet };

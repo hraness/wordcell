@@ -1,7 +1,9 @@
 // @bun
 import {
+  MAX_PUBLISH_MARK_RANGES,
   MAX_PUBLISH_PREFIX_EXPANSIONS,
   MAX_PUBLISH_QUERY_BYTES,
+  MAX_PUBLISH_QUERY_FILTERS,
   MAX_PUBLISH_QUERY_TERMS,
   PUBLISH_FIELD_ALIAS,
   PUBLISH_FIELD_CONTENT,
@@ -11,23 +13,29 @@ import {
   PUBLISH_FIELD_TITLE,
   PUBLISH_SEARCH_WEIGHTS_V1,
   comparePublishScores,
+  publishDocMatchesFilters,
+  publishMarkRanges,
   publishNormalize,
   publishPrefixTerms,
   publishQuery,
+  publishQueryParts,
   publishShardName,
   publishSnippet,
   publishUtf8Bytes,
   scorePublishDocument
-} from "./index-s8ytxd6f.js";
+} from "./index-3agn8scn.js";
 import"./index-z1w83f81.js";
 export {
   scorePublishDocument,
   publishUtf8Bytes,
   publishSnippet,
   publishShardName,
+  publishQueryParts,
   publishQuery,
   publishPrefixTerms,
   publishNormalize,
+  publishMarkRanges,
+  publishDocMatchesFilters,
   comparePublishScores,
   PUBLISH_SEARCH_WEIGHTS_V1,
   PUBLISH_FIELD_TITLE,
@@ -37,6 +45,8 @@ export {
   PUBLISH_FIELD_CONTENT,
   PUBLISH_FIELD_ALIAS,
   MAX_PUBLISH_QUERY_TERMS,
+  MAX_PUBLISH_QUERY_FILTERS,
   MAX_PUBLISH_QUERY_BYTES,
-  MAX_PUBLISH_PREFIX_EXPANSIONS
+  MAX_PUBLISH_PREFIX_EXPANSIONS,
+  MAX_PUBLISH_MARK_RANGES
 };

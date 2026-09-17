@@ -70,15 +70,39 @@ site/
   manifest.json           # hraness.wordcell.site.v1 manifest
   catalog.json            # every note: slug, title, type, tags
   graph.json              # selection-scoped link and relation edges
+  graph/index.html        # interactive map of the published graph
   n/<slug>/index.html     # prerendered note pages with backlink panels
   n/<slug>.json           # hydrated note payloads for richer readers
   index/docs.json         # document table with normalized eager fields
   index/terms.json        # sorted term dictionary for prefix lookup
   index/c/<hh>.json       # content postings shards, only for large selections
   assets/<hash>.<ext>     # referenced attachments, content-addressed
-  reader/reader.js|.css   # the bundled search overlay
+  reader/reader.js|.css   # the bundled reader: search overlay and graph map
   404.html, robots.txt, sitemap.xml
 ```
+
+## Reading the site
+
+Every page ships the same chrome: a header with the site title, a `Graph` link,
+and a `Search` button; a sidebar tree of the published notes; and a footer.
+The tree is derived from slug paths — directories sort before notes at each
+level, groups open along the path to the current page, and oversized branches
+fold into bounded `+N more` links back to the catalog. Everything is
+prerendered HTML: navigation works with JavaScript disabled.
+
+Note pages add breadcrumbs above the article and an *On this page* table of
+contents beside it, generated from the same heading anchors the Markdown
+renderer emits. The backlink, relation, and referenced-by panels still sit in
+the article aside.
+
+The graph page maps `graph.json` onto a canvas: nodes sized by degree, links
+as solid edges and typed relations as dashed ones. Drag to pan, scroll or
+pinch to zoom, hover a node to light its neighborhood, and click a node to
+open the note. `graph/#n=<slug>` deep-links to a focused node. The layout is a
+seeded deterministic force layout, so every visitor sees the same map. Sites
+over the contract's node limit publish the same page with the static note
+index instead of the live canvas, and the prerendered index below the map
+keeps the page useful without JavaScript at any size.
 
 Every JSON file carries an explicit format identifier and parses under a
 bounded `unknown`-value contract; parsers reject unexpected keys, oversize
@@ -97,6 +121,22 @@ reader fetches lazily by FNV-1a term hash. `--no-index-content` disables content
 indexing entirely, leaving field-only search. Query, prefix-expansion, result,
 and hydration bounds are fixed by the contract so a hostile or oversized
 artifact cannot exhaust the browser.
+
+The overlay opens from the `Search` button or the `/` key. Alongside free
+text, field filters narrow the candidate set:
+
+- `tag:<tag>` requires every listed tag.
+- `type:<type>` matches the catalog `type` value; notes without one count as
+  `note`.
+- `path:<prefix>` limits results to notes whose slug, id, or vault path sits
+  under the prefix on a segment boundary (`path:docs` matches `docs/alpha`,
+  never `docs2/x`).
+
+Filters combine with free text — `tag:public path:docs migration` searches
+"migration" inside public notes under `docs/` — and a filter-only query lists
+everything that matches. Unknown or malformed `name:` tokens stay in the
+free-text query. Matched terms render with `<mark>` highlighting built from
+DOM text nodes, never injected HTML.
 
 ### Safety
 
