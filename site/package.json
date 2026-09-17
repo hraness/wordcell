@@ -25,7 +25,7 @@
     "next": "16.3.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "@hraness/site-footer": "github:hraness/site-footer#v0.12.1"
+    "@hraness/site-footer": "github:hraness/site-footer#v0.13.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.2.1",
