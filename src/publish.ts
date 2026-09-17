@@ -32,7 +32,9 @@ import {
   type WordcellSiteNoteRelationV1,
   type WordcellSiteNoteV1,
 } from "./publish-model.js";
+import { siteNavFromCatalog } from "./publish-nav.js";
 import {
+  renderGraphPage,
   renderLandingPage,
   renderNotFoundPage,
   renderNotePage,
@@ -313,12 +315,54 @@ export async function projectVault(
   };
   const noindex = options.noindex === true;
 
+  const catalog: WordcellSiteCatalogV1 = {
+    format: WORDCELL_SITE_CATALOG_FORMAT_V1,
+    entries: selection.notes.map((note, index) => ({
+      i: index,
+      s: slugFor(note.id),
+      t: note.title,
+      ...(typeof note.metadata["type"] === "string" && note.metadata["type"] !== ""
+        ? { type: note.metadata["type"] }
+        : {}),
+      ...(note.tags.length === 0 ? {} : { g: note.tags }),
+    })),
+  };
+  const nav = siteNavFromCatalog(catalog.entries);
+  const titles = new Map(catalog.entries.map((entry) => [entry.s, entry.t]));
+
+  const edgeIndexById = new Map(selection.notes.map((note, index) => [note.id, index]));
+  const rawEdges: WordcellSiteGraphEdgeV1[] = [
+    ...selection.links.map((link) => ({
+      s: edgeIndexById.get(link.source) ?? -1,
+      t: edgeIndexById.get(link.target) ?? -1,
+      k: "link" as const,
+    })),
+    ...selection.notes.flatMap((note) =>
+      (selection.relationsById.get(note.id) ?? []).map((relation) => ({
+        s: edgeIndexById.get(relation.source) ?? -1,
+        t: edgeIndexById.get(relation.target) ?? -1,
+        k: "relation" as const,
+        p: relation.predicate,
+      }))),
+  ];
+  const edges = rawEdges
+    .filter((edge) => edge.s >= 0 && edge.t >= 0)
+    .toSorted((a, b) => a.s - b.s || a.t - b.t || a.k.localeCompare(b.k) || (a.p ?? "").localeCompare(b.p ?? ""));
+
   const files = new Map<string, Uint8Array>();
   for (const note of selection.notes) {
     const slug = slugFor(note.id);
     if (slug !== "") {
       files.set(`n/${slug}.json`, encodeUtf8(serializeSiteFile(payloadBySlug.get(slug))));
-      const ctx: PageContext = { site, rel: relativePrefix(slug), noindex, generator: WORDCELL_PUBLISH_GENERATOR };
+      const ctx: PageContext = {
+        site,
+        rel: relativePrefix(slug),
+        noindex,
+        generator: WORDCELL_PUBLISH_GENERATOR,
+        nav,
+        current: slug,
+        titles,
+      };
       const payload = payloadBySlug.get(slug);
       if (payload === undefined) throw new Error(`Missing payload for ${slug}.`);
       files.set(
@@ -342,24 +386,24 @@ export async function projectVault(
     files.set("index.json", encodeUtf8(serializeSiteFile(indexPayload)));
   }
 
-  const catalog: WordcellSiteCatalogV1 = {
-    format: WORDCELL_SITE_CATALOG_FORMAT_V1,
-    entries: selection.notes.map((note, index) => ({
-      i: index,
-      s: slugFor(note.id),
-      t: note.title,
-      ...(typeof note.metadata["type"] === "string" && note.metadata["type"] !== ""
-        ? { type: note.metadata["type"] }
-        : {}),
-      ...(note.tags.length === 0 ? {} : { g: note.tags }),
-    })),
+  const landingCtx: PageContext = {
+    site,
+    rel: "",
+    noindex,
+    generator: WORDCELL_PUBLISH_GENERATOR,
+    nav,
+    current: "",
+    titles,
   };
-
-  const landingCtx: PageContext = { site, rel: "", noindex, generator: WORDCELL_PUBLISH_GENERATOR };
   files.set("index.html", encodeUtf8(renderLandingPage(
     indexPayload === undefined ? undefined : bodyBySlug.get(""),
     catalog.entries,
     landingCtx,
+  )));
+  files.set("graph/index.html", encodeUtf8(renderGraphPage(
+    catalog.entries,
+    edges.length,
+    { ...landingCtx, rel: "../" },
   )));
   files.set("404.html", encodeUtf8(renderNotFoundPage(landingCtx)));
   files.set("robots.txt", encodeUtf8(renderRobotsTxt(noindex)));
@@ -384,24 +428,6 @@ export async function projectVault(
     files.set(`${SITE_PATHS.postingsPrefix}${shard}.json`, encodeUtf8(serializeSiteFile(postings)));
   }
 
-  const edgeIndexById = new Map(selection.notes.map((note, index) => [note.id, index]));
-  const rawEdges: WordcellSiteGraphEdgeV1[] = [
-    ...selection.links.map((link) => ({
-      s: edgeIndexById.get(link.source) ?? -1,
-      t: edgeIndexById.get(link.target) ?? -1,
-      k: "link" as const,
-    })),
-    ...selection.notes.flatMap((note) =>
-      (selection.relationsById.get(note.id) ?? []).map((relation) => ({
-        s: edgeIndexById.get(relation.source) ?? -1,
-        t: edgeIndexById.get(relation.target) ?? -1,
-        k: "relation" as const,
-        p: relation.predicate,
-      }))),
-  ];
-  const edges = rawEdges
-    .filter((edge) => edge.s >= 0 && edge.t >= 0)
-    .toSorted((a, b) => a.s - b.s || a.t - b.t || a.k.localeCompare(b.k) || (a.p ?? "").localeCompare(b.p ?? ""));
   files.set(SITE_PATHS.graph, encodeUtf8(serializeSiteFile({
     format: WORDCELL_SITE_GRAPH_FORMAT_V1,
     edges,

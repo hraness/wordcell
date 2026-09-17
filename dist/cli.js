@@ -5,7 +5,7 @@ import {
   parseArguments,
   runExecutable,
   usage
-} from "./index-28by84bg.js";
+} from "./index-z7r055rd.js";
 import"./index-bcknqxrq.js";
 import"./index-054mb7d3.js";
 import"./index-j54ye6rz.js";
@@ -39,14 +39,14 @@ import"./index-11621h23.js";
 import"./index-1gwbassd.js";
 import"./index-gm9t95d9.js";
 import"./index-1xxnjn0d.js";
-import"./index-0a695x2x.js";
+import"./index-w0xppkg6.js";
 import"./index-0k2x4nn9.js";
 import"./index-d13v9ckt.js";
 import"./index-48pz4jpc.js";
 import"./index-06c9ctr6.js";
 import"./index-4knsp9qj.js";
 import"./index-66pshdtx.js";
-import"./index-s8ytxd6f.js";
+import"./index-3agn8scn.js";
 import"./index-hya40gb2.js";
 import"./index-5vwpzb5a.js";
 import"./index-x3fthpsc.js";
@@ -59,7 +59,7 @@ import {
 
 // src/cli.ts
 if (import.meta.main) {
-  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-eefbc30h.js");
+  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-as5994be.js");
   const env = standaloneSupportEnvironment();
   const args = process.argv.slice(2);
   if (args[0] === "support") {

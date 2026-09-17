@@ -51,9 +51,12 @@ vault's `wordcell check` gate can diagnose.
 ## 3. Verify and host
 
 Open `index.html` or preview over a real socket with
-`wordcell serve --root <site> --port 8080`, then exercise the `/` search
-overlay in a browser. The bundled server binds the loopback interface by
-default, confines requests and symlinks to the root, and returns the published
-`404.html` for misses. Sync the directory to the target — `aws s3 sync`,
-`rclone`, Pages, or any bucket — and publish again rather than editing emitted
-files in place.
+`wordcell serve --root <site> --port 8080`, then exercise the site in a
+browser: the sidebar tree and breadcrumbs navigate without JavaScript, the
+`/` search overlay accepts `tag:`, `type:`, and `path:` field filters with
+`<mark>` highlighting, and `graph/` renders an interactive pan/zoom map of
+`graph.json` (deep-link a node with `graph/#n=<slug>`). The bundled server
+binds the loopback interface by default, confines requests and symlinks to
+the root, and returns the published `404.html` for misses. Sync the directory
+to the target — `aws s3 sync`, `rclone`, Pages, or any bucket — and publish
+again rather than editing emitted files in place.

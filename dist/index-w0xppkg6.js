@@ -24,7 +24,7 @@ import {
 import {
   publishNormalize,
   publishShardName
-} from "./index-s8ytxd6f.js";
+} from "./index-3agn8scn.js";
 import {
   parseLocalAttachmentReferences,
   validateMarkdownAttachments
@@ -681,10 +681,9 @@ ${renderInline(raw.trim(), ctx)}`);
 `);
 }
 function stripMarkup(html) {
-  const text = html.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", '"').replaceAll("&#39;", "'").replaceAll("&amp;", "&");
   let stripped = "";
   let inTag = false;
-  for (const character of text) {
+  for (const character of html) {
     if (character === "<")
       inTag = true;
     else if (character === ">")
@@ -692,7 +691,115 @@ function stripMarkup(html) {
     else if (!inTag)
       stripped += character;
   }
-  return stripped;
+  return stripped.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", '"').replaceAll("&#39;", "'").replaceAll("&amp;", "&");
+}
+
+// src/publish-nav.ts
+var SITE_NAV_GROUP_LIMIT = 96;
+var SITE_NAV_NODE_BUDGET = 768;
+var SITE_TOC_LIMIT = 128;
+function compareNavNodes(left, right) {
+  return Number(right.children.length > 0) - Number(left.children.length > 0) || (left.label < right.label ? -1 : left.label > right.label ? 1 : 0) || (left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+}
+function siteNavFromCatalog(entries) {
+  const root = new Map;
+  for (const entry of entries) {
+    if (entry.s === "")
+      continue;
+    const segments = entry.s.split("/");
+    let level = root;
+    let path = "";
+    for (const [index, segment] of segments.entries()) {
+      path = path === "" ? segment : `${path}/${segment}`;
+      let node = level.get(segment);
+      if (node === undefined) {
+        node = { path, label: segment, children: new Map };
+        level.set(segment, node);
+      }
+      if (index === segments.length - 1) {
+        node.slug = entry.s;
+        node.label = entry.t;
+      }
+      level = node.children;
+    }
+  }
+  const freeze = (level) => [...level.values()].map((node) => ({
+    path: node.path,
+    ...node.slug === undefined ? {} : { slug: node.slug },
+    label: node.label,
+    children: freeze(node.children)
+  })).toSorted(compareNavNodes);
+  return { nodes: freeze(root), hiddenRoots: 0 };
+}
+function pruneSiteNav(tree, current, groupLimit = SITE_NAV_GROUP_LIMIT, nodeBudget = SITE_NAV_NODE_BUDGET) {
+  const onPath = (path) => current !== undefined && current !== "" && (path === current || current.startsWith(`${path}/`));
+  const nearCurrent = (path) => current !== undefined && current !== "" && (path === current || current.startsWith(`${path}/`) || path.startsWith(`${current}/`));
+  const keepNode = (node) => {
+    if (node.path.split("/").length <= 2)
+      return true;
+    if (nearCurrent(node.path))
+      return true;
+    const parent = node.path.slice(0, node.path.lastIndexOf("/"));
+    return parent !== "" && onPath(parent);
+  };
+  const budget = { left: nodeBudget };
+  const pruneLevel = (nodes) => {
+    const kept = nodes.filter(keepNode);
+    const required = kept.filter((node) => onPath(node.path) || node.path === current);
+    const requiredSet = new Set(required);
+    const fillable = Math.max(0, groupLimit - required.length);
+    const optional = kept.filter((node) => !requiredSet.has(node)).slice(0, fillable);
+    const shown = new Set([...required, ...optional]);
+    let hidden = nodes.length - shown.size;
+    const out = [];
+    for (const node of kept) {
+      if (!shown.has(node))
+        continue;
+      if (budget.left <= 0 && !onPath(node.path)) {
+        hidden += 1;
+        continue;
+      }
+      budget.left -= 1;
+      const children = node.children.length === 0 ? { nodes: [], hiddenRoots: 0 } : pruneLevel(node.children);
+      out.push({
+        path: node.path,
+        ...node.slug === undefined ? {} : { slug: node.slug },
+        label: node.label,
+        children: children.nodes,
+        ...children.hiddenRoots === 0 ? {} : { hiddenChildren: children.hiddenRoots }
+      });
+    }
+    return { nodes: out, hiddenRoots: hidden };
+  };
+  return pruneLevel(tree.nodes);
+}
+function siteBreadcrumbs(slug, titleBySlug) {
+  if (slug === "")
+    return [];
+  const segments = slug.split("/");
+  return segments.map((segment, index) => {
+    const path = segments.slice(0, index + 1).join("/");
+    const current = index === segments.length - 1;
+    return {
+      label: titleBySlug.get(path) ?? segment,
+      ...current || !titleBySlug.has(path) ? {} : { slug: path },
+      current
+    };
+  });
+}
+var HEADING_PATTERN = /<h([1-6]) id="([^"]{0,256})">([\s\S]*?)<\/h\1>/gu;
+function siteTocFromHtml(html, limit = SITE_TOC_LIMIT) {
+  const entries = [];
+  for (const match of html.matchAll(HEADING_PATTERN)) {
+    if (entries.length >= limit)
+      break;
+    entries.push({
+      level: Number(match[1]),
+      id: match[2] ?? "",
+      text: stripMarkup(match[3] ?? "").replace(/\s+/gu, " ").trim()
+    });
+  }
+  return entries;
 }
 
 // src/publish-pages.ts
@@ -702,6 +809,9 @@ function relativePrefix(slug) {
     return "";
   const depth = slug.split("/").length;
   return "../".repeat(depth + 1);
+}
+function noteHref(rel, slug) {
+  return slug === "" ? rel || "./" : `${rel}n/${encodeURI(slug)}/`;
 }
 function head(title, ctx, extra = []) {
   const lines = [
@@ -723,22 +833,109 @@ function head(title, ctx, extra = []) {
   return lines.join(`
     `);
 }
-function chrome(title, main, ctx, extra = []) {
+function navLink(rel, node, current, extraClass = "") {
+  const isCurrent = node.slug !== undefined && node.slug === current;
+  const classes = `site-tree-link${isCurrent ? " site-tree-current" : ""}${extraClass}`;
+  return `<a class="${classes}" href="${escapeAttribute(noteHref(rel, node.slug ?? ""))}"${isCurrent ? ` aria-current="page"` : ""}>${escapeHtml(node.label)}</a>`;
+}
+function navItems(nodes, current, rel, depth) {
+  const items = nodes.map((node) => {
+    const grouped = node.children.length > 0 || (node.hiddenChildren ?? 0) > 0;
+    if (!grouped) {
+      const body = node.slug === undefined ? `<span class="site-tree-empty">${escapeHtml(node.label)}</span>` : navLink(rel, node, current);
+      return `          <li class="site-tree-leaf">${body}</li>`;
+    }
+    const onPath = current !== "" && (current === node.path || current.startsWith(`${node.path}/`));
+    const open = depth === 0 || onPath;
+    const self = node.slug === undefined ? "" : `            <li class="site-tree-self">${navLink(rel, node, current)}</li>
+`;
+    const more = (node.hiddenChildren ?? 0) === 0 ? "" : `            <li class="site-tree-more"><a href="${escapeAttribute(rel)}#catalog">+${String(node.hiddenChildren)} more</a></li>
+`;
+    return `          <li class="site-tree-group">
+            <details${open ? " open" : ""}>
+              <summary>${escapeHtml(node.label)}</summary>
+              <ul>
+${self}${navItems(node.children, current, rel, depth + 1)}${more}              </ul>
+            </details>
+          </li>`;
+  });
+  return items.join(`
+`) + (items.length === 0 ? "" : `
+`);
+}
+function renderSiteNav(tree, current, rel) {
+  if (tree.nodes.length === 0)
+    return "";
+  const more = tree.hiddenRoots === 0 ? "" : `          <li class="site-tree-more"><a href="${escapeAttribute(rel)}#catalog">+${String(tree.hiddenRoots)} more</a></li>
+`;
+  return `    <nav class="site-nav" aria-label="Published notes">
+      <ul class="site-tree">
+${navItems(tree.nodes, current, rel, 0)}${more}      </ul>
+    </nav>`;
+}
+function breadcrumbsHtml(ctx) {
+  const crumbs = siteBreadcrumbs(ctx.current, ctx.titles);
+  if (crumbs.length === 0)
+    return "";
+  const items = [
+    `          <li><a href="${escapeAttribute(ctx.rel || "./")}">Home</a></li>`,
+    ...crumbs.map((crumb) => {
+      if (crumb.current) {
+        return `          <li><span aria-current="page">${escapeHtml(crumb.label)}</span></li>`;
+      }
+      if (crumb.slug === undefined) {
+        return `          <li><span>${escapeHtml(crumb.label)}</span></li>`;
+      }
+      return `          <li><a href="${escapeAttribute(noteHref(ctx.rel, crumb.slug))}">${escapeHtml(crumb.label)}</a></li>`;
+    })
+  ];
+  return `      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+${items.join(`
+`)}
+        </ol>
+      </nav>
+`;
+}
+function tocHtml(bodyHtml) {
+  const toc = siteTocFromHtml(bodyHtml);
+  if (toc.length < 2)
+    return "";
+  const items = toc.map((entry) => `          <li class="toc-level-${String(Math.min(entry.level, 4))}"><a href="#${escapeAttribute(entry.id)}">${escapeHtml(entry.text)}</a></li>`);
+  return `      <nav class="note-toc" aria-label="On this page">
+        <h2>On this page</h2>
+        <ol>
+${items.join(`
+`)}
+        </ol>
+      </nav>`;
+}
+function chrome(title, main, ctx, extra = [], options = {}) {
+  const nav = renderSiteNav(pruneSiteNav(ctx.nav, ctx.current), ctx.current, ctx.rel);
+  const graphCurrent = options.graph === true ? ` aria-current="page"` : "";
+  const layoutClass = nav === "" ? "site-layout site-layout-flat" : "site-layout";
   return `<!doctype html>
 <html lang="en">
   <head>
     ${head(title, ctx, extra)}
   </head>
   <body>
+    <a class="skip-link" href="#wordcell-main">Skip to content</a>
     <header class="site-header">
       <a class="site-title" href="${escapeAttribute(ctx.rel || "./")}">${escapeHtml(ctx.site.title)}</a>
-      <button type="button" class="search-button" data-wordcell-search aria-keyshortcuts="/">
-        <span>Search</span><kbd>/</kbd>
-      </button>
+      <nav class="site-actions" aria-label="Site">
+        <a class="graph-link" href="${escapeAttribute(ctx.rel)}graph/"${graphCurrent}>Graph</a>
+        <button type="button" class="search-button" data-wordcell-search aria-keyshortcuts="/">
+          <span>Search</span><kbd>/</kbd>
+        </button>
+      </nav>
     </header>
-    <main>
+    <div class="${layoutClass}">
+${nav}
+      <main id="wordcell-main">
 ${main}
-    </main>
+      </main>
+    </div>
     <footer class="site-footer">
       <span>Published with <a href="https://wordcell.io" rel="noopener noreferrer">Wordcell</a>.</span>
     </footer>
@@ -763,7 +960,7 @@ function propertiesBlock(note) {
 function linkList(title, links, rel) {
   if (links.length === 0)
     return "";
-  const items = links.map((link) => `          <li><a href="${escapeAttribute(link.s === "" ? rel || "./" : `${rel}n/${encodeURI(link.s)}/`)}">${escapeHtml(link.t)}</a></li>`).join(`
+  const items = links.map((link) => `          <li><a href="${escapeAttribute(noteHref(rel, link.s))}">${escapeHtml(link.t)}</a></li>`).join(`
 `);
   return `      <section class="note-links">
         <h2>${escapeHtml(title)}</h2>
@@ -775,7 +972,7 @@ ${items}
 function relationList(title, relations, rel) {
   if (relations.length === 0)
     return "";
-  const items = relations.map((relation) => `          <li><span class="predicate">${escapeHtml(relation.p)}</span> <a href="${escapeAttribute(relation.s === "" ? rel || "./" : `${rel}n/${encodeURI(relation.s)}/`)}">${escapeHtml(relation.t)}</a></li>`).join(`
+  const items = relations.map((relation) => `          <li><span class="predicate">${escapeHtml(relation.p)}</span> <a href="${escapeAttribute(noteHref(rel, relation.s))}">${escapeHtml(relation.t)}</a></li>`).join(`
 `);
   return `      <section class="note-relations">
         <h2>${escapeHtml(title)}</h2>
@@ -793,17 +990,22 @@ function renderNotePage(note, bodyHtml, sides, ctx) {
     relationList("Referenced by", sides.relationBacklinks, ctx.rel)
   ].filter((section) => section !== "").join(`
 `);
-  const main = `      <article class="note">
-        <h1>${escapeHtml(note.title)}</h1>
-        ${meta}
-        ${aliasRow}
-        <div class="note-body">
+  const toc = tocHtml(bodyHtml);
+  const article = `        <article class="note">
+          <h1>${escapeHtml(note.title)}</h1>
+          ${meta}
+          ${aliasRow}
+          <div class="note-body">
 ${bodyHtml}
-        </div>
-      </article>${aside === "" ? "" : `
-      <aside class="note-aside">
+          </div>
+        </article>${aside === "" ? "" : `
+        <aside class="note-aside">
 ${aside}
-      </aside>`}`;
+        </aside>`}`;
+  const main = `${breadcrumbsHtml(ctx)}      <div class="note-columns">
+${article}
+${toc}
+      </div>`;
   return chrome(note.title, main, ctx);
 }
 function renderLandingPage(indexBodyHtml, entries, ctx) {
@@ -815,7 +1017,7 @@ function renderLandingPage(indexBodyHtml, entries, ctx) {
     groups.set(top, group);
   }
   const sections = [...groups.entries()].toSorted(([left], [right]) => left.localeCompare(right)).map(([group, members]) => {
-    const items = members.map((entry) => `            <li><a href="${escapeAttribute(entry.s === "" ? ctx.rel || "./" : `${ctx.rel}n/${encodeURI(entry.s)}/`)}">${escapeHtml(entry.t)}</a></li>`).join(`
+    const items = members.map((entry) => `            <li><a href="${escapeAttribute(noteHref(ctx.rel, entry.s))}">${escapeHtml(entry.t)}</a></li>`).join(`
 `);
     return `        <section class="catalog-group">
           <h2>${escapeHtml(group === "" ? "Notes" : group)}</h2>
@@ -829,12 +1031,33 @@ ${items}
 ${indexBodyHtml}
       </div>
 `;
-  const main = `${body}      <nav class="catalog" aria-label="All published notes">
+  const main = `${body}      <nav class="catalog" id="catalog" aria-label="All published notes">
 ${sections}
       </nav>`;
   return chrome("", main, ctx, [
     `<meta name="wordcell:landing" content="true">`
   ]);
+}
+function renderGraphPage(entries, edgeCount, ctx) {
+  const items = entries.map((entry) => `          <li><a href="${escapeAttribute(noteHref(ctx.rel, entry.s))}">${escapeHtml(entry.t)}</a></li>`).join(`
+`);
+  const main = `      <article class="note graph-page">
+        <h1>Graph</h1>
+        <p class="graph-lede">${String(entries.length)} notes and ${String(edgeCount)} links. Drag to pan, scroll or pinch to zoom, click a node to open the note.</p>
+        <div class="graph-shell" data-wordcell-graph>
+          <canvas class="graph-canvas" data-wordcell-graph-canvas width="1280" height="720" tabindex="0" role="img" aria-label="Interactive map of ${String(entries.length)} published notes"></canvas>
+          <div class="graph-status" data-wordcell-graph-status>The interactive map needs JavaScript. Every note is listed below.</div>
+          <div class="graph-toolbar">
+            <button type="button" class="graph-reset" data-wordcell-graph-reset>Reset view</button>
+            <span class="graph-legend"><span class="graph-edge graph-edge-link"></span> link <span class="graph-edge graph-edge-relation"></span> typed relation</span>
+          </div>
+        </div>
+        <h2>All notes</h2>
+        <ul class="graph-index">
+${items}
+        </ul>
+      </article>`;
+  return chrome("Graph", main, ctx, [], { graph: true });
 }
 function renderNotFoundPage(ctx) {
   return chrome("Not found", `      <article class="note">
@@ -1209,12 +1432,47 @@ async function projectVault(snapshot, options, io) {
     ...options.description === undefined ? {} : { description: options.description }
   };
   const noindex = options.noindex === true;
+  const catalog = {
+    format: WORDCELL_SITE_CATALOG_FORMAT_V1,
+    entries: selection.notes.map((note, index2) => ({
+      i: index2,
+      s: slugFor(note.id),
+      t: note.title,
+      ...typeof note.metadata["type"] === "string" && note.metadata["type"] !== "" ? { type: note.metadata["type"] } : {},
+      ...note.tags.length === 0 ? {} : { g: note.tags }
+    }))
+  };
+  const nav = siteNavFromCatalog(catalog.entries);
+  const titles = new Map(catalog.entries.map((entry) => [entry.s, entry.t]));
+  const edgeIndexById = new Map(selection.notes.map((note, index2) => [note.id, index2]));
+  const rawEdges = [
+    ...selection.links.map((link) => ({
+      s: edgeIndexById.get(link.source) ?? -1,
+      t: edgeIndexById.get(link.target) ?? -1,
+      k: "link"
+    })),
+    ...selection.notes.flatMap((note) => (selection.relationsById.get(note.id) ?? []).map((relation) => ({
+      s: edgeIndexById.get(relation.source) ?? -1,
+      t: edgeIndexById.get(relation.target) ?? -1,
+      k: "relation",
+      p: relation.predicate
+    })))
+  ];
+  const edges = rawEdges.filter((edge) => edge.s >= 0 && edge.t >= 0).toSorted((a, b) => a.s - b.s || a.t - b.t || a.k.localeCompare(b.k) || (a.p ?? "").localeCompare(b.p ?? ""));
   const files = new Map;
   for (const note of selection.notes) {
     const slug = slugFor(note.id);
     if (slug !== "") {
       files.set(`n/${slug}.json`, encodeUtf8(serializeSiteFile(payloadBySlug.get(slug))));
-      const ctx = { site, rel: relativePrefix(slug), noindex, generator: WORDCELL_PUBLISH_GENERATOR };
+      const ctx = {
+        site,
+        rel: relativePrefix(slug),
+        noindex,
+        generator: WORDCELL_PUBLISH_GENERATOR,
+        nav,
+        current: slug,
+        titles
+      };
       const payload = payloadBySlug.get(slug);
       if (payload === undefined)
         throw new Error(`Missing payload for ${slug}.`);
@@ -1230,18 +1488,17 @@ async function projectVault(snapshot, options, io) {
   if (indexPayload !== undefined) {
     files.set("index.json", encodeUtf8(serializeSiteFile(indexPayload)));
   }
-  const catalog = {
-    format: WORDCELL_SITE_CATALOG_FORMAT_V1,
-    entries: selection.notes.map((note, index2) => ({
-      i: index2,
-      s: slugFor(note.id),
-      t: note.title,
-      ...typeof note.metadata["type"] === "string" && note.metadata["type"] !== "" ? { type: note.metadata["type"] } : {},
-      ...note.tags.length === 0 ? {} : { g: note.tags }
-    }))
+  const landingCtx = {
+    site,
+    rel: "",
+    noindex,
+    generator: WORDCELL_PUBLISH_GENERATOR,
+    nav,
+    current: "",
+    titles
   };
-  const landingCtx = { site, rel: "", noindex, generator: WORDCELL_PUBLISH_GENERATOR };
   files.set("index.html", encodeUtf8(renderLandingPage(indexPayload === undefined ? undefined : bodyBySlug.get(""), catalog.entries, landingCtx)));
+  files.set("graph/index.html", encodeUtf8(renderGraphPage(catalog.entries, edges.length, { ...landingCtx, rel: "../" })));
   files.set("404.html", encodeUtf8(renderNotFoundPage(landingCtx)));
   files.set("robots.txt", encodeUtf8(renderRobotsTxt(noindex)));
   const baseUrl = normalizeBaseUrl(options.baseUrl);
@@ -1258,21 +1515,6 @@ async function projectVault(snapshot, options, io) {
   for (const [shard, postings] of index.postings) {
     files.set(`${SITE_PATHS.postingsPrefix}${shard}.json`, encodeUtf8(serializeSiteFile(postings)));
   }
-  const edgeIndexById = new Map(selection.notes.map((note, index2) => [note.id, index2]));
-  const rawEdges = [
-    ...selection.links.map((link) => ({
-      s: edgeIndexById.get(link.source) ?? -1,
-      t: edgeIndexById.get(link.target) ?? -1,
-      k: "link"
-    })),
-    ...selection.notes.flatMap((note) => (selection.relationsById.get(note.id) ?? []).map((relation) => ({
-      s: edgeIndexById.get(relation.source) ?? -1,
-      t: edgeIndexById.get(relation.target) ?? -1,
-      k: "relation",
-      p: relation.predicate
-    })))
-  ];
-  const edges = rawEdges.filter((edge) => edge.s >= 0 && edge.t >= 0).toSorted((a, b) => a.s - b.s || a.t - b.t || a.k.localeCompare(b.k) || (a.p ?? "").localeCompare(b.p ?? ""));
   files.set(SITE_PATHS.graph, encodeUtf8(serializeSiteFile({
     format: WORDCELL_SITE_GRAPH_FORMAT_V1,
     edges

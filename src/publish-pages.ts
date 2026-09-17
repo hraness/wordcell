@@ -6,11 +6,20 @@ import type {
   WordcellSiteNoteLinkV1,
   WordcellSiteNoteRelationV1,
 } from "./publish-model.js";
+import {
+  pruneSiteNav,
+  siteBreadcrumbs,
+  siteTocFromHtml,
+  type SiteNavNode,
+  type SiteNavTree,
+} from "./publish-nav.js";
 
 /**
  * Static page chrome for a published site. Pages are complete HTML documents
- * that read without JavaScript; the bundled reader progressively adds search.
- * No inline scripts or styles are emitted so a strict `default-src 'self'`
+ * that read without JavaScript: the sidebar tree, breadcrumbs, table of
+ * contents, and graph note index are all prerendered markup, and the bundled
+ * reader progressively adds search and the interactive graph. No inline
+ * scripts or styles are emitted so a strict `default-src 'self'`
  * Content-Security-Policy applies to every page.
  */
 
@@ -24,6 +33,12 @@ export type PageContext = {
   /** Noindex emitted on every page when the publisher asked for it. */
   readonly noindex: boolean;
   readonly generator: string;
+  /** Full catalog nav tree; chrome prunes it around `current` per page. */
+  readonly nav: SiteNavTree;
+  /** Slug of the page being rendered; "" when nothing in the tree is current. */
+  readonly current: string;
+  /** Slug → note title for breadcrumb labels. */
+  readonly titles: ReadonlyMap<string, string>;
 };
 
 export function relativePrefix(slug: string): string {
@@ -59,27 +74,127 @@ function head(
   return lines.join("\n    ");
 }
 
+function navLink(rel: string, node: SiteNavNode, current: string, extraClass = ""): string {
+  const isCurrent = node.slug !== undefined && node.slug === current;
+  const classes = `site-tree-link${isCurrent ? " site-tree-current" : ""}${extraClass}`;
+  return `<a class="${classes}" href="${escapeAttribute(noteHref(rel, node.slug ?? ""))}"${
+    isCurrent ? ` aria-current="page"` : ""
+  }>${escapeHtml(node.label)}</a>`;
+}
+
+function navItems(
+  nodes: readonly SiteNavNode[],
+  current: string,
+  rel: string,
+  depth: number,
+): string {
+  const items = nodes.map((node) => {
+    const grouped = node.children.length > 0 || (node.hiddenChildren ?? 0) > 0;
+    if (!grouped) {
+      const body = node.slug === undefined
+        ? `<span class="site-tree-empty">${escapeHtml(node.label)}</span>`
+        : navLink(rel, node, current);
+      return `          <li class="site-tree-leaf">${body}</li>`;
+    }
+    const onPath = current !== ""
+      && (current === node.path || current.startsWith(`${node.path}/`));
+    const open = depth === 0 || onPath;
+    const self = node.slug === undefined
+      ? ""
+      : `            <li class="site-tree-self">${navLink(rel, node, current)}</li>\n`;
+    const more = (node.hiddenChildren ?? 0) === 0
+      ? ""
+      : `            <li class="site-tree-more"><a href="${escapeAttribute(rel)}#catalog">+${String(node.hiddenChildren)} more</a></li>\n`;
+    return `          <li class="site-tree-group">
+            <details${open ? " open" : ""}>
+              <summary>${escapeHtml(node.label)}</summary>
+              <ul>
+${self}${navItems(node.children, current, rel, depth + 1)}${more}              </ul>
+            </details>
+          </li>`;
+  });
+  return items.join("\n") + (items.length === 0 ? "" : "\n");
+}
+
+function renderSiteNav(tree: SiteNavTree, current: string, rel: string): string {
+  if (tree.nodes.length === 0) return "";
+  const more = tree.hiddenRoots === 0
+    ? ""
+    : `          <li class="site-tree-more"><a href="${escapeAttribute(rel)}#catalog">+${String(tree.hiddenRoots)} more</a></li>\n`;
+  return `    <nav class="site-nav" aria-label="Published notes">
+      <ul class="site-tree">
+${navItems(tree.nodes, current, rel, 0)}${more}      </ul>
+    </nav>`;
+}
+
+function breadcrumbsHtml(ctx: PageContext): string {
+  const crumbs = siteBreadcrumbs(ctx.current, ctx.titles);
+  if (crumbs.length === 0) return "";
+  const items = [
+    `          <li><a href="${escapeAttribute(ctx.rel || "./")}">Home</a></li>`,
+    ...crumbs.map((crumb) => {
+      if (crumb.current) {
+        return `          <li><span aria-current="page">${escapeHtml(crumb.label)}</span></li>`;
+      }
+      if (crumb.slug === undefined) {
+        return `          <li><span>${escapeHtml(crumb.label)}</span></li>`;
+      }
+      return `          <li><a href="${escapeAttribute(noteHref(ctx.rel, crumb.slug))}">${escapeHtml(crumb.label)}</a></li>`;
+    }),
+  ];
+  return `      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+${items.join("\n")}
+        </ol>
+      </nav>\n`;
+}
+
+function tocHtml(bodyHtml: string): string {
+  const toc = siteTocFromHtml(bodyHtml);
+  if (toc.length < 2) return "";
+  const items = toc.map((entry) =>
+    `          <li class="toc-level-${String(Math.min(entry.level, 4))}"><a href="#${escapeAttribute(entry.id)}">${escapeHtml(entry.text)}</a></li>`,
+  );
+  return `      <nav class="note-toc" aria-label="On this page">
+        <h2>On this page</h2>
+        <ol>
+${items.join("\n")}
+        </ol>
+      </nav>`;
+}
+
 function chrome(
   title: string,
   main: string,
   ctx: PageContext,
   extra: readonly string[] = [],
+  options: { readonly graph?: boolean } = {},
 ): string {
+  const nav = renderSiteNav(pruneSiteNav(ctx.nav, ctx.current), ctx.current, ctx.rel);
+  const graphCurrent = options.graph === true ? ` aria-current="page"` : "";
+  const layoutClass = nav === "" ? "site-layout site-layout-flat" : "site-layout";
   return `<!doctype html>
 <html lang="en">
   <head>
     ${head(title, ctx, extra)}
   </head>
   <body>
+    <a class="skip-link" href="#wordcell-main">Skip to content</a>
     <header class="site-header">
       <a class="site-title" href="${escapeAttribute(ctx.rel || "./")}">${escapeHtml(ctx.site.title)}</a>
-      <button type="button" class="search-button" data-wordcell-search aria-keyshortcuts="/">
-        <span>Search</span><kbd>/</kbd>
-      </button>
+      <nav class="site-actions" aria-label="Site">
+        <a class="graph-link" href="${escapeAttribute(ctx.rel)}graph/"${graphCurrent}>Graph</a>
+        <button type="button" class="search-button" data-wordcell-search aria-keyshortcuts="/">
+          <span>Search</span><kbd>/</kbd>
+        </button>
+      </nav>
     </header>
-    <main>
+    <div class="${layoutClass}">
+${nav}
+      <main id="wordcell-main">
 ${main}
-    </main>
+      </main>
+    </div>
     <footer class="site-footer">
       <span>Published with <a href="https://wordcell.io" rel="noopener noreferrer">Wordcell</a>.</span>
     </footer>
@@ -104,7 +219,7 @@ function propertiesBlock(note: Note): string {
 function linkList(title: string, links: readonly WordcellSiteNoteLinkV1[], rel: string): string {
   if (links.length === 0) return "";
   const items = links.map((link) =>
-    `          <li><a href="${escapeAttribute(link.s === "" ? rel || "./" : `${rel}n/${encodeURI(link.s)}/`)}">${escapeHtml(link.t)}</a></li>`,
+    `          <li><a href="${escapeAttribute(noteHref(rel, link.s))}">${escapeHtml(link.t)}</a></li>`,
   ).join("\n");
   return `      <section class="note-links">
         <h2>${escapeHtml(title)}</h2>
@@ -121,7 +236,7 @@ function relationList(
 ): string {
   if (relations.length === 0) return "";
   const items = relations.map((relation) =>
-    `          <li><span class="predicate">${escapeHtml(relation.p)}</span> <a href="${escapeAttribute(relation.s === "" ? rel || "./" : `${rel}n/${encodeURI(relation.s)}/`)}">${escapeHtml(relation.t)}</a></li>`,
+    `          <li><span class="predicate">${escapeHtml(relation.p)}</span> <a href="${escapeAttribute(noteHref(rel, relation.s))}">${escapeHtml(relation.t)}</a></li>`,
   ).join("\n");
   return `      <section class="note-relations">
         <h2>${escapeHtml(title)}</h2>
@@ -151,14 +266,19 @@ export function renderNotePage(
     relationList("Relations", sides.relations, ctx.rel),
     relationList("Referenced by", sides.relationBacklinks, ctx.rel),
   ].filter((section) => section !== "").join("\n");
-  const main = `      <article class="note">
-        <h1>${escapeHtml(note.title)}</h1>
-        ${meta}
-        ${aliasRow}
-        <div class="note-body">
+  const toc = tocHtml(bodyHtml);
+  const article = `        <article class="note">
+          <h1>${escapeHtml(note.title)}</h1>
+          ${meta}
+          ${aliasRow}
+          <div class="note-body">
 ${bodyHtml}
-        </div>
-      </article>${aside === "" ? "" : `\n      <aside class="note-aside">\n${aside}\n      </aside>`}`;
+          </div>
+        </article>${aside === "" ? "" : `\n        <aside class="note-aside">\n${aside}\n        </aside>`}`;
+  const main = `${breadcrumbsHtml(ctx)}      <div class="note-columns">
+${article}
+${toc}
+      </div>`;
   return chrome(note.title, main, ctx);
 }
 
@@ -178,7 +298,7 @@ export function renderLandingPage(
     .toSorted(([left], [right]) => left.localeCompare(right))
     .map(([group, members]) => {
       const items = members.map((entry) =>
-        `            <li><a href="${escapeAttribute(entry.s === "" ? ctx.rel || "./" : `${ctx.rel}n/${encodeURI(entry.s)}/`)}">${escapeHtml(entry.t)}</a></li>`,
+        `            <li><a href="${escapeAttribute(noteHref(ctx.rel, entry.s))}">${escapeHtml(entry.t)}</a></li>`,
       ).join("\n");
       return `        <section class="catalog-group">
           <h2>${escapeHtml(group === "" ? "Notes" : group)}</h2>
@@ -190,12 +310,39 @@ ${items}
   const body = indexBodyHtml === undefined || indexBodyHtml === ""
     ? ""
     : `      <div class="note-body index-body">\n${indexBodyHtml}\n      </div>\n`;
-  const main = `${body}      <nav class="catalog" aria-label="All published notes">
+  const main = `${body}      <nav class="catalog" id="catalog" aria-label="All published notes">
 ${sections}
       </nav>`;
   return chrome("", main, ctx, [
     `<meta name="wordcell:landing" content="true">`,
   ]);
+}
+
+export function renderGraphPage(
+  entries: readonly WordcellSiteCatalogEntryV1[],
+  edgeCount: number,
+  ctx: PageContext,
+): string {
+  const items = entries.map((entry) =>
+    `          <li><a href="${escapeAttribute(noteHref(ctx.rel, entry.s))}">${escapeHtml(entry.t)}</a></li>`,
+  ).join("\n");
+  const main = `      <article class="note graph-page">
+        <h1>Graph</h1>
+        <p class="graph-lede">${String(entries.length)} notes and ${String(edgeCount)} links. Drag to pan, scroll or pinch to zoom, click a node to open the note.</p>
+        <div class="graph-shell" data-wordcell-graph>
+          <canvas class="graph-canvas" data-wordcell-graph-canvas width="1280" height="720" tabindex="0" role="img" aria-label="Interactive map of ${String(entries.length)} published notes"></canvas>
+          <div class="graph-status" data-wordcell-graph-status>The interactive map needs JavaScript. Every note is listed below.</div>
+          <div class="graph-toolbar">
+            <button type="button" class="graph-reset" data-wordcell-graph-reset>Reset view</button>
+            <span class="graph-legend"><span class="graph-edge graph-edge-link"></span> link <span class="graph-edge graph-edge-relation"></span> typed relation</span>
+          </div>
+        </div>
+        <h2>All notes</h2>
+        <ul class="graph-index">
+${items}
+        </ul>
+      </article>`;
+  return chrome("Graph", main, ctx, [], { graph: true });
 }
 
 export function renderNotFoundPage(ctx: PageContext): string {

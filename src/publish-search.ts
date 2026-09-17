@@ -66,6 +66,158 @@ export type PublishQuery = {
   readonly terms: readonly string[];
 };
 
+export const MAX_PUBLISH_QUERY_FILTERS = 8;
+
+export type PublishQueryFilters = {
+  /** Normalized tag values; a document must carry every one. */
+  readonly tags: readonly string[];
+  /** Normalized note types; absent catalog types count as "note". */
+  readonly types: readonly string[];
+  /** Normalized slug/path/id prefixes, matched on segment boundaries. */
+  readonly paths: readonly string[];
+};
+
+export type PublishQueryParts = {
+  readonly filters: PublishQueryFilters;
+  /** Query text with filter tokens removed, ready for `publishQuery`. */
+  readonly text: string;
+};
+
+const FILTER_PATTERN = /^(tag|type|path):(\S+)$/u;
+
+/** Trim `/` runs at both ends without a regex (CodeQL-safe, linear). */
+function trimSlashes(value: string): string {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value.charCodeAt(start) === 0x2f) start += 1;
+  while (end > start && value.charCodeAt(end - 1) === 0x2f) end -= 1;
+  return value.slice(start, end);
+}
+
+/**
+ * Split a raw query into field filters and free text. `tag:`, `type:`, and
+ * `path:` tokens become filters (values normalized like query text); anything
+ * else — including a malformed `name:` token with an empty value — stays in
+ * the free-text query. Each filter family keeps at most
+ * MAX_PUBLISH_QUERY_FILTERS values; overflow falls back to free text.
+ */
+export function publishQueryParts(raw: string): PublishQueryParts {
+  const tags: string[] = [];
+  const types: string[] = [];
+  const paths: string[] = [];
+  const rest: string[] = [];
+  for (const token of raw.split(/\s+/u)) {
+    if (token === "") continue;
+    const match = FILTER_PATTERN.exec(token);
+    const value = match === null
+      ? ""
+      : publishNormalize(trimSlashes(match[2] ?? ""));
+    if (match === null || value === "") {
+      rest.push(token);
+      continue;
+    }
+    const bucket = match[1] === "tag" ? tags : match[1] === "type" ? types : paths;
+    if (bucket.length < MAX_PUBLISH_QUERY_FILTERS) bucket.push(value);
+    else rest.push(token);
+  }
+  return { filters: { tags, types, paths }, text: rest.join(" ") };
+}
+
+/**
+ * Whether a document satisfies parsed filters. `type` is the catalog type for
+ * the document (raw); both sides normalize before comparing so filter casing
+ * matches the indexed value.
+ */
+export function publishDocMatchesFilters(
+  doc: Pick<WordcellSiteDocV1, "s" | "f">,
+  filters: PublishQueryFilters,
+  type: string | undefined,
+): boolean {
+  if (filters.tags.length > 0) {
+    const tags = doc.f.g === "" ? [] : doc.f.g.split("\n");
+    for (const tag of filters.tags) {
+      if (!tags.includes(publishNormalize(tag))) return false;
+    }
+  }
+  if (filters.types.length > 0) {
+    const docType = publishNormalize(type === undefined || type === "" ? "note" : type);
+    for (const wanted of filters.types) {
+      if (docType !== publishNormalize(wanted)) return false;
+    }
+  }
+  if (filters.paths.length > 0) {
+    const slug = publishNormalize(doc.s);
+    const fields = doc.f.p === "" ? [] : doc.f.p.split("\n");
+    for (const value of filters.paths) {
+      const prefix = publishNormalize(trimSlashes(value));
+      const boundary = `${prefix}/`;
+      const inSlug = slug === prefix || slug.startsWith(boundary);
+      const inFields = fields.some((line) => line === prefix || line.startsWith(boundary));
+      if (!inSlug && !inFields) return false;
+    }
+  }
+  return true;
+}
+
+export type PublishMarkRange = {
+  /** Start and end offsets into the NFC-normalized input text (UTF-16). */
+  readonly start: number;
+  readonly end: number;
+};
+
+export const MAX_PUBLISH_MARK_RANGES = 32;
+
+/**
+ * Locate query terms in display text for `<mark>` highlighting. The search
+ * index normalizes with NFC + en-US lowercase, so this builds the same
+ * normalized form code point by code point and maps matches back to ranges in
+ * the NFC-normalized input. Ranges are sorted, non-overlapping, and bounded.
+ */
+export function publishMarkRanges(
+  text: string,
+  terms: readonly string[],
+  maximum = MAX_PUBLISH_MARK_RANGES,
+): readonly PublishMarkRange[] {
+  const display = text.normalize("NFC");
+  let normalized = "";
+  const map: number[] = [];
+  for (let offset = 0; offset < display.length;) {
+    const point = display.codePointAt(offset) ?? 0;
+    const character = String.fromCodePoint(point);
+    const lowered = character.toLocaleLowerCase("en-US");
+    for (let index = 0; index < lowered.length; index += 1) map.push(offset);
+    normalized += lowered;
+    offset += character.length;
+  }
+  const ranges: PublishMarkRange[] = [];
+  for (const term of terms) {
+    const needle = publishNormalize(term);
+    if (needle === "") continue;
+    let from = 0;
+    while (ranges.length < maximum) {
+      const hit = normalized.indexOf(needle, from);
+      if (hit === -1) break;
+      const start = map[hit] ?? 0;
+      const tail = hit + needle.length;
+      const end = tail >= map.length ? display.length : (map[tail] ?? display.length);
+      if (end > start) ranges.push({ start, end });
+      from = tail === 0 ? 1 : tail;
+    }
+    if (ranges.length >= maximum) break;
+  }
+  ranges.sort((left, right) => left.start - right.start || left.end - right.end);
+  const merged: PublishMarkRange[] = [];
+  for (const range of ranges) {
+    const last = merged[merged.length - 1];
+    if (last !== undefined && range.start <= last.end) {
+      merged[merged.length - 1] = { start: last.start, end: Math.max(last.end, range.end) };
+    } else {
+      merged.push(range);
+    }
+  }
+  return merged;
+}
+
 /** Normalize and bound a published-site query like `validateSearchQuery`. */
 export function publishQuery(value: unknown): PublishQuery {
   if (typeof value !== "string") {

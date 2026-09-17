@@ -597,19 +597,21 @@ export function renderMarkdownToHtml(content: string, ctx: PublishRenderContext)
   return html.join("\n");
 }
 
-function stripMarkup(html: string): string {
-  const text = html
+export function stripMarkup(html: string): string {
+  // Scan literal tags first — escaped angle brackets (&lt;) decode to text,
+  // never tag boundaries. The character scanner (not a regex) keeps CodeQL's
+  // incomplete-multi-character-sanitization rule quiet.
+  let stripped = "";
+  let inTag = false;
+  for (const character of html) {
+    if (character === "<") inTag = true;
+    else if (character === ">") inTag = false;
+    else if (!inTag) stripped += character;
+  }
+  return stripped
     .replaceAll("&lt;", "<")
     .replaceAll("&gt;", ">")
     .replaceAll("&quot;", '"')
     .replaceAll("&#39;", "'")
     .replaceAll("&amp;", "&");
-  let stripped = "";
-  let inTag = false;
-  for (const character of text) {
-    if (character === "<") inTag = true;
-    else if (character === ">") inTag = false;
-    else if (!inTag) stripped += character;
-  }
-  return stripped;
 }
