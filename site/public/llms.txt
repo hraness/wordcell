@@ -1,0 +1,31 @@
+# wordcell
+
+> A knowledge base for coding agents, built from Markdown, backlinks,
+> semantic search, and Git context. Wordcell turns sources, plans, and
+> decisions into inspectable context that agents can recover across sessions
+> without coupling application code to the knowledge system. Markdown and Git
+> stay authoritative; every index is derived and rebuildable.
+
+When to use this site:
+- Use wordcell.io to learn what Wordcell is, the boundaries it keeps, and the
+  current verified install command.
+- Use /docs for the complete README: installation, vault format, command
+  surface, capture, graph, skills, and release notes.
+
+## Pages
+
+- [Wordcell](https://wordcell.io/): Memory model, interfaces (CLI, TypeScript
+  SDK, Agent Skill), trust boundaries, questions, and the verified install.
+- [Documentation](https://wordcell.io/docs): The complete Wordcell README
+  rendered as a page, including the install reference.
+
+## Source material
+
+- Repository and packaged Agent Skill: https://github.com/hraness/wordcell
+- README as Markdown: https://github.com/hraness/wordcell/blob/main/README.md
+- Immutable releases: https://github.com/hraness/wordcell/releases
+- npm mirror: https://www.npmjs.com/package/@hraness/wordcell
+
+## Optional
+
+- [sitemap](https://wordcell.io/sitemap.xml): Indexable HTML URLs.

@@ -63,6 +63,7 @@ function head(
     `<meta name="generator" content="${escapeAttribute(ctx.generator)}">`,
     `<meta name="wordcell:base" content="${escapeAttribute(ctx.rel || "./")}">`,
     `<meta http-equiv="Content-Security-Policy" content="${escapeAttribute(SITE_CONTENT_SECURITY_POLICY)}">`,
+    `<script src="${escapeAttribute(ctx.rel)}reader/theme.js"></script>`,
     `<link rel="stylesheet" href="${escapeAttribute(ctx.rel)}reader/reader.css">`,
     `<script type="module" src="${escapeAttribute(ctx.rel)}reader/reader.js"></script>`,
   ];

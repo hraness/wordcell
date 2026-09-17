@@ -9,23 +9,24 @@
   "scripts": {
     "check:theme": "bun scripts/check-paper-theme.mjs",
     "sync:readme": "bun scripts/sync-readme.ts",
-    "dev": "bun run sync:readme && next dev --webpack",
-    "prebuild": "bun run sync:readme",
+    "build:theme": "bun scripts/build-theme-bootstrap.ts",
+    "dev": "bun run sync:readme && bun run build:theme && next dev --webpack",
+    "prebuild": "bun run sync:readme && bun run build:theme",
     "build": "next build --webpack",
     "postbuild": "bun test ./tests/runtime.test.ts",
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
     "test": "bun test ./tests/source.test.ts ./tests/home.test.tsx ./scripts/readme-html.test.ts ./tests/ui-styles.test.tsx",
     "typecheck": "tsc --noEmit",
-    "check": "bun run check:theme && bun run sync:readme && bun run test && bun run lint && bun run typecheck && bun run build"
+    "check": "bun run check:theme && bun run sync:readme && bun run build:theme && bun run test && bun run lint && bun run typecheck && bun run build"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.8.0",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.10.0",
     "@hraness/ui": "github:hraness/ui#v0.5.13",
     "next": "16.3.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "@hraness/site-footer": "github:hraness/site-footer#v0.13.0"
+    "@hraness/site-footer": "github:hraness/site-footer#v0.15.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.2.1",

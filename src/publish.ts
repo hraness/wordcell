@@ -542,7 +542,7 @@ function withinRoot(root: string, candidate: string): boolean {
   return path === "" || (!path.startsWith(`..${sep}`) && path !== ".." && !isAbsolute(path));
 }
 
-const READER_FILES = ["reader.js", "reader.css"] as const;
+const READER_FILES = ["reader.js", "reader.css", "theme.js"] as const;
 
 async function defaultReaderFiles(): Promise<Map<string, Uint8Array>> {
   const packageRoot = findKbPackageRoot();

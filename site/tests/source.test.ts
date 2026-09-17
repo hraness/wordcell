@@ -60,7 +60,7 @@ describe("Wordcell site source contract", () => {
       read("app/readme.generated.ts"),
     ]);
     expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.13"');
-    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.8.0"');
+    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.10.0"');
     expect(home).toContain('import { AskAiAboutThis } from "@hraness/ui"');
     expect(home).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io" />');
     expect(docs).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />');
@@ -114,6 +114,30 @@ test("registers the footer layer after UI layers in one stylesheet", async () =>
   expect(layout).not.toContain('import "@hraness/site-footer/styles.css"');
 });
 
+test("adopts the shared palette contract with Paper as the default appearance", async () => {
+  const [layout, home, bootstrap, css, packageJson] = await Promise.all([
+    read("app/layout.tsx"),
+    read("app/page.tsx"),
+    read("browser/theme-bootstrap.ts"),
+    read("app/globals.css"),
+    read("package.json"),
+  ]);
+  expect(layout).toContain('data-palette="paper"');
+  expect(layout).toContain('getDesignPaletteTheme("paper", "light")');
+  expect(layout).toContain('src="/theme-bootstrap.js"');
+  expect(layout).toContain("DesignPaletteProvider");
+  expect(layout).toContain("suppressHydrationWarning");
+  // The single appearance control sits at the rightmost header action.
+  expect(home).toContain('trailing={<ThemeMenuButton aria-label="Appearance" />}');
+  // The blocking bootstrap keeps Paper as the system-following default.
+  expect(bootstrap).toContain("initDesignPalette");
+  expect(bootstrap).toContain('palette: "paper", mode: "system"');
+  // Palette themes and the semantic bridge load before the vendored theme.
+  expect(css).toContain('@import "@hraness/design-kit/palettes.css";');
+  expect(css.indexOf('palettes.css')).toBeLessThan(css.indexOf("vendor/paper-theme"));
+  expect(packageJson).toContain('"build:theme"');
+});
+
 test("pins the shared footer release and leaves attribution to the package", async () => {
   const [packageJson, layout, home, docs, css] = await Promise.all([
     read("package.json"),
@@ -122,13 +146,12 @@ test("pins the shared footer release and leaves attribution to the package", asy
     read("app/docs/page.tsx"),
     read("app/globals.css"),
   ]);
-  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.13.0"');
+  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.15.0"');
   expect(layout).toContain('import { HranessSiteFooter } from "@hraness/site-footer/react"');
   expect(layout).toMatch(/<HranessSiteFooter\b[^>]*placement="flow"/u);
-  expect(home).toContain('import { hranessAttribution } from "@hraness/site-footer"');
   for (const source of [home, docs, css]) {
     expect(source).not.toContain("Ben Guo");
-    expect(source).not.toContain("Built by ");
+    expect(source).not.toContain("Built by Ben");
     expect(source).not.toContain("MarketingMaker");
     expect(source).not.toContain("hraness-marketing-maker");
   }
