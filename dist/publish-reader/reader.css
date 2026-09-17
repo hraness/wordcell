@@ -1,11 +1,22 @@
-/* Wordcell reference reader — zero-dependency, system-font, light/dark. */
+/* Wordcell reference reader — zero-dependency, system-font, light/dark.
+ *
+ * Palette values are the resolved semantic colors of the shared
+ * `hraness-design-palette-v1` contract (Catppuccin, Gruvbox, Rosé Pine,
+ * Tokyo Night; light + dark), adapted onto the reader's --wordcell-*
+ * tokens. `data-palette`/`data-theme` are applied by reader/theme.js
+ * before first paint; pages without it fall back to the neutral
+ * "wordcell" palette via prefers-color-scheme below.
+ */
 
 :root {
   --wordcell-bg: #ffffff;
   --wordcell-fg: #1a1a1a;
   --wordcell-muted: #5f6368;
   --wordcell-border: #e1e4e8;
+  --wordcell-border-strong: #a8aeb6;
   --wordcell-accent: #0b5bd3;
+  --wordcell-accent-soft: #e9f1fc;
+  --wordcell-warning: #9a6700;
   --wordcell-code-bg: #f6f8fa;
   --wordcell-mark: #fff3bf;
   --wordcell-overlay: rgba(15, 15, 15, 0.45);
@@ -15,12 +26,15 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --wordcell-bg: #14151a;
     --wordcell-fg: #e8e8e8;
     --wordcell-muted: #9aa0a6;
     --wordcell-border: #2d3138;
+    --wordcell-border-strong: #4a505a;
     --wordcell-accent: #7aa5f8;
+    --wordcell-accent-soft: #1b2a44;
+    --wordcell-warning: #e3b341;
     --wordcell-code-bg: #1d2025;
     --wordcell-mark: #4d4200;
     --wordcell-overlay: rgba(0, 0, 0, 0.6);
@@ -28,8 +42,170 @@
   }
 }
 
+/* Shared palettes — explicit palette/theme pairs override the media-query
+ * defaults above. `border` is the subtle hairline (grid role); interactive
+ * boundaries use `border-strong` (control role). */
+
+:root[data-palette="wordcell"][data-theme="light"] {
+  --wordcell-bg: #ffffff;
+  --wordcell-fg: #1a1a1a;
+  --wordcell-muted: #5f6368;
+  --wordcell-border: #e1e4e8;
+  --wordcell-border-strong: #a8aeb6;
+  --wordcell-accent: #0b5bd3;
+  --wordcell-accent-soft: #e9f1fc;
+  --wordcell-warning: #9a6700;
+  --wordcell-code-bg: #f6f8fa;
+  --wordcell-mark: #fff3bf;
+  --wordcell-overlay: rgba(15, 15, 15, 0.45);
+  --wordcell-panel: #ffffff;
+}
+
+:root[data-palette="wordcell"][data-theme="dark"] {
+  --wordcell-bg: #14151a;
+  --wordcell-fg: #e8e8e8;
+  --wordcell-muted: #9aa0a6;
+  --wordcell-border: #2d3138;
+  --wordcell-border-strong: #4a505a;
+  --wordcell-accent: #7aa5f8;
+  --wordcell-accent-soft: #1b2a44;
+  --wordcell-warning: #e3b341;
+  --wordcell-code-bg: #1d2025;
+  --wordcell-mark: #4d4200;
+  --wordcell-overlay: rgba(0, 0, 0, 0.6);
+  --wordcell-panel: #1d2025;
+}
+
+:root[data-palette="catppuccin"][data-theme="light"] {
+  --wordcell-bg: #eff1f5;
+  --wordcell-fg: #3a3c50;
+  --wordcell-muted: #545768;
+  --wordcell-border: #dce0e8;
+  --wordcell-border-strong: #6e7183;
+  --wordcell-accent: #1750bf;
+  --wordcell-accent-soft: #d6e0f5;
+  --wordcell-warning: #7b4e10;
+  --wordcell-code-bg: #e6e9ef;
+  --wordcell-mark: #ede5db;
+  --wordcell-overlay: #00000070;
+  --wordcell-panel: #dce0e8;
+}
+
+:root[data-palette="catppuccin"][data-theme="dark"] {
+  --wordcell-bg: #1e1e2e;
+  --wordcell-fg: #dbe1f7;
+  --wordcell-muted: #b2b8cf;
+  --wordcell-border: #313244;
+  --wordcell-border-strong: #9296ab;
+  --wordcell-accent: #92bafa;
+  --wordcell-accent-soft: #2b3046;
+  --wordcell-warning: #f9e2af;
+  --wordcell-code-bg: #181825;
+  --wordcell-mark: #38363d;
+  --wordcell-overlay: #000000b8;
+  --wordcell-panel: #313244;
+}
+
+:root[data-palette="gruvbox"][data-theme="light"] {
+  --wordcell-bg: #fbf1c7;
+  --wordcell-fg: #393533;
+  --wordcell-muted: #584f48;
+  --wordcell-border: #ebdbb2;
+  --wordcell-border-strong: #75685e;
+  --wordcell-accent: #065968;
+  --wordcell-accent-soft: #dee0be;
+  --wordcell-warning: #70490c;
+  --wordcell-code-bg: #f9f5d7;
+  --wordcell-mark: #f3e2b2;
+  --wordcell-overlay: #00000070;
+  --wordcell-panel: #ebdbb2;
+}
+
+:root[data-palette="gruvbox"][data-theme="dark"] {
+  --wordcell-bg: #282828;
+  --wordcell-fg: #f0e5c7;
+  --wordcell-muted: #c7baa3;
+  --wordcell-border: #3c3836;
+  --wordcell-border-strong: #a5988c;
+  --wordcell-accent: #a9c1b8;
+  --wordcell-accent-soft: #333735;
+  --wordcell-warning: #fabd2f;
+  --wordcell-code-bg: #1d2021;
+  --wordcell-mark: #413a29;
+  --wordcell-overlay: #000000b8;
+  --wordcell-panel: #3c3836;
+}
+
+:root[data-palette="rose-pine"][data-theme="light"] {
+  --wordcell-bg: #faf4ed;
+  --wordcell-fg: #44405e;
+  --wordcell-muted: #605c74;
+  --wordcell-border: #f2e9e1;
+  --wordcell-border-strong: #797593;
+  --wordcell-accent: #68587a;
+  --wordcell-accent-soft: #ede5e5;
+  --wordcell-warning: #81561d;
+  --wordcell-code-bg: #fffaf3;
+  --wordcell-mark: #f8ead7;
+  --wordcell-overlay: #00000070;
+  --wordcell-panel: #f2e9e1;
+}
+
+:root[data-palette="rose-pine"][data-theme="dark"] {
+  --wordcell-bg: #191724;
+  --wordcell-fg: #e0def4;
+  --wordcell-muted: #adaac0;
+  --wordcell-border: #26233a;
+  --wordcell-border-strong: #908caa;
+  --wordcell-accent: #c4a7e7;
+  --wordcell-accent-soft: #2e283b;
+  --wordcell-warning: #f6c177;
+  --wordcell-code-bg: #1f1d2e;
+  --wordcell-mark: #342b2e;
+  --wordcell-overlay: #000000b8;
+  --wordcell-panel: #26233a;
+}
+
+:root[data-palette="tokyo-night"][data-theme="light"] {
+  --wordcell-bg: #e1e2e7;
+  --wordcell-fg: #1c3161;
+  --wordcell-muted: #414c76;
+  --wordcell-border: #c4c8da;
+  --wordcell-border-strong: #56659d;
+  --wordcell-accent: #1d4e90;
+  --wordcell-accent-soft: #ccd6e7;
+  --wordcell-warning: #614b2b;
+  --wordcell-code-bg: #d0d5e3;
+  --wordcell-mark: #d7d4d3;
+  --wordcell-overlay: #00000070;
+  --wordcell-panel: #c4c8da;
+}
+
+:root[data-palette="tokyo-night"][data-theme="dark"] {
+  --wordcell-bg: #1a1b26;
+  --wordcell-fg: #c0caf5;
+  --wordcell-muted: #a9b1d6;
+  --wordcell-border: #24283b;
+  --wordcell-border-strong: #737aa2;
+  --wordcell-accent: #7aa2f7;
+  --wordcell-accent-soft: #262b3f;
+  --wordcell-warning: #e0af68;
+  --wordcell-code-bg: #16161e;
+  --wordcell-mark: #322d2e;
+  --wordcell-overlay: #000000b8;
+  --wordcell-panel: #24283b;
+}
+
 html {
   color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
@@ -62,13 +238,14 @@ body {
   gap: 1rem;
   max-width: 76rem;
   margin: 0 auto;
-  padding: 1rem 1.25rem;
+  padding: 0.65rem 1.25rem;
   border-bottom: 1px solid var(--wordcell-border);
 }
 
 .site-title {
   color: var(--wordcell-fg);
   font-weight: 650;
+  font-size: 0.95rem;
   text-decoration: none;
 }
 
@@ -106,7 +283,13 @@ body {
   background: transparent;
   color: var(--wordcell-muted);
   font: inherit;
+  font-size: 0.9rem;
   cursor: pointer;
+}
+
+.search-button:hover {
+  color: var(--wordcell-fg);
+  background: var(--wordcell-code-bg);
 }
 
 .search-button kbd {
@@ -114,6 +297,139 @@ body {
   border: 1px solid var(--wordcell-border);
   border-radius: 0.25rem;
   font: 0.75em ui-monospace, monospace;
+}
+
+/* Appearance menu — the single icon control at the rightmost header
+ * action, injected by the reader bundle (absent without JavaScript). */
+
+.appearance {
+  position: relative;
+}
+
+.appearance-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--wordcell-muted);
+  cursor: pointer;
+}
+
+.appearance-trigger:hover {
+  color: var(--wordcell-fg);
+  background: var(--wordcell-code-bg);
+}
+
+.appearance-trigger[aria-expanded="true"] {
+  color: var(--wordcell-accent);
+  background: var(--wordcell-accent-soft);
+}
+
+.appearance-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  min-width: 11.5rem;
+  margin: 0;
+  padding: 0.45rem;
+  border: 1px solid var(--wordcell-border);
+  border-radius: 0.65rem;
+  background: var(--wordcell-panel);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18);
+  font-size: 0.85rem;
+}
+
+.appearance-menu[hidden] {
+  display: none;
+}
+
+.appearance-group {
+  padding: 0.15rem 0;
+}
+
+.appearance-group + .appearance-group {
+  border-top: 1px solid var(--wordcell-border);
+  margin-top: 0.3rem;
+  padding-top: 0.45rem;
+}
+
+.appearance-label {
+  padding: 0.1rem 0.55rem 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--wordcell-muted);
+}
+
+.appearance-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.4rem;
+  color: var(--wordcell-fg);
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.appearance-option:hover {
+  background: var(--wordcell-code-bg);
+}
+
+.appearance-option input {
+  appearance: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin: 0;
+  flex: none;
+  border: 1.5px solid var(--wordcell-border-strong);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.appearance-option input:checked {
+  border-color: var(--wordcell-accent);
+  background: var(--wordcell-accent);
+  box-shadow: inset 0 0 0 2.5px var(--wordcell-panel);
+}
+
+.appearance-option input:focus-visible {
+  outline: 2px solid var(--wordcell-accent);
+  outline-offset: 2px;
+}
+
+.appearance-option .swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--wordcell-border-strong);
+}
+
+/* Swatches show each palette's light/dark page backgrounds, split. */
+.swatch-wordcell { background: linear-gradient(135deg, #ffffff 50%, #14151a 50%); }
+.swatch-catppuccin { background: linear-gradient(135deg, #eff1f5 50%, #1e1e2e 50%); }
+.swatch-gruvbox { background: linear-gradient(135deg, #fbf1c7 50%, #282828 50%); }
+.swatch-rose-pine { background: linear-gradient(135deg, #faf4ed 50%, #191724 50%); }
+.swatch-tokyo-night { background: linear-gradient(135deg, #e1e2e7 50%, #1a1b26 50%); }
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--wordcell-accent);
+  outline-offset: 2px;
+  border-radius: 0.3rem;
+}
+
+::selection {
+  background: var(--wordcell-accent-soft);
 }
 
 .site-layout {
@@ -177,7 +493,7 @@ body {
 .site-tree-link.site-tree-current {
   color: var(--wordcell-accent);
   font-weight: 600;
-  background: var(--wordcell-code-bg);
+  background: var(--wordcell-accent-soft);
 }
 
 .site-tree-empty {
@@ -312,10 +628,16 @@ main {
 .note-toc .toc-level-3,
 .note-toc .toc-level-4 { padding-left: 1.6rem; }
 
+.note {
+  max-width: 42rem;
+}
+
 .note h1 {
   margin: 0 0 0.5rem;
   font-size: 1.8rem;
   line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 .note-meta {
@@ -327,11 +649,11 @@ main {
 
 .note-type,
 .note-tag {
-  padding: 0.1rem 0.55rem;
+  padding: 0.08rem 0.55rem;
   border: 1px solid var(--wordcell-border);
   border-radius: 999px;
   color: var(--wordcell-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .note-aliases {
@@ -340,8 +662,32 @@ main {
   margin: 0 0 1rem;
 }
 
+.note-body {
+  line-height: 1.7;
+}
+
+.note-body p,
+.note-body li {
+  text-wrap: pretty;
+}
+
+.note-body h2,
+.note-body h3,
+.note-body h4 {
+  text-wrap: balance;
+  letter-spacing: -0.005em;
+}
+
 .note-body a {
   color: var(--wordcell-accent);
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.14em;
+}
+
+.note-body hr {
+  border: 0;
+  border-top: 1px solid var(--wordcell-border);
+  margin: 2rem 0;
 }
 
 .note-body img {
@@ -519,7 +865,7 @@ main {
 }
 
 .graph-reset {
-  border: 1px solid var(--wordcell-border);
+  border: 1px solid var(--wordcell-border-strong);
   border-radius: 0.45rem;
   background: var(--wordcell-panel);
   color: var(--wordcell-fg);
@@ -642,7 +988,7 @@ main {
 
 .wordcell-search-results a.active,
 .wordcell-search-results a:hover {
-  background: var(--wordcell-code-bg);
+  background: var(--wordcell-accent-soft);
 }
 
 .wordcell-search-results .title {

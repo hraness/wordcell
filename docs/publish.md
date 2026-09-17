@@ -78,6 +78,7 @@ site/
   index/c/<hh>.json       # content postings shards, only for large selections
   assets/<hash>.<ext>     # referenced attachments, content-addressed
   reader/reader.js|.css   # the bundled reader: search overlay and graph map
+  reader/theme.js         # synchronous appearance bootstrap (see below)
   404.html, robots.txt, sitemap.xml
 ```
 
@@ -103,6 +104,23 @@ seeded deterministic force layout, so every visitor sees the same map. Sites
 over the contract's node limit publish the same page with the static note
 index instead of the live canvas, and the prerendered index below the map
 keeps the page useful without JavaScript at any size.
+
+### Appearance
+
+The reader supports the shared Hraness palette contract: the `wordcell`
+neutral palette plus Catppuccin, Gruvbox, Rosé Pine, and Tokyo Night, each
+in light and dark. A small classic script, `reader/theme.js`, loads
+synchronously in every page head — ahead of the stylesheet — and applies
+the stored preference to `data-palette` and `data-theme` on the document
+element before first paint, so a saved palette never flashes the default.
+The preference lives under `hraness-design-palette-v1` in the origin's
+local storage, the same key design-kit applications use, so a reader
+hosted beside one honors the visitor's existing choice; `system` mode
+follows the operating system and `storage` events synchronize other tabs.
+The deferred reader adds a single appearance menu as the rightmost header
+action — radio groups for mode and palette — and the graph map repaints
+on every applied change. Without JavaScript, or with no stored preference,
+pages fall back to the neutral palette under `prefers-color-scheme`.
 
 Every JSON file carries an explicit format identifier and parses under a
 bounded `unknown`-value contract; parsers reject unexpected keys, oversize

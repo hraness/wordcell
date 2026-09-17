@@ -35,6 +35,13 @@ import {
   type PublishQueryFilters,
   type PublishScore,
 } from "../publish-search.js";
+import {
+  wordcellAppearanceBridge,
+  wordcellAppearanceModeLabels,
+  wordcellAppearanceModes,
+  wordcellPaletteLabels,
+  wordcellPalettes,
+} from "../publish-theme.js";
 
 /**
  * Zero-dependency reference reader bundled into every published site. It
@@ -85,6 +92,8 @@ type ReaderElement = {
   innerHTML: string;
   href: string;
   type: string;
+  name: string;
+  checked: boolean;
   placeholder: string;
   value: string;
   hidden: boolean;
@@ -111,6 +120,7 @@ type ReaderEvent = {
   readonly target?: {
     readonly value?: string;
     readonly tagName?: string;
+    closest?(selector: string): ReaderElement | null;
   } | null;
   preventDefault(): void;
 };
@@ -836,10 +846,12 @@ function initGraph(base: string): void {
       view = fitView(points, cssWidth, cssHeight);
       redraw();
     });
-    dom.matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    const repaintTheme = (): void => {
       theme.current = graphTheme(shell);
       redraw();
-    });
+    };
+    wordcellAppearanceBridge()?.subscribe(repaintTheme);
+    dom.matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", repaintTheme);
 
     if (status !== null) status.hidden = true;
     dom.addEventListener?.("hashchange", focusSlug);
@@ -853,11 +865,137 @@ function initGraph(base: string): void {
   });
 }
 
+/**
+ * The appearance control is injected by the reader so published pages carry
+ * no dead control without JavaScript. It is a single icon button appended
+ * as the final header action; its menu holds real radio inputs for keyboard
+ * and screen-reader parity, and it drives the synchronous `theme.js`
+ * bridge so a selection repaints instantly and persists under the shared
+ * `hraness-design-palette-v1` key.
+ */
+function initAppearance(): void {
+  const bridge = wordcellAppearanceBridge();
+  const actions = dom.document.querySelector(".site-actions");
+  if (bridge === undefined || actions === null) return;
+
+  const wrap = dom.document.createElement("div");
+  wrap.className = "appearance";
+
+  const trigger = dom.document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "appearance-trigger";
+  trigger.setAttribute("aria-haspopup", "dialog");
+  trigger.setAttribute("aria-expanded", "false");
+  trigger.setAttribute("aria-label", "Appearance");
+  trigger.innerHTML = "<svg width=\"15\" height=\"15\" viewBox=\"0 0 16 16\" aria-hidden=\"true\">"
+    + "<circle cx=\"8\" cy=\"8\" r=\"6.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\"/>"
+    + "<path d=\"M8 1.4a6.6 6.6 0 0 1 0 13.2z\" fill=\"currentColor\"/></svg>";
+
+  const menu = dom.document.createElement("div");
+  menu.className = "appearance-menu";
+  menu.hidden = true;
+  menu.setAttribute("role", "dialog");
+  menu.setAttribute("aria-label", "Appearance");
+
+  const paletteInputs = new Map<string, ReaderElement>();
+  const modeInputs = new Map<string, ReaderElement>();
+
+  const modeGroup = dom.document.createElement("div");
+  modeGroup.className = "appearance-group";
+  const modeLabel = dom.document.createElement("div");
+  modeLabel.className = "appearance-label";
+  modeLabel.textContent = "Appearance";
+  modeGroup.appendChild(modeLabel);
+  for (const mode of wordcellAppearanceModes) {
+    const label = dom.document.createElement("label");
+    label.className = "appearance-option";
+    const input = dom.document.createElement("input");
+    input.type = "radio";
+    input.name = "wordcell-appearance-mode";
+    input.value = mode;
+    input.addEventListener("change", () => {
+      bridge.set({ palette: bridge.get().palette, mode });
+    });
+    modeInputs.set(mode, input);
+    const text = dom.document.createElement("span");
+    text.textContent = wordcellAppearanceModeLabels[mode];
+    label.appendChild(input);
+    label.appendChild(text);
+    modeGroup.appendChild(label);
+  }
+
+  const paletteGroup = dom.document.createElement("div");
+  paletteGroup.className = "appearance-group";
+  const paletteLabel = dom.document.createElement("div");
+  paletteLabel.className = "appearance-label";
+  paletteLabel.textContent = "Palette";
+  paletteGroup.appendChild(paletteLabel);
+  for (const palette of wordcellPalettes) {
+    const label = dom.document.createElement("label");
+    label.className = "appearance-option";
+    const input = dom.document.createElement("input");
+    input.type = "radio";
+    input.name = "wordcell-appearance-palette";
+    input.value = palette;
+    input.addEventListener("change", () => {
+      bridge.set({ palette, mode: bridge.get().mode });
+    });
+    paletteInputs.set(palette, input);
+    const swatch = dom.document.createElement("span");
+    swatch.className = `swatch swatch-${palette}`;
+    const text = dom.document.createElement("span");
+    text.textContent = wordcellPaletteLabels[palette];
+    label.appendChild(input);
+    label.appendChild(swatch);
+    label.appendChild(text);
+    paletteGroup.appendChild(label);
+  }
+
+  menu.appendChild(modeGroup);
+  menu.appendChild(paletteGroup);
+  wrap.appendChild(trigger);
+  wrap.appendChild(menu);
+  actions.appendChild(wrap);
+
+  const sync = (): void => {
+    const preference = bridge.get();
+    for (const [mode, input] of modeInputs) input.checked = mode === preference.mode;
+    for (const [palette, input] of paletteInputs) input.checked = palette === preference.palette;
+  };
+
+  const close = (): void => {
+    menu.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+  };
+  const open = (): void => {
+    sync();
+    menu.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    paletteInputs.get(bridge.get().palette)?.focus();
+  };
+  trigger.addEventListener("click", () => {
+    if (menu.hidden) open();
+    else close();
+  });
+  dom.document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !menu.hidden) {
+      close();
+      trigger.focus();
+    }
+  });
+  dom.document.addEventListener("click", (event) => {
+    if (!menu.hidden && event.target?.closest?.(".appearance") == null) close();
+  });
+  bridge.subscribe(sync);
+  sync();
+}
+
 function start(): void {
   const content = dom.document
     .querySelector('meta[name="wordcell:base"]')
     ?.getAttribute("content") ?? "./";
   const base = content.endsWith("/") ? content : `${content}/`;
+  initAppearance();
   const overlay = buildOverlay(base);
   for (const button of Array.from(
     dom.document.querySelectorAll("[data-wordcell-search]"),

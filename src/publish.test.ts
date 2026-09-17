@@ -111,6 +111,7 @@ describe("publishVault", () => {
         "graph/index.html",
         "reader/reader.js",
         "reader/reader.css",
+        "reader/theme.js",
       ]) {
         expect(paths).toContain(required);
       }
@@ -137,6 +138,18 @@ describe("publishVault", () => {
       const betaHtml = await readFile(join(out, "n/docs/beta/index.html"), "utf8");
       expect(betaHtml).toContain('class="note-toc"');
       expect(betaHtml).toContain('href="#details"');
+
+      // The synchronous appearance bootstrap ships as a classic script
+      // before the stylesheet on every page so stored palettes apply
+      // pre-paint under the strict self-only CSP.
+      for (const html of [alphaHtml, graphHtml]) {
+        const themeAt = html.indexOf("reader/theme.js");
+        const cssAt = html.indexOf("reader/reader.css");
+        expect(themeAt).toBeGreaterThan(-1);
+        expect(cssAt).toBeGreaterThan(themeAt);
+        expect(html).not.toContain(`type="module" src="${"../".repeat(3)}reader/theme.js"`);
+        expect(html).not.toContain('type="module" src="../reader/theme.js"');
+      }
 
       // Nothing outside the selection leaked into structured artifacts.
       const catalogText = await readFile(join(out, "catalog.json"), "utf8");
