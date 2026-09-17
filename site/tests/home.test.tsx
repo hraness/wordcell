@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { hranessAttribution } from "@hraness/site-footer";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import Home from "../app/page";
@@ -15,6 +16,38 @@ test("every public route has one optional support footer without product signup"
     expect(html).not.toContain('type="email"');
     expect(html).not.toContain('source=web#updates');
   }
+});
+
+test("every public route attributes the site to Hraness through the shared footer only", () => {
+  expect(hranessAttribution.title).toBe("Built by Hraness");
+  expect(hranessAttribution.subtitle).toMatch(/^Hraness is an advanced software research organization/u);
+  for (const Page of [Home, Docs]) {
+    const html = renderToStaticMarkup(<RootLayout><Page /></RootLayout>);
+    const attributionBlocks: Array<{ lang: string; lines: string[] }> = [];
+    new HTMLRewriter()
+      .on('footer [data-slot="hraness-attribution"]', {
+        element(element) { attributionBlocks.push({ lang: element.getAttribute("lang") ?? "", lines: [] }); },
+      })
+      .on('footer [data-slot="hraness-attribution"] p', {
+        text(chunk) {
+          if (chunk.text !== "") attributionBlocks.at(-1)?.lines.push(chunk.text);
+        },
+      })
+      .transform(html);
+    expect(attributionBlocks).toEqual([{ lang: "en", lines: [hranessAttribution.title, hranessAttribution.subtitle] }]);
+    expect(html).not.toContain("Ben Guo");
+    expect(html).not.toContain("Built by Ben");
+    expect(html).not.toContain("hraness-marketing-maker");
+    expect(html).not.toContain('id="maker"');
+  }
+});
+
+test("the homepage's maker answer repeats the shared footer attribution copy", () => {
+  const html = renderToStaticMarkup(<Home />);
+  expect(html).toContain("Who made it?");
+  expect(html).toContain(`${hranessAttribution.title}. ${hranessAttribution.subtitle} Wordcell is published under the MIT license.`);
+  expect(html).not.toContain("Venmo");
+  expect(html).not.toContain("Puerto Rico");
 });
 
 test("the homepage leads with the README identity and the verified install command", () => {

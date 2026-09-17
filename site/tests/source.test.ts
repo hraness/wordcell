@@ -113,3 +113,23 @@ test("registers the footer layer after UI layers in one stylesheet", async () =>
   expect(css.indexOf(footer)).toBeGreaterThan(css.indexOf('lantern-material.css";'));
   expect(layout).not.toContain('import "@hraness/site-footer/styles.css"');
 });
+
+test("pins the shared footer release and leaves attribution to the package", async () => {
+  const [packageJson, layout, home, docs, css] = await Promise.all([
+    read("package.json"),
+    read("app/layout.tsx"),
+    read("app/page.tsx"),
+    read("app/docs/page.tsx"),
+    read("app/globals.css"),
+  ]);
+  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.13.0"');
+  expect(layout).toContain('import { HranessSiteFooter } from "@hraness/site-footer/react"');
+  expect(layout).toMatch(/<HranessSiteFooter\b[^>]*placement="flow"/u);
+  expect(home).toContain('import { hranessAttribution } from "@hraness/site-footer"');
+  for (const source of [home, docs, css]) {
+    expect(source).not.toContain("Ben Guo");
+    expect(source).not.toContain("Built by ");
+    expect(source).not.toContain("MarketingMaker");
+    expect(source).not.toContain("hraness-marketing-maker");
+  }
+});
