@@ -115,3 +115,10 @@ export function canonicalSha256Rust(value: unknown): string | null {
 export function canonicalRustEngineInfo(): { engine: string; artifactSha256: string; available: boolean } {
   return { engine: "oh.canonical.rust.v1", artifactSha256: OH_CANONICAL_RAW_WASM_SHA256, available: engine() !== null };
 }
+
+/** Emit a non-fatal telemetry notice when the Rust engine falls back to TS. */
+export function emitCanonicalRustFallback(reason: string, inputClass: string): void {
+  if (typeof process !== "undefined" && process.stderr?.write) {
+    process.stderr.write(`[oh-canonical-rust-fallback] ${reason} input=${inputClass}\n`);
+  }
+}
