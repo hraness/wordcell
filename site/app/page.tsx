@@ -2,7 +2,6 @@ import {
   MarketingCallToAction,
   MarketingInstallPanel,
   MarketingInterfaceGrid,
-  MarketingMaker,
   MarketingPage,
   MarketingPrimitives,
   MarketingProofFrame,
@@ -12,6 +11,7 @@ import {
   MarketingTrustBoundary,
   ProductHero,
 } from "@hraness/design-kit/react/server";
+import { hranessAttribution } from "@hraness/site-footer";
 import { AskAiAboutThis } from "@hraness/ui";
 
 import { publishedRelease } from "./publication";
@@ -90,7 +90,7 @@ const questions = [
   },
   {
     question: "Who made it?",
-    answer: "Ben Guo, a musician and builder, formerly a founder and engineering leader at companies including Venmo and Stripe, now building from Puerto Rico. Wordcell is published by Hraness under the MIT license.",
+    answer: `${hranessAttribution.title}. ${hranessAttribution.subtitle} Wordcell is published under the MIT license.`,
   },
 ] as const;
 
@@ -283,24 +283,6 @@ wordcell check --root kb`}</code></pre>
               question,
             }))}
           />
-
-          <MarketingMaker
-            heading="Built by Ben Guo"
-            headingId="maker-title"
-            id="maker"
-            label=""
-            links={[
-              { href: "https://hraness.com", label: "hraness.com" },
-              { href: "https://x.com/hraness", label: "@hraness" },
-              { href: repository, label: "GitHub" },
-            ]}
-          >
-            <p>
-              Wordcell is built by Ben Guo, a musician and builder, formerly a founder and engineering
-              leader at companies including Venmo and Stripe, now building from Puerto Rico. It is
-              published by Hraness under the MIT license.
-            </p>
-          </MarketingMaker>
 
           <MarketingCallToAction
             actions={[
