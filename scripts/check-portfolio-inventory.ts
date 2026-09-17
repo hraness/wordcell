@@ -1,6 +1,12 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { canonicalPortfolioInventoryBytes } from "@hraness/build-governance/portfolio-inventory";
+import {
+  canonicalPortfolioInventory,
+  canonicalPortfolioInventoryBytes,
+  hranessSourceRepository,
+} from "@hraness/build-governance/portfolio-inventory";
+
+export { canonicalPortfolioInventory, hranessSourceRepository };
 
 const repositoryRoot = resolve(import.meta.dir, "..");
 const inventoryPath = resolve(repositoryRoot, "portfolio-inventory.json");
