@@ -16,6 +16,7 @@
         "zod": "^4.4.3",
       },
       "devDependencies": {
+        "@hraness/build-governance": "github:hraness/build-governance#v0.1.0",
         "@types/bun": "^1.3.14",
         "fast-check": "^4.8.0",
         "typescript": "^6.0.3",
@@ -24,6 +25,8 @@
   },
   "packages": {
     "@hono/node-server": ["@hono/node-server@1.19.17", "", { "peerDependencies": { "hono": "^4" } }, "sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ=="],
+
+    "@hraness/build-governance": ["@hraness/build-governance@github:hraness/build-governance#d7436be", { "peerDependencies": { "typescript": "^6.0.3" } }, "hraness-build-governance-d7436be", "sha512-E35iWyOTAr83wolBYf4/vpPH0f3QsBA96ubY6XuGEc50fX6BVWIYQ37bYoAYEx4Owe6Ew1hSVRgTxdGOG4c9SA=="],
 
     "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.4.3/hraness-oh-0.4.3.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-nNSYgzPwUzlUeTagVZ1Ti/UV92KSs3Q2x2hWx8bp8mt7zFXxVc9EV+Toqp3dRTkiqnxNBVBWVhaTBjr0IM8ZNg=="],
 

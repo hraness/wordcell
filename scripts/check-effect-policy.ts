@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { createArchitectureProgram, inspectEffectArchitecture } from "./check-effect-architecture.js";
+import { createArchitectureProgram, inspectEffectArchitecture } from "@hraness/build-governance/effect-architecture";
 
 const root = resolve(import.meta.dir, "..");
 const findings = inspectEffectArchitecture(createArchitectureProgram(resolve(root, "tsconfig.json")), {
