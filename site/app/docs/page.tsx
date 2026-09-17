@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AskAiAboutThis } from "@hraness/ui";
 
 import { publishedRelease } from "../publication";
+import { WordcellContentFooter } from "../site-footer";
 import { readmeHtml, readmeTitle } from "../readme.generated";
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function Docs() {
         <article dangerouslySetInnerHTML={{ __html: readmeHtml }} />
       </main>
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />
+      <WordcellContentFooter />
     </>
   );
 }

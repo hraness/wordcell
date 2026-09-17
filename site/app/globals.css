@@ -46,13 +46,6 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
-.brand-mark {
-  display: inline-block;
-  font-size: 1.25em;
-  line-height: 1;
-  color: var(--hraness-site-accent);
-}
-
 .wordcell-marketing-hero .hraness-marketing-hero__heading {
   max-inline-size: 22ch;
 }
@@ -138,50 +131,13 @@ a:focus-visible {
   }
 }
 
-.ask-ai,
-.site-footer {
+.ask-ai {
   inline-size: min(100%, var(--hraness-marketing-measure));
   margin-inline: auto;
   padding-inline: clamp(1.25rem, 4vw, 3rem);
-}
-
-.ask-ai {
   padding-block: 1.25rem;
   border-top: 1px solid var(--line);
   color: var(--muted);
-}
-
-.site-footer {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 1rem 3rem;
-  padding-block: 2rem 4rem;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.site-footer p {
-  margin: 0;
-  max-inline-size: 40ch;
-}
-
-.site-footer nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-}
-
-.site-footer a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.site-footer a:hover {
-  color: var(--foreground);
-  text-decoration: underline;
 }
 
 .skip-link {
@@ -200,7 +156,7 @@ a:focus-visible {
 }
 
 @media (pointer: coarse) {
-  .site-footer a, .hraness-marketing-header__nav a, .document-nav a {
+  .hraness-marketing-footer__nav a, .hraness-marketing-header__nav a, .document-nav a {
     display: inline-flex;
     align-items: center;
     min-height: 3rem;

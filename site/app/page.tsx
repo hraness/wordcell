@@ -12,10 +12,11 @@ import {
   ProductHero,
 } from "@hraness/design-kit/react/server";
 import { ThemeMenuButton } from "@hraness/design-kit/react";
-import { hranessAttribution } from "@hraness/site-footer";
+
 import { AskAiAboutThis } from "@hraness/ui";
 
 import { publishedRelease } from "./publication";
+import { WordcellContentFooter } from "./site-footer";
 import { readmeLead, readmeTitle } from "./readme.generated";
 
 const releaseVersion = publishedRelease?.version;
@@ -91,7 +92,7 @@ const questions = [
   },
   {
     question: "Who made it?",
-    answer: `${hranessAttribution.title}. ${hranessAttribution.subtitle} Wordcell is published under the MIT license.`,
+    answer: "Built by Hraness. Hraness is an advanced software research organization dedicated to advancing the frontier of machine intelligence. Wordcell is published under the MIT license.",
   },
 ] as const;
 
@@ -104,7 +105,7 @@ const navigation = [
 ] as const;
 
 function BrandMark() {
-  return <span aria-hidden="true" className="brand-mark">📝</span>;
+  return <img alt="" height={20} src="/icon.png" width={20} />;
 }
 
 export default function Home() {
@@ -301,14 +302,7 @@ wordcell check --root kb`}</code></pre>
 
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io" />
 
-      <div className="site-footer">
-        <p>Wordcell is open source for developers and the agents working beside them.</p>
-        <nav aria-label="Project links">
-          <a href="/docs">Docs</a>
-          <a href={repository}>hraness/wordcell</a>
-          <a href="https://hraness.com/projects">Hraness projects</a>
-        </nav>
-      </div>
+      <WordcellContentFooter />
     </div>
   );
 }

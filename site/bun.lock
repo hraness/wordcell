@@ -5,8 +5,8 @@
     "": {
       "name": "wordcell-site",
       "dependencies": {
-        "@hraness/design-kit": "github:hraness/design-kit#v0.8.0",
-        "@hraness/site-footer": "github:hraness/site-footer#v0.13.0",
+        "@hraness/design-kit": "github:hraness/design-kit#v0.9.0",
+        "@hraness/site-footer": "github:hraness/site-footer#v0.14.0",
         "@hraness/ui": "github:hraness/ui#v0.5.13",
         "next": "16.3.3",
         "react": "19.2.6",
@@ -85,9 +85,9 @@
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.1", "", { "dependencies": { "@eslint/core": "^0.17.0", "levn": "^0.4.1" } }, "sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA=="],
 
-    "@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#7813c9c", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.2", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.12 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-7813c9c", "sha512-erlyNqevsQJUqKbI1vSfJRkU6TDiIEHypuYopjkJotXjaatWd5ouDSBeB5vt4RVa5v8tpeIMb4tb4K3hX6D4CA=="],
+    "@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#ec16647", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.2", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.12 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-ec16647", "sha512-6V4lD2BwwnB1pu2VbGruE/xuCRw3NPEVm66z0aDuwIRNP3K9jNOnoPbqWiHNqPmuid6hMC2/mDhk76zJTr+anA=="],
 
-    "@hraness/site-footer": ["@hraness/site-footer@github:hraness/site-footer#5a98596", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "hraness-site-footer-5a98596", "sha512-6uDPfrn6D6oPyXsPvd8WWFYbA2P6vS1eDyO9tpPtQl1mSE73Zp++/u6/noOYjhyEpcYc2KBkW7nb+3dqNROcVw=="],
+    "@hraness/site-footer": ["@hraness/site-footer@github:hraness/site-footer#11ee484", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "hraness-site-footer-11ee484", "sha512-LRbmtwD+cR5W/GUxXN+BLWShFBSiihQagkuXSa1NkELgkCc15bXNHDLgTlAc52rBa2FwVtIoS2pKrIOELAQ7jA=="],
 
     "@hraness/ui": ["@hraness/ui@github:hraness/ui#89946f6", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.2", "@hugeicons/react": "^1.1.9", "@stylexjs/stylex": "0.19.0", "clsx": "^2.1.1", "parse5": "8.0.1", "react-aria": "3.50.0", "react-aria-components": "1.19.0" }, "peerDependencies": { "@babel/core": "7.29.7", "@stylexjs/babel-plugin": "0.19.0", "@types/babel__core": "7.20.5", "@types/bun": "1.3.14", "@types/node": "^20.19.0 || >=22.12.0", "lightningcss": "1.33.0", "next": "16.2.12 || 16.3.3", "react": ">=18 <20", "react-dom": ">=18 <20", "typescript": "6.0.3", "vite": "7.3.6 || 8.2.1" }, "optionalPeers": ["@babel/core", "@stylexjs/babel-plugin", "@types/babel__core", "@types/bun", "@types/node", "lightningcss", "next", "typescript", "vite"] }, "hraness-ui-89946f6", "sha512-U3mbWWSJbULiEZTY8N0cS+Nu7BO9vYI8UbeTkI+UnmSUElk/RJv9lZEEB8/R5873SLVpAXm2oC9puj51mvsBOw=="],
 
