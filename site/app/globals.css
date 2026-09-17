@@ -231,3 +231,6 @@ a { text-underline-offset: 0.2em; }
   border-color: var(--hraness-material-seam);
   color: var(--hraness-material-ink);
 }
+
+/* Decorative topic icons (agent-generated line art, public/icons/). */
+.wordcell-topic-icon { display: block; width: 40px; height: 40px; margin: 0 0 12px; }

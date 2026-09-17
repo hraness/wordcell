@@ -15,6 +15,14 @@ import { ThemeMenuButton } from "@hraness/design-kit/react";
 
 import { AskAiAboutThis } from "@hraness/ui";
 
+function TopicIcon({ slug }: Readonly<{ slug: string }>) {
+  // Decorative local SVG; next/image cannot optimize vector sources.
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img className="wordcell-topic-icon" src={`/icons/${slug}.svg`} alt="" aria-hidden="true" width="40" height="40" loading="lazy" decoding="async" />
+  );
+}
+
 import { publishedRelease } from "./publication";
 import { WordcellContentFooter } from "./site-footer";
 import { readmeLead, readmeTitle } from "./readme.generated";
@@ -29,26 +37,32 @@ const footnote =
 
 const primitives = [
   {
+    icon: "markdown",
     label: "Notes",
     summary: "Ordinary Markdown with frontmatter. A stable document id, tags, and typed relationships live in the file, so Obsidian, grep, and Git all read the same record.",
   },
   {
+    icon: "backlinks",
     label: "Backlinks and graph views",
     summary: "Derived at read time from wikilinks and typed relationships. Wordcell never writes reciprocal or inferred edges into your notes.",
   },
   {
+    icon: "search",
     label: "Search lanes",
     summary: "Exact metadata filters, local full-text, and optional local embeddings stay separate evidence. Results join back to the current file, never to a stale index.",
   },
   {
+    icon: "git-provenance",
     label: "Git provenance",
     summary: "History and co-change come from your repository's own log, on request, as context rather than a silent relevance boost.",
   },
   {
+    icon: "capture",
     label: "Capture",
     summary: "Clip a page or a PDF into the vault with its source metadata, assets, and a capture receipt an agent can verify later.",
   },
   {
+    icon: "scopes",
     label: "Repository scopes",
     summary: "Route a code path to the notes, plans, and decisions that own it, so the next session starts from the right context.",
   },
@@ -187,7 +201,11 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
             heading="Plain files, derived views."
             headingId="model-title"
             id="model"
-            items={primitives.map((primitive) => ({ label: primitive.label, summary: primitive.summary }))}
+            items={primitives.map((primitive) => ({
+              example: <TopicIcon slug={primitive.icon} />,
+              label: primitive.label,
+              summary: primitive.summary,
+            }))}
             label=""
             summary="A vault is Markdown under version control. Wordcell adds the write path and the bounded read paths an agent needs, and keeps every index replaceable."
           />
@@ -201,18 +219,24 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 label: "CLI",
                 summary: "Search, capture, link, and validate from a terminal or a script.",
                 example: (
-                  <pre tabIndex={0}><code>{`wordcell search "why parser retries stop" \\
+                  <>
+                    <TopicIcon slug="cli" />
+                    <pre tabIndex={0}><code>{`wordcell search "why parser retries stop" \\
   --root kb --mode exact --history --repo .`}</code></pre>
+                  </>
                 ),
               },
               {
                 label: "TypeScript SDK",
                 summary: "Open a read-only session over one vault scan and compose bounded workflows.",
                 example: (
-                  <pre tabIndex={0}><code>{`import { openKnowledgeBase } from "@hraness/wordcell/sdk";
+                  <>
+                    <TopicIcon slug="sdk" />
+                    <pre tabIndex={0}><code>{`import { openKnowledgeBase } from "@hraness/wordcell/sdk";
 
 const session = await openKnowledgeBase({ root: "kb" });
 const hits = await session.search({ query: "parser contract", mode: "exact" });`}</code></pre>
+                  </>
                 ),
               },
               {
@@ -220,6 +244,7 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
                 summary: "Teach a coding agent the vault rituals through skills.sh.",
                 example: (
                   <>
+                    <TopicIcon slug="agent-skill" />
                     {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <pre tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion}`}</code></pre>}
                     <p className="interface-link"><a href={`${repository}/blob/main/skills/wordcell/SKILL.md`}>Inspect the packaged skill</a></p>
                   </>
