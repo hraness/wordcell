@@ -21,9 +21,11 @@ images or runtime package dependency.
 ## STORY
 
 Keep the existing hero and command example, model, three interfaces, boundaries,
-installation, questions, maker, and final actions. Omit redundant section labels
+installation, questions, and final actions. Omit redundant section labels
 through empty legacy slots. Display verified release facts beneath the install
-heading. Preserve factual copy and every meaningful destination.
+heading. Preserve factual copy and every meaningful destination. The page
+carries no maker section; the shared `@hraness/site-footer` attribution is the
+only builder credit.
 
 ## FIRST VIEWPORT
 

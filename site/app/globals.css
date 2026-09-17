@@ -85,7 +85,6 @@ a:focus-visible {
 .record-link a,
 .interface-link a,
 .install-note a,
-.hraness-marketing-maker__links a,
 .hraness-marketing-question__answer a {
   color: var(--foreground);
   text-decoration: underline;
@@ -96,7 +95,6 @@ a:focus-visible {
 .record-link a:hover,
 .interface-link a:hover,
 .install-note a:hover,
-.hraness-marketing-maker__links a:hover,
 .hraness-marketing-question__answer a:hover {
   text-decoration-color: currentColor;
 }
