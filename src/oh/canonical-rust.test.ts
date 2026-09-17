@@ -10,7 +10,10 @@ import {
   canonicalRustEngineInfo,
   canonicalSha256Rust,
 } from "./canonical-rust.js";
-import { OH_CANONICAL_RAW_WASM_BASE64, OH_CANONICAL_RAW_WASM_SHA256 } from "../vendor/oh-canonical/artifact.js";
+import {
+  OH_CANONICAL_RAW_WASM_BASE64,
+  OH_CANONICAL_RAW_WASM_SHA256,
+} from "@hraness/oh/canonical-rust/artifact";
 
 const jsonValueArb: fc.Arbitrary<unknown> = fc.letrec((tie) => ({
   root: fc.oneof(
@@ -31,7 +34,7 @@ describe("canonical-rust engine", () => {
     const info = canonicalRustEngineInfo();
     expect(info.available).toBe(true);
     expect(info.engine).toBe("oh.canonical.rust.v1");
-    const wasmPath = fileURLToPath(new URL("../vendor/oh-canonical/oh_canonical_raw_wasm.wasm", import.meta.url));
+    const wasmPath = fileURLToPath(new URL(import.meta.resolve("@hraness/oh/canonical-rust/raw-wasm")));
     const bytes = readFileSync(wasmPath);
     expect(createHash("sha256").update(bytes).digest("hex")).toBe(OH_CANONICAL_RAW_WASM_SHA256);
     expect(Buffer.from(OH_CANONICAL_RAW_WASM_BASE64, "base64")).toEqual(Buffer.from(bytes));

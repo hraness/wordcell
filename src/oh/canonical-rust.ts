@@ -1,6 +1,8 @@
 import { canonicalJson } from "@hraness/oh";
-
-import { OH_CANONICAL_RAW_WASM_BASE64, OH_CANONICAL_RAW_WASM_SHA256 } from "../vendor/oh-canonical/artifact.js";
+import {
+  OH_CANONICAL_RAW_WASM_BASE64,
+  OH_CANONICAL_RAW_WASM_SHA256,
+} from "@hraness/oh/canonical-rust/artifact";
 
 /**
  * Optional Rust canonical-JSON/digest engine (`oh.canonical.rust.v1`), vendored
