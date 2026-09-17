@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import { hranessAttribution } from "@hraness/site-footer";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import Home from "../app/page";
@@ -7,10 +6,16 @@ import Docs from "../app/docs/page";
 import { publishedRelease } from "../app/publication";
 import RootLayout from "../app/layout";
 
-test("every public route has one optional support footer without product signup", () => {
+test("every public route has the in-flow content footer above the network footer", () => {
   for (const Page of [Home, Docs]) {
     const html = renderToStaticMarkup(<RootLayout><Page /></RootLayout>);
-    expect(html.match(/<footer\b/gu)).toHaveLength(1);
+    expect(html.match(/<footer\b/gu)).toHaveLength(2);
+    const contentFooter = html.indexOf('data-hraness-marketing="footer"');
+    const networkFooter = html.indexOf('data-slot="hraness-site-footer"');
+    expect(contentFooter).toBeGreaterThan(-1);
+    expect(networkFooter).toBeGreaterThan(contentFooter);
+    expect(html).toContain('<img alt="" height="20" src="/icon.png" width="20"/>');
+    expect(html).not.toContain("📝");
     expect(html).toContain("https://account.hraness.com/support?product=kb&amp;source=web#support");
     expect(html).toContain("Support ongoing development of inspectable Markdown memory for coding agents.");
     expect(html).not.toContain('type="email"');
@@ -19,22 +24,18 @@ test("every public route has one optional support footer without product signup"
 });
 
 test("every public route attributes the site to Hraness through the shared footer only", () => {
-  expect(hranessAttribution.title).toBe("Built by Hraness");
-  expect(hranessAttribution.subtitle).toMatch(/^Hraness is an advanced software research organization/u);
   for (const Page of [Home, Docs]) {
     const html = renderToStaticMarkup(<RootLayout><Page /></RootLayout>);
-    const attributionBlocks: Array<{ lang: string; lines: string[] }> = [];
+    const brandLinks: string[] = [];
     new HTMLRewriter()
-      .on('footer [data-slot="hraness-attribution"]', {
-        element(element) { attributionBlocks.push({ lang: element.getAttribute("lang") ?? "", lines: [] }); },
-      })
-      .on('footer [data-slot="hraness-attribution"] p', {
-        text(chunk) {
-          if (chunk.text !== "") attributionBlocks.at(-1)?.lines.push(chunk.text);
-        },
+      .on('footer[data-slot="hraness-site-footer"] a[aria-label="Hraness home"]', {
+        element() { brandLinks.push("hraness-home"); },
       })
       .transform(html);
-    expect(attributionBlocks).toEqual([{ lang: "en", lines: [hranessAttribution.title, hranessAttribution.subtitle] }]);
+    expect(brandLinks).toEqual(["hraness-home"]);
+    expect(html).toContain('data-slot="hraness-mark"');
+    expect(html).toContain("by Hraness");
+    expect(html).not.toContain('data-slot="hraness-attribution"');
     expect(html).not.toContain("Ben Guo");
     expect(html).not.toContain("Built by Ben");
     expect(html).not.toContain("hraness-marketing-maker");
@@ -42,10 +43,10 @@ test("every public route attributes the site to Hraness through the shared foote
   }
 });
 
-test("the homepage's maker answer repeats the shared footer attribution copy", () => {
+test("the homepage's maker answer attributes Wordcell to Hraness", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html).toContain("Who made it?");
-  expect(html).toContain(`${hranessAttribution.title}. ${hranessAttribution.subtitle} Wordcell is published under the MIT license.`);
+  expect(html).toContain("Built by Hraness. Hraness is an advanced software research organization dedicated to advancing the frontier of machine intelligence. Wordcell is published under the MIT license.");
   expect(html).not.toContain("Venmo");
   expect(html).not.toContain("Puerto Rico");
 });
