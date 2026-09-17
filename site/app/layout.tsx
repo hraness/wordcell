@@ -3,6 +3,7 @@ import { getDesignPaletteTheme } from "@hraness/design-kit";
 import { DesignPaletteProvider, ThemeColorSync } from "@hraness/design-kit/react";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import { supportProfile } from "../../src/support-profile";
+import { FoilController } from "./foil-controller";
 import "./globals.css";
 
 /**
@@ -71,6 +72,7 @@ export default function RootLayout({
           <div className="network-footer">
             <HranessSiteFooter placement="flow" mailingList={{ kind: "none" }} support={supportProfile} />
           </div>
+          <FoilController />
         </DesignPaletteProvider>
       </body>
     </html>
