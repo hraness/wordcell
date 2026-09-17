@@ -114,6 +114,30 @@ test("registers the footer layer after UI layers in one stylesheet", async () =>
   expect(layout).not.toContain('import "@hraness/site-footer/styles.css"');
 });
 
+test("adopts the shared palette contract with Paper as the default appearance", async () => {
+  const [layout, home, bootstrap, css, packageJson] = await Promise.all([
+    read("app/layout.tsx"),
+    read("app/page.tsx"),
+    read("browser/theme-bootstrap.ts"),
+    read("app/globals.css"),
+    read("package.json"),
+  ]);
+  expect(layout).toContain('data-palette="paper"');
+  expect(layout).toContain('getDesignPaletteTheme("paper", "light")');
+  expect(layout).toContain('src="/theme-bootstrap.js"');
+  expect(layout).toContain("DesignPaletteProvider");
+  expect(layout).toContain("suppressHydrationWarning");
+  // The single appearance control sits at the rightmost header action.
+  expect(home).toContain('trailing={<ThemeMenuButton aria-label="Appearance" />}');
+  // The blocking bootstrap keeps Paper as the system-following default.
+  expect(bootstrap).toContain("initDesignPalette");
+  expect(bootstrap).toContain('palette: "paper", mode: "system"');
+  // Palette themes and the semantic bridge load before the vendored theme.
+  expect(css).toContain('@import "@hraness/design-kit/palettes.css";');
+  expect(css.indexOf('palettes.css')).toBeLessThan(css.indexOf("vendor/paper-theme"));
+  expect(packageJson).toContain('"build:theme"');
+});
+
 test("pins the shared footer release and leaves attribution to the package", async () => {
   const [packageJson, layout, home, docs, css] = await Promise.all([
     read("package.json"),

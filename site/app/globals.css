@@ -2,6 +2,7 @@
 @import "@hraness/ui/styles.css";
 @import "@hraness/design-kit/fonts.css";
 @import "@hraness/design-kit/product-marketing.css";
+@import "@hraness/design-kit/palettes.css";
 
 @import "../vendor/paper-theme/paper-theme.css";
 @import "../vendor/hraness-marketing/product-marketing-preset.css";

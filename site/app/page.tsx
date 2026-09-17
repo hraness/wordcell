@@ -11,6 +11,7 @@ import {
   MarketingTrustBoundary,
   ProductHero,
 } from "@hraness/design-kit/react/server";
+import { ThemeMenuButton } from "@hraness/design-kit/react";
 import { hranessAttribution } from "@hraness/site-footer";
 import { AskAiAboutThis } from "@hraness/ui";
 
@@ -143,6 +144,7 @@ export default function Home() {
         brand={<><BrandMark />Wordcell</>}
         brandLabel="Wordcell home"
         links={navigation}
+        trailing={<ThemeMenuButton aria-label="Appearance" />}
       />
 
       <main id="main" tabIndex={-1}>

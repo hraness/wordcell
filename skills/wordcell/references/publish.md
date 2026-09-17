@@ -55,7 +55,10 @@ Open `index.html` or preview over a real socket with
 browser: the sidebar tree and breadcrumbs navigate without JavaScript, the
 `/` search overlay accepts `tag:`, `type:`, and `path:` field filters with
 `<mark>` highlighting, and `graph/` renders an interactive pan/zoom map of
-`graph.json` (deep-link a node with `graph/#n=<slug>`). The bundled server
+`graph.json` (deep-link a node with `graph/#n=<slug>`). The header's
+rightmost icon opens the appearance menu — Catppuccin, Gruvbox, Rosé Pine,
+Tokyo Night, or the neutral Wordcell palette in light, dark, or system —
+persisted under the shared `hraness-design-palette-v1` key. The bundled server
 binds the loopback interface by default, confines requests and symlinks to
 the root, and returns the published `404.html` for misses. Sync the directory
 to the target — `aws s3 sync`, `rclone`, Pages, or any bucket — and publish
