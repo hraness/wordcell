@@ -5,7 +5,7 @@
     "": {
       "name": "@hraness/wordcell",
       "dependencies": {
-        "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.10.6/hraness-oh-0.10.6.tgz",
+        "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.10.7/hraness-oh-0.10.7.tgz",
         "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0",
         "@steipete/sweet-cookie": "0.4.3",
         "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c",
@@ -28,7 +28,7 @@
 
     "@hraness/build-governance": ["@hraness/build-governance@github:hraness/build-governance#d7436be", { "peerDependencies": { "typescript": "^6.0.3" } }, "hraness-build-governance-d7436be", "sha512-E35iWyOTAr83wolBYf4/vpPH0f3QsBA96ubY6XuGEc50fX6BVWIYQ37bYoAYEx4Owe6Ew1hSVRgTxdGOG4c9SA=="],
 
-    "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.10.6/hraness-oh-0.10.6.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-fAiZ03nZNHnya5t3hMW3f6fb3M9tjSdEeSKNRYssAh71fnwijS6BSAAYJ0wmjpajLljNceQ16rO1bTzwqLFkhA=="],
+    "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.10.7/hraness-oh-0.10.7.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-QMUpUOAMMMpkVVBDFRU+WvPB5v2xe8rRzk79YQOqJKFvMgLQmJtIs3oOAmHIvJn6QXt7+jBK1eON6rKIfr3H7g=="],
 
     "@hraness/support-foundation": ["@hraness/support-foundation@github:hraness/support-foundation#b32c1c8", {}, "hraness-support-foundation-b32c1c8", "sha512-dkMiXCI9bIzcX63byMK/IQHYzZg+i4XlDiuwnpJXrSF4nc9boCk2zDkZPh6cSpueio4h3K+SprnVOWjYzXC77w=="],
 
