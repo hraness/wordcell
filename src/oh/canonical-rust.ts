@@ -58,6 +58,12 @@ function engine(): OhCanonicalRawExports | null {
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+const MAX_FALLBACK_NOTICES = 4;
+const emittedFallbackNotices = new Set<string>();
+
+function boundedDiagnosticField(value: string): string {
+  return /^[A-Za-z0-9._-]{1,64}$/u.test(value) ? value : "other";
+}
 
 function runEngine(
   text: string,
@@ -75,11 +81,15 @@ function runEngine(
     new Uint8Array(exports.memory.buffer as ArrayBuffer, inputPtr, input.length).set(input);
     resultPtr = call(exports, inputPtr, input.length);
     if (resultPtr === 0) return null;
+    const memoryLength = exports.memory.buffer.byteLength;
+    if (resultPtr > memoryLength - 12) return null;
     const view = new DataView(exports.memory.buffer as ArrayBuffer, resultPtr, 12);
-    resultCapacity = view.getUint32(0, true);
+    const capacity = view.getUint32(0, true);
     const status = view.getUint32(4, true);
     const payloadLength = view.getUint32(8, true);
-    if (status !== 0 || payloadLength === 0 || 12 + payloadLength > resultCapacity) return null;
+    if (capacity < 12 || capacity > memoryLength - resultPtr || payloadLength > capacity - 12) return null;
+    resultCapacity = capacity;
+    if (status !== 0 || payloadLength === 0) return null;
     return decoder.decode(new Uint8Array(exports.memory.buffer as ArrayBuffer, resultPtr + 12, payloadLength));
   } catch {
     return null;
@@ -118,7 +128,14 @@ export function canonicalRustEngineInfo(): { engine: string; artifactSha256: str
 
 /** Emit a non-fatal telemetry notice when the Rust engine falls back to TS. */
 export function emitCanonicalRustFallback(reason: string, inputClass: string): void {
-  if (typeof process !== "undefined" && process.stderr?.write) {
-    process.stderr.write(`[oh-canonical-rust-fallback] ${reason} input=${inputClass}\n`);
+  const diagnostic = `${boundedDiagnosticField(reason)}:${boundedDiagnosticField(inputClass)}`;
+  if (emittedFallbackNotices.has(diagnostic) || emittedFallbackNotices.size >= MAX_FALLBACK_NOTICES) return;
+  emittedFallbackNotices.add(diagnostic);
+  try {
+    if (typeof process !== "undefined" && process.stderr?.write) {
+      process.stderr.write(`[oh-canonical-rust-fallback] ${diagnostic.replace(":", " input=")}\n`);
+    }
+  } catch {
+    return;
   }
 }

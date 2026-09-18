@@ -12,9 +12,16 @@ interface ProjectionRustEngineV1 {
 }
 
 let cached: ProjectionRustEngineV1 | null | undefined;
+const emittedFallbackNotices = new Set<string>();
 
-export function emitProjectionRustFallback(reason: string): void {
-  console.error(`[oh-projection-rust-fallback] ${reason}`);
+export function emitProjectionRustFallback(reason: "load-failed" | "evaluate-failed"): void {
+  if (emittedFallbackNotices.has(reason)) return;
+  emittedFallbackNotices.add(reason);
+  try {
+    console.error(`[oh-projection-rust-fallback] ${reason}`);
+  } catch {
+    return;
+  }
 }
 
 const OH_PROJECTION_RUST_MODULE = "@hraness/oh/projection/rust";
@@ -30,8 +37,8 @@ async function loadEngine(): Promise<ProjectionRustEngineV1 | null> {
       return null;
     }
     cached = await module.loadProjectionRustEngineV1();
-  } catch (error) {
-    emitProjectionRustFallback(String(error));
+  } catch {
+    emitProjectionRustFallback("load-failed");
     cached = null;
   }
   return cached;
@@ -54,8 +61,8 @@ export function evaluateOhProjectionWithFallbackV1(input: Readonly<{
   if (input.engine !== null) {
     try {
       return input.engine.evaluate(input);
-    } catch (error) {
-      emitProjectionRustFallback(String(error));
+    } catch {
+      emitProjectionRustFallback("evaluate-failed");
     }
   }
   return evaluateOhProjectionV1(input);

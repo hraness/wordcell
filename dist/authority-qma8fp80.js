@@ -30,8 +30,16 @@ import { createOhStoreProfileV1, OH_WORKING_STORE_PROFILE_V1 } from "@hraness/oh
 // src/oh/projection-rust.ts
 import { evaluateOhProjectionV1 } from "@hraness/oh/projection";
 var cached;
+var emittedFallbackNotices = new Set;
 function emitProjectionRustFallback(reason) {
-  console.error(`[oh-projection-rust-fallback] ${reason}`);
+  if (emittedFallbackNotices.has(reason))
+    return;
+  emittedFallbackNotices.add(reason);
+  try {
+    console.error(`[oh-projection-rust-fallback] ${reason}`);
+  } catch {
+    return;
+  }
 }
 var OH_PROJECTION_RUST_MODULE = "@hraness/oh/projection/rust";
 async function loadEngine() {
@@ -44,8 +52,8 @@ async function loadEngine() {
       return null;
     }
     cached = await module.loadProjectionRustEngineV1();
-  } catch (error) {
-    emitProjectionRustFallback(String(error));
+  } catch {
+    emitProjectionRustFallback("load-failed");
     cached = null;
   }
   return cached;
@@ -57,8 +65,8 @@ function evaluateOhProjectionWithFallbackV1(input) {
   if (input.engine !== null) {
     try {
       return input.engine.evaluate(input);
-    } catch (error) {
-      emitProjectionRustFallback(String(error));
+    } catch {
+      emitProjectionRustFallback("evaluate-failed");
     }
   }
   return evaluateOhProjectionV1(input);
