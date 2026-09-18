@@ -32,7 +32,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-j9k0jsck.js";
+} from "./index-bh9s7fpy.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -44,7 +44,7 @@ import {
   packSearchContext,
   packUntrustedSearchContext,
   validateKnowledgeBaseSearchHistory
-} from "./index-k1tpzzj5.js";
+} from "./index-vd58ffah.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -82,7 +82,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-j9d0m7z1.js";
+} from "./index-2yfcx6hp.js";
 import {
   DEFAULT_PERCOLATION_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
@@ -110,7 +110,7 @@ import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-1c6rwb15.js";
+} from "./index-zaxvkmm3.js";
 import {
   GRAPH_LIMITS,
   GraphAuthorityError,
@@ -350,6 +350,11 @@ function engine() {
 }
 var encoder = new TextEncoder;
 var decoder = new TextDecoder;
+var MAX_FALLBACK_NOTICES = 4;
+var emittedFallbackNotices = new Set;
+function boundedDiagnosticField(value) {
+  return /^[A-Za-z0-9._-]{1,64}$/u.test(value) ? value : "other";
+}
 function runEngine(text, call) {
   const exports = engine();
   if (exports === null)
@@ -367,11 +372,17 @@ function runEngine(text, call) {
     resultPtr = call(exports, inputPtr, input.length);
     if (resultPtr === 0)
       return null;
+    const memoryLength = exports.memory.buffer.byteLength;
+    if (resultPtr > memoryLength - 12)
+      return null;
     const view = new DataView(exports.memory.buffer, resultPtr, 12);
-    resultCapacity = view.getUint32(0, true);
+    const capacity = view.getUint32(0, true);
     const status = view.getUint32(4, true);
     const payloadLength = view.getUint32(8, true);
-    if (status !== 0 || payloadLength === 0 || 12 + payloadLength > resultCapacity)
+    if (capacity < 12 || capacity > memoryLength - resultPtr || payloadLength > capacity - 12)
+      return null;
+    resultCapacity = capacity;
+    if (status !== 0 || payloadLength === 0)
       return null;
     return decoder.decode(new Uint8Array(exports.memory.buffer, resultPtr + 12, payloadLength));
   } catch {
@@ -406,9 +417,17 @@ function canonicalSha256Rust(value) {
   return runEngine(json, (exports, ptr, len) => exports.oh_canonical_sha256(ptr, len));
 }
 function emitCanonicalRustFallback(reason, inputClass) {
-  if (typeof process !== "undefined" && process.stderr?.write) {
-    process.stderr.write(`[oh-canonical-rust-fallback] ${reason} input=${inputClass}
+  const diagnostic = `${boundedDiagnosticField(reason)}:${boundedDiagnosticField(inputClass)}`;
+  if (emittedFallbackNotices.has(diagnostic) || emittedFallbackNotices.size >= MAX_FALLBACK_NOTICES)
+    return;
+  emittedFallbackNotices.add(diagnostic);
+  try {
+    if (typeof process !== "undefined" && process.stderr?.write) {
+      process.stderr.write(`[oh-canonical-rust-fallback] ${diagnostic.replace(":", " input=")}
 `);
+    }
+  } catch {
+    return;
   }
 }
 

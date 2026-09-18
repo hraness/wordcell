@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -9,11 +9,13 @@ import {
   canonicalJsonRust,
   canonicalRustEngineInfo,
   canonicalSha256Rust,
+  emitCanonicalRustFallback,
 } from "./canonical-rust.js";
 import {
   OH_CANONICAL_RAW_WASM_BASE64,
   OH_CANONICAL_RAW_WASM_SHA256,
 } from "@hraness/oh/canonical-rust/artifact";
+import { emitProjectionRustFallback } from "./projection-rust.js";
 
 const jsonValueArb: fc.Arbitrary<unknown> = fc.letrec((tie) => ({
   root: fc.oneof(
@@ -86,6 +88,24 @@ describe("canonical-rust engine", () => {
     for (const value of cases) {
       expect(canonicalJsonRust(value)).toBe(canonicalJson(value));
       expect(canonicalSha256Rust(value)).toBe(canonicalSha256(value));
+    }
+  });
+
+  test("fallback diagnostics are emitted once per bounded class", () => {
+    const write = spyOn(process.stderr, "write").mockImplementation(() => true);
+    const error = spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      emitCanonicalRustFallback("test-once", "object");
+      emitCanonicalRustFallback("test-once", "object");
+      emitProjectionRustFallback("evaluate-failed");
+      emitProjectionRustFallback("evaluate-failed");
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(String(write.mock.calls[0]?.[0])).toBe("[oh-canonical-rust-fallback] test-once input=object\n");
+      expect(error).toHaveBeenCalledTimes(1);
+      expect(error).toHaveBeenCalledWith("[oh-projection-rust-fallback] evaluate-failed");
+    } finally {
+      error.mockRestore();
+      write.mockRestore();
     }
   });
 });
