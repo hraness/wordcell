@@ -93,18 +93,15 @@ describe("canonical-rust engine", () => {
 
   test("fallback diagnostics are emitted once per bounded class", () => {
     const write = spyOn(process.stderr, "write").mockImplementation(() => true);
-    const error = spyOn(console, "error").mockImplementation(() => undefined);
     try {
       emitCanonicalRustFallback("test-once", "object");
       emitCanonicalRustFallback("test-once", "object");
       emitProjectionRustFallback("evaluate-failed");
       emitProjectionRustFallback("evaluate-failed");
-      expect(write).toHaveBeenCalledTimes(1);
+      expect(write).toHaveBeenCalledTimes(2);
       expect(String(write.mock.calls[0]?.[0])).toBe("[oh-canonical-rust-fallback] test-once input=object\n");
-      expect(error).toHaveBeenCalledTimes(1);
-      expect(error).toHaveBeenCalledWith("[oh-projection-rust-fallback] evaluate-failed");
+      expect(String(write.mock.calls[1]?.[0])).toBe("[oh-projection-rust-fallback] evaluate-failed\n");
     } finally {
-      error.mockRestore();
       write.mockRestore();
     }
   });

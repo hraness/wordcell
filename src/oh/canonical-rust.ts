@@ -3,6 +3,7 @@ import {
   OH_CANONICAL_RAW_WASM_BASE64,
   OH_CANONICAL_RAW_WASM_SHA256,
 } from "@hraness/oh/canonical-rust/artifact";
+import { emitOhRustFallback } from "@hraness/oh/rust-fallback";
 
 /**
  * Optional Rust canonical-JSON/digest engine (`oh.canonical.rust.v1`), vendored
@@ -58,12 +59,6 @@ function engine(): OhCanonicalRawExports | null {
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-const MAX_FALLBACK_NOTICES = 4;
-const emittedFallbackNotices = new Set<string>();
-
-function boundedDiagnosticField(value: string): string {
-  return /^[A-Za-z0-9._-]{1,64}$/u.test(value) ? value : "other";
-}
 
 function runEngine(
   text: string,
@@ -128,14 +123,5 @@ export function canonicalRustEngineInfo(): { engine: string; artifactSha256: str
 
 /** Emit a non-fatal telemetry notice when the Rust engine falls back to TS. */
 export function emitCanonicalRustFallback(reason: string, inputClass: string): void {
-  const diagnostic = `${boundedDiagnosticField(reason)}:${boundedDiagnosticField(inputClass)}`;
-  if (emittedFallbackNotices.has(diagnostic) || emittedFallbackNotices.size >= MAX_FALLBACK_NOTICES) return;
-  emittedFallbackNotices.add(diagnostic);
-  try {
-    if (typeof process !== "undefined" && process.stderr?.write) {
-      process.stderr.write(`[oh-canonical-rust-fallback] ${diagnostic.replace(":", " input=")}\n`);
-    }
-  } catch {
-    return;
-  }
+  emitOhRustFallback({ tag: "oh-canonical-rust-fallback", reason, inputClass });
 }
