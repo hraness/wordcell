@@ -437,6 +437,7 @@
     "src/graph-cli.ts",
     "src/graph-percolation.ts",
     "src/oh/authority.ts",
+    "src/oh/canonical-rust.ts",
     "src/oh/programs.ts",
     "src/oh/schema.ts",
     "src/oh/snapshot.ts",
