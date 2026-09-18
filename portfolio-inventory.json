@@ -22,7 +22,7 @@
     {
       "from": "@hraness/wordcell",
       "scope": "runtime",
-      "specifier": "https://github.com/hraness/oh/releases/download/v0.4.3/hraness-oh-0.4.3.tgz",
+      "specifier": "https://github.com/hraness/oh/releases/download/v0.10.3/hraness-oh-0.10.3.tgz",
       "to": "@hraness/oh",
       "sourceRepository": "hraness/oh"
     },

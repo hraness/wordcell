@@ -437,6 +437,7 @@
     "src/graph-cli.ts",
     "src/graph-percolation.ts",
     "src/oh/authority.ts",
+    "src/oh/canonical-rust.ts",
     "src/oh/programs.ts",
     "src/oh/schema.ts",
     "src/oh/snapshot.ts",
@@ -465,7 +466,7 @@
     "check:effect": "bun run scripts/check-effect-policy.ts"
   },
   "dependencies": {
-    "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.4.3/hraness-oh-0.4.3.tgz",
+    "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.10.3/hraness-oh-0.10.3.tgz",
     "@steipete/sweet-cookie": "0.4.3",
     "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c",
     "agent-browser": "0.32.3",

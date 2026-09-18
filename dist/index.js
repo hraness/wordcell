@@ -304,7 +304,115 @@ import"./index-z1w83f81.js";
 // src/oh-adoption.ts
 import { createHash } from "crypto";
 import { posix } from "path";
-import { canonicalJson, canonicalSha256 } from "@hraness/oh";
+import { canonicalJson as canonicalJson2, canonicalSha256 } from "@hraness/oh";
+
+// src/oh/canonical-rust.ts
+import { canonicalJson } from "@hraness/oh";
+import {
+  OH_CANONICAL_RAW_WASM_BASE64,
+  OH_CANONICAL_RAW_WASM_SHA256
+} from "@hraness/oh/canonical-rust/artifact";
+var BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function decodeBase64(text) {
+  const clean = text.replace(/=+$/u, "");
+  const bytes = new Uint8Array(Math.floor(clean.length * 3 / 4));
+  let bits = 0;
+  let bitCount = 0;
+  let offset = 0;
+  for (const character of clean) {
+    const value = BASE64_ALPHABET.indexOf(character);
+    if (value < 0)
+      throw new Error("invalid base64 artifact");
+    bits = bits << 6 | value;
+    bitCount += 6;
+    if (bitCount >= 8) {
+      bitCount -= 8;
+      bytes[offset] = bits >> bitCount & 255;
+      offset += 1;
+    }
+  }
+  if (offset !== bytes.length)
+    throw new Error("base64 artifact length mismatch");
+  return bytes;
+}
+var cached;
+function engine() {
+  if (cached !== undefined)
+    return cached;
+  try {
+    const bytes = decodeBase64(OH_CANONICAL_RAW_WASM_BASE64);
+    const instance = new WebAssembly.Instance(new WebAssembly.Module(bytes.buffer));
+    cached = instance.exports;
+  } catch {
+    cached = null;
+  }
+  return cached;
+}
+var encoder = new TextEncoder;
+var decoder = new TextDecoder;
+function runEngine(text, call) {
+  const exports = engine();
+  if (exports === null)
+    return null;
+  const input = encoder.encode(text);
+  if (input.length === 0)
+    return null;
+  const inputPtr = exports.oh_canonical_alloc(input.length);
+  if (inputPtr === 0)
+    return null;
+  let resultPtr = 0;
+  let resultCapacity = 0;
+  try {
+    new Uint8Array(exports.memory.buffer, inputPtr, input.length).set(input);
+    resultPtr = call(exports, inputPtr, input.length);
+    if (resultPtr === 0)
+      return null;
+    const view = new DataView(exports.memory.buffer, resultPtr, 12);
+    resultCapacity = view.getUint32(0, true);
+    const status = view.getUint32(4, true);
+    const payloadLength = view.getUint32(8, true);
+    if (status !== 0 || payloadLength === 0 || 12 + payloadLength > resultCapacity)
+      return null;
+    return decoder.decode(new Uint8Array(exports.memory.buffer, resultPtr + 12, payloadLength));
+  } catch {
+    return null;
+  } finally {
+    if (resultPtr !== 0 && resultCapacity > 0)
+      exports.oh_canonical_free(resultPtr, resultCapacity);
+    exports.oh_canonical_free(inputPtr, input.length);
+  }
+}
+function canonicalJsonRust(value) {
+  const json = JSON.stringify(value);
+  if (json === undefined)
+    return null;
+  const rust = runEngine(json, (exports, ptr, len) => exports.oh_canonical_json(ptr, len));
+  if (rust === null)
+    return null;
+  try {
+    if (rust !== canonicalJson(value))
+      return null;
+  } catch {
+    return null;
+  }
+  return rust;
+}
+function canonicalSha256Rust(value) {
+  if (canonicalJsonRust(value) === null)
+    return null;
+  const json = JSON.stringify(value);
+  if (json === undefined)
+    return null;
+  return runEngine(json, (exports, ptr, len) => exports.oh_canonical_sha256(ptr, len));
+}
+function emitCanonicalRustFallback(reason, inputClass) {
+  if (typeof process !== "undefined" && process.stderr?.write) {
+    process.stderr.write(`[oh-canonical-rust-fallback] ${reason} input=${inputClass}
+`);
+  }
+}
+
+// src/oh-adoption.ts
 import {
   parseOhHeadV1,
   parseOhStoreBindingV1,
@@ -478,7 +586,7 @@ function parseHostPolicy(value) {
 }
 function verifyCapsule(value, expectedSource) {
   try {
-    if (!structurallyBounded(value) || !isRecord(value) || !exactKeys(value, ["binding", "closureSha256", "head", "records", "roots", "v"]) || value.v !== 1 || !Array.isArray(value.records) || !Array.isArray(value.roots) || value.records.length < 1 || value.records.length > MAX_RECORDS || value.roots.length < 1 || value.roots.length > MAX_ROOTS || Buffer.byteLength(canonicalJson(value), "utf8") > MAX_CAPSULE_BYTES)
+    if (!structurallyBounded(value) || !isRecord(value) || !exactKeys(value, ["binding", "closureSha256", "head", "records", "roots", "v"]) || value.v !== 1 || !Array.isArray(value.records) || !Array.isArray(value.roots) || value.records.length < 1 || value.records.length > MAX_RECORDS || value.roots.length < 1 || value.roots.length > MAX_ROOTS || Buffer.byteLength(canonicalJson2(value), "utf8") > MAX_CAPSULE_BYTES)
       return null;
     const verified = verifyOhDependencyClosureAgainstV1(value, {
       binding: expectedSource.binding,
@@ -590,7 +698,11 @@ function prepareWithPolicy(value, policy) {
     transformations,
     v: 1
   };
-  const candidateSha256 = canonicalSha256(manifest);
+  const rustSha256 = canonicalSha256Rust(manifest);
+  if (rustSha256 === null) {
+    emitCanonicalRustFallback("canonicalSha256Rust", "object");
+  }
+  const candidateSha256 = rustSha256 ?? canonicalSha256(manifest);
   const markdown = renderMarkdown(manifest, candidateSha256);
   if (Buffer.byteLength(markdown, "utf8") > MAX_CAPSULE_BYTES) {
     throw new RangeError("The adoption candidate exceeds its Markdown byte limit.");

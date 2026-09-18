@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { posix } from "node:path";
 
 import { canonicalJson, canonicalSha256 } from "@hraness/oh";
+
+import { canonicalSha256Rust, emitCanonicalRustFallback } from "./oh/canonical-rust.js";
 import {
   parseOhHeadV1,
   parseOhStoreBindingV1,
@@ -419,7 +421,11 @@ function prepareWithPolicy(
     transformations,
     v: 1 as const,
   };
-  const candidateSha256 = canonicalSha256(manifest);
+  const rustSha256 = canonicalSha256Rust(manifest);
+  if (rustSha256 === null) {
+    emitCanonicalRustFallback("canonicalSha256Rust", "object");
+  }
+  const candidateSha256 = rustSha256 ?? canonicalSha256(manifest);
   const markdown = renderMarkdown(manifest, candidateSha256);
   if (Buffer.byteLength(markdown, "utf8") > MAX_CAPSULE_BYTES) {
     throw new RangeError("The adoption candidate exceeds its Markdown byte limit.");
