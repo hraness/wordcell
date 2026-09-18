@@ -66,7 +66,7 @@ export default function RootLayout({
         <script src="/theme-bootstrap.js" />
       </head>
       <body>
-        <DesignPaletteProvider>
+        <DesignPaletteProvider defaultPreference={{ palette: "paper", mode: "system" }}>
           <ThemeColorSync />
           {children}
           <div className="network-footer">
