@@ -231,7 +231,7 @@ import { lstat, open } from "fs/promises";
 var graphCacheFileSystem = { lstat, open };
 
 // src/graph-authority.ts
-var openOhGraphAdapter = async (...args) => await (await import("./authority-4sp9d552.js")).openOhGraphAdapter(...args);
+var openOhGraphAdapter = async (...args) => await (await import("./authority-n8p26qbw.js")).openOhGraphAdapter(...args);
 var MAX_CACHE_BYTES = 67108864;
 var ignoredCache = `# Disposable Wordcell graph state. Rebuild from Markdown.
 *

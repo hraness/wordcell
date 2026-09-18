@@ -22,11 +22,47 @@ import {
   createOhProjectionDatasetV1,
   createOhProjectionFactV1,
   createOhProjectionSnapshotV1,
-  evaluateOhProjectionV1,
   parseOhProjectionResultV1
 } from "@hraness/oh/projection";
 import { createOhSqliteStoreAuthorityV1 } from "@hraness/oh/sqlite";
 import { createOhStoreProfileV1, OH_WORKING_STORE_PROFILE_V1 } from "@hraness/oh/store";
+
+// src/oh/projection-rust.ts
+import { evaluateOhProjectionV1 } from "@hraness/oh/projection";
+var cached;
+function emitProjectionRustFallback(reason) {
+  console.error(`[oh-projection-rust-fallback] ${reason}`);
+}
+var OH_PROJECTION_RUST_MODULE = "@hraness/oh/projection/rust";
+async function loadEngine() {
+  if (cached !== undefined)
+    return cached;
+  try {
+    const module = await import(OH_PROJECTION_RUST_MODULE);
+    if (typeof module.loadProjectionRustEngineV1 !== "function") {
+      cached = null;
+      return null;
+    }
+    cached = await module.loadProjectionRustEngineV1();
+  } catch (error) {
+    emitProjectionRustFallback(String(error));
+    cached = null;
+  }
+  return cached;
+}
+async function loadProjectionRustEngineV1() {
+  return loadEngine();
+}
+function evaluateOhProjectionWithFallbackV1(input) {
+  if (input.engine !== null) {
+    try {
+      return input.engine.evaluate(input);
+    } catch (error) {
+      emitProjectionRustFallback(String(error));
+    }
+  }
+  return evaluateOhProjectionV1(input);
+}
 
 // src/oh/programs.ts
 import {
@@ -531,6 +567,7 @@ async function openOhGraphAdapter(input, options = {}) {
     if (canonicalJson4(materialized.records) !== canonicalJson4(expected))
       throw new GraphAuthorityError("corrupt-cache", "Graph reconciliation did not retain exact source records.");
     const projectionSnapshot = createOhProjectionSnapshotV1({ ...materialized, spaceId });
+    const rustEngine = await loadProjectionRustEngineV1();
     const recordMap = new Map(records.map((record, index) => [record.key, { record, source: snapshot.records[index] }]));
     const assertOpen = () => {
       if (closed)
@@ -561,15 +598,22 @@ async function openOhGraphAdapter(input, options = {}) {
       });
       try {
         const dataset = createOhProjectionDatasetV1({ extractorSha256: GRAPH_EXTRACTOR_SHA256, factPackId: "wordcell.graph-facts", factPackRevision: 1, facts, snapshot: projectionSnapshot });
-        const result = evaluateOhProjectionV1({ ...program, dataset, snapshot: projectionSnapshot, options: {
-          maximumDerivedTuples: limits.derivedTuples,
-          maximumRounds: limits.rounds,
-          maximumWorkUnits: limits.workUnits,
-          maximumProofDepth: limits.proofDepth,
-          maximumProofNodes: limits.proofNodes,
-          maximumTotalProofNodes: limits.totalProofNodes,
-          maximumResultBytes: limits.resultBytes
-        } });
+        const result = evaluateOhProjectionWithFallbackV1({
+          dataset,
+          engine: rustEngine,
+          rulePack: program.rulePack,
+          query: program.query,
+          snapshot: projectionSnapshot,
+          options: {
+            maximumDerivedTuples: limits.derivedTuples,
+            maximumRounds: limits.rounds,
+            maximumWorkUnits: limits.workUnits,
+            maximumProofDepth: limits.proofDepth,
+            maximumProofNodes: limits.proofNodes,
+            maximumTotalProofNodes: limits.totalProofNodes,
+            maximumResultBytes: limits.resultBytes
+          }
+        });
         if (parseOhProjectionResultV1(result, result.identity.projectionSha256) === null)
           throw new GraphAuthorityError("corrupt-cache", "Oh returned an invalid bounded projection result.");
         await assertCurrent();

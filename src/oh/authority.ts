@@ -3,7 +3,7 @@ import { isProxy } from "node:util/types";
 import { canonicalJson, canonicalSha256, type KnowledgeGraphChangeV1, type KnowledgeGraphRecordV1 } from "@hraness/oh";
 import {
   createOhProjectionDatasetV1, createOhProjectionFactV1, createOhProjectionSnapshotV1,
-  evaluateOhProjectionV1, parseOhProjectionResultV1, type OhProjectionProofV1,
+  parseOhProjectionResultV1, type OhProjectionProofV1,
 } from "@hraness/oh/projection";
 import { createOhSqliteStoreAuthorityV1 } from "@hraness/oh/sqlite";
 import { createOhStoreProfileV1, OH_WORKING_STORE_PROFILE_V1, type OhStoreV1 } from "@hraness/oh/store";
@@ -11,6 +11,7 @@ import {
   GRAPH_LIMITS, GraphAuthorityError, type GraphAuthority, type GraphProof,
   type GraphQueryLimits, type GraphQueryRequest, type GraphQueryResult, type GraphSnapshot,
 } from "../graph-authority-model";
+import { evaluateOhProjectionWithFallbackV1, loadProjectionRustEngineV1 } from "./projection-rust";
 import { compileGraphProgram, normalizeGraphQueryRequest } from "./programs";
 import { GRAPH_EXTRACTOR_SHA256, GRAPH_MANIFEST_KEY, manifestGraphRecord, parseGraphSnapshot, sourceGraphRecord } from "./snapshot";
 import { deepFreeze, detachedData, exactKeys } from "./validation";
@@ -95,6 +96,7 @@ export async function openOhGraphAdapter(input: GraphSnapshot, options: OhGraphA
     const materialized = await selectedStore.snapshot({ maximumRecords: GRAPH_LIMITS.notes + 1 });
     if (canonicalJson(materialized.records) !== canonicalJson(expected)) throw new GraphAuthorityError("corrupt-cache", "Graph reconciliation did not retain exact source records.");
     const projectionSnapshot = createOhProjectionSnapshotV1({ ...materialized, spaceId });
+    const rustEngine = await loadProjectionRustEngineV1();
     const recordMap = new Map(records.map((record, index) => [record.key, { record, source: snapshot.records[index]! }]));
     const assertOpen = () => { if (closed) throw new GraphAuthorityError("closed", "The graph authority is closed."); };
     const assertCurrent = async () => {
@@ -141,10 +143,17 @@ export async function openOhGraphAdapter(input: GraphSnapshot, options: OhGraphA
       });
       try {
         const dataset = createOhProjectionDatasetV1({ extractorSha256: GRAPH_EXTRACTOR_SHA256, factPackId: "wordcell.graph-facts", factPackRevision: 1, facts, snapshot: projectionSnapshot });
-        const result = evaluateOhProjectionV1({ ...program, dataset, snapshot: projectionSnapshot, options: {
-          maximumDerivedTuples: limits.derivedTuples, maximumRounds: limits.rounds, maximumWorkUnits: limits.workUnits,
-          maximumProofDepth: limits.proofDepth, maximumProofNodes: limits.proofNodes, maximumTotalProofNodes: limits.totalProofNodes, maximumResultBytes: limits.resultBytes,
-        } });
+        const result = evaluateOhProjectionWithFallbackV1({
+          dataset,
+          engine: rustEngine,
+          rulePack: program.rulePack,
+          query: program.query,
+          snapshot: projectionSnapshot,
+          options: {
+            maximumDerivedTuples: limits.derivedTuples, maximumRounds: limits.rounds, maximumWorkUnits: limits.workUnits,
+            maximumProofDepth: limits.proofDepth, maximumProofNodes: limits.proofNodes, maximumTotalProofNodes: limits.totalProofNodes, maximumResultBytes: limits.resultBytes,
+          },
+        });
         if (parseOhProjectionResultV1(result, result.identity.projectionSha256) === null) throw new GraphAuthorityError("corrupt-cache", "Oh returned an invalid bounded projection result.");
         await assertCurrent();
         const proofBudget = { remaining: limits.resultBytes };
