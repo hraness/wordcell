@@ -405,6 +405,12 @@ function canonicalSha256Rust(value) {
     return null;
   return runEngine(json, (exports, ptr, len) => exports.oh_canonical_sha256(ptr, len));
 }
+function emitCanonicalRustFallback(reason, inputClass) {
+  if (typeof process !== "undefined" && process.stderr?.write) {
+    process.stderr.write(`[oh-canonical-rust-fallback] ${reason} input=${inputClass}
+`);
+  }
+}
 
 // src/oh-adoption.ts
 import {
@@ -692,7 +698,11 @@ function prepareWithPolicy(value, policy) {
     transformations,
     v: 1
   };
-  const candidateSha256 = canonicalSha256Rust(manifest) ?? canonicalSha256(manifest);
+  const rustSha256 = canonicalSha256Rust(manifest);
+  if (rustSha256 === null) {
+    emitCanonicalRustFallback("canonicalSha256Rust", "object");
+  }
+  const candidateSha256 = rustSha256 ?? canonicalSha256(manifest);
   const markdown = renderMarkdown(manifest, candidateSha256);
   if (Buffer.byteLength(markdown, "utf8") > MAX_CAPSULE_BYTES) {
     throw new RangeError("The adoption candidate exceeds its Markdown byte limit.");
