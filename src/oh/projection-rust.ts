@@ -1,4 +1,5 @@
 import { evaluateOhProjectionV1, type OhProjectionDatasetV1, type OhProjectionEvaluationOptionsV1, type OhProjectionQueryV1, type OhProjectionResultV1, type OhProjectionRulePackV1, type OhProjectionSnapshotV1 } from "@hraness/oh/projection";
+import { emitOhRustFallback } from "@hraness/oh/rust-fallback";
 
 interface ProjectionRustEngineV1 {
   readonly engine: "oh.projection.rust.v1";
@@ -12,16 +13,9 @@ interface ProjectionRustEngineV1 {
 }
 
 let cached: ProjectionRustEngineV1 | null | undefined;
-const emittedFallbackNotices = new Set<string>();
 
 export function emitProjectionRustFallback(reason: "load-failed" | "evaluate-failed"): void {
-  if (emittedFallbackNotices.has(reason)) return;
-  emittedFallbackNotices.add(reason);
-  try {
-    console.error(`[oh-projection-rust-fallback] ${reason}`);
-  } catch {
-    return;
-  }
+  emitOhRustFallback({ tag: "oh-projection-rust-fallback", reason });
 }
 
 const OH_PROJECTION_RUST_MODULE = "@hraness/oh/projection/rust";

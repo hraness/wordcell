@@ -29,17 +29,10 @@ import { createOhStoreProfileV1, OH_WORKING_STORE_PROFILE_V1 } from "@hraness/oh
 
 // src/oh/projection-rust.ts
 import { evaluateOhProjectionV1 } from "@hraness/oh/projection";
+import { emitOhRustFallback } from "@hraness/oh/rust-fallback";
 var cached;
-var emittedFallbackNotices = new Set;
 function emitProjectionRustFallback(reason) {
-  if (emittedFallbackNotices.has(reason))
-    return;
-  emittedFallbackNotices.add(reason);
-  try {
-    console.error(`[oh-projection-rust-fallback] ${reason}`);
-  } catch {
-    return;
-  }
+  emitOhRustFallback({ tag: "oh-projection-rust-fallback", reason });
 }
 var OH_PROJECTION_RUST_MODULE = "@hraness/oh/projection/rust";
 async function loadEngine() {

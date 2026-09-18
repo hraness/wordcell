@@ -32,7 +32,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-bh9s7fpy.js";
+} from "./index-g1kx59e7.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -44,7 +44,7 @@ import {
   packSearchContext,
   packUntrustedSearchContext,
   validateKnowledgeBaseSearchHistory
-} from "./index-vd58ffah.js";
+} from "./index-9x8jtqmp.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -82,7 +82,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-2yfcx6hp.js";
+} from "./index-py7681h5.js";
 import {
   DEFAULT_PERCOLATION_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
@@ -110,7 +110,7 @@ import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-zaxvkmm3.js";
+} from "./index-7s6dytxy.js";
 import {
   GRAPH_LIMITS,
   GraphAuthorityError,
@@ -312,6 +312,7 @@ import {
   OH_CANONICAL_RAW_WASM_BASE64,
   OH_CANONICAL_RAW_WASM_SHA256
 } from "@hraness/oh/canonical-rust/artifact";
+import { emitOhRustFallback } from "@hraness/oh/rust-fallback";
 var BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function decodeBase64(text) {
   const clean = text.replace(/=+$/u, "");
@@ -350,11 +351,6 @@ function engine() {
 }
 var encoder = new TextEncoder;
 var decoder = new TextDecoder;
-var MAX_FALLBACK_NOTICES = 4;
-var emittedFallbackNotices = new Set;
-function boundedDiagnosticField(value) {
-  return /^[A-Za-z0-9._-]{1,64}$/u.test(value) ? value : "other";
-}
 function runEngine(text, call) {
   const exports = engine();
   if (exports === null)
@@ -417,18 +413,7 @@ function canonicalSha256Rust(value) {
   return runEngine(json, (exports, ptr, len) => exports.oh_canonical_sha256(ptr, len));
 }
 function emitCanonicalRustFallback(reason, inputClass) {
-  const diagnostic = `${boundedDiagnosticField(reason)}:${boundedDiagnosticField(inputClass)}`;
-  if (emittedFallbackNotices.has(diagnostic) || emittedFallbackNotices.size >= MAX_FALLBACK_NOTICES)
-    return;
-  emittedFallbackNotices.add(diagnostic);
-  try {
-    if (typeof process !== "undefined" && process.stderr?.write) {
-      process.stderr.write(`[oh-canonical-rust-fallback] ${diagnostic.replace(":", " input=")}
-`);
-    }
-  } catch {
-    return;
-  }
+  emitOhRustFallback({ tag: "oh-canonical-rust-fallback", reason, inputClass });
 }
 
 // src/oh-adoption.ts
