@@ -5,7 +5,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   validateKnowledgeBaseSearchHistory
-} from "./index-vd58ffah.js";
+} from "./index-9x8jtqmp.js";
 import {
   expandSearchRequest,
   parseSearchRules

@@ -5,7 +5,7 @@ import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-zaxvkmm3.js";
+} from "./index-7s6dytxy.js";
 import {
   GRAPH_LIMITS,
   GraphAuthorityError,
