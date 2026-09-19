@@ -284,6 +284,45 @@ async function run(command: string[], cwd: string): Promise<void> {
   if (exitCode !== 0) throw new Error(`Command failed (${String(exitCode)}): ${command.join(" ")}`);
 }
 
+async function verifyInstalledFirstUse(cwd: string): Promise<void> {
+  // Run from the installed consumer so source-tree imports cannot hide pack errors.
+  await run([process.execPath, "--eval", `
+    import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+    import { join } from "node:path";
+    import { parseSiteDocsV1, parseSiteManifestV1 } from "@hraness/wordcell/publish-model";
+    const root = join(process.cwd(), "plain-markdown");
+    const out = join(process.cwd(), "published-notes");
+    await mkdir(root);
+    await writeFile(join(root, "decision.md"), "# Decision\\n\\nParser retries stop after three attempts.\\n" + "界".repeat(6000));
+    await writeFile(join(root, "private.md"), "---\\npublish: false\\n---\\n# Private\\nPRIVATE_SENTINEL\\n");
+    const cli = join(process.cwd(), "node_modules", ".bin", "wordcell");
+    async function invoke(args) {
+      const child = Bun.spawn([cli, ...args, "--json"], { stdout: "pipe", stderr: "pipe" });
+      const [stdout, stderr, code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
+      if (code !== 0) throw new Error("Installed first-use command failed: " + stderr);
+      return { value: JSON.parse(stdout), text: stdout };
+    }
+    const search = await invoke(["search", "parser retries", "--root", root, "--mode", "exact"]);
+    if (!search.text.includes("decision.md")) throw new Error("Installed exact search lost the saved decision");
+    if ((await readdir(root)).length !== 2) throw new Error("Read-only search modified the existing Markdown folder");
+    const args = ["publish", "--root", root, "--out", out, "--include-glob", "**", "--list-limit", "1", "--deterministic"];
+    const preview = (await invoke([...args, "--dry-run"])).value;
+    const built = (await invoke(args)).value;
+    if (JSON.stringify(preview.selection) !== JSON.stringify(built.selection)
+      || built.selection.total !== 1 || built.selection.ids[0] !== "decision") {
+      throw new Error("Installed publication did not retain the reviewed public slice");
+    }
+    parseSiteManifestV1(JSON.parse(await readFile(join(out, "manifest.json"), "utf8")));
+    parseSiteDocsV1(JSON.parse(await readFile(join(out, "index/docs.json"), "utf8")));
+    for (const file of ["reader/reader.js", "reader/reader.css", "reader/theme.js", "n/decision/index.html"]) {
+      if ((await readFile(join(out, file))).length === 0) throw new Error("Installed reader asset is empty: " + file);
+    }
+    if ((await readFile(join(out, "catalog.json"), "utf8")).includes("private")) {
+      throw new Error("Installed publication exposed an excluded note");
+    }
+  `], cwd);
+}
+
 async function verifyInstalledHelp(binary: string, cwd: string, expected: string): Promise<void> {
   const child = Bun.spawn([join(cwd, "node_modules", ".bin", binary), "--help"], {
     cwd, env: environment, stdout: "pipe", stderr: "pipe",
@@ -578,6 +617,7 @@ const environment = {
   HRANESS_SUPPORT: "off",
   HRANESS_SUPPORT_EMAIL: "off",
   XDG_STATE_HOME: join(work, "support-state"),
+  XDG_CACHE_HOME: join(work, "cache"),
   BUN_TMPDIR: temporary,
   TMPDIR: temporary,
   npm_config_audit: "false",
@@ -670,6 +710,7 @@ try {
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], npmConsumer);
   for (const installed of [consumer, npmConsumer]) {
     await verifyInstalledHelp("wordcell", installed, "wordcell init [directory]");
+    await verifyInstalledFirstUse(installed);
     await verifyInstalledSupport(installed);
     await run([join(installed, "node_modules", ".bin", "wordcell-evaluation-builder"), "--help"], installed);
     const graphRoot = join(installed, "graph-vault");

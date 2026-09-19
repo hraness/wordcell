@@ -27,11 +27,13 @@ import type {
 
 export const MAX_PUBLISH_SELECTORS = 256;
 export const MAX_PUBLISH_FROM_DEPTH = 10;
+export const MAX_PUBLISH_FROM_NOTES = 1_000;
+export const MAX_PUBLISH_SELECTOR_BYTES = 1_024;
 export const MAX_PUBLISH_SLUG_BYTES = 1_024;
 
 /**
- * Positive selectors form a union: every include prefix, metadata filter,
- * tag, scope, or `--from` neighborhood adds notes. Excludes and the authored
+ * Include prefixes/globs, the combined metadata query, and a `--from`
+ * neighborhood form a union. Excludes and the authored
  * `publish: false` flag then carve notes back out. Selection never reads
  * note bodies; a selected note's prose can still mention excluded ids, so the
  * boundary is graph and metadata presence, not text redaction.
@@ -39,6 +41,9 @@ export const MAX_PUBLISH_SLUG_BYTES = 1_024;
 export type PublishSelectionInput = {
   readonly includes?: readonly string[];
   readonly excludes?: readonly string[];
+  /** Case-sensitive globs over note ids or Markdown paths; * and ? stay in a segment. */
+  readonly includeGlobs?: readonly string[];
+  readonly excludeGlobs?: readonly string[];
   readonly filters?: readonly MetadataFilter[];
   readonly tags?: readonly string[];
   readonly repositoryScopes?: readonly string[];
@@ -71,15 +76,20 @@ export type PublishSelection = {
   /** Resolved links and relations whose target stayed outside the selection. */
   readonly droppedExternalLinks: number;
   readonly droppedExternalRelations: number;
-  /** Manifest record of the selectors that produced this projection. */
+  /** Manifest counts of the selectors; their raw values stay local. */
   readonly descriptor: WordcellSiteSelectionV1;
 };
 
 function normalizeSelectorPrefix(value: string, flag: string): string {
   const trimmed = value.trim().replaceAll("\\", "/");
+  if (trimmed === "" || Buffer.byteLength(trimmed, "utf8") > MAX_PUBLISH_SELECTOR_BYTES || /[\u0000-\u001f\u007f]/u.test(trimmed)) {
+    throw new TypeError(`${flag} must be bounded text without control characters`);
+  }
   const normalized = posix.normalize(trimmed).replace(/^\.\//u, "").replace(/\/+$/u, "");
   if (
     normalized === ""
+    || trimmed.split("/").includes("..")
+    || /^[a-z]:\//iu.test(normalized)
     || normalized.startsWith("/")
     || normalized === ".."
     || normalized.startsWith("../")
@@ -92,9 +102,65 @@ function normalizeSelectorPrefix(value: string, flag: string): string {
 
 function selectorIncludes(prefixes: readonly string[], id: string): boolean {
   return prefixes.some((prefix) =>
-    id === prefix
+    prefix === "."
+    || id === prefix
     || id.startsWith(`${prefix}/`)
     || (prefix.endsWith(".md") && id === prefix.slice(0, -3)));
+}
+
+/** Small glob grammar with bounded work and no filesystem traversal. */
+function publishGlob(value: string, flag: string): readonly string[] {
+  const pattern = value.trim().replaceAll("\\", "/").replace(/^\.\//u, "");
+  const segments = pattern.split("/");
+  if (
+    pattern === "" || /^[a-z]:\//iu.test(pattern)
+    || Buffer.byteLength(pattern, "utf8") > MAX_PUBLISH_SELECTOR_BYTES
+    || /[\u0000-\u001f\u007f\[\]{}]/u.test(pattern)
+    || segments.some((segment) => segment === "" || segment === "." || segment === ".."
+      || (segment.includes("**") && segment !== "**"))
+  ) {
+    throw new TypeError(`${flag} must be a vault-relative glob using *, ?, or whole-segment **`);
+  }
+  return segments;
+}
+
+function wildcardSegment(pattern: string, value: string): boolean {
+  const tokens = Array.from(pattern);
+  const characters = Array.from(value);
+  let previous = new Uint8Array(characters.length + 1);
+  previous[0] = 1;
+  for (const token of tokens) {
+    const current = new Uint8Array(characters.length + 1);
+    if (token === "*") current[0] = previous[0] ?? 0;
+    for (let index = 1; index <= characters.length; index += 1) {
+      current[index] = token === "*"
+        ? (previous[index] || current[index - 1] ? 1 : 0)
+        : (previous[index - 1] && (token === "?" || token === characters[index - 1]) ? 1 : 0);
+    }
+    previous = current;
+  }
+  return previous[characters.length] === 1;
+}
+
+function globMatches(pattern: readonly string[], path: string): boolean {
+  const segments = path.split("/");
+  let previous = new Uint8Array(segments.length + 1);
+  previous[0] = 1;
+  for (const token of pattern) {
+    const current = new Uint8Array(segments.length + 1);
+    if (token === "**") current[0] = previous[0] ?? 0;
+    for (let index = 1; index <= segments.length; index += 1) {
+      current[index] = token === "**"
+        ? (previous[index] || current[index - 1] ? 1 : 0)
+        : (previous[index - 1] && wildcardSegment(token, segments[index - 1] ?? "") ? 1 : 0);
+    }
+    previous = current;
+  }
+  return previous[segments.length] === 1;
+}
+
+function selectorGlobs(patterns: readonly (readonly string[])[], note: Note): boolean {
+  return patterns.some((pattern) => globMatches(pattern, note.id) || globMatches(pattern, note.path));
 }
 
 function isPrivate(note: Note): boolean {
@@ -188,26 +254,31 @@ export function selectPublishNotes(
   analysis: VaultAnalysis,
   input: PublishSelectionInput = {},
 ): PublishSelection {
+  const selectorCount = (input.includes?.length ?? 0) + (input.excludes?.length ?? 0)
+    + (input.includeGlobs?.length ?? 0) + (input.excludeGlobs?.length ?? 0);
+  if (selectorCount > MAX_PUBLISH_SELECTORS) {
+    throw new RangeError(`Publish selectors may contain at most ${MAX_PUBLISH_SELECTORS} entries.`);
+  }
   const includes = (input.includes ?? []).map((value) =>
     normalizeSelectorPrefix(value, "--include"));
   const excludes = (input.excludes ?? []).map((value) =>
     normalizeSelectorPrefix(value, "--exclude"));
-  if (includes.length + excludes.length > MAX_PUBLISH_SELECTORS) {
-    throw new RangeError(`Publish selectors may contain at most ${MAX_PUBLISH_SELECTORS} entries.`);
-  }
+  const includeGlobs = (input.includeGlobs ?? []).map((value) => publishGlob(value, "--include-glob"));
+  const excludeGlobs = (input.excludeGlobs ?? []).map((value) => publishGlob(value, "--exclude-glob"));
   const filters = input.filters ?? [];
   const tags = input.tags ?? [];
   const repositoryScopes = input.repositoryScopes ?? [];
 
   const candidates = new Set<string>();
   const hasPositive = includes.length > 0
+    || includeGlobs.length > 0
     || filters.length > 0
     || tags.length > 0
     || repositoryScopes.length > 0
     || input.from !== undefined;
 
   for (const note of notes) {
-    if (includes.length > 0 && selectorIncludes(includes, note.id)) candidates.add(note.id);
+    if (selectorIncludes(includes, note.id) || selectorGlobs(includeGlobs, note)) candidates.add(note.id);
   }
   if (filters.length > 0 || tags.length > 0 || repositoryScopes.length > 0) {
     for (const row of queryVault(notes, analysis, { filters, tags, repositoryScopes })) {
@@ -228,7 +299,11 @@ export function selectPublishNotes(
     const neighborhood = navigateLinks(notes, analysis, lookup.note, {
       direction: input.from.direction,
       depth: input.from.depth,
+      limit: MAX_PUBLISH_FROM_NOTES,
     });
+    if (neighborhood.truncated) {
+      throw new RangeError(`Publish neighborhood exceeds the ${MAX_PUBLISH_FROM_NOTES}-note or connection limit; narrow --depth or select explicit paths instead.`);
+    }
     for (const node of neighborhood.nodes) candidates.add(node.id);
   }
 
@@ -237,7 +312,7 @@ export function selectPublishNotes(
   const selected: Note[] = [];
   for (const note of notes) {
     const chosen = hasPositive ? candidates.has(note.id) : true;
-    const excluded = excludes.length > 0 && selectorIncludes(excludes, note.id);
+    const excluded = selectorIncludes(excludes, note.id) || selectorGlobs(excludeGlobs, note);
     if (!chosen || excluded) {
       excludedBySelection += 1;
       continue;
@@ -297,17 +372,14 @@ export function selectPublishNotes(
   }
 
   const descriptor: WordcellSiteSelectionV1 = {
-    includes,
-    excludes,
-    ...(input.from === undefined
-      ? {}
-      : {
-          from: Object.freeze({
-            note: input.from.note,
-            depth: input.from.depth,
-            direction: input.from.direction,
-          }),
-        }),
+    // Raw selectors can identify private paths and metadata; publish counts only.
+    includes: [],
+    excludes: [],
+    includeCount: includes.length,
+    excludeCount: excludes.length,
+    includeGlobCount: includeGlobs.length,
+    excludeGlobCount: excludeGlobs.length,
+    fromCount: input.from === undefined ? 0 : 1,
     filterCount: filters.length,
     tagCount: tags.length,
     scopeCount: repositoryScopes.length,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
-import { parseNote } from "./graph.js";
+import { analyzeVault, parseNote } from "./graph.js";
 import {
   layoutSiteGraph,
   siteGraphSeed,
@@ -9,6 +9,7 @@ import {
 import {
   parseSiteDocsV1,
   parseSiteTermsV1,
+  WORDCELL_SITE_LIMITS_V1,
 } from "./publish-model.js";
 import {
   pruneSiteNav,
@@ -29,6 +30,7 @@ import {
   publishAssetTarget,
   publishAssetVaultPath,
   publishSlugSegment,
+  selectPublishNotes,
 } from "./publish-select.js";
 
 const segment = fc.stringMatching(/^[a-z][a-z0-9_-]{0,6}(?: [a-z0-9_-]{1,6})?$/);
@@ -62,6 +64,28 @@ describe("publish slug properties", () => {
     fc.assert(fc.property(segment, (value) => {
       const once = publishSlugSegment(value);
       expect(publishSlugSegment(once)).toBe(once);
+    }));
+  });
+});
+
+describe("publish selection properties", () => {
+  test("glob selection is order independent and private/excluded notes never enter it", () => {
+    fc.assert(fc.property(fc.uniqueArray(noteId, { minLength: 1, maxLength: 12 }), (ids) => {
+      const notes = ids.map((id, index) => parseNote(`${id}.md`, `${index % 3 === 0 ? "---\npublish: false\n---\n" : ""}# ${id}\n`));
+      const analysis = analyzeVault(notes);
+      const options = { includeGlobs: ["**/*.md"], excludes: [ids[0] ?? ""] };
+      const first = selectPublishNotes(notes, analysis, options);
+      const second = selectPublishNotes([...notes].reverse(), analysis, options);
+      expect(first.notes.map(({ id }) => id)).toEqual(second.notes.map(({ id }) => id));
+      expect(first.selected.has(ids[0] ?? "")).toBe(false);
+      for (const note of first.notes) expect(note.metadata["publish"]).not.toBe(false);
+      for (const link of first.links) {
+        expect(first.selected.has(link.source)).toBe(true);
+        expect(first.selected.has(link.target)).toBe(true);
+      }
+      const idGlob = selectPublishNotes(notes, analysis, { includeGlobs: ["**"] });
+      const pathGlob = selectPublishNotes(notes, analysis, { includeGlobs: ["**/*.md"] });
+      expect(idGlob.notes.map(({ id }) => id)).toEqual(pathGlob.notes.map(({ id }) => id));
     }));
   });
 });
@@ -128,6 +152,27 @@ describe("publish search properties", () => {
 });
 
 describe("publish index properties", () => {
+  test("Unicode fields, previews, and inline content fit byte budgets without broken code points", () => {
+    const unicode = fc.array(fc.constantFrom("界", "😀", "é", "İ", "𝄞", "a", " "), { minLength: 1, maxLength: 12 });
+    fc.assert(fc.property(unicode, fc.integer({ min: 1, max: 8_000 }), (parts, repeat) => {
+      const text = parts.join("").repeat(repeat);
+      const base = parseNote("unicode.md", "# Unicode\n");
+      const note = { ...base, aliases: [text], tags: [text], metadata: { custom: text }, searchableText: text, summary: text };
+      const build = buildSiteIndex([note], derivePublishSlugs([note.id]));
+      const docs = parseSiteDocsV1(JSON.parse(JSON.stringify(build.docs)));
+      for (const doc of docs.docs) {
+        for (const field of Object.values(doc.f)) {
+          expect(Buffer.byteLength(field, "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
+          expect(field).not.toContain("�");
+        }
+        expect(Buffer.byteLength(doc.p, "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.docPreviewBytes);
+        expect(Buffer.byteLength(doc.x ?? "", "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.inlineTextBytes);
+        expect(doc.p).not.toContain("�");
+        expect(doc.x).not.toContain("�");
+      }
+    }), { numRuns: 50 });
+  });
+
   test("generated docs and terms round-trip through the contract parsers", () => {
     fc.assert(fc.property(
       fc.uniqueArray(noteId, { minLength: 1, maxLength: 12 }),

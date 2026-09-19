@@ -119,9 +119,18 @@ export function renderReadmeHtml(source: string): string {
 
 /** The README landing block between the shared Hraness markers, without its heading. */
 export function readmeLanding(source: string): Readonly<{ title: string; lead: string; markdown: string }> {
-  const start = source.indexOf(LANDING_START);
-  const end = source.indexOf(LANDING_END);
-  if (start < 0 || end <= start) throw new Error("README landing markers are missing or out of order");
+  const linesWithOffsets = Array.from(source.matchAll(/^.*$/gmu));
+  const markerOffset = (marker: string): number => {
+    const occurrences = source.split(marker).length - 1;
+    const lines = linesWithOffsets.filter((line) => line[0]!.replace(/\r$/u, "") === marker);
+    if (occurrences !== 1 || lines.length !== 1) {
+      throw new Error("README landing markers must appear exactly once on their own lines");
+    }
+    return lines[0]!.index!;
+  };
+  const start = markerOffset(LANDING_START);
+  const end = markerOffset(LANDING_END);
+  if (end <= start) throw new Error("README landing markers are out of order");
   const block = source.slice(start + LANDING_START.length, end).trim();
   const lines = block.split("\n");
   const heading = lines[0] ?? "";

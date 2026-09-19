@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { analyzeVault, parseNote, type Note } from "./graph.js";
 import {
   MAX_PUBLISH_SLUG_BYTES,
+  MAX_PUBLISH_FROM_NOTES,
   MAX_PUBLISH_SELECTORS,
   derivePublishSlugs,
   publishAssetTarget,
@@ -37,6 +38,7 @@ describe("selectPublishNotes", () => {
     ]);
     expect(selection.excludedPrivate).toBe(1);
     expect(selection.excludedBySelection).toBe(0);
+    expect(selectPublishNotes(notes, analyzeVault(notes), { includes: ["."] }).notes).toEqual(selection.notes);
   });
 
   test("positive selectors form a union, then excludes carve back out", () => {
@@ -89,6 +91,9 @@ describe("selectPublishNotes", () => {
     const analysis = analyzeVault(notes);
     expect(() =>
       selectPublishNotes(notes, analysis, { includes: ["../outside"] })).toThrow(TypeError);
+    for (const path of ["", "   ", "docs/..", "C:/docs"]) {
+      expect(() => selectPublishNotes(notes, analysis, { includes: [path] })).toThrow(TypeError);
+    }
     expect(() =>
       selectPublishNotes(notes, analysis, { includes: ["/abs"] })).toThrow(TypeError);
     expect(() =>
@@ -98,6 +103,60 @@ describe("selectPublishNotes", () => {
     expect(() =>
       selectPublishNotes(notes, analysis, { from: { note: "missing", depth: 1, direction: "both" } }))
       .toThrow("not found");
+  });
+
+  test("globs select arbitrary paths while excludes and privacy always win", () => {
+    const notes = [
+      ...fixture(),
+      note("docs/deep/a.md", "# Nested\n"),
+      note("docs/deep/draft-b.md", "# Draft\n"),
+      note("docs2/a.md", "# Other folder\n"),
+    ];
+    const selection = selectPublishNotes(notes, analyzeVault(notes), {
+      includeGlobs: ["docs/**/*.md", "private/**"],
+      excludes: ["docs/beta"],
+      excludeGlobs: ["**/draft-*"],
+    });
+    expect(selection.notes.map(({ id }) => id)).toEqual(["docs/alpha", "docs/deep/a"]);
+    expect(selection.excludedPrivate).toBe(1);
+    expect(selectPublishNotes(notes, analyzeVault(notes), { includeGlobs: ["docs/*"] })
+      .notes.map(({ id }) => id)).toEqual(["docs/alpha", "docs/beta"]);
+    expect(selectPublishNotes(notes, analyzeVault(notes), { includeGlobs: ["**/?.md"] })
+      .notes.map(({ id }) => id)).toEqual(["docs/deep/a", "docs2/a"]);
+  });
+
+  test("metadata predicates intersect inside their group and paths add to it", () => {
+    const notes = fixture();
+    const selection = selectPublishNotes(notes, analyzeVault(notes), {
+      includes: ["drafts/wip"],
+      tags: ["public"],
+      filters: [{ kind: "equals", path: "type", value: "concept" }],
+    });
+    expect(selection.notes.map(({ id }) => id)).toEqual(["docs/alpha", "drafts/wip"]);
+  });
+
+  test("rejects unsupported and escaping globs instead of silently matching nothing", () => {
+    const notes = fixture();
+    const analysis = analyzeVault(notes);
+    for (const pattern of ["", "../**", "/docs/*", "C:/docs/*", "docs/../*", "docs/**a", "[ab]", "{a,b}", "**/\u0000", "a".repeat(1025)]) {
+      expect(() => selectPublishNotes(notes, analysis, { includeGlobs: [pattern] })).toThrow(TypeError);
+    }
+    expect(() => selectPublishNotes(notes, analysis, {
+      includes: ["docs"], includeGlobs: Array.from({ length: MAX_PUBLISH_SELECTORS }, () => "**"),
+    })).toThrow(RangeError);
+  });
+
+  test("publishes graph neighborhoods beyond fifty notes and rejects truncation", () => {
+    const leaves = Array.from({ length: MAX_PUBLISH_FROM_NOTES }, (_, index) => note(`n${index}.md`, `# Note ${index}\n`));
+    const seed = note("seed.md", leaves.map(({ id }) => `[[${id}]]`).join("\n"));
+    const small = [seed, ...leaves.slice(0, 60)];
+    expect(selectPublishNotes(small, analyzeVault(small), {
+      from: { note: "seed", depth: 1, direction: "out" },
+    }).notes).toHaveLength(61);
+    const large = [seed, ...leaves];
+    expect(() => selectPublishNotes(large, analyzeVault(large, { mentionScope: () => false }), {
+      from: { note: "seed", depth: 1, direction: "out" },
+    })).toThrow("narrow --depth");
   });
 
   test("records a manifest descriptor without leaking filter values", () => {
@@ -111,9 +170,13 @@ describe("selectPublishNotes", () => {
       from: { note: "docs/alpha", depth: 2, direction: "out" },
     });
     expect(selection.descriptor).toEqual({
-      includes: ["docs"],
-      excludes: ["docs/beta"],
-      from: { note: "docs/alpha", depth: 2, direction: "out" },
+      includes: [],
+      excludes: [],
+      includeCount: 1,
+      excludeCount: 1,
+      includeGlobCount: 0,
+      excludeGlobCount: 0,
+      fromCount: 1,
       filterCount: 1,
       tagCount: 1,
       scopeCount: 1,

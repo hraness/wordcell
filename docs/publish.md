@@ -1,65 +1,110 @@
 # Publish a static site
 
-`wordcell publish` projects a vault — or a selected subsection of one — into a
-self-contained static site under the `hraness.wordcell.site.v1` contract. The
-output is plain files that work from object storage, a CDN, or `file://`:
-prerendered HTML pages read without JavaScript, and a bundled zero-dependency
-reader adds browser-local search and navigation on top. No server, database, or
-runtime is required to host the result.
+`wordcell publish` turns selected Markdown notes into a static website with
+search, backlinks, and a graph. Build it locally, inspect the result, then copy
+the files to your preferred host. Publishing does not upload your vault or
+require an account, database, model, or API key.
 
-## Publish a vault
+The HTML pages work without JavaScript. Serve the directory over HTTP to use
+the bundled browser-local search and graph; opening HTML files directly is
+suitable for reading pages, but browser restrictions can block the reader.
 
-```sh
-wordcell publish --root kb --out site/
-```
+## Preview and publish a slice
 
-The command scans the vault, resolves the selection, validates local
-attachments against the filesystem, renders a restricted Markdown subset to
-HTML, builds the exact-lane search index, and writes the artifact. Re-run it
-with `--force` to replace a non-empty output directory.
+Choose notes by exact path, directory, glob, metadata, or a graph neighborhood.
+This example combines a directory tree with one note from elsewhere in the
+vault, then removes drafts:
 
 ```sh
-wordcell publish --root kb --out site/ --title "Team Handbook" \
-  --description "Public engineering notes" --base-path /handbook/ \
-  --base-url https://docs.example.com
+wordcell publish --root kb --out site \
+  --include-glob 'guides/**/*.md' --include notes/getting-started \
+  --exclude drafts --dry-run --json
 ```
 
-`--base-path` sets the URL prefix the site is served under (default `/`).
-`--base-url` adds a `sitemap.xml`; omit it for object-storage or file hosting
-without a canonical origin. `--noindex` emits a robots disallow and a noindex
-marker on every page. `--deterministic` omits the generation timestamp so two
-runs over identical input produce byte-identical output. `--dry-run` returns
-the report and projected file set without writing. `--json` prints the report
-as JSON.
+The dry run builds the same artifact in memory and leaves the output directory
+untouched. Its JSON report includes counts, a source digest, and up to 20
+selected note ids. Review those ids and counts before writing. Repeat the same
+selectors without `--dry-run` to build the site:
 
-## Select a subsection
+```sh
+wordcell publish --root kb --out site \
+  --include-glob 'guides/**/*.md' --include notes/getting-started \
+  --exclude drafts
+wordcell serve --root site --port 8080
+```
 
-Positive selectors form a union; excludes and `publish: false` frontmatter then
-carve notes back out:
+Open `http://127.0.0.1:8080` to inspect the pages. Nothing is publicly hosted
+until you upload the generated directory. When rebuilding an existing site,
+add `--force` to replace that output directory. Keep it separate from your
+source vault: neither directory may contain the other. An empty selection
+returns a zero-count dry-run report, but writing it fails so a mistyped selector
+cannot replace an existing site.
+
+For agent workflows, `--json` returns the report without note bodies, HTML,
+search postings, or file contents. `--list-limit 0` returns counts and the source
+digest only; a value from zero through 1,000 changes the maximum listed ids.
+The ids also have a combined 16 KiB byte budget, and `selection.truncated`
+reports when the list is incomplete. The bound changes only the report, never
+which notes publish. Read the generated `catalog.json` when you need the full
+published list. An SDK caller can reuse a scanned vault with `projectVault`.
+
+## Choose what publishes
 
 ```sh
 wordcell publish --root kb --out site/docs --include docs
 wordcell publish --root kb --out site/public --tag public --exclude drafts
+wordcell publish --root kb --out site/guides \
+  --include-glob 'guides/**/*.md' --exclude-glob '**/draft-*'
 wordcell publish --root kb --out site/topic \
   --from notes/topic-seed --depth 2 --direction both
 wordcell publish --root kb --out site/concepts --where type=concept --has relations
 ```
 
-- `--include <path>` selects a note id or directory prefix; repeat to add more.
-- `--exclude <path>` removes matching notes after selection.
+- `--include <path>` selects a note id, `.md` path, or directory prefix. Repeat
+  it to combine notes from anywhere in the vault.
+- `--include-glob <pattern>` matches note ids or `.md` paths, case sensitively.
+  `*` matches within one path segment, `?` matches one character, and a whole
+  `**` segment matches zero or more directories. Quote patterns so your shell
+  does not expand them. Bracket classes and brace expansion are unsupported.
 - `--where <path=value>`, `--has <path>`, `--tag <tag>`, and `--scope
-  <repository-path>` reuse the `wordcell list` metadata filters.
-- `--from <note>` selects a bounded link-and-relation neighborhood around a
-  seed note with `--depth` (1–10) and `--direction in|out|both`.
-- `publish: false` frontmatter always excludes a note, even when a positive
-  selector matches it.
+  <repository-path>` form one metadata query. All filters in that query must
+  match, as with `wordcell list`.
+- `--from <note>` selects a link-and-relation neighborhood with `--depth`
+  (1–10) and `--direction in|out|both`. Neighborhoods are bounded at 1,000 notes
+  and 10,000 connections; exceeding either bound fails instead of silently
+  publishing an incomplete neighborhood. Narrow the depth or use paths/globs.
+- Include paths, include globs, the metadata query, and the graph neighborhood
+  form a union. For example, `--include docs --tag public` selects every note
+  under `docs` plus every public-tagged note elsewhere.
+- `--exclude <path>` and `--exclude-glob <pattern>` remove notes after that
+  union. `publish: false` frontmatter always removes a note, even when another
+  selector matches it. With no positive selector, all remaining notes publish.
 
-Selection never reads note bodies to redact prose: a published note may still
-mention an excluded note by name. The boundary is graph and metadata
-membership. Links and typed relationships whose target stayed outside the
-selection render as plain unresolved text — the excluded note's title and path
-never enter the artifact — and the report counts them as dropped. Attachments
-publish only when a selected note references a validated file inside the vault.
+Review selected prose and attachments before hosting. Selection controls which
+notes enter the site; it does not redact text inside them. A selected note can
+still mention a private name, contain sensitive metadata in its search fields,
+or reference an attachment you intended to keep private. Exclusion selectors
+apply to notes, not attachment files. Only validated local attachments directly
+referenced by selected notes are copied.
+
+Links and typed relationships to excluded notes are omitted from structured
+navigation. An authored link label can remain in the selected note's rendered
+prose. Public manifests record selector counts without storing raw include,
+exclude, filter, or seed values.
+
+## Set the site identity
+
+```sh
+wordcell publish --root kb --out site --title "Team Handbook" \
+  --description "Public engineering notes" --base-path /handbook/ \
+  --base-url https://docs.example.com
+```
+
+`--base-path` sets the URL prefix (default `/`). `--base-url` adds a
+`sitemap.xml`; omit it when the site has no canonical origin. `--noindex`
+emits a robots disallow and a noindex marker on every page. These are indexing
+requests, not access controls. `--deterministic` omits the generation timestamp
+so identical inputs and options produce byte-identical artifacts.
 
 ## The emitted artifact
 
@@ -86,7 +131,7 @@ site/
 
 Every page ships the same chrome: a header with the site title, a `Graph` link,
 and a `Search` button; a sidebar tree of the published notes; and a footer.
-The tree is derived from slug paths — directories sort before notes at each
+The tree is derived from slug paths. Directories sort before notes at each
 level, groups open along the path to the current page, and oversized branches
 fold into bounded `+N more` links back to the catalog. Everything is
 prerendered HTML: navigation works with JavaScript disabled.
@@ -110,7 +155,7 @@ keeps the page useful without JavaScript at any size.
 The reader supports the shared Hraness palette contract: the `wordcell`
 neutral palette plus Catppuccin, Gruvbox, Rosé Pine, and Tokyo Night, each
 in light and dark. A small classic script, `reader/theme.js`, loads
-synchronously in every page head — ahead of the stylesheet — and applies
+synchronously in every page head, ahead of the stylesheet, and applies
 the stored preference to `data-palette` and `data-theme` on the document
 element before first paint, so a saved palette never flashes the default.
 The preference lives under `hraness-design-palette-v1` in the origin's
@@ -125,7 +170,7 @@ pages fall back to the neutral palette under `prefers-color-scheme`.
 Every JSON file carries an explicit format identifier and parses under a
 bounded `unknown`-value contract; parsers reject unexpected keys, oversize
 fields, and wrong formats. `manifest.json` records the generator identity and
-version, the selection descriptor, the source digest, artifact paths, search
+version, selector counts, the source digest, artifact paths, search
 mode, counts, and any truncated aspects. In `--deterministic` mode the manifest
 carries no timestamp and the whole directory is reproducible.
 
@@ -150,7 +195,7 @@ text, field filters narrow the candidate set:
   under the prefix on a segment boundary (`path:docs` matches `docs/alpha`,
   never `docs2/x`).
 
-Filters combine with free text — `tag:public path:docs migration` searches
+Filters combine with free text. `tag:public path:docs migration` searches
 "migration" inside public notes under `docs/` — and a filter-only query lists
 everything that matches. Unknown or malformed `name:` tokens stay in the
 free-text query. Matched terms render with `<mark>` highlighting built from
@@ -162,8 +207,12 @@ Raw HTML never passes through the renderer: every text span and attribute is
 entity-escaped, only the controlled Markdown grammar emits markup, and external
 URLs are restricted to `http`, `https`, and `mailto`. Pages ship a strict
 `default-src 'self'` Content-Security-Policy, so no remote image, script, or
-frame can load. The output directory must not be the vault root or inside it,
-and every written path is confined to `--out`.
+frame can load. The output directory and vault must be separate: neither may contain the
+other, including through symlinked parent directories. The output directory
+itself cannot be a symlink, and every written path is confined to `--out`.
+Generated JSON must pass the reader contracts before any output is replaced.
+An oversized title or too many aliases or tags produces a named validation
+error; shorten that field or narrow the selection and publish again.
 
 ## Host the result
 
@@ -185,8 +234,8 @@ wordcell serve --root site --port 8080
 The server defaults to the loopback interface (`--host` overrides), maps
 directories to `index.html`, returns the published `404.html` for missing
 paths, confines requests and symlinks to the root, and answers `GET` and
-`HEAD` only. It is a preview tool — production hosting stays with the object
-store or CDN — and any other static file server works too:
+`HEAD` only. Production hosting stays with the object store or CDN. Any other static file
+server works for previews too:
 
 ```sh
 python3 -m http.server --directory site 8080
@@ -199,12 +248,18 @@ already-scanned snapshot through an injectable `PublishIo` seam, so tests and
 alternative hosts can resolve and read assets without disk access:
 
 ```ts
-import { publishVault, projectVault } from "@hraness/wordcell/publish";
-import {
-  parseSiteManifestV1,
-  WORDCELL_SITE_LIMITS_V1,
-} from "@hraness/wordcell/publish-model";
+import { publishVault } from "@hraness/wordcell/publish";
+
+const preview = await publishVault({
+  root: "kb",
+  out: "site",
+  selection: { includeGlobs: ["guides/**/*.md"], includes: ["notes/getting-started"] },
+  dryRun: true,
+  listLimit: 10,
+});
+console.log(preview.report); // counts, selected ids, and digest; no note bodies
 ```
 
-`WORDCELL_SITE_LIMITS_V1` fixes every bound the artifact guarantees: note,
+`parseSiteManifestV1` and `WORDCELL_SITE_LIMITS_V1` are available from
+`@hraness/wordcell/publish-model`. The constants fix every artifact bound: note,
 asset, term, shard, preview, inline-text, payload-text, and hydration caps.

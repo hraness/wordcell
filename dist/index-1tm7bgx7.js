@@ -334,12 +334,24 @@ async function snapshot(rootInput, options, writeIndex) {
     ...options.maxNoteBytes === undefined ? {} : { maxNoteBytes: options.maxNoteBytes },
     ...options.maxTotalBytes === undefined ? {} : { maxTotalBytes: options.maxTotalBytes }
   });
-  const indexRevision = await readIndexRevision(root, indexPath, options.maxNoteBytes ?? MAX_NOTE_UTF8_BYTES);
-  const currentIndex = indexRevision.content;
-  const indexNote = parseNote(vaultIndexPath, currentIndex);
-  const catalogMode = parsedCatalogMode(options.catalogMode, "ScanVaultOptions.catalogMode") ?? declaredCatalogMode(indexNote) ?? "managed";
+  const configuredCatalogMode = parsedCatalogMode(options.catalogMode, "ScanVaultOptions.catalogMode");
+  let indexRevision;
+  try {
+    indexRevision = await readIndexRevision(root, indexPath, options.maxNoteBytes ?? MAX_NOTE_UTF8_BYTES);
+  } catch (error) {
+    const absent = error instanceof Error && "code" in error && error.code === "ENOENT";
+    if (!absent || options.index !== undefined || configuredCatalogMode === "managed" || notes.some((note) => note.path === vaultIndexPath))
+      throw error;
+    if (writeIndex) {
+      throw new Error("Refresh requires an index.md front door. Add one with kb_catalog: authored to preserve its contents, or catalog markers for a managed catalog. Search and graph commands can read this folder without one.", { cause: error });
+    }
+  }
+  const currentIndex = indexRevision?.content ?? "";
+  const catalogMode = configuredCatalogMode ?? (indexRevision === undefined ? "authored" : declaredCatalogMode(parseNote(vaultIndexPath, currentIndex)) ?? "managed");
   let index = "authored";
   if (catalogMode === "managed") {
+    if (indexRevision === undefined)
+      throw new Error("A managed catalog requires an existing index file.");
     const expectedIndex = replaceCatalog(currentIndex, renderCatalog(notes, catalogNoteId));
     const stale = currentIndex !== expectedIndex;
     index = stale ? "stale" : "current";

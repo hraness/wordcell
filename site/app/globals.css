@@ -234,3 +234,21 @@ a { text-underline-offset: 0.2em; }
 
 /* Decorative topic icons (agent-generated line art, public/icons/). */
 .wordcell-topic-icon { display: block; width: 88px; height: 88px; margin: 0 0 18px; }
+
+/* Product evidence stays readable in both palettes and at narrow widths. */
+.wordcell-measurement {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+.wordcell-measurement p { margin: 0; }
+.wordcell-measurement strong { display: block; font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 600; line-height: 1.2; }
+.wordcell-measurement span { display: block; margin-top: 0.5rem; color: var(--muted); }
+.wordcell-comparison { width: 100%; overflow-x: auto; }
+.wordcell-comparison:focus-visible { outline: 2px solid var(--hraness-site-accent); outline-offset: 4px; }
+.wordcell-comparison table { border-collapse: collapse; width: 100%; min-width: 35rem; }
+.wordcell-comparison th, .wordcell-comparison td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.wordcell-comparison th { font-weight: 600; }
+.release-preview { padding: 1rem; border: 1px solid var(--line); background: var(--surface); }
+@media (max-width: 30rem) { .wordcell-measurement { grid-template-columns: 1fr; } }

@@ -37,7 +37,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-7m9mmm8y.js";
+} from "./index-k857tecp.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -50,7 +50,7 @@ import {
   packUntrustedSearchContext,
   searchEvidenceRank,
   validateKnowledgeBaseSearchHistory
-} from "./index-rpx0e9w5.js";
+} from "./index-084evpsj.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -67,7 +67,7 @@ import {
   searchSemanticVault,
   semanticDatabasePath,
   sha256EmbeddingModelFile
-} from "./index-trgxvmy6.js";
+} from "./index-hcw140eb.js";
 import"./index-4j3tt0c3.js";
 import {
   MAX_RERANK_CANDIDATES,
@@ -94,7 +94,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-py7681h5.js";
+} from "./index-t2bs9xdr.js";
 import {
   DEFAULT_PERCOLATION_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
@@ -122,7 +122,7 @@ import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-7s6dytxy.js";
+} from "./index-famy7fhs.js";
 import {
   GRAPH_LIMITS,
   GraphAuthorityError,
@@ -157,13 +157,16 @@ import {
 } from "./index-gm9t95d9.js";
 import"./index-1xxnjn0d.js";
 import {
+  DEFAULT_PUBLISH_LIST_LIMIT,
+  MAX_PUBLISH_LIST_BYTES,
+  MAX_PUBLISH_LIST_LIMIT,
   MAX_SITE_BYTES,
   WORDCELL_PUBLISH_GENERATOR,
   projectVault,
   publishVault,
   renderPublishReportText,
   serializeSiteFile
-} from "./index-jsn2tmjz.js";
+} from "./index-mhej9k64.js";
 import {
   MAX_NOTE_UTF8_BYTES,
   MAX_SCANNED_NOTES,
@@ -174,7 +177,7 @@ import {
   readVaultNotes,
   refreshVault,
   scanVault
-} from "./index-0k2x4nn9.js";
+} from "./index-1tm7bgx7.js";
 import {
   MAX_NAVIGATION_INDEXED_CONNECTIONS,
   MAX_NAVIGATION_RETURNED_CONNECTIONS,
@@ -940,6 +943,8 @@ export {
   MAX_QUERY_METADATA_PATH_SEGMENTS,
   MAX_QUERY_FILTER_VALUES,
   MAX_QUERY_FILTERS,
+  MAX_PUBLISH_LIST_LIMIT,
+  MAX_PUBLISH_LIST_BYTES,
   MAX_PERCOLATION_TEXT_UTF8_BYTES,
   MAX_PERCOLATION_RESULT_UTF8_BYTES,
   MAX_PERCOLATION_RESULT_NODES,
@@ -989,6 +994,7 @@ export {
   DEFAULT_SEARCH_RESULTS,
   DEFAULT_REPOSITORY_MEMORY_GROUP_LIMIT,
   DEFAULT_REPOSITORY_MEMORY_DETAIL_LIMIT,
+  DEFAULT_PUBLISH_LIST_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
   DEFAULT_PERCOLATION_LIMIT,
   AgentContextRepositoryPathError

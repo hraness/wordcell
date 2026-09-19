@@ -1,7 +1,7 @@
 // @bun
 import {
   scanVault
-} from "./index-0k2x4nn9.js";
+} from "./index-1tm7bgx7.js";
 import {
   navigateLinks
 } from "./index-d13v9ckt.js";
@@ -19,7 +19,14 @@ import {
   WORDCELL_SITE_LIMITS_V1,
   WORDCELL_SITE_NOTE_FORMAT_V1,
   WORDCELL_SITE_POSTINGS_FORMAT_V1,
-  WORDCELL_SITE_TERMS_FORMAT_V1
+  WORDCELL_SITE_TERMS_FORMAT_V1,
+  parseSiteCatalogV1,
+  parseSiteDocsV1,
+  parseSiteGraphV1,
+  parseSiteManifestV1,
+  parseSiteNoteV1,
+  parseSitePostingsV1,
+  parseSiteTermsV1
 } from "./index-66pshdtx.js";
 import {
   publishNormalize,
@@ -36,8 +43,8 @@ import {
 
 // src/publish.ts
 import { createHash } from "crypto";
-import { lstat, mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
-import { basename, isAbsolute, posix as posix2, relative, resolve, sep } from "path";
+import { lstat, mkdir, readdir, readFile, realpath, rm, writeFile } from "fs/promises";
+import { basename, dirname, isAbsolute, posix as posix2, relative, resolve, sep } from "path";
 import { canonicalJson as canonicalJson2, canonicalSha256 } from "@hraness/oh";
 
 // src/publish-index.ts
@@ -46,10 +53,11 @@ var TERM_PATTERN = /[\p{L}\p{N}][\p{L}\p{N}._/-]*/gu;
 function bounded(value, maximumBytes) {
   if (Buffer.byteLength(value, "utf8") <= maximumBytes)
     return { text: value, truncated: false };
+  const bytes = Buffer.from(value, "utf8");
   let end = maximumBytes;
-  while (end > 0 && (value.charCodeAt(end) & 192) === 128)
+  while (end > 0 && ((bytes[end] ?? 0) & 192) === 128)
     end -= 1;
-  return { text: value.slice(0, end), truncated: true };
+  return { text: bytes.subarray(0, end).toString("utf8"), truncated: true };
 }
 function previewText(note) {
   const basis = note.summary !== "" ? note.summary : note.searchableText;
@@ -1089,17 +1097,64 @@ import {
   posix
 } from "path";
 var MAX_PUBLISH_SELECTORS = 256;
+var MAX_PUBLISH_FROM_NOTES = 1000;
+var MAX_PUBLISH_SELECTOR_BYTES = 1024;
 var MAX_PUBLISH_SLUG_BYTES = 1024;
 function normalizeSelectorPrefix(value, flag) {
   const trimmed = value.trim().replaceAll("\\", "/");
+  if (trimmed === "" || Buffer.byteLength(trimmed, "utf8") > MAX_PUBLISH_SELECTOR_BYTES || /[\u0000-\u001f\u007f]/u.test(trimmed)) {
+    throw new TypeError(`${flag} must be bounded text without control characters`);
+  }
   const normalized = posix.normalize(trimmed).replace(/^\.\//u, "").replace(/\/+$/u, "");
-  if (normalized === "" || normalized.startsWith("/") || normalized === ".." || normalized.startsWith("../") || normalized.split("/").includes("..")) {
+  if (normalized === "" || trimmed.split("/").includes("..") || /^[a-z]:\//iu.test(normalized) || normalized.startsWith("/") || normalized === ".." || normalized.startsWith("../") || normalized.split("/").includes("..")) {
     throw new TypeError(`${flag} must be a vault-relative path prefix or note id`);
   }
   return normalized;
 }
 function selectorIncludes(prefixes, id) {
-  return prefixes.some((prefix) => id === prefix || id.startsWith(`${prefix}/`) || prefix.endsWith(".md") && id === prefix.slice(0, -3));
+  return prefixes.some((prefix) => prefix === "." || id === prefix || id.startsWith(`${prefix}/`) || prefix.endsWith(".md") && id === prefix.slice(0, -3));
+}
+function publishGlob(value, flag) {
+  const pattern = value.trim().replaceAll("\\", "/").replace(/^\.\//u, "");
+  const segments = pattern.split("/");
+  if (pattern === "" || /^[a-z]:\//iu.test(pattern) || Buffer.byteLength(pattern, "utf8") > MAX_PUBLISH_SELECTOR_BYTES || /[\u0000-\u001f\u007f\[\]{}]/u.test(pattern) || segments.some((segment) => segment === "" || segment === "." || segment === ".." || segment.includes("**") && segment !== "**")) {
+    throw new TypeError(`${flag} must be a vault-relative glob using *, ?, or whole-segment **`);
+  }
+  return segments;
+}
+function wildcardSegment(pattern, value) {
+  const tokens = Array.from(pattern);
+  const characters = Array.from(value);
+  let previous = new Uint8Array(characters.length + 1);
+  previous[0] = 1;
+  for (const token of tokens) {
+    const current = new Uint8Array(characters.length + 1);
+    if (token === "*")
+      current[0] = previous[0] ?? 0;
+    for (let index = 1;index <= characters.length; index += 1) {
+      current[index] = token === "*" ? previous[index] || current[index - 1] ? 1 : 0 : previous[index - 1] && (token === "?" || token === characters[index - 1]) ? 1 : 0;
+    }
+    previous = current;
+  }
+  return previous[characters.length] === 1;
+}
+function globMatches(pattern, path) {
+  const segments = path.split("/");
+  let previous = new Uint8Array(segments.length + 1);
+  previous[0] = 1;
+  for (const token of pattern) {
+    const current = new Uint8Array(segments.length + 1);
+    if (token === "**")
+      current[0] = previous[0] ?? 0;
+    for (let index = 1;index <= segments.length; index += 1) {
+      current[index] = token === "**" ? previous[index] || current[index - 1] ? 1 : 0 : previous[index - 1] && wildcardSegment(token, segments[index - 1] ?? "") ? 1 : 0;
+    }
+    previous = current;
+  }
+  return previous[segments.length] === 1;
+}
+function selectorGlobs(patterns, note) {
+  return patterns.some((pattern) => globMatches(pattern, note.id) || globMatches(pattern, note.path));
 }
 function isPrivate(note) {
   return note.metadata["publish"] === false;
@@ -1146,18 +1201,21 @@ function publishAssetTarget(rawTarget) {
   return decoded;
 }
 function selectPublishNotes(notes, analysis, input = {}) {
-  const includes = (input.includes ?? []).map((value) => normalizeSelectorPrefix(value, "--include"));
-  const excludes = (input.excludes ?? []).map((value) => normalizeSelectorPrefix(value, "--exclude"));
-  if (includes.length + excludes.length > MAX_PUBLISH_SELECTORS) {
+  const selectorCount = (input.includes?.length ?? 0) + (input.excludes?.length ?? 0) + (input.includeGlobs?.length ?? 0) + (input.excludeGlobs?.length ?? 0);
+  if (selectorCount > MAX_PUBLISH_SELECTORS) {
     throw new RangeError(`Publish selectors may contain at most ${MAX_PUBLISH_SELECTORS} entries.`);
   }
+  const includes = (input.includes ?? []).map((value) => normalizeSelectorPrefix(value, "--include"));
+  const excludes = (input.excludes ?? []).map((value) => normalizeSelectorPrefix(value, "--exclude"));
+  const includeGlobs = (input.includeGlobs ?? []).map((value) => publishGlob(value, "--include-glob"));
+  const excludeGlobs = (input.excludeGlobs ?? []).map((value) => publishGlob(value, "--exclude-glob"));
   const filters = input.filters ?? [];
   const tags = input.tags ?? [];
   const repositoryScopes = input.repositoryScopes ?? [];
   const candidates = new Set;
-  const hasPositive = includes.length > 0 || filters.length > 0 || tags.length > 0 || repositoryScopes.length > 0 || input.from !== undefined;
+  const hasPositive = includes.length > 0 || includeGlobs.length > 0 || filters.length > 0 || tags.length > 0 || repositoryScopes.length > 0 || input.from !== undefined;
   for (const note of notes) {
-    if (includes.length > 0 && selectorIncludes(includes, note.id))
+    if (selectorIncludes(includes, note.id) || selectorGlobs(includeGlobs, note))
       candidates.add(note.id);
   }
   if (filters.length > 0 || tags.length > 0 || repositoryScopes.length > 0) {
@@ -1175,8 +1233,12 @@ function selectPublishNotes(notes, analysis, input = {}) {
     }
     const neighborhood = navigateLinks(notes, analysis, lookup.note, {
       direction: input.from.direction,
-      depth: input.from.depth
+      depth: input.from.depth,
+      limit: MAX_PUBLISH_FROM_NOTES
     });
+    if (neighborhood.truncated) {
+      throw new RangeError(`Publish neighborhood exceeds the ${MAX_PUBLISH_FROM_NOTES}-note or connection limit; narrow --depth or select explicit paths instead.`);
+    }
     for (const node of neighborhood.nodes)
       candidates.add(node.id);
   }
@@ -1185,7 +1247,7 @@ function selectPublishNotes(notes, analysis, input = {}) {
   const selected = [];
   for (const note of notes) {
     const chosen = hasPositive ? candidates.has(note.id) : true;
-    const excluded = excludes.length > 0 && selectorIncludes(excludes, note.id);
+    const excluded = selectorIncludes(excludes, note.id) || selectorGlobs(excludeGlobs, note);
     if (!chosen || excluded) {
       excludedBySelection += 1;
       continue;
@@ -1243,15 +1305,13 @@ function selectPublishNotes(notes, analysis, input = {}) {
       attachmentsById.set(note.id, parsed.references);
   }
   const descriptor = {
-    includes,
-    excludes,
-    ...input.from === undefined ? {} : {
-      from: Object.freeze({
-        note: input.from.note,
-        depth: input.from.depth,
-        direction: input.from.direction
-      })
-    },
+    includes: [],
+    excludes: [],
+    includeCount: includes.length,
+    excludeCount: excludes.length,
+    includeGlobCount: includeGlobs.length,
+    excludeGlobCount: excludeGlobs.length,
+    fromCount: input.from === undefined ? 0 : 1,
     filterCount: filters.length,
     tagCount: tags.length,
     scopeCount: repositoryScopes.length
@@ -1279,6 +1339,14 @@ function serializeSiteFile(value) {
   return `${canonicalJson2(value)}
 `;
 }
+function setSiteJson(files, path, value, parse) {
+  try {
+    parse(value);
+  } catch (error) {
+    throw new Error(`Cannot publish ${path}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  files.set(path, encodeUtf8(serializeSiteFile(value)));
+}
 var SITE_PATHS = Object.freeze({
   catalog: "catalog.json",
   graph: "graph.json",
@@ -1290,6 +1358,16 @@ var SITE_PATHS = Object.freeze({
   readerPrefix: "reader/"
 });
 var MAX_SITE_BYTES = 1024 * 1024 * 1024;
+var DEFAULT_PUBLISH_LIST_LIMIT = 20;
+var MAX_PUBLISH_LIST_LIMIT = 1000;
+var MAX_PUBLISH_LIST_BYTES = 16384;
+function publishListLimit(value) {
+  const limit = value ?? DEFAULT_PUBLISH_LIST_LIMIT;
+  if (!Number.isSafeInteger(limit) || limit < 0 || limit > MAX_PUBLISH_LIST_LIMIT) {
+    throw new RangeError(`--list-limit must be an integer from 0 through ${MAX_PUBLISH_LIST_LIMIT}`);
+  }
+  return limit;
+}
 function encodeUtf8(text) {
   return new TextEncoder().encode(text);
 }
@@ -1320,12 +1398,14 @@ function boundedNormalized(text, maximumBytes) {
   if (Buffer.byteLength(normalized, "utf8") <= maximumBytes) {
     return { text: normalized, truncated: false };
   }
+  const bytes = Buffer.from(normalized, "utf8");
   let end = maximumBytes;
-  while (end > 0 && (normalized.charCodeAt(end) & 192) === 128)
+  while (end > 0 && ((bytes[end] ?? 0) & 192) === 128)
     end -= 1;
-  return { text: normalized.slice(0, end), truncated: true };
+  return { text: bytes.subarray(0, end).toString("utf8"), truncated: true };
 }
 async function projectVault(snapshot, options, io) {
+  const listLimit = publishListLimit(options.listLimit);
   const selection = selectPublishNotes(snapshot.notes, snapshot.analysis, options.selection ?? {});
   if (selection.notes.length > WORDCELL_SITE_LIMITS_V1.notes) {
     throw new RangeError(`Publish selection exceeds the ${WORDCELL_SITE_LIMITS_V1.notes}-note contract limit.`);
@@ -1464,7 +1544,7 @@ async function projectVault(snapshot, options, io) {
   for (const note of selection.notes) {
     const slug = slugFor(note.id);
     if (slug !== "") {
-      files.set(`n/${slug}.json`, encodeUtf8(serializeSiteFile(payloadBySlug.get(slug))));
+      setSiteJson(files, `n/${slug}.json`, payloadBySlug.get(slug), parseSiteNoteV1);
       const ctx = {
         site,
         rel: relativePrefix(slug),
@@ -1487,7 +1567,7 @@ async function projectVault(snapshot, options, io) {
   }
   const indexPayload = payloadBySlug.get("");
   if (indexPayload !== undefined) {
-    files.set("index.json", encodeUtf8(serializeSiteFile(indexPayload)));
+    setSiteJson(files, "index.json", indexPayload, parseSiteNoteV1);
   }
   const landingCtx = {
     site,
@@ -1507,19 +1587,19 @@ async function projectVault(snapshot, options, io) {
     const slugs = selection.notes.map((note) => slugFor(note.id));
     files.set("sitemap.xml", encodeUtf8(renderSitemapXml(slugs, `${baseUrl}${site.basePath === "/" ? "" : site.basePath.replace(/\/$/u, "")}`)));
   }
-  files.set(SITE_PATHS.catalog, encodeUtf8(serializeSiteFile(catalog)));
+  setSiteJson(files, SITE_PATHS.catalog, catalog, parseSiteCatalogV1);
   const index = buildSiteIndex(selection.notes, selection.slugById, {
     ...options.indexContent === undefined ? {} : { indexContent: options.indexContent }
   });
-  files.set(SITE_PATHS.docs, encodeUtf8(serializeSiteFile(index.docs)));
-  files.set(SITE_PATHS.terms, encodeUtf8(serializeSiteFile(index.terms)));
+  setSiteJson(files, SITE_PATHS.docs, index.docs, parseSiteDocsV1);
+  setSiteJson(files, SITE_PATHS.terms, index.terms, parseSiteTermsV1);
   for (const [shard, postings] of index.postings) {
-    files.set(`${SITE_PATHS.postingsPrefix}${shard}.json`, encodeUtf8(serializeSiteFile(postings)));
+    setSiteJson(files, `${SITE_PATHS.postingsPrefix}${shard}.json`, postings, parseSitePostingsV1);
   }
-  files.set(SITE_PATHS.graph, encodeUtf8(serializeSiteFile({
+  setSiteJson(files, SITE_PATHS.graph, {
     format: WORDCELL_SITE_GRAPH_FORMAT_V1,
     edges
-  })));
+  }, parseSiteGraphV1);
   for (const [path, asset] of [...assetByPath.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
     files.set(`${SITE_PATHS.assetPrefix}${asset.name}`, asset.bytes);
   }
@@ -1580,12 +1660,27 @@ async function projectVault(snapshot, options, io) {
     },
     truncated
   };
-  files.set("manifest.json", encodeUtf8(serializeSiteFile(manifest)));
+  setSiteJson(files, "manifest.json", manifest, parseSiteManifestV1);
   const ordered = new Map([...files.entries()].toSorted(([a], [b]) => a.localeCompare(b)));
+  const listedIds = [];
+  let listedBytes = 0;
+  for (const note of selection.notes) {
+    const bytes = Buffer.byteLength(note.id, "utf8");
+    if (listedIds.length >= listLimit || listedBytes + bytes > MAX_PUBLISH_LIST_BYTES)
+      break;
+    listedIds.push(note.id);
+    listedBytes += bytes;
+  }
   const report = {
     format: WORDCELL_SITE_FORMAT_V1,
     out: "",
     deterministic: options.deterministic === true,
+    selection: {
+      ids: listedIds,
+      total: selection.notes.length,
+      truncated: listedIds.length < selection.notes.length,
+      digest: manifest.source.digest
+    },
     files: ordered.size,
     bytes: totalBytes,
     notes: {
@@ -1613,6 +1708,35 @@ async function projectVault(snapshot, options, io) {
 function withinRoot(root, candidate) {
   const path = relative(root, candidate);
   return path === "" || !path.startsWith(`..${sep}`) && path !== ".." && !isAbsolute(path);
+}
+async function canonicalOutputPath(path) {
+  let ancestor = path;
+  const suffix = [];
+  for (;; ) {
+    try {
+      const stat = await lstat(ancestor);
+      if (ancestor === path && stat.isSymbolicLink()) {
+        throw new Error("--out must not be a symbolic link.");
+      }
+      return resolve(await realpath(ancestor), ...suffix);
+    } catch (error) {
+      if (!(error instanceof Error) || !("code" in error) || error.code !== "ENOENT")
+        throw error;
+      const parent = dirname(ancestor);
+      if (parent === ancestor)
+        throw error;
+      suffix.unshift(basename(ancestor));
+      ancestor = parent;
+    }
+  }
+}
+function assertSeparateOutput(root, out) {
+  if (withinRoot(root, out)) {
+    throw new Error("--out must not be the vault root or a directory inside it.");
+  }
+  if (withinRoot(out, root)) {
+    throw new Error("--out must not contain the vault root; replacement would delete the vault.");
+  }
 }
 var READER_FILES = ["reader.js", "reader.css", "theme.js"];
 async function defaultReaderFiles() {
@@ -1643,16 +1767,21 @@ async function defaultVersion() {
   return "0.0.0-dev";
 }
 async function publishVault(options) {
-  const resolvedRoot = resolve(options.root);
-  const out = resolve(options.out);
-  if (out === resolvedRoot || withinRoot(resolvedRoot, out)) {
-    throw new Error("--out must not be the vault root or a directory inside it.");
-  }
+  publishListLimit(options.listLimit);
+  const requestedRoot = resolve(options.root);
+  const requestedOut = resolve(options.out);
+  assertSeparateOutput(requestedRoot, requestedOut);
+  const resolvedRoot = await realpath(requestedRoot);
+  const out = await canonicalOutputPath(requestedOut);
+  assertSeparateOutput(resolvedRoot, out);
   const snapshot = await scanVault(resolvedRoot, {
     mentionScope: false,
     ...options.index === undefined ? {} : { index: options.index }
   });
   const selection = selectPublishNotes(snapshot.notes, snapshot.analysis, options.selection ?? {});
+  if (selection.notes.length === 0 && !options.dryRun) {
+    throw new Error("Publish selection is empty; check the selectors with --dry-run before replacing output.");
+  }
   const validation = await validateMarkdownAttachments({
     root: resolvedRoot,
     documents: selection.notes.map((note) => ({ path: note.path, content: note.content }))
@@ -1690,6 +1819,7 @@ async function publishVault(options) {
   const projection = await projectVault(snapshot, options, io);
   const report = { ...projection.report, out };
   if (!options.dryRun) {
+    assertSeparateOutput(await realpath(resolvedRoot), await canonicalOutputPath(out));
     let stat;
     try {
       stat = await lstat(out);
@@ -1730,6 +1860,13 @@ function renderPublishReportText(report, dryRun) {
     `  excluded: ${report.notes.excludedPrivate} private, ${report.notes.excludedBySelection} by selection`,
     `  search: ${report.search.content} content index, ${report.search.terms.toLocaleString("en-US")} terms`
   ];
+  if (report.selection.ids.length > 0) {
+    lines.push(`  selected ids: ${report.selection.ids.join(", ")}`);
+  }
+  if (report.selection.truncated) {
+    lines.push(`  selected ids shown: ${report.selection.ids.length} of ${report.selection.total} (use --list-limit to change the report bound)`);
+  }
+  lines.push(`  source: ${report.selection.digest}`);
   if (report.search.truncated) {
     lines.push("  warning: search index truncated at contract limits");
   }
@@ -1738,4 +1875,4 @@ function renderPublishReportText(report, dryRun) {
 `;
 }
 
-export { WORDCELL_PUBLISH_GENERATOR, serializeSiteFile, MAX_SITE_BYTES, projectVault, publishVault, renderPublishReportText };
+export { WORDCELL_PUBLISH_GENERATOR, serializeSiteFile, MAX_SITE_BYTES, DEFAULT_PUBLISH_LIST_LIMIT, MAX_PUBLISH_LIST_LIMIT, MAX_PUBLISH_LIST_BYTES, projectVault, publishVault, renderPublishReportText };

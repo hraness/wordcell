@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -11,13 +11,16 @@ import {
   parseSiteNoteV1,
   parseSiteTermsV1,
   WORDCELL_SITE_FORMAT_V1,
+  WORDCELL_SITE_LIMITS_V1,
 } from "./publish-model.js";
 import {
   projectVault,
+  MAX_PUBLISH_LIST_BYTES,
   publishVault,
   renderPublishReportText,
   type PublishIo,
 } from "./publish.js";
+import { analyzeVault, parseNote } from "./graph.js";
 import { scanVault } from "./vault.js";
 
 const READER_STUB = new Map<string, Uint8Array>([
@@ -219,6 +222,97 @@ describe("publishVault", () => {
     }
   });
 
+  test("rejects an output ancestor before force can delete the vault", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "hraness-wordcell-ancestor-"));
+    const root = join(parent, "kb");
+    await mkdir(root);
+    await writeFile(join(root, "keep.md"), "# Keep this source\n");
+    try {
+      await expect(publishVault({ root, out: parent, force: true })).rejects.toThrow("contain the vault");
+      expect(await readFile(join(root, "keep.md"), "utf8")).toBe("# Keep this source\n");
+    } finally {
+      await rm(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("resolves symlink parents before checking output confinement", async () => {
+    const root = await makeVault();
+    const parent = await mkdtemp(join(tmpdir(), "hraness-wordcell-alias-"));
+    const alias = join(parent, "alias");
+    await symlink(root, alias, "dir");
+    try {
+      await expect(publishVault({ root, out: join(alias, "site"), force: true })).rejects.toThrow("inside");
+      await expect(publishVault({ root, out: alias, force: true })).rejects.toThrow("symbolic link");
+      const vaultThroughAlias = join(alias, "docs");
+      await expect(publishVault({ root: vaultThroughAlias, out: root, force: true })).rejects.toThrow("contain the vault");
+      expect(await readFile(join(root, "docs/alpha.md"), "utf8")).toContain("# Alpha");
+    } finally {
+      await rm(parent, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("bounded dry-run report lists only selected ids and leaves the output untouched", async () => {
+    const root = await makeVault();
+    const parent = await mkdtemp(join(tmpdir(), "hraness-wordcell-report-"));
+    await writeFile(join(parent, "keep.txt"), "unchanged");
+    try {
+      const result = await publishVault({
+        root, out: parent, dryRun: true, force: true, listLimit: 1,
+        selection: { includeGlobs: ["docs/**"], excludes: ["private/secret"] },
+      });
+      expect(result.report.selection.ids).toEqual(["docs/alpha"]);
+      expect(result.report.selection.total).toBe(2);
+      expect(result.report.selection.truncated).toBe(true);
+      expect(result.report.selection.digest).toBe(result.manifest.source.digest);
+      expect(JSON.stringify(result.report)).not.toContain("searchable needle");
+      expect(JSON.stringify(result.manifest)).not.toContain("private/secret");
+      expect(await readFile(join(parent, "keep.txt"), "utf8")).toBe("unchanged");
+      const countsOnly = await publishVault({ root, out: parent, dryRun: true, listLimit: 0 });
+      expect(countsOnly.report.selection.ids).toEqual([]);
+      expect(countsOnly.report.selection.truncated).toBe(true);
+      await expect(publishVault({ root, out: parent, listLimit: 1001 })).rejects.toThrow("--list-limit");
+    } finally {
+      await rm(parent, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("an empty selection previews safely and cannot erase an existing output", async () => {
+    const root = await makeVault();
+    const out = await mkdtemp(join(tmpdir(), "hraness-wordcell-empty-"));
+    await writeFile(join(out, "keep.txt"), "existing site");
+    const options = { root, out, force: true, selection: { includeGlobs: ["typo/**/*.md"] } };
+    try {
+      const preview = await publishVault({ ...options, dryRun: true });
+      expect(preview.report.notes.published).toBe(0);
+      expect(preview.report.selection.ids).toEqual([]);
+      await expect(publishVault(options)).rejects.toThrow("Publish selection is empty");
+      expect(await readFile(join(out, "keep.txt"), "utf8")).toBe("existing site");
+    } finally {
+      await rm(out, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test.each([
+    { label: "title", content: `# ${"界".repeat(200)}\n`, error: "note.title" },
+    { label: "aliases", content: `---\naliases: [${Array.from({ length: 129 }, (_, i) => `alias${i}`).join(", ")}]\n---\n# Aliases\n`, error: "note.aliases" },
+    { label: "tags", content: `---\ntags: [${Array.from({ length: 129 }, (_, i) => `tag${i}`).join(", ")}]\n---\n# Tags\n`, error: "note.tags" },
+  ])("rejects oversized $label before replacing output", async ({ content, error }) => {
+    const root = await makeVault();
+    const out = await mkdtemp(join(tmpdir(), "hraness-wordcell-bounds-"));
+    await writeFile(join(root, "oversized.md"), content);
+    await writeFile(join(out, "keep.txt"), "existing site");
+    try {
+      await expect(publishVault({ root, out, force: true, selection: { includes: ["oversized"] } })).rejects.toThrow(error);
+      expect(await readFile(join(out, "keep.txt"), "utf8")).toBe("existing site");
+    } finally {
+      await rm(out, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   test("selection subsets publish only the chosen neighborhood", async () => {
     const root = await makeVault();
     const parent = await mkdtemp(join(tmpdir(), "hraness-wordcell-site-"));
@@ -264,12 +358,53 @@ describe("projectVault", () => {
   });
 });
 
+test("report id bytes are bounded and preview limits do not change artifact bytes", async () => {
+  const notes = Array.from({ length: 24 }, (_, index) => parseNote(`${"x".repeat(900)}${index}.md`, "# Note\n"));
+  const snapshot = { root: "/vault", notes, analysis: analyzeVault(notes) };
+  const io: PublishIo = {
+    resolveAssetPath: () => undefined,
+    readAsset: async () => undefined,
+    readerFiles: async () => READER_STUB,
+  };
+  const first = await projectVault(snapshot, { root: "/vault", listLimit: 1000, deterministic: true }, io);
+  const second = await projectVault(snapshot, { root: "/vault", listLimit: 0, deterministic: true }, io);
+  expect(first.report.selection.ids.length).toBeGreaterThan(0);
+  expect(first.report.selection.ids.reduce((sum, id) => sum + Buffer.byteLength(id), 0)).toBeLessThanOrEqual(MAX_PUBLISH_LIST_BYTES);
+  expect(first.report.selection.truncated).toBe(true);
+  expect(second.report.selection.ids).toEqual([]);
+  expect(first.report.selection.digest).toBe(second.report.selection.digest);
+  expect([...first.files.entries()]).toEqual([...second.files.entries()]);
+});
+
+test("multibyte note payloads respect byte limits without corrupting Unicode", async () => {
+  const notes = [parseNote("unicode.md", `# Unicode\n\n${"界".repeat(WORDCELL_SITE_LIMITS_V1.noteTextBytes)}`)];
+  const projection = await projectVault({ root: "/vault", notes, analysis: analyzeVault(notes) }, { root: "/vault" }, {
+    resolveAssetPath: () => undefined,
+    readAsset: async () => undefined,
+    readerFiles: async () => READER_STUB,
+  });
+  const bytes = projection.files.get("n/unicode.json");
+  const payload = parseSiteNoteV1(JSON.parse(new TextDecoder().decode(bytes)));
+  expect(Buffer.byteLength(payload.text, "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.noteTextBytes);
+  expect(payload.text).not.toContain("�");
+  expect(payload.textTruncated).toBe(true);
+  const decode = (path: string): unknown => JSON.parse(new TextDecoder().decode(projection.files.get(path)));
+  const docs = parseSiteDocsV1(decode("index/docs.json"));
+  parseSiteManifestV1(decode("manifest.json"));
+  parseSiteCatalogV1(decode("catalog.json"));
+  parseSiteGraphV1(decode("graph.json"));
+  parseSiteTermsV1(decode("index/terms.json"));
+  expect(Buffer.byteLength(docs.docs[0]?.p ?? "", "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.docPreviewBytes);
+  expect(Buffer.byteLength(docs.docs[0]?.x ?? "", "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.inlineTextBytes);
+});
+
 describe("renderPublishReportText", () => {
   test("renders a bounded human report", () => {
     const text = renderPublishReportText({
       format: WORDCELL_SITE_FORMAT_V1,
       out: "/tmp/site",
       deterministic: true,
+      selection: { ids: ["docs/a"], total: 3, truncated: true, digest: "sha256:example" },
       files: 10,
       bytes: 2048,
       notes: { published: 3, excludedPrivate: 1, excludedBySelection: 0 },

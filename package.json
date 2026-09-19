@@ -1,7 +1,7 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.21.3",
-  "description": "A knowledge base for coding agents, built from Markdown, backlinks, semantic search, and Git context.",
+  "version": "0.22.0",
+  "description": "A local knowledge base for coding agents. Save decisions in Markdown and recover the context behind your code.",
   "license": "MIT",
   "type": "module",
   "sideEffects": [

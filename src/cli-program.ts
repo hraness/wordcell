@@ -97,6 +97,8 @@ import {
   type PortfolioSearchResult,
 } from "./portfolio.js";
 import {
+  DEFAULT_PUBLISH_LIST_LIMIT,
+  MAX_PUBLISH_LIST_LIMIT,
   publishVault,
   renderPublishReportText,
   type PublishSelectionInput,
@@ -224,7 +226,16 @@ async function loadSearchRulesFile(path: string): Promise<SearchRulesV1> {
   return parseSearchRules(input);
 }
 
-export const usage = `wordcell — auditable capture and derived links for Markdown vaults
+export const usage = `wordcell — a local knowledge base for coding agents
+
+Start here (no account or model needed):
+  wordcell init kb
+  wordcell note create notes/decision --title "A decision" --body "Keep retries bounded." --root kb
+  wordcell search "retries" --root kb --mode exact
+
+Already have Markdown? Search it with --root <your-notes-directory>.
+Use --mode exact for model-free search; optional hybrid search needs a local index.
+Quick start and examples: https://wordcell.io/docs
 
 Usage:
   wordcell init [directory] [--json]
@@ -258,7 +269,7 @@ Usage:
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
   wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
-  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--force] [--json]
+  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--include-glob <pattern>]... [--exclude-glob <pattern>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--list-limit <0-1000>] [--force] [--json]
   wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
@@ -472,6 +483,7 @@ type ParsedCommand =
       readonly indexContent: boolean;
       readonly deterministic: boolean;
       readonly dryRun: boolean;
+      readonly listLimit: number;
       readonly force: boolean;
       readonly selection: PublishSelectionInput;
       readonly json: boolean;
@@ -918,6 +930,7 @@ function parsePublishCommand(arguments_: readonly string[]): ParseResult {
   let indexContent = true;
   let deterministic = false;
   let dryRun = false;
+  let listLimit = DEFAULT_PUBLISH_LIST_LIMIT;
   let force = false;
   let json = false;
   let from: string | undefined;
@@ -925,6 +938,8 @@ function parsePublishCommand(arguments_: readonly string[]): ParseResult {
   let direction: LinkDirection = "both";
   const includes: string[] = [];
   const excludes: string[] = [];
+  const includeGlobs: string[] = [];
+  const excludeGlobs: string[] = [];
   const filters: MetadataFilter[] = [];
   const tags: string[] = [];
   const repositoryScopes: string[] = [];
@@ -943,6 +958,8 @@ function parsePublishCommand(arguments_: readonly string[]): ParseResult {
       || argument === "--title" || argument === "--description"
       || argument === "--base-path" || argument === "--base-url"
       || argument === "--include" || argument === "--exclude"
+      || argument === "--include-glob" || argument === "--exclude-glob"
+      || argument === "--list-limit"
       || argument === "--where" || argument === "--has" || argument === "--tag"
       || argument === "--scope" || argument === "--repository-scope"
       || argument === "--from" || argument === "--depth" || argument === "--direction"
@@ -958,6 +975,14 @@ function parsePublishCommand(arguments_: readonly string[]): ParseResult {
       else if (argument === "--base-url") baseUrl = value;
       else if (argument === "--include") includes.push(value);
       else if (argument === "--exclude") excludes.push(value);
+      else if (argument === "--include-glob") includeGlobs.push(value);
+      else if (argument === "--exclude-glob") excludeGlobs.push(value);
+      else if (argument === "--list-limit") {
+        if (!/^(0|[1-9][0-9]*)$/u.test(value) || Number(value) > MAX_PUBLISH_LIST_LIMIT) {
+          return { ok: false, message: `--list-limit must be an integer from 0 through ${MAX_PUBLISH_LIST_LIMIT}` };
+        }
+        listLimit = Number(value);
+      }
       else if (argument === "--from") from = value;
       else if (argument === "--depth") {
         const parsed = Number(value);
@@ -1017,6 +1042,8 @@ function parsePublishCommand(arguments_: readonly string[]): ParseResult {
   const selection: PublishSelectionInput = {
     includes,
     excludes,
+    includeGlobs,
+    excludeGlobs,
     filters,
     tags,
     repositoryScopes,
@@ -1032,6 +1059,7 @@ function parsePublishCommand(arguments_: readonly string[]): ParseResult {
       indexContent,
       deterministic,
       dryRun,
+      listLimit,
       force,
       selection,
       json,
@@ -3084,6 +3112,7 @@ async function runPublish(
     indexContent: command.indexContent,
     deterministic: command.deterministic,
     dryRun: command.dryRun,
+    listLimit: command.listLimit,
     force: command.force,
     selection: command.selection,
     ...(command.index === undefined ? {} : { index: command.index }),
