@@ -155,7 +155,12 @@ for older readers to close. `wordcell index` can prewarm that cache. `--mode exa
 requires no model.
 
 Reranking is opt-in through `--rerank typesafe`, which needs `TYPESAFE_API_KEY`.
-The engine re-sorts a bounded result window with an independent relevance
+This hosted lane sends the effective query and, for each of at most 25
+candidates, its title, vault-relative path, and at most 512 UTF-8 bytes of
+snippet text to TypeSafe in a separate request. Those fields leave the local
+machine and may contain private vault material, so enable the lane only when
+that external processing and its possible per-request cost are acceptable.
+The engine re-sorts the bounded window with an independent relevance
 probability per note; reranked hits keep their fused scores and gain a separate
 `rerank` evidence lane. When the key is absent or the provider fails, the
 search keeps the baseline order and reports a degraded or unavailable lane

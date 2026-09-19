@@ -1,4 +1,6 @@
 import {
+  MAX_RERANK_CANDIDATES,
+  MAX_RERANK_SNIPPET_BYTES,
   MAX_RERANK_STATE_BYTES,
   type SearchRerankRequest,
   type SearchRerankResult,
@@ -10,6 +12,9 @@ export const DEFAULT_SYSTEMONE_MODEL = "jev-latest";
 const DEFAULT_RERANK_TIMEOUT_MS = 8_000;
 const DEFAULT_RERANK_MAX_RESPONSE_BYTES = 64 * 1_024;
 const DEFAULT_RERANK_CONCURRENCY = 8;
+const MAX_RERANK_TIMEOUT_MS = DEFAULT_RERANK_TIMEOUT_MS;
+const MAX_RERANK_RESPONSE_BYTES = DEFAULT_RERANK_MAX_RESPONSE_BYTES;
+const MAX_RERANK_CONCURRENCY = DEFAULT_RERANK_CONCURRENCY;
 
 const RELEVANCE_QUESTION = "relevant";
 const RELEVANCE_INSTRUCTIONS =
@@ -30,11 +35,12 @@ export type SystemOneTransport = (request: {
 }) => Promise<{ readonly status: number; readonly body: Uint8Array }>;
 
 export type TypeSafeRerankerOptions = {
-  /** Overrides the TYPESAFE_API_KEY environment lookup. */
-  readonly apiKey?: string;
   readonly transport?: SystemOneTransport;
+  /** May lower, but never raise, the fixed request timeout bound. */
   readonly timeoutMs?: number;
+  /** May lower, but never raise, the fixed response byte bound. */
   readonly maxResponseBytes?: number;
+  /** May lower, but never raise, the fixed request concurrency bound. */
   readonly concurrency?: number;
   /** Test seam for environment lookups; production callers leave this unset. */
   readonly environment?: Readonly<Record<string, string | undefined>>;
@@ -42,9 +48,9 @@ export type TypeSafeRerankerOptions = {
 
 type ParsedSystemOneAnswer = {
   readonly noul: number;
-  readonly model?: string;
-  readonly inputTokens?: number;
-  readonly outputTokens?: number;
+  readonly model: string;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
 };
 
 async function readBoundedResponse(
@@ -96,16 +102,13 @@ async function fetchSystemOneTransport(request: {
     method: "POST",
     headers: request.headers,
     body: body.buffer,
+    redirect: "error",
     signal: AbortSignal.any(signals),
   });
   return {
     status: response.status,
     body: await readBoundedResponse(response, request.maxResponseBytes),
   };
-}
-
-function sanitizeMessage(text: string, secret: string): string {
-  return secret === "" ? text : text.split(secret).join("[redacted]");
 }
 
 function finiteNumber(value: unknown): number | null {
@@ -138,8 +141,7 @@ function tokenCount(value: unknown): number | null {
 
 function acceptedResponseModel(value: unknown): value is string {
   return value === DEFAULT_SYSTEMONE_MODEL
-    || (typeof value === "string"
-      && /^jev-[0-9]+(?:\.[0-9]+){2}(?:[-+][A-Za-z0-9.-]+)?$/u.test(value));
+    || (typeof value === "string" && /^jev-[0-9]+(?:\.[0-9]+){2}$/u.test(value));
 }
 
 function parseSystemOneResponse(value: unknown): ParsedSystemOneAnswer | null {
@@ -192,162 +194,244 @@ function validApiKey(value: string | undefined): value is string {
   return value !== undefined && /^[\x21-\x7e]{1,512}$/u.test(value);
 }
 
+function boundedPositiveInteger(
+  value: number | undefined,
+  fallback: number,
+  maximum: number,
+): number | null {
+  const resolved = value ?? fallback;
+  return Number.isSafeInteger(resolved) && resolved >= 1 && resolved <= maximum
+    ? resolved
+    : null;
+}
+
+function validRerankRequest(value: unknown): value is SearchRerankRequest {
+  const request = recordValue(value);
+  if (
+    request === null
+    || typeof request["query"] !== "string"
+    || request["query"].trim() === ""
+    || Buffer.byteLength(request["query"], "utf8") > MAX_RERANK_STATE_BYTES
+    || !Array.isArray(request["candidates"])
+    || request["candidates"].length > MAX_RERANK_CANDIDATES
+  ) return false;
+  const ids = new Set<string>();
+  for (const [index, value] of request["candidates"].entries()) {
+    const candidate = recordValue(value);
+    if (
+      candidate === null
+      || typeof candidate["id"] !== "string"
+      || candidate["id"] === ""
+      || ids.has(candidate["id"])
+      || candidate["baselineRank"] !== index + 1
+      || typeof candidate["score"] !== "number"
+      || !Number.isFinite(candidate["score"])
+      || typeof candidate["title"] !== "string"
+      || typeof candidate["path"] !== "string"
+      || typeof candidate["snippet"] !== "string"
+      || Buffer.byteLength(candidate["id"], "utf8") > MAX_RERANK_STATE_BYTES
+      || Buffer.byteLength(candidate["title"], "utf8") > MAX_RERANK_STATE_BYTES
+      || Buffer.byteLength(candidate["path"], "utf8") > MAX_RERANK_STATE_BYTES
+      || Buffer.byteLength(candidate["snippet"], "utf8") > MAX_RERANK_SNIPPET_BYTES
+    ) return false;
+    ids.add(candidate["id"]);
+  }
+  return true;
+}
+
+type ScoredCandidate =
+  | {
+      readonly ok: true;
+      readonly noul: number;
+      readonly model: string;
+      readonly inputTokens: number;
+      readonly outputTokens: number;
+    }
+  | { readonly ok: false; readonly message: string };
+
 /**
  * Pairwise-noul reranker for the TypeSafe System One API. Each candidate is
  * scored by one independent noul question so the window keeps an inspectable
- * calibrated probability per note. A missing API key degrades to
+ * calibrated probability per note. The API key is read only from the
+ * TYPESAFE_API_KEY environment variable. A missing key degrades to
  * `unavailable` without any network call; transport, HTTP, timeout, and
- * malformed-response failures degrade to `failed` with sanitized messages.
+ * malformed-response failures degrade to `failed` without provider bodies.
  */
 export function createTypeSafeReranker(
   options: TypeSafeRerankerOptions = {},
 ): SearchReranker {
   const transport = options.transport ?? fetchSystemOneTransport;
-  const timeoutMs = options.timeoutMs ?? DEFAULT_RERANK_TIMEOUT_MS;
-  const maxResponseBytes = options.maxResponseBytes ?? DEFAULT_RERANK_MAX_RESPONSE_BYTES;
-  const concurrency = options.concurrency ?? DEFAULT_RERANK_CONCURRENCY;
-  const apiKey = options.apiKey
-    ?? options.environment?.["TYPESAFE_API_KEY"]
-    ?? process.env["TYPESAFE_API_KEY"];
+  const timeoutMs = boundedPositiveInteger(
+    options.timeoutMs,
+    DEFAULT_RERANK_TIMEOUT_MS,
+    MAX_RERANK_TIMEOUT_MS,
+  );
+  const maxResponseBytes = boundedPositiveInteger(
+    options.maxResponseBytes,
+    DEFAULT_RERANK_MAX_RESPONSE_BYTES,
+    MAX_RERANK_RESPONSE_BYTES,
+  );
+  const concurrency = boundedPositiveInteger(
+    options.concurrency,
+    DEFAULT_RERANK_CONCURRENCY,
+    MAX_RERANK_CONCURRENCY,
+  );
+  const environment = options.environment ?? process.env;
+  const apiKey = Object.hasOwn(environment, "TYPESAFE_API_KEY")
+    ? environment["TYPESAFE_API_KEY"]
+    : undefined;
 
   return {
     id: "typesafe",
     rerank: async (request: SearchRerankRequest): Promise<SearchRerankResult> => {
+      if (timeoutMs === null || maxResponseBytes === null || concurrency === null) {
+        return { status: "failed", message: "TypeSafe rerank configuration was invalid." };
+      }
       if (!validApiKey(apiKey)) {
         return {
           status: "unavailable",
           message: "TYPESAFE_API_KEY is missing or invalid; the TypeSafe rerank lane is unavailable.",
         };
       }
-      if (request.candidates.length === 0) {
-        return { status: "ready", ordering: [], probabilities: {} };
-      }
-      const encoder = new TextEncoder();
-      const decoder = new TextDecoder("utf-8", { fatal: false });
-      const scoreCandidate = async (
-        candidate: SearchRerankRequest["candidates"][number],
-      ): Promise<
-        | {
-            readonly ok: true;
-            readonly noul: number;
-            readonly model?: string;
-            readonly inputTokens?: number;
-            readonly outputTokens?: number;
+      try {
+        if (!validRerankRequest(request)) {
+          return { status: "failed", message: "TypeSafe rerank request was malformed or exceeded its limits." };
+        }
+        if (request.signal?.aborted === true) {
+          return { status: "failed", message: "TypeSafe rerank request was aborted." };
+        }
+        if (request.candidates.length === 0) {
+          return { status: "ready", ordering: [], probabilities: {} };
+        }
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder("utf-8", { fatal: true });
+        let firstFailure: string | undefined;
+        const failed = (message: string): ScoredCandidate => {
+          firstFailure ??= message;
+          return { ok: false, message: firstFailure };
+        };
+        const scoreCandidate = async (
+          candidate: SearchRerankRequest["candidates"][number],
+        ): Promise<ScoredCandidate> => {
+          if (firstFailure !== undefined) return { ok: false, message: firstFailure };
+          if (request.signal?.aborted === true) {
+            return failed("TypeSafe rerank request was aborted.");
           }
-        | { readonly ok: false; readonly message: string }
-      > => {
-        const state = {
-          query: request.query,
-          candidate: {
-            key: candidate.id,
-            title: candidate.title,
-            path: candidate.path,
-            snippet: candidate.snippet,
-          },
+          const state = {
+            query: request.query,
+            candidate: {
+              key: candidate.id,
+              title: candidate.title,
+              path: candidate.path,
+              snippet: candidate.snippet,
+            },
+          };
+          const stateBytes = encoder.encode(JSON.stringify(state)).byteLength;
+          if (stateBytes > MAX_RERANK_STATE_BYTES) {
+            return failed(
+              `TypeSafe rerank state exceeds the ${MAX_RERANK_STATE_BYTES}-byte limit.`,
+            );
+          }
+          const body = encoder.encode(JSON.stringify({
+            model: DEFAULT_SYSTEMONE_MODEL,
+            state,
+            questions: {
+              [RELEVANCE_QUESTION]: {
+                type: "noul",
+                instructions: RELEVANCE_INSTRUCTIONS,
+                criteria: RELEVANCE_CRITERIA,
+              },
+            },
+          }));
+          let response: { readonly status: number; readonly body: Uint8Array };
+          try {
+            response = await transport({
+              url: DEFAULT_SYSTEMONE_ENDPOINT,
+              body,
+              headers: {
+                "authorization": `Bearer ${apiKey}`,
+                "content-type": "application/json",
+              },
+              timeoutMs,
+              maxResponseBytes,
+              ...(request.signal === undefined ? {} : { signal: request.signal }),
+            });
+          } catch {
+            return failed("TypeSafe rerank request failed.");
+          }
+          if (
+            !Number.isSafeInteger(response.status)
+            || !(response.body instanceof Uint8Array)
+            || response.body.byteLength > maxResponseBytes
+          ) {
+            return failed("TypeSafe rerank transport returned a malformed or oversized response.");
+          }
+          if (response.status !== 200) {
+            return failed(`TypeSafe rerank request returned HTTP ${response.status}.`);
+          }
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(decoder.decode(response.body)) as unknown;
+          } catch {
+            return failed("TypeSafe rerank response was not valid UTF-8 JSON.");
+          }
+          const answer = parseSystemOneResponse(parsed);
+          if (answer === null) {
+            return failed("TypeSafe rerank response was malformed.");
+          }
+          return {
+            ok: true,
+            noul: answer.noul,
+            model: answer.model,
+            inputTokens: answer.inputTokens,
+            outputTokens: answer.outputTokens,
+          };
         };
-        const stateBytes = encoder.encode(JSON.stringify(state)).byteLength;
-        if (stateBytes > MAX_RERANK_STATE_BYTES) {
-          return {
-            ok: false,
-            message: `TypeSafe rerank state exceeds the ${MAX_RERANK_STATE_BYTES}-byte limit.`,
-          };
+        const scored = await mapWithConcurrency(
+          request.candidates,
+          concurrency,
+          scoreCandidate,
+        );
+        const failure = scored.find((entry) => !entry.ok);
+        if (failure !== undefined && !failure.ok) {
+          return { status: "failed", message: failure.message };
         }
-        const body = encoder.encode(JSON.stringify({
-          model: DEFAULT_SYSTEMONE_MODEL,
-          state,
-          questions: {
-            [RELEVANCE_QUESTION]: {
-              type: "noul",
-              instructions: RELEVANCE_INSTRUCTIONS,
-              criteria: RELEVANCE_CRITERIA,
-            },
-          },
-        }));
-        let response: { readonly status: number; readonly body: Uint8Array };
-        try {
-          response = await transport({
-            url: DEFAULT_SYSTEMONE_ENDPOINT,
-            body,
-            headers: {
-              "authorization": `Bearer ${apiKey}`,
-              "content-type": "application/json",
-            },
-            timeoutMs,
-            maxResponseBytes,
-            ...(request.signal === undefined ? {} : { signal: request.signal }),
-          });
-        } catch (error: unknown) {
-          const raw = error instanceof Error ? error.message : String(error);
-          return {
-            ok: false,
-            message: `TypeSafe rerank request failed: ${sanitizeMessage(raw, apiKey)}`,
-          };
+        const probabilities: Record<string, number> = Object.create(null) as Record<string, number>;
+        let inputTokens = 0;
+        let outputTokens = 0;
+        let responseModel: string | undefined;
+        for (const [index, entry] of scored.entries()) {
+          if (!entry.ok) continue;
+          const candidate = request.candidates[index];
+          if (candidate === undefined) {
+            return { status: "failed", message: "TypeSafe rerank result was incomplete." };
+          }
+          if (responseModel !== undefined && responseModel !== entry.model) {
+            return { status: "failed", message: "TypeSafe rerank responses used inconsistent models." };
+          }
+          probabilities[candidate.id] = entry.noul;
+          responseModel ??= entry.model;
+          inputTokens += entry.inputTokens;
+          outputTokens += entry.outputTokens;
         }
-        if (response.status !== 200) {
-          return {
-            ok: false,
-            message: `TypeSafe rerank request returned HTTP ${response.status}.`,
-          };
-        }
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(decoder.decode(response.body)) as unknown;
-        } catch {
-          return { ok: false, message: "TypeSafe rerank response was not valid JSON." };
-        }
-        const answer = parseSystemOneResponse(parsed);
-        if (answer === null) {
-          return { ok: false, message: "TypeSafe rerank response was malformed." };
-        }
+        const ordering = request.candidates
+          .toSorted(
+            (left, right) =>
+              (probabilities[right.id] ?? -1) - (probabilities[left.id] ?? -1)
+              || left.baselineRank - right.baselineRank
+              || left.id.localeCompare(right.id),
+          )
+          .map(({ id }) => id);
         return {
-          ok: true,
-          noul: answer.noul,
-          ...(answer.model === undefined ? {} : { model: answer.model }),
-          ...(answer.inputTokens === undefined ? {} : { inputTokens: answer.inputTokens }),
-          ...(answer.outputTokens === undefined ? {} : { outputTokens: answer.outputTokens }),
+          status: "ready",
+          ordering: Object.freeze(ordering),
+          probabilities,
+          model: responseModel ?? DEFAULT_SYSTEMONE_MODEL,
+          usage: { inputTokens, outputTokens },
         };
-      };
-      const scored = await mapWithConcurrency(
-        request.candidates,
-        concurrency,
-        scoreCandidate,
-      );
-      const failure = scored.find((entry) => !entry.ok);
-      if (failure !== undefined && !failure.ok) {
-        return { status: "failed", message: failure.message };
+      } catch {
+        return { status: "failed", message: "TypeSafe rerank request was malformed or failed." };
       }
-      const probabilities: Record<string, number> = {};
-      let inputTokens = 0;
-      let outputTokens = 0;
-      let sawUsage = false;
-      let responseModel: string | undefined;
-      for (const [index, entry] of scored.entries()) {
-        if (!entry.ok) continue;
-        const candidate = request.candidates[index];
-        if (candidate === undefined) continue;
-        probabilities[candidate.id] = entry.noul;
-        responseModel ??= entry.model;
-        if (entry.inputTokens !== undefined || entry.outputTokens !== undefined) {
-          sawUsage = true;
-          inputTokens += entry.inputTokens ?? 0;
-          outputTokens += entry.outputTokens ?? 0;
-        }
-      }
-      const ordering = request.candidates
-        .toSorted(
-          (left, right) =>
-            (probabilities[right.id] ?? -1) - (probabilities[left.id] ?? -1)
-            || left.baselineRank - right.baselineRank
-            || left.id.localeCompare(right.id),
-        )
-        .map(({ id }) => id);
-      return {
-        status: "ready",
-        ordering: Object.freeze(ordering),
-        probabilities,
-        model: responseModel ?? DEFAULT_SYSTEMONE_MODEL,
-        ...(sawUsage ? { usage: { inputTokens, outputTokens } } : {}),
-      };
     },
   };
 }

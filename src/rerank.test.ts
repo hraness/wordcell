@@ -155,6 +155,46 @@ describe("applyRerank", () => {
     expect(failed.placements.size).toBe(0);
   });
 
+  test("fails soft for malformed custom-engine results", () => {
+    const hits = [hit("a", 1), hit("b", 2)];
+    for (const malformed of [
+      null,
+      {},
+      { status: "ready", ordering: null, probabilities: {} },
+      { status: "ready", ordering: ["a", "b"], probabilities: null },
+      {
+        status: "ready",
+        ordering: ["a", "b"],
+        probabilities: { a: 0.5, b: 0.5 },
+        usage: { inputTokens: "secret provider body" },
+      },
+      {
+        status: "ready",
+        ordering: ["a", "b"],
+        probabilities: { a: 0.5, b: 0.5 },
+        extra: true,
+      },
+      { status: "failed", message: "x".repeat(513) },
+    ]) {
+      const applied = applyRerank(hits, malformed);
+      expect(applied.status).toBe("failed");
+      expect(applied.hits).toEqual(hits);
+      expect(applied.message).toBe("Rerank engine returned a malformed result.");
+    }
+  });
+
+  test("rejects a partial result when the caller supplies the full expected window", () => {
+    const hits = [hit("a", 1), hit("b", 2), hit("c", 3)];
+    const applied = applyRerank(
+      hits,
+      ready(["a", "b"], { a: 0.8, b: 0.2 }),
+      ["a", "b", "c"],
+    );
+    expect(applied.status).toBe("failed");
+    expect(applied.hits).toEqual(hits);
+    expect(applied.placements.size).toBe(0);
+  });
+
   test("keeps hits outside the declared ordering window untouched", () => {
     const hits = [hit("a", 1), hit("b", 2), hit("c", 3), hit("d", 4)];
     const applied = applyRerank(

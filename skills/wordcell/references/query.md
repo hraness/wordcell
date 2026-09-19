@@ -156,12 +156,17 @@ text rank. They explain and expand candidates without becoming authored facts,
 links, or recency boosts.
 
 Reranking is opt-in: `wordcell search "query" --rerank typesafe` requires
-`TYPESAFE_API_KEY` in the environment. The engine re-sorts a bounded result
-window with an independent relevance probability per note; reranked hits keep
-their fused scores and gain a separate `rerank` evidence entry with baseline
-rank, final rank, and probability. When the key is absent or the provider
-fails, the search keeps the baseline order, reports a degraded or unavailable
-rerank lane, and stays partial instead of failing.
+`TYPESAFE_API_KEY` in the environment. This hosted lane sends the effective
+query and, for each of at most 25 candidates, its title, vault-relative path,
+and at most 512 UTF-8 bytes of snippet text to TypeSafe in a separate request.
+Those fields leave the local machine and may contain private vault material, so
+use the lane only when that external processing and its possible per-request
+cost are acceptable. The engine re-sorts the bounded window with an independent
+relevance probability per note; reranked hits keep their fused scores and gain
+a separate `rerank` evidence entry with baseline rank, post-rerank rank, and
+probability. Explicit priority rules still run last. When the key is absent or
+the provider fails, the search keeps the baseline order, reports a degraded or
+unavailable rerank lane, and stays partial instead of failing.
 
 `wordcell history <note>` returns the bounded commit history already associated with
 one resolved note. `wordcell history search <query-or-path>` searches the bounded Git

@@ -72,7 +72,7 @@ describe("createTypeSafeReranker", () => {
   test("sends one bounded noul request per candidate with auth and model", async () => {
     const captured: CapturedRequest[] = [];
     const reranker = createTypeSafeReranker({
-      apiKey: "key-abc",
+      environment: { TYPESAFE_API_KEY: "key-abc" },
       transport: fakeTransport((_request, key) =>
         systemOneResponse(key === "b" ? 0.9 : 0.1), captured),
     });
@@ -132,7 +132,7 @@ describe("createTypeSafeReranker", () => {
   test("returns unavailable without transport for an invalid key", async () => {
     let calls = 0;
     const reranker = createTypeSafeReranker({
-      apiKey: "key\nheader: injected",
+      environment: { TYPESAFE_API_KEY: "key\nheader: injected" },
       transport: async () => {
         calls += 1;
         return { status: 200, body: new Uint8Array() };
@@ -146,7 +146,7 @@ describe("createTypeSafeReranker", () => {
     expect(calls).toBe(0);
   });
 
-  test("maps apiKey option over environment over process.env", async () => {
+  test("reads the API key only from the selected environment", async () => {
     await withoutProcessKey(async () => {
       process.env["TYPESAFE_API_KEY"] = "env-process";
       const auths: (string | undefined)[] = [];
@@ -157,8 +157,6 @@ describe("createTypeSafeReranker", () => {
           body: new TextEncoder().encode(JSON.stringify(systemOneResponse(0.5))),
         };
       };
-      const explicit = createTypeSafeReranker({ apiKey: "opt-key", transport });
-      await explicit.rerank({ query: "q", candidates: [candidate("a", 1)] });
       const envScoped = createTypeSafeReranker({
         environment: { TYPESAFE_API_KEY: "env-map" },
         transport,
@@ -166,14 +164,19 @@ describe("createTypeSafeReranker", () => {
       await envScoped.rerank({ query: "q", candidates: [candidate("a", 1)] });
       const processScoped = createTypeSafeReranker({ transport });
       await processScoped.rerank({ query: "q", candidates: [candidate("a", 1)] });
-      expect(auths).toEqual(["Bearer opt-key", "Bearer env-map", "Bearer env-process"]);
+      const isolatedMissing = createTypeSafeReranker({ environment: {}, transport });
+      expect(await isolatedMissing.rerank({
+        query: "q",
+        candidates: [candidate("a", 1)],
+      })).toMatchObject({ status: "unavailable" });
+      expect(auths).toEqual(["Bearer env-map", "Bearer env-process"]);
     });
   });
 
   test("fails with the HTTP status on 401, 429, and 5xx responses", async () => {
     for (const status of [401, 429, 500]) {
       const reranker = createTypeSafeReranker({
-        apiKey: "key",
+        environment: { TYPESAFE_API_KEY: "key" },
         transport: async () => ({
           status,
           body: new TextEncoder().encode("{}"),
@@ -192,7 +195,7 @@ describe("createTypeSafeReranker", () => {
 
   test("fails when the transport throws or times out", async () => {
     const reranker = createTypeSafeReranker({
-      apiKey: "key",
+      environment: { TYPESAFE_API_KEY: "key" },
       timeoutMs: 25,
       transport: async () => {
         throw new Error("socket hangup");
@@ -219,10 +222,16 @@ describe("createTypeSafeReranker", () => {
         answers: { relevant: { type: "noul", noul: 0.5, extra: true } },
         usage: { input_tokens: 1, output_tokens: 1 },
       }),
+      JSON.stringify(systemOneResponse(0.5, { extra: true })),
+      JSON.stringify({
+        model: "jev-1.13.0-beta",
+        answers: { relevant: { type: "noul", noul: 0.5 } },
+        usage: { input_tokens: 1, output_tokens: 1 },
+      }),
     ];
     for (const bodyText of malformedBodies) {
       const reranker = createTypeSafeReranker({
-        apiKey: "key",
+        environment: { TYPESAFE_API_KEY: "key" },
         transport: async () => ({
           status: 200,
           body: new TextEncoder().encode(bodyText),
@@ -239,7 +248,7 @@ describe("createTypeSafeReranker", () => {
   test("never leaks the API key into failure messages", async () => {
     const secret = "sk-live-secret-123";
     const reranker = createTypeSafeReranker({
-      apiKey: secret,
+      environment: { TYPESAFE_API_KEY: secret },
       transport: async () => {
         throw new Error(`upstream rejected ${secret} at gateway`);
       },
@@ -251,7 +260,7 @@ describe("createTypeSafeReranker", () => {
     expect(result.status).toBe("failed");
     if (result.status !== "ready") {
       expect(result.message).not.toContain(secret);
-      expect(result.message).toContain("[redacted]");
+      expect(result.message).toBe("TypeSafe rerank request failed.");
     }
   });
 
@@ -269,7 +278,7 @@ describe("createTypeSafeReranker", () => {
       };
     };
     const reranker = createTypeSafeReranker({
-      apiKey: "key",
+      environment: { TYPESAFE_API_KEY: "key" },
       concurrency: 3,
       transport,
     });
@@ -283,9 +292,102 @@ describe("createTypeSafeReranker", () => {
     }
   });
 
+  test("rejects oversized windows, snippets, and invalid bounds before transport", async () => {
+    let calls = 0;
+    const transport: SystemOneTransport = async () => {
+      calls += 1;
+      return {
+        status: 200,
+        body: new TextEncoder().encode(JSON.stringify(systemOneResponse(0.5))),
+      };
+    };
+    const bounded = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" },
+      transport,
+    });
+    expect(await bounded.rerank({
+      query: "q",
+      candidates: Array.from({ length: 26 }, (_, index) => candidate(`c${index}`, index + 1)),
+    })).toMatchObject({ status: "failed" });
+    expect(await bounded.rerank({
+      query: "q",
+      candidates: [{ ...candidate("a", 1), snippet: "x".repeat(513) }],
+    })).toMatchObject({ status: "failed" });
+
+    for (const options of [
+      { timeoutMs: 8_001 },
+      { maxResponseBytes: (64 * 1_024) + 1 },
+      { concurrency: 9 },
+      { concurrency: 0 },
+    ]) {
+      const invalid = createTypeSafeReranker({
+        ...options,
+        environment: { TYPESAFE_API_KEY: "key" },
+        transport,
+      });
+      expect(await invalid.rerank({ query: "q", candidates: [candidate("a", 1)] }))
+        .toEqual({ status: "failed", message: "TypeSafe rerank configuration was invalid." });
+    }
+    expect(calls).toBe(0);
+  });
+
+  test("rejects oversized custom-transport responses before parsing", async () => {
+    const reranker = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" },
+      maxResponseBytes: 32,
+      transport: async () => ({ status: 200, body: new Uint8Array(33) }),
+    });
+    expect(await reranker.rerank({ query: "q", candidates: [candidate("a", 1)] }))
+      .toEqual({
+        status: "failed",
+        message: "TypeSafe rerank transport returned a malformed or oversized response.",
+      });
+  });
+
+  test("does not start queued paid calls after a candidate failure", async () => {
+    let calls = 0;
+    const reranker = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" },
+      concurrency: 1,
+      transport: async () => {
+        calls += 1;
+        return { status: 429, body: new TextEncoder().encode("provider body secret") };
+      },
+    });
+    const result = await reranker.rerank({
+      query: "q",
+      candidates: [candidate("a", 1), candidate("b", 2), candidate("c", 3)],
+    });
+    expect(result).toEqual({
+      status: "failed",
+      message: "TypeSafe rerank request returned HTTP 429.",
+    });
+    expect(calls).toBe(1);
+    expect(JSON.stringify(result)).not.toContain("provider body secret");
+  });
+
+  test("honors an already-aborted caller signal without transport", async () => {
+    let calls = 0;
+    const controller = new AbortController();
+    controller.abort();
+    const reranker = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" },
+      transport: async () => {
+        calls += 1;
+        return { status: 200, body: new Uint8Array() };
+      },
+    });
+    expect(await reranker.rerank({
+      query: "q",
+      candidates: [candidate("a", 1)],
+      signal: controller.signal,
+    })).toEqual({ status: "failed", message: "TypeSafe rerank request was aborted." });
+    expect(calls).toBe(0);
+  });
+
   test("sums usage and reports the response model", async () => {
     const reranker = createTypeSafeReranker({
-      apiKey: "key",
+      environment: { TYPESAFE_API_KEY: "key" },
       transport: fakeTransport(() => ({
         model: "jev-1.13.0",
         answers: { relevant: { type: "noul", noul: 0.4 } },
@@ -306,7 +408,7 @@ describe("createTypeSafeReranker", () => {
   test("returns ready with no transport calls for an empty window", async () => {
     let calls = 0;
     const reranker = createTypeSafeReranker({
-      apiKey: "key",
+      environment: { TYPESAFE_API_KEY: "key" },
       transport: async () => {
         calls += 1;
         return { status: 200, body: new Uint8Array() };

@@ -2017,6 +2017,146 @@ describe("search rerank", () => {
     }
   });
 
+  test("keeps omission byte-compatible and never calls an installed reranker", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      let calls = 0;
+      const reranker = fakeReranker(() => {
+        calls += 1;
+        return { status: "failed", message: "must not run" };
+      });
+      const [plain, configured] = await Promise.all([
+        openKnowledgeBase({ root }),
+        openKnowledgeBase({ root }, { rerankers: [reranker] }),
+      ]);
+      const options = {
+        query: "transient retry budget",
+        mode: "exact" as const,
+        limit: 4,
+        graph: false as const,
+        history: false as const,
+      };
+      const [baseline, omitted] = await Promise.all([
+        plain.search(options),
+        configured.search(options),
+      ]);
+      const withoutElapsed = (result: typeof baseline): unknown => ({
+        ...result,
+        diagnostics: { ...result.diagnostics, elapsedMs: 0 },
+      });
+      expect(withoutElapsed(omitted)).toEqual(withoutElapsed(baseline));
+      expect(calls).toBe(0);
+      await Promise.all([plain.close(), configured.close()]);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("keeps priority rules authoritative after reranking", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const reranker = fakeReranker((request) => ({
+        status: "ready",
+        ordering: request.candidates.map(({ id }) => id),
+        probabilities: Object.fromEntries(
+          request.candidates.map(({ id }, index) => [id, (index + 1) / 10]),
+        ),
+      }));
+      const kb = await openKnowledgeBase({
+        root,
+        searchRules: {
+          schemaVersion: 1,
+          aliases: {},
+          priorityRules: [{ id: "alpha-first", tier: 1, pathPrefix: "notes/alpha" }],
+        },
+      }, { rerankers: [reranker] });
+      const result = await kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        limit: 6,
+        graph: false,
+        history: false,
+        ordering: "priority-then-relevance",
+        rerank: { engine: "typesafe", limit: 6 },
+      });
+      expect(result.results[0]?.id).toBe("notes/alpha");
+      const rerankEvidence = result.results[0]?.evidence.find(({ kind }) => kind === "rerank");
+      expect(rerankEvidence).toMatchObject({
+        kind: "rerank",
+        baselineRank: 1,
+        rerankRank: 6,
+      });
+      expect(result.results[0]?.rank).toBe(1);
+      expect(result.rules?.priority?.trace[0]).toMatchObject({
+        id: "notes/alpha",
+        matchedRuleIds: ["alpha-first"],
+        tier: 1,
+      });
+      await kb.close();
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("fails soft for malformed and partial custom reranker results", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const baselineSession = await openKnowledgeBase({ root });
+      const baseline = await baselineSession.search({
+        query: "transient retry budget",
+        mode: "exact",
+        limit: 4,
+        graph: false,
+        history: false,
+      });
+      await baselineSession.close();
+
+      const malformedResults: unknown[] = [
+        null,
+        {
+          status: "ready",
+          ordering: baseline.results.slice(0, 2).map(({ id }) => id),
+          probabilities: Object.fromEntries(
+            baseline.results.slice(0, 2).map(({ id }) => [id, 0.5]),
+          ),
+        },
+        {
+          status: "ready",
+          ordering: baseline.results.map(({ id }) => id),
+          probabilities: Object.fromEntries(baseline.results.map(({ id }) => [id, 0.5])),
+          usage: { inputTokens: "provider body secret" },
+        },
+      ];
+      for (const malformed of malformedResults) {
+        const kb = await openKnowledgeBase(
+          { root },
+          { rerankers: [fakeReranker(() => malformed as never)] },
+        );
+        const result = await kb.search({
+          query: "transient retry budget",
+          mode: "exact",
+          limit: 4,
+          graph: false,
+          history: false,
+          rerank: { engine: "typesafe", limit: 4 },
+        });
+        expect(result.results.map(({ id }) => id))
+          .toEqual(baseline.results.map(({ id }) => id));
+        expect(result.partial).toBe(true);
+        expect(result.diagnostics.lanes).toContainEqual({
+          lane: "rerank",
+          status: "degraded",
+          results: 0,
+          message: "Rerank engine returned a malformed result.",
+        });
+        expect(JSON.stringify(result)).not.toContain("provider body secret");
+        await kb.close();
+      }
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
   test("bounds the rerank window to the configured limit", async () => {
     const { temporary, root } = await rerankFixture();
     try {
@@ -2106,9 +2246,12 @@ describe("search rerank", () => {
   test("degrades instead of throwing when the engine itself throws", async () => {
     const { temporary, root } = await rerankFixture();
     try {
-      const reranker = fakeReranker(() => {
-        throw new Error("provider exploded");
-      });
+      const reranker: SearchReranker = {
+        id: "typesafe",
+        rerank: (() => {
+          throw new Error("provider exploded");
+        }) as SearchReranker["rerank"],
+      };
       const kb = await openKnowledgeBase({ root }, { rerankers: [reranker] });
       const result = await kb.search({
         query: "transient retry budget",

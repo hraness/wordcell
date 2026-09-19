@@ -947,8 +947,8 @@ export async function openKnowledgeBase(
           path: hit.path,
           snippet: utf8Prefix(hit.snippet, MAX_RERANK_SNIPPET_BYTES).value,
         }));
-      const outcome = await rerankRequest.reranker
-        .rerank({ query: effectiveQuery, candidates })
+      const outcome = await Promise.resolve()
+        .then(() => rerankRequest.reranker.rerank({ query: effectiveQuery, candidates }))
         .then(
           (result) => ({ ok: true as const, result }),
           (error: unknown) => ({ ok: false as const, error }),
@@ -961,6 +961,7 @@ export async function openKnowledgeBase(
               status: "failed",
               message: "Rerank engine failed before returning a result.",
             },
+        candidates.map(({ id }) => id),
       );
       rankedResults = applied.hits.map((hit) => {
         const placement = applied.placements.get(hit.id);
@@ -981,8 +982,8 @@ export async function openKnowledgeBase(
           ],
         };
       });
-      const readyResult = outcome.ok && outcome.result.status === "ready"
-        ? outcome.result
+      const readyResult = applied.result.status === "ready"
+        ? applied.result
         : null;
       const details: string[] = [];
       if (readyResult?.model !== undefined) details.push(readyResult.model);

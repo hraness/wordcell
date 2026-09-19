@@ -16,7 +16,7 @@ import {
   MAX_RERANK_CANDIDATES,
   MAX_RERANK_SNIPPET_BYTES,
   applyRerank
-} from "./index-sbg6k9q1.js";
+} from "./index-pyxsp062.js";
 import {
   percolateWithGraph
 } from "./index-py7681h5.js";
@@ -498,11 +498,11 @@ async function openKnowledgeBase(options, dependencies = {}) {
         path: hit.path,
         snippet: utf8Prefix(hit.snippet, MAX_RERANK_SNIPPET_BYTES).value
       }));
-      const outcome = await rerankRequest.reranker.rerank({ query: effectiveQuery, candidates }).then((result) => ({ ok: true, result }), (error) => ({ ok: false, error }));
+      const outcome = await Promise.resolve().then(() => rerankRequest.reranker.rerank({ query: effectiveQuery, candidates })).then((result) => ({ ok: true, result }), (error) => ({ ok: false, error }));
       const applied = applyRerank(relevanceResults, outcome.ok ? outcome.result : {
         status: "failed",
         message: "Rerank engine failed before returning a result."
-      });
+      }, candidates.map(({ id }) => id));
       rankedResults = applied.hits.map((hit) => {
         const placement = applied.placements.get(hit.id);
         if (placement === undefined)
@@ -521,7 +521,7 @@ async function openKnowledgeBase(options, dependencies = {}) {
           ]
         };
       });
-      const readyResult = outcome.ok && outcome.result.status === "ready" ? outcome.result : null;
+      const readyResult = applied.result.status === "ready" ? applied.result : null;
       const details = [];
       if (readyResult?.model !== undefined)
         details.push(readyResult.model);
