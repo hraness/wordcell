@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import fc from "fast-check";
 
 import {
   applyRerank,
@@ -43,6 +44,37 @@ describe("applyRerank", () => {
       probability: 0.2,
     });
     expect(applied.placements.has("d")).toBe(false);
+  });
+
+  test("preserves identity priority, permutations, and the untouched tail", () => {
+    fc.assert(fc.property(
+      fc.array(fc.record({
+        identity: fc.boolean(),
+        probability: fc.integer({ min: 0, max: 100 }),
+      }), { minLength: 1, maxLength: 25 }),
+      (entries) => {
+        const hits = entries.map((entry, index) => ({
+          ...hit(`c${index}`, index + 1), identity: entry.identity,
+        }));
+        const tail = { ...hit("tail", hits.length + 1), identity: false };
+        const probabilities = Object.fromEntries(entries.map((entry, index) =>
+          [`c${index}`, entry.probability / 100]));
+        const applied = applyRerank([...hits, tail], ready(
+          hits.map(({ id }) => id), probabilities,
+        ));
+        const expected = [...hits].sort((left, right) =>
+          Number(right.identity) - Number(left.identity)
+          || (probabilities[right.id] ?? 0) - (probabilities[left.id] ?? 0)
+          || left.rank - right.rank);
+        expect(applied.status).toBe("ready");
+        expect(applied.hits.map(({ id }) => id)).toEqual([
+          ...expected.map(({ id }) => id), "tail",
+        ]);
+        expect(applied.hits.at(-1)).toBe(tail);
+        expect(applied.hits.map(({ rank }) => rank))
+          .toEqual(Array.from({ length: hits.length + 1 }, (_, index) => index + 1));
+      },
+    ));
   });
 
   test("keeps non-window hits in baseline order", () => {

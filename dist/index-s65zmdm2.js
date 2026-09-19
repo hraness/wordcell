@@ -3,7 +3,7 @@ import {
   MAX_RERANK_CANDIDATES,
   MAX_RERANK_SNIPPET_BYTES,
   MAX_RERANK_STATE_BYTES
-} from "./index-pyxsp062.js";
+} from "./index-q2t3bq2c.js";
 
 // src/rerank-typesafe.ts
 var DEFAULT_SYSTEMONE_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
@@ -172,17 +172,8 @@ function createTypeSafeReranker(options = {}) {
         }
         const encoder = new TextEncoder;
         const decoder = new TextDecoder("utf-8", { fatal: true });
-        let firstFailure;
-        const failed = (message) => {
-          firstFailure ??= message;
-          return { ok: false, message: firstFailure };
-        };
-        const scoreCandidate = async (candidate) => {
-          if (firstFailure !== undefined)
-            return { ok: false, message: firstFailure };
-          if (request.signal?.aborted === true) {
-            return failed("TypeSafe rerank request was aborted.");
-          }
+        const bodies = [];
+        for (const candidate of request.candidates) {
           const state = {
             query: request.query,
             candidate: {
@@ -194,9 +185,12 @@ function createTypeSafeReranker(options = {}) {
           };
           const stateBytes = encoder.encode(JSON.stringify(state)).byteLength;
           if (stateBytes > MAX_RERANK_STATE_BYTES) {
-            return failed(`TypeSafe rerank state exceeds the ${MAX_RERANK_STATE_BYTES}-byte limit.`);
+            return {
+              status: "failed",
+              message: `TypeSafe rerank state exceeds the ${MAX_RERANK_STATE_BYTES}-byte limit.`
+            };
           }
-          const body = encoder.encode(JSON.stringify({
+          bodies.push(encoder.encode(JSON.stringify({
             model: DEFAULT_SYSTEMONE_MODEL,
             state,
             questions: {
@@ -206,7 +200,19 @@ function createTypeSafeReranker(options = {}) {
                 criteria: RELEVANCE_CRITERIA
               }
             }
-          }));
+          })));
+        }
+        let firstFailure;
+        const failed = (message) => {
+          firstFailure ??= message;
+          return { ok: false, message: firstFailure };
+        };
+        const scoreCandidate = async (body) => {
+          if (firstFailure !== undefined)
+            return { ok: false, message: firstFailure };
+          if (request.signal?.aborted === true) {
+            return failed("TypeSafe rerank request was aborted.");
+          }
           let response;
           try {
             response = await transport({
@@ -247,7 +253,7 @@ function createTypeSafeReranker(options = {}) {
             outputTokens: answer.outputTokens
           };
         };
-        const scored = await mapWithConcurrency(request.candidates, concurrency, scoreCandidate);
+        const scored = await mapWithConcurrency(bodies, concurrency, scoreCandidate);
         const failure = scored.find((entry) => !entry.ok);
         if (failure !== undefined && !failure.ok) {
           return { status: "failed", message: failure.message };

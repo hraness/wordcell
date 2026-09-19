@@ -222,13 +222,17 @@ function failedRerank<T extends { readonly id: string; readonly rank: number }>(
 
 /**
  * Apply one rerank result to hits in baseline order. The window is the leading
- * `result.ordering.length` hits; its members are sorted by probability
- * descending, then baseline rank, then id. Later hits keep their baseline
- * order and rank. A malformed result keeps the baseline order and reports
+ * `result.ordering.length` hits; exact identities stay first, then members are
+ * sorted by probability descending, baseline rank, and id. Later hits keep
+ * their baseline order and rank. A malformed result keeps the baseline order and reports
  * `failed` so callers can surface a degraded diagnostic. When expected window
  * ids are supplied, a partial candidate result is malformed rather than applied.
  */
-export function applyRerank<T extends { readonly id: string; readonly rank: number }>(
+export function applyRerank<T extends {
+  readonly id: string;
+  readonly rank: number;
+  readonly identity?: boolean;
+}>(
   hits: readonly T[],
   result: unknown,
   expectedWindowIds?: readonly string[],
@@ -301,7 +305,8 @@ export function applyRerank<T extends { readonly id: string; readonly rank: numb
   const probabilityOf = (id: string): number => inspected.probabilities[id] as number;
   const sorted = window.toSorted(
     (left, right) =>
-      probabilityOf(right.id) - probabilityOf(left.id)
+      Number(right.identity === true) - Number(left.identity === true)
+      || probabilityOf(right.id) - probabilityOf(left.id)
       || left.rank - right.rank
       || left.id.localeCompare(right.id),
   );

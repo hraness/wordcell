@@ -152,7 +152,7 @@ function applyRerank(hits, result, expectedWindowIds) {
     }
   }
   const probabilityOf = (id) => inspected.probabilities[id];
-  const sorted = window.toSorted((left, right) => probabilityOf(right.id) - probabilityOf(left.id) || left.rank - right.rank || left.id.localeCompare(right.id));
+  const sorted = window.toSorted((left, right) => Number(right.identity === true) - Number(left.identity === true) || probabilityOf(right.id) - probabilityOf(left.id) || left.rank - right.rank || left.id.localeCompare(right.id));
   const placements = new Map;
   const reordered = sorted.map((hit, index) => {
     placements.set(hit.id, {

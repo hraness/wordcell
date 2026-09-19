@@ -16,7 +16,7 @@ import {
   MAX_RERANK_CANDIDATES,
   MAX_RERANK_SNIPPET_BYTES,
   applyRerank
-} from "./index-pyxsp062.js";
+} from "./index-q2t3bq2c.js";
 import {
   percolateWithGraph
 } from "./index-py7681h5.js";

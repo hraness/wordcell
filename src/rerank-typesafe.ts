@@ -250,10 +250,10 @@ type ScoredCandidate =
   | { readonly ok: false; readonly message: string };
 
 /**
- * Pairwise-noul reranker for the TypeSafe System One API. Each candidate is
+ * Pointwise-noul reranker for the TypeSafe System One API. Each candidate is
  * scored by one independent noul question so the window keeps an inspectable
- * calibrated probability per note. The API key is read only from the
- * TYPESAFE_API_KEY environment variable. A missing key degrades to
+ * model-assigned relevance probability per note. The API key is read only from
+ * the TYPESAFE_API_KEY environment variable. A missing key degrades to
  * `unavailable` without any network call; transport, HTTP, timeout, and
  * malformed-response failures degrade to `failed` without provider bodies.
  */
@@ -305,18 +305,10 @@ export function createTypeSafeReranker(
         }
         const encoder = new TextEncoder();
         const decoder = new TextDecoder("utf-8", { fatal: true });
-        let firstFailure: string | undefined;
-        const failed = (message: string): ScoredCandidate => {
-          firstFailure ??= message;
-          return { ok: false, message: firstFailure };
-        };
-        const scoreCandidate = async (
-          candidate: SearchRerankRequest["candidates"][number],
-        ): Promise<ScoredCandidate> => {
-          if (firstFailure !== undefined) return { ok: false, message: firstFailure };
-          if (request.signal?.aborted === true) {
-            return failed("TypeSafe rerank request was aborted.");
-          }
+        // Prepare the whole window before any paid request. Individually bounded
+        // fields can still exceed the serialized state limit when combined.
+        const bodies: Uint8Array[] = [];
+        for (const candidate of request.candidates) {
           const state = {
             query: request.query,
             candidate: {
@@ -328,11 +320,12 @@ export function createTypeSafeReranker(
           };
           const stateBytes = encoder.encode(JSON.stringify(state)).byteLength;
           if (stateBytes > MAX_RERANK_STATE_BYTES) {
-            return failed(
-              `TypeSafe rerank state exceeds the ${MAX_RERANK_STATE_BYTES}-byte limit.`,
-            );
+            return {
+              status: "failed",
+              message: `TypeSafe rerank state exceeds the ${MAX_RERANK_STATE_BYTES}-byte limit.`,
+            };
           }
-          const body = encoder.encode(JSON.stringify({
+          bodies.push(encoder.encode(JSON.stringify({
             model: DEFAULT_SYSTEMONE_MODEL,
             state,
             questions: {
@@ -342,7 +335,18 @@ export function createTypeSafeReranker(
                 criteria: RELEVANCE_CRITERIA,
               },
             },
-          }));
+          })));
+        }
+        let firstFailure: string | undefined;
+        const failed = (message: string): ScoredCandidate => {
+          firstFailure ??= message;
+          return { ok: false, message: firstFailure };
+        };
+        const scoreCandidate = async (body: Uint8Array): Promise<ScoredCandidate> => {
+          if (firstFailure !== undefined) return { ok: false, message: firstFailure };
+          if (request.signal?.aborted === true) {
+            return failed("TypeSafe rerank request was aborted.");
+          }
           let response: { readonly status: number; readonly body: Uint8Array };
           try {
             response = await transport({
@@ -388,7 +392,7 @@ export function createTypeSafeReranker(
           };
         };
         const scored = await mapWithConcurrency(
-          request.candidates,
+          bodies,
           concurrency,
           scoreCandidate,
         );

@@ -331,6 +331,27 @@ describe("createTypeSafeReranker", () => {
     expect(calls).toBe(0);
   });
 
+  test("preflights every serialized state before sending any candidate", async () => {
+    for (const title of ["x".repeat(24 * 1_024), "\\".repeat(13 * 1_024)]) {
+      let calls = 0;
+      const reranker = createTypeSafeReranker({
+        environment: { TYPESAFE_API_KEY: "key" },
+        transport: fakeTransport(() => {
+          calls += 1;
+          return systemOneResponse(0.5);
+        }),
+      });
+      const candidates = Array.from({ length: 12 }, (_, index) =>
+        candidate(`c${index}`, index + 1));
+      candidates[11] = { ...candidate("c11", 12), title };
+      expect(await reranker.rerank({ query: "q", candidates })).toEqual({
+        status: "failed",
+        message: "TypeSafe rerank state exceeds the 24576-byte limit.",
+      });
+      expect(calls).toBe(0);
+    }
+  });
+
   test("rejects oversized custom-transport responses before parsing", async () => {
     const reranker = createTypeSafeReranker({
       environment: { TYPESAFE_API_KEY: "key" },

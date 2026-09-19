@@ -2017,6 +2017,40 @@ describe("search rerank", () => {
     }
   });
 
+  test("keeps exact identities ahead of higher-probability broad matches", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      await writeFile(join(root, "notes", "identity.md"), [
+        "---", "title: transient retry budget", "---", "# Retry policy", "",
+      ].join("\n"), "utf8");
+      const reranker = fakeReranker((request) => ({
+        status: "ready",
+        ordering: request.candidates.map(({ id }) => id),
+        probabilities: Object.fromEntries(request.candidates.map(({ id }) =>
+          [id, id === "notes/identity" ? 0.01 : 0.99])),
+      }));
+      const kb = await openKnowledgeBase({ root }, { rerankers: [reranker] });
+      try {
+        const result = await kb.search({
+          query: "transient retry budget",
+          mode: "exact",
+          limit: 4,
+          graph: false,
+          rerank: { engine: "typesafe", limit: 4 },
+        });
+        expect(result.results[0]).toMatchObject({ id: "notes/identity", identity: true, rank: 1 });
+        expect(result.results[0]?.evidence).toContainEqual({
+          kind: "rerank", engine: "typesafe", baselineRank: 1, rerankRank: 1, probability: 0.01,
+        });
+        expect(result.results.slice(1).every(({ identity }) => !identity)).toBe(true);
+      } finally {
+        await kb.close();
+      }
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
   test("keeps omission byte-compatible and never calls an installed reranker", async () => {
     const { temporary, root } = await rerankFixture();
     try {

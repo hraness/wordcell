@@ -160,8 +160,9 @@ Reranking is opt-in: `wordcell search "query" --rerank typesafe` requires
 query and, for each of at most 25 candidates, its title, vault-relative path,
 and at most 512 UTF-8 bytes of snippet text to TypeSafe in a separate request.
 Those fields leave the local machine and may contain private vault material, so
-use the lane only when that external processing and its possible per-request
-cost are acceptable. The engine re-sorts the bounded window with an independent
+use the lane only when that external processing and provider input-token
+charges are acceptable. Exact identities remain first. The engine re-sorts the
+bounded window with an independent
 relevance probability per note; reranked hits keep their fused scores and gain
 a separate `rerank` evidence entry with baseline rank, post-rerank rank, and
 probability. Explicit priority rules still run last. When the key is absent or
