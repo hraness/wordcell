@@ -990,6 +990,13 @@ ${items}
         </ul>
       </section>`;
 }
+function notePageTitle(title, bodyHtml) {
+  const leading = /^\s*(<h1 id="[^"]*">([^<]*)<\/h1>)/u.exec(bodyHtml);
+  if (leading !== null && leading[2] === escapeHtml(title)) {
+    return { heading: leading[1] ?? "", body: bodyHtml.slice(leading[0].length) };
+  }
+  return { heading: `<h1>${escapeHtml(title)}</h1>`, body: bodyHtml };
+}
 function renderNotePage(note, bodyHtml, sides, ctx) {
   const meta = propertiesBlock(note);
   const aliasRow = note.aliases.length === 0 ? "" : `<p class="note-aliases">Also known as ${escapeHtml(note.aliases.join(", "))}</p>`;
@@ -1000,12 +1007,13 @@ function renderNotePage(note, bodyHtml, sides, ctx) {
   ].filter((section) => section !== "").join(`
 `);
   const toc = tocHtml(bodyHtml);
+  const title = notePageTitle(note.title, bodyHtml);
   const article = `        <article class="note">
-          <h1>${escapeHtml(note.title)}</h1>
+          ${title.heading}
           ${meta}
           ${aliasRow}
           <div class="note-body">
-${bodyHtml}
+${title.body}
           </div>
         </article>${aside === "" ? "" : `
         <aside class="note-aside">

@@ -63,6 +63,18 @@ test("omits repository landing markers and renders the skill badge as a durable 
   expect(html).not.toContain("assets/agent-skill.svg");
 });
 
+test("replacing the skill badge preserves the following paragraph boundary", () => {
+  for (const newline of ["\n", "\r\n"]) {
+    const html = renderReadmeHtml([
+      "[![Agent Skill](https://example.com/badge.svg)](https://example.com/skill) \t",
+      "",
+      "A local knowledge base for coding agents.",
+    ].join(newline));
+    expect(html).toContain('<p><a href="https://example.com/skill">Install the Agent Skill</a></p>');
+    expect(html).toContain('<p>A local knowledge base for coding agents.</p>');
+  }
+});
+
 
 describe("README HTML boundary", () => {
   test("derives stable fragments from parsed heading text", () => {

@@ -247,6 +247,15 @@ ${items}
       </section>`;
 }
 
+/** Reuse only a plain leading title; preserve its authored anchor and all other HTML. */
+function notePageTitle(title: string, bodyHtml: string): { heading: string; body: string } {
+  const leading = /^\s*(<h1 id="[^"]*">([^<]*)<\/h1>)/u.exec(bodyHtml);
+  if (leading !== null && leading[2] === escapeHtml(title)) {
+    return { heading: leading[1] ?? "", body: bodyHtml.slice(leading[0].length) };
+  }
+  return { heading: `<h1>${escapeHtml(title)}</h1>`, body: bodyHtml };
+}
+
 export function renderNotePage(
   note: Note,
   bodyHtml: string,
@@ -268,12 +277,13 @@ export function renderNotePage(
     relationList("Referenced by", sides.relationBacklinks, ctx.rel),
   ].filter((section) => section !== "").join("\n");
   const toc = tocHtml(bodyHtml);
+  const title = notePageTitle(note.title, bodyHtml);
   const article = `        <article class="note">
-          <h1>${escapeHtml(note.title)}</h1>
+          ${title.heading}
           ${meta}
           ${aliasRow}
           <div class="note-body">
-${bodyHtml}
+${title.body}
           </div>
         </article>${aside === "" ? "" : `\n        <aside class="note-aside">\n${aside}\n        </aside>`}`;
   const main = `${breadcrumbsHtml(ctx)}      <div class="note-columns">

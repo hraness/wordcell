@@ -5,7 +5,7 @@ import {
   parseArguments,
   runExecutable,
   usage
-} from "./index-qqaypy44.js";
+} from "./index-4ag64rc1.js";
 import"./index-bcknqxrq.js";
 import"./index-054mb7d3.js";
 import"./index-avbce90h.js";
@@ -41,7 +41,7 @@ import"./index-11621h23.js";
 import"./index-1gwbassd.js";
 import"./index-gm9t95d9.js";
 import"./index-1xxnjn0d.js";
-import"./index-138mv597.js";
+import"./index-0dqfnrz9.js";
 import"./index-1tm7bgx7.js";
 import"./index-d13v9ckt.js";
 import"./index-48pz4jpc.js";
@@ -61,7 +61,7 @@ import {
 
 // src/cli.ts
 if (import.meta.main) {
-  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-7btb793z.js");
+  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-mywv1em0.js");
   const env = standaloneSupportEnvironment();
   const args = process.argv.slice(2);
   if (args[0] === "support") {
