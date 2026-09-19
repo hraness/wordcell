@@ -313,6 +313,26 @@ describe("publishVault", () => {
     }
   });
 
+  test.each([
+    { label: "long ASCII filename", paths: [`${"a".repeat(251)}.md`], error: "255 UTF-8 bytes" },
+    { label: "long Unicode filename", paths: [`${"界".repeat(84)}.md`], error: "255 UTF-8 bytes" },
+    { label: "file and parent directory collision", paths: ["foo.md", "foo.json.md"], error: "both a file and a parent directory" },
+  ])("preflights $label before replacing existing output", async ({ paths, error }) => {
+    const root = await mkdtemp(join(tmpdir(), "hraness-wordcell-path-source-"));
+    const out = await mkdtemp(join(tmpdir(), "hraness-wordcell-path-output-"));
+    for (const path of paths) await writeFile(join(root, path), "# A valid source note\n");
+    await writeFile(join(out, "keep.txt"), "existing site");
+    try {
+      await expect(publishVault({ root, out, force: true })).rejects.toThrow(error);
+      expect(await readFile(join(out, "keep.txt"), "utf8")).toBe("existing site");
+      await expect(readFile(join(out, "manifest.json"), "utf8")).rejects.toThrow();
+      await expect(publishVault({ root, out, dryRun: true })).rejects.toThrow(error);
+    } finally {
+      await rm(out, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   test("selection subsets publish only the chosen neighborhood", async () => {
     const root = await makeVault();
     const parent = await mkdtemp(join(tmpdir(), "hraness-wordcell-site-"));
@@ -359,7 +379,7 @@ describe("projectVault", () => {
 });
 
 test("report id bytes are bounded and preview limits do not change artifact bytes", async () => {
-  const notes = Array.from({ length: 24 }, (_, index) => parseNote(`${"x".repeat(900)}${index}.md`, "# Note\n"));
+  const notes = Array.from({ length: 24 }, (_, index) => parseNote(`${`${"x".repeat(180)}/`.repeat(4)}${"x".repeat(180)}${index}.md`, "# Note\n"));
   const snapshot = { root: "/vault", notes, analysis: analyzeVault(notes) };
   const io: PublishIo = {
     resolveAssetPath: () => undefined,

@@ -3,13 +3,14 @@ import {
   DEFAULT_PUBLISH_LIST_LIMIT,
   MAX_PUBLISH_LIST_BYTES,
   MAX_PUBLISH_LIST_LIMIT,
+  MAX_PUBLISH_PATH_COMPONENT_BYTES,
   MAX_SITE_BYTES,
   WORDCELL_PUBLISH_GENERATOR,
   projectVault,
   publishVault,
   renderPublishReportText,
   serializeSiteFile
-} from "./index-mhej9k64.js";
+} from "./index-8c7j1d27.js";
 import"./index-1tm7bgx7.js";
 import"./index-d13v9ckt.js";
 import"./index-48pz4jpc.js";
@@ -28,6 +29,7 @@ export {
   projectVault,
   WORDCELL_PUBLISH_GENERATOR,
   MAX_SITE_BYTES,
+  MAX_PUBLISH_PATH_COMPONENT_BYTES,
   MAX_PUBLISH_LIST_LIMIT,
   MAX_PUBLISH_LIST_BYTES,
   DEFAULT_PUBLISH_LIST_LIMIT

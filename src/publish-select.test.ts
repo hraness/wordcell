@@ -159,6 +159,17 @@ describe("selectPublishNotes", () => {
     })).toThrow("narrow --depth");
   });
 
+  test("bounds aggregate work across include and exclude globs", () => {
+    const notes = [note(`${"a".repeat(240)}.md`, "# Long filename\n")];
+    const analysis = analyzeVault(notes);
+    const expensive = `${"*a".repeat(500)}b`;
+    expect(() => selectPublishNotes(notes, analysis, {
+      includeGlobs: Array.from({ length: 128 }, () => expensive),
+      excludeGlobs: Array.from({ length: 128 }, () => expensive),
+    })).toThrow("work budget");
+    expect(selectPublishNotes(notes, analysis, { includes: [notes[0]?.id ?? "missing"] }).notes).toEqual(notes);
+  });
+
   test("records a manifest descriptor without leaking filter values", () => {
     const notes = fixture();
     const selection = selectPublishNotes(notes, analyzeVault(notes), {

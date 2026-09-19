@@ -1099,6 +1099,7 @@ import {
 var MAX_PUBLISH_SELECTORS = 256;
 var MAX_PUBLISH_FROM_NOTES = 1000;
 var MAX_PUBLISH_SELECTOR_BYTES = 1024;
+var MAX_PUBLISH_GLOB_WORK = 1e8;
 var MAX_PUBLISH_SLUG_BYTES = 1024;
 function normalizeSelectorPrefix(value, flag) {
   const trimmed = value.trim().replaceAll("\\", "/");
@@ -1122,9 +1123,16 @@ function publishGlob(value, flag) {
   }
   return segments;
 }
-function wildcardSegment(pattern, value) {
+function spendGlobWork(budget, cells) {
+  if (cells > budget.remaining) {
+    throw new RangeError(`Publish glob matching exceeds the ${MAX_PUBLISH_GLOB_WORK}-cell work budget; reduce the number or complexity of globs, or use --include/--exclude path prefixes.`);
+  }
+  budget.remaining -= cells;
+}
+function wildcardSegment(pattern, value, budget) {
   const tokens = Array.from(pattern);
   const characters = Array.from(value);
+  spendGlobWork(budget, tokens.length * (characters.length + 1));
   let previous = new Uint8Array(characters.length + 1);
   previous[0] = 1;
   for (const token of tokens) {
@@ -1138,8 +1146,9 @@ function wildcardSegment(pattern, value) {
   }
   return previous[characters.length] === 1;
 }
-function globMatches(pattern, path) {
+function globMatches(pattern, path, budget) {
   const segments = path.split("/");
+  spendGlobWork(budget, pattern.length * (segments.length + 1));
   let previous = new Uint8Array(segments.length + 1);
   previous[0] = 1;
   for (const token of pattern) {
@@ -1147,14 +1156,14 @@ function globMatches(pattern, path) {
     if (token === "**")
       current[0] = previous[0] ?? 0;
     for (let index = 1;index <= segments.length; index += 1) {
-      current[index] = token === "**" ? previous[index] || current[index - 1] ? 1 : 0 : previous[index - 1] && wildcardSegment(token, segments[index - 1] ?? "") ? 1 : 0;
+      current[index] = token === "**" ? previous[index] || current[index - 1] ? 1 : 0 : previous[index - 1] && wildcardSegment(token, segments[index - 1] ?? "", budget) ? 1 : 0;
     }
     previous = current;
   }
   return previous[segments.length] === 1;
 }
-function selectorGlobs(patterns, note) {
-  return patterns.some((pattern) => globMatches(pattern, note.id) || globMatches(pattern, note.path));
+function selectorGlobs(patterns, note, budget) {
+  return patterns.some((pattern) => globMatches(pattern, note.id, budget) || globMatches(pattern, note.path, budget));
 }
 function isPrivate(note) {
   return note.metadata["publish"] === false;
@@ -1212,10 +1221,11 @@ function selectPublishNotes(notes, analysis, input = {}) {
   const filters = input.filters ?? [];
   const tags = input.tags ?? [];
   const repositoryScopes = input.repositoryScopes ?? [];
+  const globBudget = { remaining: MAX_PUBLISH_GLOB_WORK };
   const candidates = new Set;
   const hasPositive = includes.length > 0 || includeGlobs.length > 0 || filters.length > 0 || tags.length > 0 || repositoryScopes.length > 0 || input.from !== undefined;
   for (const note of notes) {
-    if (selectorIncludes(includes, note.id) || selectorGlobs(includeGlobs, note))
+    if (selectorIncludes(includes, note.id) || selectorGlobs(includeGlobs, note, globBudget))
       candidates.add(note.id);
   }
   if (filters.length > 0 || tags.length > 0 || repositoryScopes.length > 0) {
@@ -1247,7 +1257,7 @@ function selectPublishNotes(notes, analysis, input = {}) {
   const selected = [];
   for (const note of notes) {
     const chosen = hasPositive ? candidates.has(note.id) : true;
-    const excluded = selectorIncludes(excludes, note.id) || selectorGlobs(excludeGlobs, note);
+    const excluded = selectorIncludes(excludes, note.id) || selectorGlobs(excludeGlobs, note, globBudget);
     if (!chosen || excluded) {
       excludedBySelection += 1;
       continue;
@@ -1361,6 +1371,26 @@ var MAX_SITE_BYTES = 1024 * 1024 * 1024;
 var DEFAULT_PUBLISH_LIST_LIMIT = 20;
 var MAX_PUBLISH_LIST_LIMIT = 1000;
 var MAX_PUBLISH_LIST_BYTES = 16384;
+var MAX_PUBLISH_PATH_COMPONENT_BYTES = 255;
+function validateSitePaths(paths) {
+  const files = new Set(paths);
+  for (const path of files) {
+    const segments = path.split("/");
+    if (/[:\\\u0000-\u001f\u007f]/u.test(path) || segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
+      throw new Error(`Cannot publish unsafe artifact path ${JSON.stringify(path)}.`);
+    }
+    let ancestor = "";
+    for (const [index, segment] of segments.entries()) {
+      if (Buffer.byteLength(segment, "utf8") > MAX_PUBLISH_PATH_COMPONENT_BYTES) {
+        throw new RangeError(`Cannot publish ${JSON.stringify(path)}: a path component exceeds ${MAX_PUBLISH_PATH_COMPONENT_BYTES} UTF-8 bytes; shorten the source note or attachment filename.`);
+      }
+      ancestor = ancestor === "" ? segment : `${ancestor}/${segment}`;
+      if (index < segments.length - 1 && files.has(ancestor)) {
+        throw new Error(`Cannot publish ${JSON.stringify(path)}: ${JSON.stringify(ancestor)} is both a file and a parent directory; rename one of the conflicting source notes.`);
+      }
+    }
+  }
+}
 function publishListLimit(value) {
   const limit = value ?? DEFAULT_PUBLISH_LIST_LIMIT;
   if (!Number.isSafeInteger(limit) || limit < 0 || limit > MAX_PUBLISH_LIST_LIMIT) {
@@ -1661,6 +1691,7 @@ async function projectVault(snapshot, options, io) {
     truncated
   };
   setSiteJson(files, "manifest.json", manifest, parseSiteManifestV1);
+  validateSitePaths(files.keys());
   const ordered = new Map([...files.entries()].toSorted(([a], [b]) => a.localeCompare(b)));
   const listedIds = [];
   let listedBytes = 0;
@@ -1875,4 +1906,4 @@ function renderPublishReportText(report, dryRun) {
 `;
 }
 
-export { WORDCELL_PUBLISH_GENERATOR, serializeSiteFile, MAX_SITE_BYTES, DEFAULT_PUBLISH_LIST_LIMIT, MAX_PUBLISH_LIST_LIMIT, MAX_PUBLISH_LIST_BYTES, projectVault, publishVault, renderPublishReportText };
+export { WORDCELL_PUBLISH_GENERATOR, serializeSiteFile, MAX_SITE_BYTES, DEFAULT_PUBLISH_LIST_LIMIT, MAX_PUBLISH_LIST_LIMIT, MAX_PUBLISH_LIST_BYTES, MAX_PUBLISH_PATH_COMPONENT_BYTES, projectVault, publishVault, renderPublishReportText };

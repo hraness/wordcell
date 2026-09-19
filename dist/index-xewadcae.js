@@ -97,7 +97,7 @@ import {
   MAX_PUBLISH_LIST_LIMIT,
   publishVault,
   renderPublishReportText
-} from "./index-mhej9k64.js";
+} from "./index-8c7j1d27.js";
 import {
   refreshVault,
   scanVault

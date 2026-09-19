@@ -29,6 +29,8 @@ export const MAX_PUBLISH_SELECTORS = 256;
 export const MAX_PUBLISH_FROM_DEPTH = 10;
 export const MAX_PUBLISH_FROM_NOTES = 1_000;
 export const MAX_PUBLISH_SELECTOR_BYTES = 1_024;
+/** Aggregate dynamic-programming cells across all include/exclude glob matches. */
+export const MAX_PUBLISH_GLOB_WORK = 100_000_000;
 export const MAX_PUBLISH_SLUG_BYTES = 1_024;
 
 /**
@@ -124,9 +126,21 @@ function publishGlob(value: string, flag: string): readonly string[] {
   return segments;
 }
 
-function wildcardSegment(pattern: string, value: string): boolean {
+type PublishGlobBudget = { remaining: number };
+
+function spendGlobWork(budget: PublishGlobBudget, cells: number): void {
+  if (cells > budget.remaining) {
+    throw new RangeError(
+      `Publish glob matching exceeds the ${MAX_PUBLISH_GLOB_WORK}-cell work budget; reduce the number or complexity of globs, or use --include/--exclude path prefixes.`,
+    );
+  }
+  budget.remaining -= cells;
+}
+
+function wildcardSegment(pattern: string, value: string, budget: PublishGlobBudget): boolean {
   const tokens = Array.from(pattern);
   const characters = Array.from(value);
+  spendGlobWork(budget, tokens.length * (characters.length + 1));
   let previous = new Uint8Array(characters.length + 1);
   previous[0] = 1;
   for (const token of tokens) {
@@ -142,8 +156,9 @@ function wildcardSegment(pattern: string, value: string): boolean {
   return previous[characters.length] === 1;
 }
 
-function globMatches(pattern: readonly string[], path: string): boolean {
+function globMatches(pattern: readonly string[], path: string, budget: PublishGlobBudget): boolean {
   const segments = path.split("/");
+  spendGlobWork(budget, pattern.length * (segments.length + 1));
   let previous = new Uint8Array(segments.length + 1);
   previous[0] = 1;
   for (const token of pattern) {
@@ -152,15 +167,15 @@ function globMatches(pattern: readonly string[], path: string): boolean {
     for (let index = 1; index <= segments.length; index += 1) {
       current[index] = token === "**"
         ? (previous[index] || current[index - 1] ? 1 : 0)
-        : (previous[index - 1] && wildcardSegment(token, segments[index - 1] ?? "") ? 1 : 0);
+        : (previous[index - 1] && wildcardSegment(token, segments[index - 1] ?? "", budget) ? 1 : 0);
     }
     previous = current;
   }
   return previous[segments.length] === 1;
 }
 
-function selectorGlobs(patterns: readonly (readonly string[])[], note: Note): boolean {
-  return patterns.some((pattern) => globMatches(pattern, note.id) || globMatches(pattern, note.path));
+function selectorGlobs(patterns: readonly (readonly string[])[], note: Note, budget: PublishGlobBudget): boolean {
+  return patterns.some((pattern) => globMatches(pattern, note.id, budget) || globMatches(pattern, note.path, budget));
 }
 
 function isPrivate(note: Note): boolean {
@@ -269,6 +284,7 @@ export function selectPublishNotes(
   const tags = input.tags ?? [];
   const repositoryScopes = input.repositoryScopes ?? [];
 
+  const globBudget: PublishGlobBudget = { remaining: MAX_PUBLISH_GLOB_WORK };
   const candidates = new Set<string>();
   const hasPositive = includes.length > 0
     || includeGlobs.length > 0
@@ -278,7 +294,7 @@ export function selectPublishNotes(
     || input.from !== undefined;
 
   for (const note of notes) {
-    if (selectorIncludes(includes, note.id) || selectorGlobs(includeGlobs, note)) candidates.add(note.id);
+    if (selectorIncludes(includes, note.id) || selectorGlobs(includeGlobs, note, globBudget)) candidates.add(note.id);
   }
   if (filters.length > 0 || tags.length > 0 || repositoryScopes.length > 0) {
     for (const row of queryVault(notes, analysis, { filters, tags, repositoryScopes })) {
@@ -312,7 +328,7 @@ export function selectPublishNotes(
   const selected: Note[] = [];
   for (const note of notes) {
     const chosen = hasPositive ? candidates.has(note.id) : true;
-    const excluded = selectorIncludes(excludes, note.id) || selectorGlobs(excludeGlobs, note);
+    const excluded = selectorIncludes(excludes, note.id) || selectorGlobs(excludeGlobs, note, globBudget);
     if (!chosen || excluded) {
       excludedBySelection += 1;
       continue;

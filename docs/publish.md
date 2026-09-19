@@ -23,7 +23,8 @@ wordcell publish --root kb --out site \
 
 The dry run builds the same artifact in memory and leaves the output directory
 untouched. Its JSON report includes counts, a source digest, and up to 20
-selected note ids. Review those ids and counts before writing. Repeat the same
+selected note ids. The digest covers selected Markdown; it does not cover
+attachment bytes. Review those ids, counts, and referenced assets before writing. Repeat the same
 selectors without `--dry-run` to build the site:
 
 ```sh
@@ -66,6 +67,8 @@ wordcell publish --root kb --out site/concepts --where type=concept --has relati
   `*` matches within one path segment, `?` matches one character, and a whole
   `**` segment matches zero or more directories. Quote patterns so your shell
   does not expand them. Bracket classes and brace expansion are unsupported.
+  Glob matching has a shared work budget; if a large or complex selection
+  exceeds it, use fewer patterns or exact path prefixes.
 - `--where <path=value>`, `--has <path>`, `--tag <tag>`, and `--scope
   <repository-path>` form one metadata query. All filters in that query must
   match, as with `wordcell list`.
@@ -211,6 +214,9 @@ frame can load. The output directory and vault must be separate: neither may con
 other, including through symlinked parent directories. The output directory
 itself cannot be a symlink, and every written path is confined to `--out`.
 Generated JSON must pass the reader contracts before any output is replaced.
+Every generated filename component must fit 255 UTF-8 bytes, and a generated
+file cannot also serve as a directory. A conflicting or oversized filename
+produces a rename instruction before an existing site is touched.
 An oversized title or too many aliases or tags produces a named validation
 error; shorten that field or narrow the selection and publish again.
 

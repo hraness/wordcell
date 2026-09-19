@@ -145,6 +145,30 @@ export const MAX_SITE_BYTES = 1_024 * 1_024 * 1_024;
 export const DEFAULT_PUBLISH_LIST_LIMIT = 20;
 export const MAX_PUBLISH_LIST_LIMIT = 1_000;
 export const MAX_PUBLISH_LIST_BYTES = 16_384;
+/** Portable filesystem component bound, including emitted file extensions. */
+export const MAX_PUBLISH_PATH_COMPONENT_BYTES = 255;
+
+/** Validate the complete artifact namespace before replacing an existing site. */
+function validateSitePaths(paths: Iterable<string>): void {
+  const files = new Set(paths);
+  for (const path of files) {
+    const segments = path.split("/");
+    if (/[:\\\u0000-\u001f\u007f]/u.test(path)
+      || segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
+      throw new Error(`Cannot publish unsafe artifact path ${JSON.stringify(path)}.`);
+    }
+    let ancestor = "";
+    for (const [index, segment] of segments.entries()) {
+      if (Buffer.byteLength(segment, "utf8") > MAX_PUBLISH_PATH_COMPONENT_BYTES) {
+        throw new RangeError(`Cannot publish ${JSON.stringify(path)}: a path component exceeds ${MAX_PUBLISH_PATH_COMPONENT_BYTES} UTF-8 bytes; shorten the source note or attachment filename.`);
+      }
+      ancestor = ancestor === "" ? segment : `${ancestor}/${segment}`;
+      if (index < segments.length - 1 && files.has(ancestor)) {
+        throw new Error(`Cannot publish ${JSON.stringify(path)}: ${JSON.stringify(ancestor)} is both a file and a parent directory; rename one of the conflicting source notes.`);
+      }
+    }
+  }
+}
 
 function publishListLimit(value: number | undefined): number {
   const limit = value ?? DEFAULT_PUBLISH_LIST_LIMIT;
@@ -540,6 +564,7 @@ export async function projectVault(
     truncated,
   };
   setSiteJson(files, "manifest.json", manifest, parseSiteManifestV1);
+  validateSitePaths(files.keys());
   const ordered = new Map(
     [...files.entries()].toSorted(([a], [b]) => a.localeCompare(b)),
   );
