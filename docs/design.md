@@ -363,32 +363,27 @@ position. `--mode exact` stays model-free,
 `--mode keyword` uses QMD's full-text index, and `--mode semantic` selects its
 vector lane.
 
-Reranking is additive and stays opt-in. `--rerank typesafe` sends the effective
-query and, for each of at most 25 candidates, its title, vault-relative path,
-and at most 512 UTF-8 bytes of snippet text to the fixed TypeSafe System One
-endpoint in a separate request. This hosted processing moves potentially
-private vault material off the local machine and incurs
-[provider input-token charges](https://docs.typesafe.ai/models).
-The endpoint assigns an independent relevance probability to each candidate.
-Exact identities stay first; other hits are sorted by that evidence inside the
-window only. Scores stay reciprocal-rank values, and each reranked hit carries a separate `rerank`
-evidence lane with its baseline rank, post-rerank rank, and probability.
-Explicit priority rules run afterward and retain final ordering authority. A
-missing `TYPESAFE_API_KEY` or a provider failure degrades to the baseline order
-with a diagnostic instead of failing the search, so rerank work never hides
-the deterministic lanes underneath.
+Reranking is opt-in through `--rerank typesafe`. It uses `jev-1.13.0` and sends
+the query plus each candidate's identifier, title, vault-relative path, and at
+most 512 UTF-8 bytes of snippet text to TypeSafe. Enable it only for vaults
+approved for external processing and provider input-token charges. Use
+`--rerank-limit 25` to bound the window (2–25 candidates); four requests run
+concurrently under one eight-second deadline with no retries. Exact identities
+remain first. Results retain their original scores and retrieval evidence.
 
-The adapter validates every serialized candidate state before sending any
-request, permits at most eight concurrent requests, and applies an 8-second
-timeout to each request. A 25-candidate window can therefore take four waves
-of requests; the timeout is not an 8-second search deadline. Requests are not
-retried, and a failure stops queued work. Already-started requests can still
-incur charges. The [`jev-latest` alias](https://docs.typesafe.ai/models) can
-change model versions; diagnostics record the returned model and successful
-token usage. These bounds and the
-synthetic regression fixtures do not establish retrieval quality, calibration,
-or production latency. Evaluate paired baseline and reranked results on
-independently judged, representative queries before relying on the lane.
+The CLI reads `TYPESAFE_API_KEY`, an explicit `TYPESAFE_API_KEY_FILE`, or the
+owner-only file `~/.config/wordcell/typesafe-api-key` (honoring
+`XDG_CONFIG_HOME`). Keep credentials outside the repository. A missing key or
+provider failure retains baseline ordering and marks the rerank lane
+unavailable or degraded. Inspect its structured `rerank` receipt for attempted
+requests, known usage, elapsed time, and whether usage is complete; an unknown
+charge is never reported as zero. A successful exit alone does not establish
+that reranking occurred. Omit `--rerank` for local-only retrieval.
+
+For a repository's ordinary KB searches, prefer its approved, pinned
+`kb:search` script when present. That script declares the vault and processing
+choice. Read returned notes before acting; model probabilities are ranking
+signals, not proof of truth. Explicit priority rules still run last.
 
 Wordcell pins QMD 2.5.3 and one full upstream revision of its compact
 EmbeddingGemma model for local vector retrieval. The revision prevents branch

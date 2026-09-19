@@ -59,6 +59,7 @@ import {
   type KnowledgeBaseSearchRerankOptions,
   type SearchRerankCandidate,
   type SearchReranker,
+  type SearchRerankDetails,
 } from "./rerank.js";
 import {
   openSemanticSearchSession,
@@ -186,6 +187,8 @@ export type KnowledgeBaseSearchHit = {
 
 export type KnowledgeBaseSearchDiagnostic = {
   readonly lane: "exact" | "git" | "graph" | "qmd" | "rerank";
+  /** Structured hosted-lane accounting, including known usage after fallback. */
+  readonly rerank?: SearchRerankDetails;
   readonly status: "degraded" | "ready" | "unavailable";
   readonly results: number;
   readonly message?: string;
@@ -524,6 +527,7 @@ type CheckedRerankRequest =
       readonly enabled: true;
       readonly limit: number;
       readonly reranker: SearchReranker;
+      readonly signal?: AbortSignal;
     };
 
 function checkedRerankRequest(
@@ -550,7 +554,10 @@ function checkedRerankRequest(
       `Search rerank limit must be an integer from 2 through ${MAX_RERANK_CANDIDATES}.`,
     );
   }
-  return { enabled: true, limit, reranker };
+  if (options.signal !== undefined && !(options.signal instanceof AbortSignal)) {
+    throw new TypeError("Search rerank signal must be an AbortSignal.");
+  }
+  return { enabled: true, limit, reranker, ...(options.signal === undefined ? {} : { signal: options.signal }) };
 }
 
 /** Open a read-only session that shares one live Markdown scan across retrieval tools. */
@@ -948,7 +955,9 @@ export async function openKnowledgeBase(
           snippet: utf8Prefix(hit.snippet, MAX_RERANK_SNIPPET_BYTES).value,
         }));
       const outcome = await Promise.resolve()
-        .then(() => rerankRequest.reranker.rerank({ query: effectiveQuery, candidates }))
+        .then(() => rerankRequest.reranker.rerank({ query: effectiveQuery, candidates,
+          ...(rerankRequest.signal === undefined ? {} : { signal: rerankRequest.signal }),
+        }))
         .then(
           (result) => ({ ok: true as const, result }),
           (error: unknown) => ({ ok: false as const, error }),
@@ -982,15 +991,17 @@ export async function openKnowledgeBase(
           ],
         };
       });
-      const readyResult = applied.result.status === "ready"
-        ? applied.result
-        : null;
+      const resultDetails: SearchRerankDetails = {
+        ...(applied.result.model === undefined ? {} : { model: applied.result.model }),
+        ...(applied.result.usage === undefined ? {} : { usage: applied.result.usage }),
+        ...(applied.result.accounting === undefined ? {} : { accounting: applied.result.accounting }),
+      };
       const details: string[] = [];
-      if (readyResult?.model !== undefined) details.push(readyResult.model);
-      if (readyResult?.usage !== undefined) {
+      if (resultDetails.model !== undefined) details.push(resultDetails.model);
+      if (resultDetails.usage !== undefined) {
         details.push(
-          `${(readyResult.usage.inputTokens ?? 0).toLocaleString("en-US")} input tokens, `
-            + `${(readyResult.usage.outputTokens ?? 0).toLocaleString("en-US")} output tokens`,
+          `${(resultDetails.usage.inputTokens ?? 0).toLocaleString("en-US")} input tokens, `
+            + `${(resultDetails.usage.outputTokens ?? 0).toLocaleString("en-US")} output tokens`,
         );
       }
       const rerankMessage = applied.status === "ready"
@@ -998,6 +1009,7 @@ export async function openKnowledgeBase(
         : (applied.message ?? "Rerank engine did not return a result.");
       diagnostics.push({
         lane: "rerank",
+        ...(Object.keys(resultDetails).length === 0 ? {} : { rerank: resultDetails }),
         status: applied.status === "failed" ? "degraded" : applied.status,
         results: applied.status === "ready" ? applied.placements.size : 0,
         ...(rerankMessage === undefined ? {} : { message: rerankMessage }),

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.22.0
+
+Adds opt-in TypeSafe reranking to CLI and SDK search, pinned to the evaluated
+`jev-1.13.0` model. Exact note identities remain first; provider failures retain
+the baseline order. The hosted window has an eight-second deadline, four
+concurrent requests, a configurable 2–25 candidate limit, and structured
+request and token accounting including incomplete usage on fallback. CLI
+credentials can come from an owner-only file outside the repository.
+
+The [reranking guide](docs/reranking.md) includes setup, repository adoption,
+SDK examples, and all-query scientific-retrieval results with their limits.
+
 ## 0.21.3
 
 Adds optional development support to the standalone CLI, public Agent Skill and website. Agents receive a throttled stderr discovery record after useful work and use the shared human-facing closeout protocol. SDK calls, nested commands, diagnostics and evaluation stay quiet. Features remain free; the person confirms any payment in Accounts.

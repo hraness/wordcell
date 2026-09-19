@@ -192,7 +192,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "references/url-platforms.md",
     "templates/companion-skill.template.md",
   ]);
-  expect(manifest.version).toBe("0.21.3");
+  expect(manifest.version).toBe("0.22.0");
   expect(manifestFiles).toContain("skills/wordcell");
   expect(publicSourceFiles).toContain("src/repository-memory.ts");
   expect(Object.keys(manifest.exports as Record<string, unknown>).toSorted()).toEqual([
@@ -280,7 +280,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
   ]);
   const usage = /export const usage = `([\s\S]*?)`;/u.exec(cli)?.[1] ?? "";
   expect(createHash("sha256").update(usage).digest("hex"))
-    .toBe("63e0f2b7a341ea66cc32f24d07230798b9693e03eeade347d55e03488510a370");
+    .toBe("265ad05156f123682a076abcd6696324ee79768a608f2186df9acb83d8d1c359");
   const commandIdentities = usage
     .split("\n")
     .filter((line) => line.startsWith("  wordcell "))

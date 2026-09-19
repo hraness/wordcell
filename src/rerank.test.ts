@@ -239,3 +239,76 @@ describe("applyRerank", () => {
     expect(applied.hits[3]).toBe(hits[3]);
   });
 });
+
+describe("rerank receipt validation", () => {
+  const receipt = {
+    model: "jev-1.13.0", usage: { inputTokens: 120, outputTokens: 8 },
+    accounting: { candidates: 2, attempted: 2, completed: 1, elapsedMs: 25, usageComplete: false },
+  };
+  test("retains immutable partial usage on failure and unusable ordering", () => {
+    const hits = [hit("a", 1), hit("b", 2)];
+    for (const outcome of [
+      { status: "failed", message: "deadline", ...receipt },
+      { status: "ready", ordering: ["a"], probabilities: { a: 0.5 }, ...receipt },
+      { status: "ready", ordering: ["a", "a"], probabilities: { a: 0.5 }, ...receipt },
+      { status: "ready", ordering: ["a", "b"], probabilities: null, ...receipt },
+    ]) {
+      const applied = applyRerank(hits, outcome, ["a", "b"]);
+      expect(applied.status).toBe("failed");
+      expect(applied.hits).toBe(hits);
+      expect(applied.result).toMatchObject(receipt);
+      expect(Object.isFrozen(applied.result.usage)).toBe(true);
+      expect(Object.isFrozen(applied.result.accounting)).toBe(true);
+    }
+  });
+
+  test("rejects getters without invoking them and rejects unbounded receipt data", () => {
+    let accesses = 0;
+    const getter = { get inputTokens(): number { accesses += 1; return 10; } };
+    for (const details of [
+      { ...receipt, usage: getter },
+      { ...receipt, usage: { inputTokens: Number.MAX_SAFE_INTEGER } },
+      { ...receipt, accounting: { ...receipt.accounting, elapsedMs: Infinity } },
+      { ...receipt, accounting: { ...receipt.accounting, elapsedMs: -1 } },
+      { ...receipt, accounting: { ...receipt.accounting, attempted: 26 } },
+      { ...receipt, accounting: { ...receipt.accounting, completed: 3 } },
+      { ...receipt, accounting: { ...receipt.accounting, usageComplete: true } },
+      { ...receipt, accounting: { ...receipt.accounting, candidates: 26 } },
+      { ...receipt, accounting: { ...receipt.accounting, extra: true } },
+      { ...receipt, model: "x".repeat(129) },
+    ]) {
+      const result = applyRerank([hit("a", 1)], { status: "failed", message: "failure", ...details }).result;
+      expect(result).toEqual({ status: "failed", message: "Rerank engine returned a malformed result." });
+    }
+    expect(accesses).toBe(0);
+  });
+
+  test("rejects accessor ordering and oversized probability maps without exposing candidate text", () => {
+    let accesses = 0;
+    const ordering = ["a"];
+    Object.defineProperty(ordering, "0", { get() { accesses += 1; return "a"; } });
+    const outcomes = [
+      { status: "ready", ordering, probabilities: { a: 0.5 } },
+      { status: "ready", ordering: ["a"], probabilities: Object.fromEntries(Array.from({ length: 26 }, (_, i) => [`p${i}`, 0.5])) },
+      { status: "ready", ordering: ["private\ntext"], probabilities: { "private\ntext": 0.5 } },
+    ];
+    for (const result of outcomes) {
+      const applied = applyRerank([hit("a", 1)], result);
+      expect(applied.status).toBe("failed");
+      expect(applied.message?.length).toBeLessThan(512);
+      expect(applied.message).not.toContain("private");
+    }
+    expect(accesses).toBe(0);
+  });
+
+  test("receipt counts cannot exceed the admitted candidate bound", () => {
+    fc.assert(fc.property(fc.integer({ min: 26, max: 1_000_000 }), (count) => {
+      const applied = applyRerank([hit("a", 1)], {
+        status: "failed", message: "failure", ...receipt,
+        accounting: { candidates: count, attempted: count, completed: count, elapsedMs: 1, usageComplete: true },
+      });
+      expect(applied.status).toBe("failed");
+      expect(applied.result.accounting).toBeUndefined();
+    }));
+  });
+});
