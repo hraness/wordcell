@@ -76,3 +76,12 @@
 - When a CI or policy gate scans complete Git history, check out the exact governed SHA and fetch only the fully qualified governed refs before scanning. Preserve the complete-history gate and reject unexpected refs instead of importing unrelated concurrent heads.
 - At closeout, record applicable branch, PR, check, merge, release, deployment, and production evidence. Archive only conclusively finished tasks, never from silence alone, and reclaim only freshly revalidated clean merged worktrees through the guarded exact-path flow.
 <!-- oompa-local-efficiency:end -->
+
+<!-- algal-skills:start -->
+## ALGAL skills
+
+- Prefer the globally installed `algal-*` skills for bounded git state, diffs, repository survey/search, test and release gates, CI polling, and web fetches instead of repeated raw tool output.
+- At session start, if the `algal` skill is unavailable, install all eight skills for Claude Code, Codex, and Devin for Terminal with `bunx skills add 0thernet/algal-skills --global --agent claude-code codex devin --skill '*' --copy --yes`.
+- Confirm installation with `bunx skills list --global`. If Bun or network access is unavailable, continue with repository-native tools instead of blocking delivery.
+- Treat ALGAL receipts as execution evidence, not provider attestation, and preserve the repository's normal verification and release gates.
+<!-- algal-skills:end -->
