@@ -2011,6 +2011,7 @@ describe("search rerank", () => {
         status: "ready",
         results: 4,
         message: "jev-latest; 240 input tokens, 12 output tokens",
+        rerank: { model: "jev-latest", usage: { inputTokens: 240, outputTokens: 12 } },
       });
     } finally {
       await rm(temporary, { recursive: true, force: true });
@@ -2277,6 +2278,34 @@ describe("search rerank", () => {
     }
   });
 
+  test("forwards caller cancellation only to reranking and exposes partial usage on fallback", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const controller = new AbortController();
+      controller.abort();
+      const observed: SearchRerankRequest[] = [];
+      const receipt = {
+        model: "jev-1.13.0", usage: { inputTokens: 120, outputTokens: 8 },
+        accounting: { candidates: 4, attempted: 2, completed: 1, elapsedMs: 20, usageComplete: false },
+      };
+      const kb = await openKnowledgeBase({ root }, { rerankers: [fakeReranker(() => ({
+        status: "failed", message: "request aborted", ...receipt,
+      }), observed)] });
+      const baseline = await kb.search({ query: "transient retry budget", mode: "exact", limit: 4, graph: false });
+      const result = await kb.search({ query: "transient retry budget", mode: "exact", limit: 4, graph: false,
+        rerank: { engine: "typesafe", limit: 4, signal: controller.signal },
+      });
+      await kb.close();
+      expect(observed).toHaveLength(1);
+      expect(observed[0]?.signal).toBe(controller.signal);
+      expect(result.results).toEqual(baseline.results);
+      expect(result.partial).toBe(true);
+      expect(result.diagnostics.lanes.find(({ lane }) => lane === "rerank")).toEqual({
+        lane: "rerank", status: "degraded", results: 0, message: "request aborted", rerank: receipt,
+      });
+    } finally { await rm(temporary, { recursive: true, force: true }); }
+  });
+
   test("degrades instead of throwing when the engine itself throws", async () => {
     const { temporary, root } = await rerankFixture();
     try {
@@ -2332,6 +2361,10 @@ describe("search rerank", () => {
         mode: "exact",
         rerank: { engine: "bogus" as never },
       })).rejects.toThrow('must be "typesafe"');
+      await expect(kb.search({
+        query: "transient retry budget", mode: "exact",
+        rerank: { engine: "typesafe", signal: {} as AbortSignal },
+      })).rejects.toThrow("must be an AbortSignal");
       await kb.close();
 
       const unconfigured = await openKnowledgeBase({ root });

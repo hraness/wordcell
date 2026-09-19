@@ -155,19 +155,27 @@ form. Graph neighbors and Git history remain separate from primary
 text rank. They explain and expand candidates without becoming authored facts,
 links, or recency boosts.
 
-Reranking is opt-in: `wordcell search "query" --rerank typesafe` requires
-`TYPESAFE_API_KEY` in the environment. This hosted lane sends the effective
-query and, for each of at most 25 candidates, its title, vault-relative path,
-and at most 512 UTF-8 bytes of snippet text to TypeSafe in a separate request.
-Those fields leave the local machine and may contain private vault material, so
-use the lane only when that external processing and provider input-token
-charges are acceptable. Exact identities remain first. The engine re-sorts the
-bounded window with an independent
-relevance probability per note; reranked hits keep their fused scores and gain
-a separate `rerank` evidence entry with baseline rank, post-rerank rank, and
-probability. Explicit priority rules still run last. When the key is absent or
-the provider fails, the search keeps the baseline order, reports a degraded or
-unavailable rerank lane, and stays partial instead of failing.
+Reranking is opt-in through `--rerank typesafe`. It uses `jev-1.13.0` and sends
+the query plus each candidate's identifier, title, vault-relative path, and at
+most 512 UTF-8 bytes of snippet text to TypeSafe. Enable it only for vaults
+approved for external processing and provider input-token charges. Use
+`--rerank-limit 25` to bound the window (2–25 candidates); four requests run
+concurrently under one eight-second deadline with no retries. Exact identities
+remain first. Results retain their original scores and retrieval evidence.
+
+The CLI reads `TYPESAFE_API_KEY`, an explicit `TYPESAFE_API_KEY_FILE`, or the
+owner-only file `~/.config/wordcell/typesafe-api-key` (honoring
+`XDG_CONFIG_HOME`). Keep credentials outside the repository. A missing key or
+provider failure retains baseline ordering and marks the rerank lane
+unavailable or degraded. Inspect its structured `rerank` receipt for attempted
+requests, known usage, elapsed time, and whether usage is complete; an unknown
+charge is never reported as zero. A successful exit alone does not establish
+that reranking occurred. Omit `--rerank` for local-only retrieval.
+
+For a repository's ordinary KB searches, prefer its approved, pinned
+`kb:search` script when present. That script declares the vault and processing
+choice. Read returned notes before acting; model probabilities are ranking
+signals, not proof of truth. Explicit priority rules still run last.
 
 `wordcell history <note>` returns the bounded commit history already associated with
 one resolved note. `wordcell history search <query-or-path>` searches the bounded Git

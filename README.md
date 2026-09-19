@@ -18,14 +18,14 @@ The CLI and TypeScript SDK run with Bun. Choose one installation source:
 
 ```sh
 # Canonical, versioned GitHub archive
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.3/hraness-wordcell-0.21.3.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz
 wordcell --help
 ```
 
 The same release is mirrored to [npm](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.21.3
+npm install --global --ignore-scripts @hraness/wordcell@0.22.0
 wordcell --help
 ```
 
@@ -39,7 +39,7 @@ Install the single public Agent Skill into your choice of compatible agent,
 including Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.21.3 --skill wordcell
+bunx skills add hraness/wordcell#v0.22.0 --skill wordcell
 ```
 
 Then ask:
@@ -113,6 +113,19 @@ neither the vault nor a hosted knowledge service.
 
 <!-- hraness:wordcell-landing:end -->
 
+## Rerank a search window
+
+```sh
+wordcell search "why releases use immutable archives" --root kb --mode exact \
+  --rerank typesafe --rerank-limit 25 --limit 5 --json
+```
+
+This optional hosted lane uses TypeSafe's pinned `jev-1.13.0` model. It sends
+bounded query and note snippets to the provider, needs a private local
+credential, and incurs provider charges. Exact identities remain first; a
+provider failure retains the baseline order with a diagnostic. See the
+[setup, SDK examples, measured results, and limits](https://github.com/hraness/wordcell/blob/main/docs/reranking.md).
+
 ## What you can do
 
 | Task | Command | Evidence and effects |
@@ -166,7 +179,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.21.3/hraness-wordcell-0.21.3.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph

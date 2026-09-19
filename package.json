@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.21.3",
+  "version": "0.22.0",
   "description": "A knowledge base for coding agents, built from Markdown, backlinks, semantic search, and Git context.",
   "license": "MIT",
   "type": "module",
@@ -421,6 +421,7 @@
     "src/query.ts",
     "src/rerank.ts",
     "src/rerank-typesafe.ts",
+    "src/rerank-credentials.ts",
     "src/repository-memory.ts",
     "src/search.ts",
     "src/search-rules.ts",
@@ -477,7 +478,9 @@
     "test:package": "bun run ./scripts/package-smoke.ts",
     "check": "bun run check:effect && bun run check:workflows && bun run check:portfolio-inventory && bun run check:installed-command-docs && bun run typecheck && bun run build && bun run test:package && bun run test && bun run url-metadata:tool:check",
     "prepack": "bun run check",
-    "check:effect": "bun run scripts/check-effect-policy.ts"
+    "check:effect": "bun run scripts/check-effect-policy.ts",
+    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz wordcell search --root kb --mode exact --rerank typesafe --rerank-limit 25",
+    "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz wordcell search --root kb --mode exact"
   },
   "dependencies": {
     "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.10.8/hraness-oh-0.10.8.tgz",
