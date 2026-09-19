@@ -3,8 +3,8 @@
 
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
-A local knowledge base for coding agents. Save decisions in Markdown, find the
-notes behind a code change, and give the next session only the context it needs.
+A local knowledge base for coding agents. Save decisions in Markdown and recover
+the context behind your code. Give the next session only the context it needs.
 
 Your files stay yours: read them in Obsidian or any editor, review changes in
 Git, and rebuild every index from the Markdown. Exact search and graph queries
