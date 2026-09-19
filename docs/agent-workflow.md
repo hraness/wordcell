@@ -154,6 +154,13 @@ processes, same-generation readers can overlap, and a projection change waits
 for older readers to close. `wordcell index` can prewarm that cache. `--mode exact`
 requires no model.
 
+Reranking is opt-in through `--rerank typesafe`, which needs `TYPESAFE_API_KEY`.
+The engine re-sorts a bounded result window with an independent relevance
+probability per note; reranked hits keep their fused scores and gain a separate
+`rerank` evidence lane. When the key is absent or the provider fails, the
+search keeps the baseline order and reports a degraded or unavailable lane
+instead of failing.
+
 Graph neighbors and Git provenance are returned separately from the primary
 rank. Use `--related <note>` to seed a bounded explicit neighborhood,
 `--no-graph` when it is unnecessary, and `--history` when recent note

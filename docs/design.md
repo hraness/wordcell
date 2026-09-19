@@ -363,6 +363,15 @@ position. `--mode exact` stays model-free,
 `--mode keyword` uses QMD's full-text index, and `--mode semantic` selects its
 vector lane.
 
+Reranking is additive and stays opt-in. `--rerank typesafe` sends a bounded
+result window to the TypeSafe System One endpoint, which scores each candidate
+with an independent calibrated probability. The fused order is re-sorted by
+that evidence inside the window only; scores stay reciprocal-rank values, and
+each reranked hit carries a separate `rerank` evidence lane with its baseline
+rank, final rank, and probability. A missing `TYPESAFE_API_KEY` or a provider
+failure degrades to the baseline order with a diagnostic instead of failing
+the search, so rerank work never hides the deterministic lanes underneath.
+
 Wordcell pins QMD 2.5.3 and one full upstream revision of its compact
 EmbeddingGemma model for local vector retrieval. The revision prevents branch
 drift and gives the model a revision-specific cache identity. Without an

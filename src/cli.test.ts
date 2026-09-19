@@ -642,6 +642,23 @@ describe("kb argument parsing", () => {
         ok: false,
         message: "--history and --require-history cannot be used together",
       });
+    expect(parseArguments(["search", "query", "--rerank", "typesafe"]))
+      .toMatchObject({
+        ok: true,
+        value: { kind: "search", rerank: "typesafe" },
+      });
+    expect(parseArguments(["search", "query", "--rerank", "bogus"])).toEqual({
+      ok: false,
+      message: "--rerank must be typesafe",
+    });
+    expect(parseArguments(["search", "query", "--rerank"])).toEqual({
+      ok: false,
+      message: "--rerank requires a value",
+    });
+    expect(parseArguments(["index", "--rerank", "typesafe"])).toEqual({
+      ok: false,
+      message: "unknown index option",
+    });
     expect(parseArguments([
       "search",
       "🧠".repeat((16 * 1_024 / 4) + 1),
@@ -2019,6 +2036,116 @@ describe("kb vault commands", () => {
     ]);
     expect(closed).toBe(1);
     expect(searchOutput.stdout()).toContain("notes/memory.md:4");
+  });
+
+  test("forwards --rerank to the search session and renders the rerank lane", async () => {
+    const opened: unknown[] = [];
+    const searched: unknown[] = [];
+    const fakeReranker = {
+      id: "typesafe",
+      rerank: () => Promise.resolve({ status: "unavailable" as const, message: "unused" }),
+    };
+    const searchOutput = captureOutput();
+    expect(await main([
+      "search",
+      "agent memory",
+      "--root",
+      "vault",
+      "--rerank",
+      "typesafe",
+    ], searchOutput.output, {
+      rerankers: [fakeReranker],
+      openKnowledgeBase: (options, dependencies) => {
+        opened.push({ options, dependencies });
+        const unused = (): never => { throw new Error("not used in this test"); };
+        return Promise.resolve({
+          root: "/vault",
+          repository: ".",
+          noteCount: 1,
+          grep: unused,
+          list: unused,
+          read: unused,
+          links: unused,
+          backlinks: unused,
+          search: (searchOptions) => {
+            searched.push(searchOptions);
+            return Promise.resolve({
+              query: "agent memory",
+              mode: "hybrid" as const,
+              results: [{
+                id: "notes/memory",
+                path: "notes/memory.md",
+                title: "Agent memory",
+                rank: 1,
+                score: 0.9,
+                identity: false,
+                line: 4,
+                snippet: "Durable context for coding agents.",
+                tags: ["agents"],
+                metadata: { type: "note" },
+                evidence: [
+                  {
+                    kind: "qmd" as const,
+                    rank: 2,
+                    source: "hybrid" as const,
+                    score: 0.9,
+                  },
+                  {
+                    kind: "rerank" as const,
+                    engine: "typesafe",
+                    baselineRank: 2,
+                    rerankRank: 1,
+                    probability: 0.91,
+                  },
+                ],
+                contributions: [],
+              }],
+              graph: null,
+              history: null,
+              partial: false,
+              diagnostics: {
+                notes: 1,
+                model: "local-model",
+                elapsedMs: 2,
+                lanes: [
+                  { lane: "qmd" as const, status: "ready" as const, results: 1 },
+                  {
+                    lane: "rerank" as const,
+                    status: "ready" as const,
+                    results: 3,
+                    message: "jev-latest; 120 input tokens, 8 output tokens",
+                  },
+                ],
+              },
+            });
+          },
+          history: unused,
+          graphQuery: unused,
+          graphVerifyResult: unused,
+          percolateWithProofs: unused,
+          searchHistory: unused,
+          close: () => Promise.resolve(),
+        } satisfies KnowledgeBaseSession);
+      },
+    })).toBe(0);
+    expect(searched).toEqual([
+      {
+        query: "agent memory",
+        ordering: "relevance",
+        filters: [],
+        tags: [],
+        repositoryScopes: [],
+        graph: {},
+        history: false,
+        rerank: { engine: "typesafe" },
+      },
+    ]);
+    const injected = opened[0] as { dependencies?: { rerankers?: unknown[] } };
+    expect(injected.dependencies?.rerankers).toEqual([fakeReranker]);
+    expect(searchOutput.stdout()).toContain(
+      "Rerank: typesafe over 3 candidates (ready)",
+    );
+    expect(searchOutput.stdout()).toContain("rerank#1");
   });
 
   test("loads strict search rules and makes priority ordering explicit", async () => {

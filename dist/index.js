@@ -28,11 +28,16 @@ import {
   sourceInbox
 } from "./index-pj501bh1.js";
 import {
+  DEFAULT_SYSTEMONE_ENDPOINT,
+  DEFAULT_SYSTEMONE_MODEL,
+  createTypeSafeReranker
+} from "./index-fqgktctx.js";
+import {
   FrozenEvaluationSnapshotError,
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-g1kx59e7.js";
+} from "./index-3s8frz9g.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -43,8 +48,9 @@ import {
   openKnowledgeBase,
   packSearchContext,
   packUntrustedSearchContext,
+  searchEvidenceRank,
   validateKnowledgeBaseSearchHistory
-} from "./index-9x8jtqmp.js";
+} from "./index-x48wxx0w.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -63,6 +69,12 @@ import {
   sha256EmbeddingModelFile
 } from "./index-trgxvmy6.js";
 import"./index-4j3tt0c3.js";
+import {
+  MAX_RERANK_CANDIDATES,
+  MAX_RERANK_SNIPPET_BYTES,
+  MAX_RERANK_STATE_BYTES,
+  applyRerank
+} from "./index-sbg6k9q1.js";
 import {
   MAX_BOOTSTRAP_RESAMPLES,
   MAX_EVALUATION_DIAGNOSTICS,
@@ -749,6 +761,7 @@ export {
   searchSemanticVault,
   searchGitHistory,
   searchExactVault,
+  searchEvidenceRank,
   scanVault,
   runWorkflow,
   runRetrievalEvaluation,
@@ -832,6 +845,7 @@ export {
   defaultAgentGuideIgnoredDirectories,
   deepestRepositoryScopeMatch,
   createVerifiedEmbeddingModelLease,
+  createTypeSafeReranker,
   createSyntheticRankFusionFixture,
   createRepresentativeRetrievalFixture,
   createOhAdoptionPreparerV1,
@@ -854,6 +868,7 @@ export {
   auditAgentGuideSource,
   auditAgentGuideRepository,
   attestSemanticWarmCache,
+  applyRerank,
   analyzeVault,
   analyzeAuthoredRepositoryScopes,
   analyzeAgentContexts,
@@ -908,6 +923,9 @@ export {
   MAX_SEARCH_CANDIDATES,
   MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
   MAX_SCANNED_NOTES,
+  MAX_RERANK_STATE_BYTES,
+  MAX_RERANK_SNIPPET_BYTES,
+  MAX_RERANK_CANDIDATES,
   MAX_REPOSITORY_SCOPE_UTF8_BYTES,
   MAX_REPOSITORY_SCOPES_UTF8_BYTES,
   MAX_REPOSITORY_SCOPES,
@@ -966,6 +984,8 @@ export {
   GRAPH_LIMITS,
   FrozenEvaluationSnapshotError,
   DEFAULT_WORKFLOW_OUTPUT_BYTES,
+  DEFAULT_SYSTEMONE_MODEL,
+  DEFAULT_SYSTEMONE_ENDPOINT,
   DEFAULT_SEARCH_RESULTS,
   DEFAULT_REPOSITORY_MEMORY_GROUP_LIMIT,
   DEFAULT_REPOSITORY_MEMORY_DETAIL_LIMIT,

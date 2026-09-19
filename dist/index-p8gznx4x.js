@@ -12,7 +12,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-fhc7yps3.js";
+} from "./index-meyfaqje.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -34,17 +34,21 @@ import {
   sourceInbox
 } from "./index-pj501bh1.js";
 import {
+  createTypeSafeReranker
+} from "./index-fqgktctx.js";
+import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-g1kx59e7.js";
+} from "./index-3s8frz9g.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
   MAX_SEARCH_NOTE_REFERENCE_BYTES,
   MAX_SEARCH_RELATED_SEEDS,
   MAX_SEARCH_RESULTS,
-  openKnowledgeBase
-} from "./index-9x8jtqmp.js";
+  openKnowledgeBase,
+  searchEvidenceRank
+} from "./index-x48wxx0w.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -1119,7 +1123,7 @@ Usage:
   wordcell percolate [note] [--proofs] [--root <directory>] [--min-support <count>] [--limit <count>] [--json]
   wordcell list [--root <directory>] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--sort <field>] [--order <asc|desc>] [--limit <count>] [--json]
   wordcell index [--root <directory>] [--database <path>] [--force] [--json]
-  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--json]
+  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--json]
   wordcell history <note> [--root <directory>] [--repo <repository>] [--limit <count>] [--cochanged-limit <count>] [--json]
   wordcell history search <query-or-path> [--root <directory>] [--repo <repository>] [--limit <count>] [--commit-limit <count>] [--cochanged-limit <count>] [--json]
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
@@ -1788,6 +1792,7 @@ function parseSemanticCommand(command, arguments_) {
   let limit;
   let candidateLimit;
   let minScore;
+  let rerank;
   let graphDepth;
   let noGraph = false;
   let history = false;
@@ -1845,7 +1850,7 @@ function parseSemanticCommand(command, arguments_) {
       cursor += 1;
       continue;
     }
-    if (command === "search" && (argument === "--mode" || argument === "--limit" || argument === "--candidate-limit" || argument === "--min-score" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--related" || argument === "--graph-depth")) {
+    if (command === "search" && (argument === "--mode" || argument === "--limit" || argument === "--candidate-limit" || argument === "--min-score" || argument === "--rerank" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--related" || argument === "--graph-depth")) {
       const value = readValue(arguments_, cursor);
       if (value === null)
         return { ok: false, message: `${argument} requires a value` };
@@ -1854,6 +1859,11 @@ function parseSemanticCommand(command, arguments_) {
           return { ok: false, message: "--mode must be hybrid, exact, keyword, or semantic" };
         }
         mode = value;
+      } else if (argument === "--rerank") {
+        if (value !== "typesafe") {
+          return { ok: false, message: "--rerank must be typesafe" };
+        }
+        rerank = value;
       } else if (argument === "--where") {
         const equals = value.indexOf("=");
         const path = equals === -1 ? "" : value.slice(0, equals).trim();
@@ -2023,6 +2033,7 @@ function parseSemanticCommand(command, arguments_) {
       ...limit === undefined ? {} : { limit },
       ...candidateLimit === undefined ? {} : { candidateLimit },
       ...minScore === undefined ? {} : { minScore },
+      ...rerank === undefined ? {} : { rerank },
       query,
       json
     }
@@ -2793,11 +2804,15 @@ function renderKnowledgeBaseSearch(result) {
   const lines = [
     `${result.mode[0]?.toLocaleUpperCase("en-US") ?? ""}${result.mode.slice(1)} results for \u201C${safe(result.query)}\u201D (${result.results.length})${result.partial ? " [partial]" : ""}`
   ];
+  const rerankLane = result.diagnostics.lanes.find(({ lane }) => lane === "rerank");
+  if (rerankLane !== undefined) {
+    lines.push(`  Rerank: typesafe over ${rerankLane.results} candidates (${rerankLane.status})` + (rerankLane.message === undefined ? "" : ` \u2014 ${safe(rerankLane.message)}`));
+  }
   if (result.results.length === 0)
     lines.push("  None.");
   for (const hit of result.results) {
     const location = `${safe(hit.path)}${hit.line === undefined ? "" : `:${hit.line}`}`;
-    const evidence = hit.evidence.map((item) => `${item.kind}#${item.rank}`).join(", ");
+    const evidence = hit.evidence.map((item) => `${item.kind}#${searchEvidenceRank(item)}`).join(", ");
     lines.push(`  ${hit.rank}. ${hit.score.toFixed(3)}  ${location} \u2014 ${safe(hit.title)} [${safe(evidence)}]`);
     if (hit.snippet !== "")
       lines.push(`    ${safe(hit.snippet)}`);
@@ -2829,7 +2844,7 @@ async function runSemantic(command, output, dependencies) {
     repository: command.repository,
     ...command.database === undefined ? {} : { database: command.database },
     ...searchRules === undefined ? {} : { searchRules }
-  });
+  }, ...command.rerank === undefined ? [] : [{ rerankers: dependencies.rerankers ?? [createTypeSafeReranker()] }]);
   try {
     const result = await kb.search({
       query: command.query,
@@ -2842,7 +2857,8 @@ async function runSemantic(command, output, dependencies) {
       history: command.history,
       ...command.limit === undefined ? {} : { limit: command.limit },
       ...command.candidateLimit === undefined ? {} : { candidateLimit: command.candidateLimit },
-      ...command.minScore === undefined ? {} : { minScore: command.minScore }
+      ...command.minScore === undefined ? {} : { minScore: command.minScore },
+      ...command.rerank === undefined ? {} : { rerank: { engine: command.rerank } }
     });
     output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderKnowledgeBaseSearch(result)));
     return 0;

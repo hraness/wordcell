@@ -155,6 +155,14 @@ form. Graph neighbors and Git history remain separate from primary
 text rank. They explain and expand candidates without becoming authored facts,
 links, or recency boosts.
 
+Reranking is opt-in: `wordcell search "query" --rerank typesafe` requires
+`TYPESAFE_API_KEY` in the environment. The engine re-sorts a bounded result
+window with an independent relevance probability per note; reranked hits keep
+their fused scores and gain a separate `rerank` evidence entry with baseline
+rank, final rank, and probability. When the key is absent or the provider
+fails, the search keeps the baseline order, reports a degraded or unavailable
+rerank lane, and stays partial instead of failing.
+
 `wordcell history <note>` returns the bounded commit history already associated with
 one resolved note. `wordcell history search <query-or-path>` searches the bounded Git
 projection directly and retains hashes, subjects, matched paths, co-change

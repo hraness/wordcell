@@ -53,6 +53,14 @@ import {
   type SearchRulesV1,
 } from "./search-rules.js";
 import {
+  applyRerank,
+  MAX_RERANK_CANDIDATES,
+  MAX_RERANK_SNIPPET_BYTES,
+  type KnowledgeBaseSearchRerankOptions,
+  type SearchRerankCandidate,
+  type SearchReranker,
+} from "./rerank.js";
+import {
   openSemanticSearchSession,
   recommendedEmbeddingModel,
   type SemanticDependencies,
@@ -120,6 +128,8 @@ export type KnowledgeBaseSearchOptions = {
   readonly graph?: false | KnowledgeBaseGraphOptions;
   /** Git provenance is separate from the primary relevance rank. */
   readonly history?: false | "auto" | "required" | KnowledgeBaseHistoryOptions;
+  /** Opt-in rerank engine over a bounded result window. */
+  readonly rerank?: KnowledgeBaseSearchRerankOptions;
 };
 
 export type KnowledgeBaseExactEvidence = {
@@ -142,9 +152,21 @@ export type KnowledgeBaseQmdEvidence = {
   readonly signals?: SemanticSearchHit["signals"];
 };
 
+export type KnowledgeBaseRerankEvidence = {
+  readonly kind: "rerank";
+  readonly engine: string;
+  /** One-based position before reranking. */
+  readonly baselineRank: number;
+  /** One-based position after reranking. */
+  readonly rerankRank: number;
+  /** Engine-assigned relevance probability; not the fused RRF score. */
+  readonly probability?: number;
+};
+
 export type KnowledgeBaseSearchEvidence =
   | KnowledgeBaseExactEvidence
-  | KnowledgeBaseQmdEvidence;
+  | KnowledgeBaseQmdEvidence
+  | KnowledgeBaseRerankEvidence;
 
 export type KnowledgeBaseSearchHit = {
   readonly id: string;
@@ -163,7 +185,7 @@ export type KnowledgeBaseSearchHit = {
 };
 
 export type KnowledgeBaseSearchDiagnostic = {
-  readonly lane: "exact" | "git" | "graph" | "qmd";
+  readonly lane: "exact" | "git" | "graph" | "qmd" | "rerank";
   readonly status: "degraded" | "ready" | "unavailable";
   readonly results: number;
   readonly message?: string;
@@ -244,6 +266,8 @@ export type KnowledgeBaseDependencies = {
   readonly semanticSession?: SemanticSearchSession;
   readonly git?: GitHistoryDependencies;
   readonly indexGitHistory?: typeof indexGitHistory;
+  /** Opt-in rerank engines resolved by search option id. */
+  readonly rerankers?: readonly SearchReranker[];
 };
 
 export type KnowledgeBaseSession = {
@@ -300,6 +324,11 @@ function noteOrThrow(notes: readonly Note[], query: string): Note {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** One-based rank to display for one evidence lane; rerank shows its final position. */
+export function searchEvidenceRank(item: KnowledgeBaseSearchEvidence): number {
+  return item.kind === "rerank" ? item.rerankRank : item.rank;
 }
 
 function utf8Prefix(value: string, maximumBytes: number): {
@@ -487,6 +516,41 @@ function checkedHistoryRequest(value: unknown): CheckedHistoryRequest {
 /** Validate the search-history request before any optional backend work begins. */
 export function validateKnowledgeBaseSearchHistory(value: unknown): void {
   checkedHistoryRequest(value);
+}
+
+type CheckedRerankRequest =
+  | { readonly enabled: false }
+  | {
+      readonly enabled: true;
+      readonly limit: number;
+      readonly reranker: SearchReranker;
+    };
+
+function checkedRerankRequest(
+  value: unknown,
+  rerankers: readonly SearchReranker[] | undefined,
+): CheckedRerankRequest {
+  if (value === undefined) return { enabled: false };
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new TypeError("Search rerank options must be an options object.");
+  }
+  const options = value as KnowledgeBaseSearchRerankOptions;
+  if (options.engine !== "typesafe") {
+    throw new Error('Search rerank engine must be "typesafe".');
+  }
+  const reranker = rerankers?.find((entry) => entry.id === options.engine);
+  if (reranker === undefined) {
+    throw new Error(
+      `Search rerank engine ${JSON.stringify(options.engine)} is not available in this session.`,
+    );
+  }
+  const limit = options.limit ?? MAX_RERANK_CANDIDATES;
+  if (!Number.isSafeInteger(limit) || limit < 2 || limit > MAX_RERANK_CANDIDATES) {
+    throw new RangeError(
+      `Search rerank limit must be an integer from 2 through ${MAX_RERANK_CANDIDATES}.`,
+    );
+  }
+  return { enabled: true, limit, reranker };
 }
 
 /** Open a read-only session that shares one live Markdown scan across retrieval tools. */
@@ -696,6 +760,10 @@ export async function openKnowledgeBase(
     }
     const historyRequest = checkedHistoryRequest(effectiveOptions.history);
     const graphOptions = checkedGraphOptions(effectiveOptions.graph);
+    const rerankRequest = checkedRerankRequest(
+      effectiveOptions.rerank,
+      dependencies.rerankers,
+    );
     const explicitSeeds = graphOptions === null
       ? []
       : resolvedGraphSeeds(snapshot.notes, graphOptions.related);
@@ -816,7 +884,10 @@ export async function openKnowledgeBase(
     const shouldApplyPriority = ordering === "priority-then-relevance"
       && searchRules !== null
       && searchRules.priorityRules.length > 0;
-    const relevanceResults = (shouldApplyPriority ? ordered : ordered.slice(0, limit))
+    const resultWindow = rerankRequest.enabled
+      ? Math.max(limit, rerankRequest.limit)
+      : limit;
+    const relevanceResults = (shouldApplyPriority ? ordered : ordered.slice(0, resultWindow))
       .map((candidate, index): KnowledgeBaseSearchHit => {
         const note = notesById.get(candidate.id);
         if (note === undefined) {
@@ -864,10 +935,77 @@ export async function openKnowledgeBase(
           contributions: candidate.contributions,
         };
       });
+    let rankedResults: readonly KnowledgeBaseSearchHit[] = relevanceResults;
+    if (rerankRequest.enabled) {
+      const candidates: SearchRerankCandidate[] = relevanceResults
+        .slice(0, rerankRequest.limit)
+        .map((hit, index) => ({
+          id: hit.id,
+          baselineRank: index + 1,
+          score: hit.score,
+          title: hit.title,
+          path: hit.path,
+          snippet: utf8Prefix(hit.snippet, MAX_RERANK_SNIPPET_BYTES).value,
+        }));
+      const outcome = await rerankRequest.reranker
+        .rerank({ query: effectiveQuery, candidates })
+        .then(
+          (result) => ({ ok: true as const, result }),
+          (error: unknown) => ({ ok: false as const, error }),
+        );
+      const applied = applyRerank(
+        relevanceResults,
+        outcome.ok
+          ? outcome.result
+          : {
+              status: "failed",
+              message: "Rerank engine failed before returning a result.",
+            },
+      );
+      rankedResults = applied.hits.map((hit) => {
+        const placement = applied.placements.get(hit.id);
+        if (placement === undefined) return hit;
+        return {
+          ...hit,
+          evidence: [
+            ...hit.evidence,
+            {
+              kind: "rerank" as const,
+              engine: rerankRequest.reranker.id,
+              baselineRank: placement.baselineRank,
+              rerankRank: placement.rerankRank,
+              ...(placement.probability === undefined
+                ? {}
+                : { probability: placement.probability }),
+            },
+          ],
+        };
+      });
+      const readyResult = outcome.ok && outcome.result.status === "ready"
+        ? outcome.result
+        : null;
+      const details: string[] = [];
+      if (readyResult?.model !== undefined) details.push(readyResult.model);
+      if (readyResult?.usage !== undefined) {
+        details.push(
+          `${(readyResult.usage.inputTokens ?? 0).toLocaleString("en-US")} input tokens, `
+            + `${(readyResult.usage.outputTokens ?? 0).toLocaleString("en-US")} output tokens`,
+        );
+      }
+      const rerankMessage = applied.status === "ready"
+        ? (details.length === 0 ? undefined : details.join("; "))
+        : (applied.message ?? "Rerank engine did not return a result.");
+      diagnostics.push({
+        lane: "rerank",
+        status: applied.status === "failed" ? "degraded" : applied.status,
+        results: applied.status === "ready" ? applied.placements.size : 0,
+        ...(rerankMessage === undefined ? {} : { message: rerankMessage }),
+      });
+    }
     let priorityTrace: readonly SearchPriorityTrace[] | null = null;
-    let results: readonly KnowledgeBaseSearchHit[] = relevanceResults.slice(0, limit);
+    let results: readonly KnowledgeBaseSearchHit[] = rankedResults.slice(0, limit);
     if (shouldApplyPriority && searchRules !== null) {
-      const prioritized = prioritizeSearchHits(relevanceResults, searchRules, {
+      const prioritized = prioritizeSearchHits(rankedResults, searchRules, {
         ...(options.vaultId === undefined ? {} : { vaultId: options.vaultId }),
       });
       const selectedHits = prioritized.hits.slice(0, limit);
@@ -1119,7 +1257,7 @@ export function packSearchContext(
       if (index > 0 && !append(", ")) return writer.result();
       if (!append(item.kind)) return writer.result();
       if (!append("#")) return writer.result();
-      if (!append(String(item.rank))) return writer.result();
+      if (!append(String(searchEvidenceRank(item)))) return writer.result();
     }
     if (!append("\n\n")) return writer.result();
     if (!append(hit.snippet)) return writer.result();

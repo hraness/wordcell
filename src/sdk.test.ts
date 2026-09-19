@@ -9,6 +9,11 @@ import {
   type GitHistoryIndex,
 } from "./git.js";
 import { MAX_QUERY_FILTERS } from "./query.js";
+import type {
+  SearchReranker,
+  SearchRerankRequest,
+  SearchRerankResult,
+} from "./rerank.js";
 import {
   MIN_UNTRUSTED_CONTEXT_BYTES,
   MAX_SEARCH_RELATED_SEEDS,
@@ -1883,6 +1888,282 @@ describe("knowledge-base session", () => {
         history: false,
       })).rejects.toThrow("at most 5 explicit");
       await kb.close();
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("search rerank", () => {
+  async function rerankFixture(): Promise<{
+    readonly temporary: string;
+    readonly root: string;
+  }> {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-sdk-rerank-"));
+    const root = join(temporary, "kb");
+    await mkdir(join(root, "notes"), { recursive: true });
+    await writeFile(join(root, "index.md"), "# Knowledge base\n", "utf8");
+    for (const name of ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"]) {
+      await writeFile(
+        join(root, "notes", `${name}.md`),
+        [
+          "---",
+          `title: ${name.toUpperCase()}`,
+          "tags: [retry]",
+          "---",
+          `# ${name}`,
+          "",
+          "The transient retry budget governs queue drains.",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+    }
+    return { temporary, root };
+  }
+
+  function fakeReranker(
+    handler: (
+      request: SearchRerankRequest,
+    ) => SearchRerankResult | Promise<SearchRerankResult>,
+    observed: SearchRerankRequest[] = [],
+  ): SearchReranker {
+    return {
+      id: "typesafe",
+      rerank: async (request) => {
+        observed.push(request);
+        return await handler(request);
+      },
+    };
+  }
+
+  test("reorders the window, keeps fused scores, and records per-hit evidence", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const kb = await openKnowledgeBase({ root });
+      const baseline = await kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        limit: 4,
+        graph: false,
+      });
+      await kb.close();
+      expect(baseline.partial).toBe(false);
+      expect(baseline.diagnostics.lanes.some(({ lane }) => lane === "rerank"))
+        .toBe(false);
+      const baselineIds = baseline.results.map(({ id }) => id);
+      expect(baselineIds).toHaveLength(4);
+
+      const observed: SearchRerankRequest[] = [];
+      const reranker = fakeReranker((request) => {
+        const probabilities: Record<string, number> = {};
+        for (const [index, candidate] of request.candidates.entries()) {
+          probabilities[candidate.id] = (index + 1) / 10;
+        }
+        return {
+          status: "ready",
+          ordering: request.candidates.map(({ id }) => id),
+          probabilities,
+          model: "jev-latest",
+          usage: { inputTokens: 240, outputTokens: 12 },
+        };
+      }, observed);
+      const reranked = await openKnowledgeBase(
+        { root },
+        { rerankers: [reranker] },
+      );
+      const result = await reranked.search({
+        query: "transient retry budget",
+        mode: "exact",
+        limit: 4,
+        graph: false,
+        rerank: { engine: "typesafe", limit: 4 },
+      });
+      await reranked.close();
+
+      expect(observed).toHaveLength(1);
+      expect(observed[0]?.query).toBe("transient retry budget");
+      expect(observed[0]?.candidates.map(({ id }) => id)).toEqual(baselineIds);
+      expect(observed[0]?.candidates.map(({ baselineRank }) => baselineRank))
+        .toEqual([1, 2, 3, 4]);
+
+      expect(result.partial).toBe(false);
+      expect(result.results.map(({ id }) => id))
+        .toEqual([...baselineIds].reverse());
+      expect(result.results.map(({ rank }) => rank)).toEqual([1, 2, 3, 4]);
+      const baselineScoreById = new Map(
+        baseline.results.map(({ id, score }) => [id, score]),
+      );
+      for (const hit of result.results) {
+        expect(baselineScoreById.get(hit.id)).toBe(hit.score);
+        const rerankEvidence = hit.evidence.find(({ kind }) => kind === "rerank");
+        expect(rerankEvidence).toBeDefined();
+        if (rerankEvidence?.kind === "rerank") {
+          expect(rerankEvidence.engine).toBe("typesafe");
+          expect(rerankEvidence.rerankRank).toBe(hit.rank);
+          expect(typeof rerankEvidence.probability).toBe("number");
+        }
+      }
+      const moved = result.results.find(({ id }) => id === baselineIds[0]);
+      expect(moved?.rank ?? -1).toBe(4);
+      expect(result.diagnostics.lanes).toContainEqual({
+        lane: "rerank",
+        status: "ready",
+        results: 4,
+        message: "jev-latest; 240 input tokens, 12 output tokens",
+      });
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("bounds the rerank window to the configured limit", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const observed: SearchRerankRequest[] = [];
+      const reranker = fakeReranker((request) => ({
+        status: "ready",
+        ordering: request.candidates.map(({ id }) => id),
+        probabilities: Object.fromEntries(
+          request.candidates.map(({ id }) => [id, 0.5]),
+        ),
+      }), observed);
+      const kb = await openKnowledgeBase({ root }, { rerankers: [reranker] });
+      const result = await kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        limit: 6,
+        graph: false,
+        rerank: { engine: "typesafe", limit: 3 },
+      });
+      await kb.close();
+      expect(observed[0]?.candidates).toHaveLength(3);
+      for (const candidate of observed[0]?.candidates ?? []) {
+        expect(Buffer.byteLength(candidate.snippet, "utf8"))
+          .toBeLessThanOrEqual(512);
+      }
+      expect(result.results).toHaveLength(6);
+      const rerankedIds = new Set(
+        result.results
+          .filter(({ evidence }) => evidence.some(({ kind }) => kind === "rerank"))
+          .map(({ id }) => id),
+      );
+      expect(rerankedIds.size).toBe(3);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("keeps baseline order and marks the search partial when the engine fails", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const kb = await openKnowledgeBase({ root });
+      const baseline = await kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        limit: 4,
+        graph: false,
+      });
+      await kb.close();
+
+      for (const outcome of [
+        { status: "failed", message: "HTTP 500" },
+        { status: "unavailable", message: "TYPESAFE_API_KEY is not set" },
+      ] as const) {
+        const reranker = fakeReranker(() => outcome);
+        const degraded = await openKnowledgeBase({ root }, { rerankers: [reranker] });
+        const result = await degraded.search({
+          query: "transient retry budget",
+          mode: "exact",
+          limit: 4,
+          graph: false,
+          rerank: { engine: "typesafe", limit: 4 },
+        });
+        await degraded.close();
+        expect(result.partial).toBe(true);
+        expect(result.results.map(({ id }) => id))
+          .toEqual(baseline.results.map(({ id }) => id));
+        expect(result.results.map(({ score }) => score))
+          .toEqual(baseline.results.map(({ score }) => score));
+        expect(
+          result.results.every(({ evidence }) =>
+            evidence.every(({ kind }) => kind !== "rerank")),
+        ).toBe(true);
+        const lane = result.diagnostics.lanes.find(({ lane }) => lane === "rerank");
+        expect(lane?.status).toBe(
+          outcome.status === "failed" ? "degraded" : "unavailable",
+        );
+        expect(lane?.results).toBe(0);
+        expect(lane?.message).toContain(
+          outcome.status === "failed" ? "HTTP 500" : "TYPESAFE_API_KEY",
+        );
+      }
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("degrades instead of throwing when the engine itself throws", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const reranker = fakeReranker(() => {
+        throw new Error("provider exploded");
+      });
+      const kb = await openKnowledgeBase({ root }, { rerankers: [reranker] });
+      const result = await kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        limit: 4,
+        graph: false,
+        rerank: { engine: "typesafe", limit: 4 },
+      });
+      await kb.close();
+      expect(result.partial).toBe(true);
+      expect(result.results.map(({ id }) => id))
+        .toEqual(["notes/alpha", "notes/beta", "notes/delta", "notes/epsilon"]);
+      expect(result.diagnostics.lanes).toContainEqual({
+        lane: "rerank",
+        status: "degraded",
+        results: 0,
+        message: "Rerank engine failed before returning a result.",
+      });
+      expect(JSON.stringify(result)).not.toContain("provider exploded");
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects unknown engines and out-of-range limits before retrieval", async () => {
+    const { temporary, root } = await rerankFixture();
+    try {
+      const reranker = fakeReranker(() => {
+        throw new Error("must not be called");
+      });
+      const kb = await openKnowledgeBase({ root }, { rerankers: [reranker] });
+      await expect(kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        rerank: { engine: "typesafe", limit: 1 },
+      })).rejects.toThrow("from 2 through 25");
+      await expect(kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        rerank: { engine: "typesafe", limit: 26 },
+      })).rejects.toThrow("from 2 through 25");
+      await expect(kb.search({
+        query: "transient retry budget",
+        mode: "exact",
+        rerank: { engine: "bogus" as never },
+      })).rejects.toThrow('must be "typesafe"');
+      await kb.close();
+
+      const unconfigured = await openKnowledgeBase({ root });
+      await expect(unconfigured.search({
+        query: "transient retry budget",
+        mode: "exact",
+        rerank: { engine: "typesafe" },
+      })).rejects.toThrow("not available in this session");
+      await unconfigured.close();
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }

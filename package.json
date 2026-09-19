@@ -53,6 +53,8 @@
     "./src/portfolio-identity.ts",
     "./src/portfolio-registry.ts",
     "./src/query.ts",
+    "./src/rerank.ts",
+    "./src/rerank-typesafe.ts",
     "./src/repository-memory.ts",
     "./src/sdk.ts",
     "./src/search.ts",
@@ -239,6 +241,14 @@
       "types": "./src/query.ts",
       "import": "./dist/query.js"
     },
+    "./rerank": {
+      "types": "./src/rerank.ts",
+      "import": "./dist/rerank.js"
+    },
+    "./rerank-typesafe": {
+      "types": "./src/rerank-typesafe.ts",
+      "import": "./dist/rerank-typesafe.js"
+    },
     "./repository-memory": {
       "types": "./src/repository-memory.ts",
       "import": "./dist/repository-memory.js"
@@ -409,6 +419,8 @@
     "src/pdf/source.ts",
     "src/pdf/tools.ts",
     "src/query.ts",
+    "src/rerank.ts",
+    "src/rerank-typesafe.ts",
     "src/repository-memory.ts",
     "src/search.ts",
     "src/search-rules.ts",
@@ -453,7 +465,7 @@
     "kb:check:lane": "bunx --bun github:hraness/kb#v0.15.1 check --root kb --no-catalog",
     "kb:check": "bunx --bun github:hraness/kb#v0.15.1 check --root kb && bunx --bun github:hraness/kb#v0.15.1 agents check --root kb --repo .",
     "kb:catalog": "bunx --bun github:hraness/kb#v0.15.1 catalog --root kb",
-    "build": "bun -e 'await (await import(\"node:fs/promises\")).rm(\"./dist\", { recursive: true, force: true })' && bun build ./src/index.ts ./src/publish.ts ./src/publish-model.ts ./src/publish-search.ts ./src/agent-context.ts ./src/agent-guide-audit.ts ./src/attachments.ts ./src/authoring.ts ./src/benchmark.ts ./src/clip/browser-profiles.ts ./src/capture.ts ./src/cli.ts ./src/clip/acquire.ts ./src/clip/args.ts ./src/clip/bounded-byte-buffer.ts ./src/clip/bundle-reader.ts ./src/clip/cli.ts ./src/clip/cookies.ts ./src/clip/doctor.ts ./src/clip/jobs.ts ./src/clip/network.ts ./src/clip/network-proxy.ts ./src/clip/persist.ts ./src/clip/refresh.ts ./src/clip/terminal.ts ./src/evaluation.ts ./src/evaluation-builder.ts ./src/evaluation-kb.ts ./src/git.ts ./src/graph.ts ./src/graph-percolation.ts ./src/graph-authority.ts ./src/navigation.ts ./src/pdf.ts ./src/percolate.ts ./src/portfolio.ts ./src/query.ts ./src/repository-memory.ts ./src/sdk.ts ./src/search.ts ./src/search-rules.ts ./src/semantic.ts ./src/source-inbox.ts ./src/untrusted-content.ts ./src/url-intelligence.ts ./src/workflow.ts ./src/workflows/index.ts ./src/workflows/decision-context.ts ./src/workflows/explain-change.ts ./src/workflows/plan-radar.ts ./src/clip/defuddle-worker.ts --outdir ./dist --root ./src --target bun --format esm --splitting --packages external && bun build ./src/publish-reader/reader.ts --outfile ./dist/publish-reader/reader.js --target browser --format esm && bun build ./src/publish-reader/theme.ts --outfile ./dist/publish-reader/theme.js --target browser --format iife && cp ./src/publish-reader/reader.css ./dist/publish-reader/reader.css",
+    "build": "bun -e 'await (await import(\"node:fs/promises\")).rm(\"./dist\", { recursive: true, force: true })' && bun build ./src/index.ts ./src/publish.ts ./src/publish-model.ts ./src/publish-search.ts ./src/agent-context.ts ./src/agent-guide-audit.ts ./src/attachments.ts ./src/authoring.ts ./src/benchmark.ts ./src/clip/browser-profiles.ts ./src/capture.ts ./src/cli.ts ./src/clip/acquire.ts ./src/clip/args.ts ./src/clip/bounded-byte-buffer.ts ./src/clip/bundle-reader.ts ./src/clip/cli.ts ./src/clip/cookies.ts ./src/clip/doctor.ts ./src/clip/jobs.ts ./src/clip/network.ts ./src/clip/network-proxy.ts ./src/clip/persist.ts ./src/clip/refresh.ts ./src/clip/terminal.ts ./src/evaluation.ts ./src/evaluation-builder.ts ./src/evaluation-kb.ts ./src/git.ts ./src/graph.ts ./src/graph-percolation.ts ./src/graph-authority.ts ./src/navigation.ts ./src/pdf.ts ./src/percolate.ts ./src/portfolio.ts ./src/query.ts ./src/rerank.ts ./src/rerank-typesafe.ts ./src/repository-memory.ts ./src/sdk.ts ./src/search.ts ./src/search-rules.ts ./src/semantic.ts ./src/source-inbox.ts ./src/untrusted-content.ts ./src/url-intelligence.ts ./src/workflow.ts ./src/workflows/index.ts ./src/workflows/decision-context.ts ./src/workflows/explain-change.ts ./src/workflows/plan-radar.ts ./src/clip/defuddle-worker.ts --outdir ./dist --root ./src --target bun --format esm --splitting --packages external && bun build ./src/publish-reader/reader.ts --outfile ./dist/publish-reader/reader.js --target browser --format esm && bun build ./src/publish-reader/theme.ts --outfile ./dist/publish-reader/theme.js --target browser --format iife && cp ./src/publish-reader/reader.css ./dist/publish-reader/reader.css",
     "check:workflows": "bun ./scripts/check-workflow-yaml.ts",
     "check:installed-command-docs": "bun ./scripts/check-installed-command-docs.ts",
     "check:portfolio-inventory": "bun ./scripts/check-portfolio-inventory.ts",

@@ -234,6 +234,8 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "./publish-search",
     "./query",
     "./repository-memory",
+    "./rerank",
+    "./rerank-typesafe",
     "./sdk",
     "./search",
     "./search-rules",
@@ -264,6 +266,8 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     'export * from "./publish.js";',
     'export * from "./publish-model.js";',
     'export * from "./query.js";',
+    'export * from "./rerank.js";',
+    'export * from "./rerank-typesafe.js";',
     'export * from "./repository-memory.js";',
     'export * from "./search.js";',
     'export * from "./semantic.js";',
@@ -276,7 +280,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
   ]);
   const usage = /export const usage = `([\s\S]*?)`;/u.exec(cli)?.[1] ?? "";
   expect(createHash("sha256").update(usage).digest("hex"))
-    .toBe("18d1c8428c3859c8460e8a003cd65d5fe21cf883d68aab55064df29861f82603");
+    .toBe("63e0f2b7a341ea66cc32f24d07230798b9693e03eeade347d55e03488510a370");
   const commandIdentities = usage
     .split("\n")
     .filter((line) => line.startsWith("  wordcell "))

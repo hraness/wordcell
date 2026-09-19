@@ -13,6 +13,11 @@ import {
   createUntrustedToolResult
 } from "./index-4j3tt0c3.js";
 import {
+  MAX_RERANK_CANDIDATES,
+  MAX_RERANK_SNIPPET_BYTES,
+  applyRerank
+} from "./index-sbg6k9q1.js";
+import {
   percolateWithGraph
 } from "./index-py7681h5.js";
 import {
@@ -82,6 +87,9 @@ function noteOrThrow(notes, query) {
 }
 function errorMessage(error) {
   return error instanceof Error ? error.message : String(error);
+}
+function searchEvidenceRank(item) {
+  return item.kind === "rerank" ? item.rerankRank : item.rank;
 }
 function utf8Prefix(value, maximumBytes) {
   let bytes = 0;
@@ -203,6 +211,26 @@ function checkedHistoryRequest(value) {
 function validateKnowledgeBaseSearchHistory(value) {
   checkedHistoryRequest(value);
 }
+function checkedRerankRequest(value, rerankers) {
+  if (value === undefined)
+    return { enabled: false };
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new TypeError("Search rerank options must be an options object.");
+  }
+  const options = value;
+  if (options.engine !== "typesafe") {
+    throw new Error('Search rerank engine must be "typesafe".');
+  }
+  const reranker = rerankers?.find((entry) => entry.id === options.engine);
+  if (reranker === undefined) {
+    throw new Error(`Search rerank engine ${JSON.stringify(options.engine)} is not available in this session.`);
+  }
+  const limit = options.limit ?? MAX_RERANK_CANDIDATES;
+  if (!Number.isSafeInteger(limit) || limit < 2 || limit > MAX_RERANK_CANDIDATES) {
+    throw new RangeError(`Search rerank limit must be an integer from 2 through ${MAX_RERANK_CANDIDATES}.`);
+  }
+  return { enabled: true, limit, reranker };
+}
 async function openKnowledgeBase(options, dependencies = {}) {
   const searchRules = options.searchRules === undefined ? null : parseSearchRules(options.searchRules);
   if (options.embeddingModelFile !== undefined && options.embeddingModelLease !== undefined) {
@@ -322,6 +350,7 @@ async function openKnowledgeBase(options, dependencies = {}) {
     }
     const historyRequest = checkedHistoryRequest(effectiveOptions.history);
     const graphOptions = checkedGraphOptions(effectiveOptions.graph);
+    const rerankRequest = checkedRerankRequest(effectiveOptions.rerank, dependencies.rerankers);
     const explicitSeeds = graphOptions === null ? [] : resolvedGraphSeeds(snapshot.notes, graphOptions.related);
     const historyNoteLimit = historyRequest.enabled ? historyRequest.noteLimit : null;
     const allowedIds = new Set(queryVault(snapshot.notes, snapshot.analysis, {
@@ -415,7 +444,8 @@ async function openKnowledgeBase(options, dependencies = {}) {
     const fused = fuseRankedCandidates(lanes);
     const ordered = fused.toSorted((left, right) => Number(exactById.get(right.id)?.hit.identity ?? false) - Number(exactById.get(left.id)?.hit.identity ?? false) || left.rank - right.rank || left.id.localeCompare(right.id));
     const shouldApplyPriority = ordering === "priority-then-relevance" && searchRules !== null && searchRules.priorityRules.length > 0;
-    const relevanceResults = (shouldApplyPriority ? ordered : ordered.slice(0, limit)).map((candidate, index) => {
+    const resultWindow = rerankRequest.enabled ? Math.max(limit, rerankRequest.limit) : limit;
+    const relevanceResults = (shouldApplyPriority ? ordered : ordered.slice(0, resultWindow)).map((candidate, index) => {
       const note = notesById.get(candidate.id);
       if (note === undefined) {
         throw new Error(`Fused retrieval returned unknown note ${JSON.stringify(candidate.id)}.`);
@@ -458,10 +488,58 @@ async function openKnowledgeBase(options, dependencies = {}) {
         contributions: candidate.contributions
       };
     });
+    let rankedResults = relevanceResults;
+    if (rerankRequest.enabled) {
+      const candidates = relevanceResults.slice(0, rerankRequest.limit).map((hit, index) => ({
+        id: hit.id,
+        baselineRank: index + 1,
+        score: hit.score,
+        title: hit.title,
+        path: hit.path,
+        snippet: utf8Prefix(hit.snippet, MAX_RERANK_SNIPPET_BYTES).value
+      }));
+      const outcome = await rerankRequest.reranker.rerank({ query: effectiveQuery, candidates }).then((result) => ({ ok: true, result }), (error) => ({ ok: false, error }));
+      const applied = applyRerank(relevanceResults, outcome.ok ? outcome.result : {
+        status: "failed",
+        message: "Rerank engine failed before returning a result."
+      });
+      rankedResults = applied.hits.map((hit) => {
+        const placement = applied.placements.get(hit.id);
+        if (placement === undefined)
+          return hit;
+        return {
+          ...hit,
+          evidence: [
+            ...hit.evidence,
+            {
+              kind: "rerank",
+              engine: rerankRequest.reranker.id,
+              baselineRank: placement.baselineRank,
+              rerankRank: placement.rerankRank,
+              ...placement.probability === undefined ? {} : { probability: placement.probability }
+            }
+          ]
+        };
+      });
+      const readyResult = outcome.ok && outcome.result.status === "ready" ? outcome.result : null;
+      const details = [];
+      if (readyResult?.model !== undefined)
+        details.push(readyResult.model);
+      if (readyResult?.usage !== undefined) {
+        details.push(`${(readyResult.usage.inputTokens ?? 0).toLocaleString("en-US")} input tokens, ` + `${(readyResult.usage.outputTokens ?? 0).toLocaleString("en-US")} output tokens`);
+      }
+      const rerankMessage = applied.status === "ready" ? details.length === 0 ? undefined : details.join("; ") : applied.message ?? "Rerank engine did not return a result.";
+      diagnostics.push({
+        lane: "rerank",
+        status: applied.status === "failed" ? "degraded" : applied.status,
+        results: applied.status === "ready" ? applied.placements.size : 0,
+        ...rerankMessage === undefined ? {} : { message: rerankMessage }
+      });
+    }
     let priorityTrace = null;
-    let results = relevanceResults.slice(0, limit);
+    let results = rankedResults.slice(0, limit);
     if (shouldApplyPriority && searchRules !== null) {
-      const prioritized = prioritizeSearchHits(relevanceResults, searchRules, {
+      const prioritized = prioritizeSearchHits(rankedResults, searchRules, {
         ...options.vaultId === undefined ? {} : { vaultId: options.vaultId }
       });
       const selectedHits = prioritized.hits.slice(0, limit);
@@ -696,7 +774,7 @@ Evidence: `))
         return writer.result();
       if (!append("#"))
         return writer.result();
-      if (!append(String(item.rank)))
+      if (!append(String(searchEvidenceRank(item))))
         return writer.result();
     }
     if (!append(`
@@ -1015,4 +1093,4 @@ function packUntrustedSearchContext(result, options = {}) {
   });
 }
 
-export { MAX_SEARCH_RESULTS, MAX_SEARCH_CANDIDATES, DEFAULT_SEARCH_RESULTS, MIN_UNTRUSTED_CONTEXT_BYTES, MAX_SEARCH_RELATED_SEEDS, MAX_SEARCH_NOTE_REFERENCE_BYTES, validateKnowledgeBaseSearchHistory, openKnowledgeBase, packSearchContext, packUntrustedSearchContext };
+export { MAX_SEARCH_RESULTS, MAX_SEARCH_CANDIDATES, DEFAULT_SEARCH_RESULTS, MIN_UNTRUSTED_CONTEXT_BYTES, MAX_SEARCH_RELATED_SEEDS, MAX_SEARCH_NOTE_REFERENCE_BYTES, searchEvidenceRank, validateKnowledgeBaseSearchHistory, openKnowledgeBase, packSearchContext, packUntrustedSearchContext };
