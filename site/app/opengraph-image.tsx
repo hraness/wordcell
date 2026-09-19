@@ -4,7 +4,7 @@ import {
   socialImageSize as size,
 } from "@hraness/web-discovery/social-image";
 
-export const alt = "Wordcell: a knowledge base for coding agents";
+export const alt = "Wordcell: local knowledge for coding agents";
 export { contentType, size };
 
 function WordcellMark() {
@@ -20,7 +20,7 @@ function WordcellMark() {
 
 export default function OpengraphImage() {
   return createSocialImageResponse({
-    description: "Markdown, backlinks, semantic search, and Git context: inspectable memory your agents can recover across sessions.",
+    description: "Save decisions in Markdown. Find the notes behind a code change. Give the next session the context it needs.",
     domain: "wordcell.io",
     eyebrow: "Wordcell",
     mark: <WordcellMark />,
@@ -30,6 +30,6 @@ export default function OpengraphImage() {
       foreground: "#1C1A18",
       muted: "#6A655E",
     },
-    title: "A knowledge base for coding agents",
+    title: "Local knowledge for coding agents",
   });
 }

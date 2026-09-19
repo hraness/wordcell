@@ -5,10 +5,10 @@ import {
   parseArguments,
   runExecutable,
   usage
-} from "./index-5dywh96c.js";
+} from "./index-4ag64rc1.js";
 import"./index-bcknqxrq.js";
 import"./index-054mb7d3.js";
-import"./index-gnz1xzpa.js";
+import"./index-avbce90h.js";
 import"./index-j4zgmzjr.js";
 import"./index-de2w8crk.js";
 import"./index-6jcz0m1c.js";
@@ -27,22 +27,22 @@ import"./index-mxxxytys.js";
 import"./index-23z4zxgg.js";
 import"./index-pj501bh1.js";
 import"./index-9rf81m0p.js";
-import"./index-zpwqmf72.js";
-import"./index-bcn9efk5.js";
+import"./index-e6p9e926.js";
+import"./index-2hf27mws.js";
 import"./index-adx6khj5.js";
-import"./index-trgxvmy6.js";
+import"./index-hcw140eb.js";
 import"./index-4j3tt0c3.js";
 import"./index-j70m75wd.js";
 import"./index-b88v3vtm.js";
-import"./index-py7681h5.js";
+import"./index-t2bs9xdr.js";
 import"./index-nd6nynv2.js";
-import"./index-7s6dytxy.js";
+import"./index-famy7fhs.js";
 import"./index-11621h23.js";
 import"./index-1gwbassd.js";
 import"./index-gm9t95d9.js";
 import"./index-1xxnjn0d.js";
-import"./index-jsn2tmjz.js";
-import"./index-0k2x4nn9.js";
+import"./index-0dqfnrz9.js";
+import"./index-1tm7bgx7.js";
 import"./index-d13v9ckt.js";
 import"./index-48pz4jpc.js";
 import"./index-06c9ctr6.js";
@@ -61,7 +61,7 @@ import {
 
 // src/cli.ts
 if (import.meta.main) {
-  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-w38ewa0t.js");
+  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-mywv1em0.js");
   const env = standaloneSupportEnvironment();
   const args = process.argv.slice(2);
   if (args[0] === "support") {

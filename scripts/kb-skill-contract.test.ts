@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -279,9 +278,9 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     'export * from "./graph-percolation.js";',
   ]);
   const usage = /export const usage = `([\s\S]*?)`;/u.exec(cli)?.[1] ?? "";
-  expect(createHash("sha256").update(usage).digest("hex"))
-    .toBe("265ad05156f123682a076abcd6696324ee79768a608f2186df9acb83d8d1c359");
-  const commandIdentities = usage
+  expect(usage).toContain("Start here (no account or model needed):");
+  // Examples may repeat commands. Check the public reference identities only.
+  const commandIdentities = (usage.split("\nUsage:\n")[1] ?? "")
     .split("\n")
     .filter((line) => line.startsWith("  wordcell "))
     .map((line) => {

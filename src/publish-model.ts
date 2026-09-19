@@ -207,6 +207,12 @@ export type WordcellSiteGraphV1 = {
 };
 
 export type WordcellSiteSelectionV1 = {
+  /** New publishers record counts only; legacy manifests may carry selectors. */
+  readonly includeCount?: number;
+  readonly excludeCount?: number;
+  readonly includeGlobCount?: number;
+  readonly excludeGlobCount?: number;
+  readonly fromCount?: number;
   readonly includes: readonly string[];
   readonly excludes: readonly string[];
   readonly from?: Readonly<{
@@ -223,6 +229,13 @@ export type WordcellPublishReport = {
   readonly format: typeof WORDCELL_SITE_FORMAT_V1;
   readonly out: string;
   readonly deterministic: boolean;
+  /** Bounded selected ids for local review; never includes note bodies or excluded ids. */
+  readonly selection: Readonly<{
+    ids: readonly string[];
+    total: number;
+    truncated: boolean;
+    digest: string;
+  }>;
   readonly files: number;
   readonly bytes: number;
   readonly notes: Readonly<{

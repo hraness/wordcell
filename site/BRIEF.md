@@ -20,12 +20,12 @@ images or runtime package dependency.
 
 ## STORY
 
-Keep the existing hero and command example, model, three interfaces, boundaries,
-installation, questions, and final actions. Omit redundant section labels
-through empty legacy slots. Display verified release facts beneath the install
-heading. Preserve factual copy and every meaningful destination. The page
-carries no maker section; the shared `@hraness/site-footer` attribution is the
-only builder credit.
+Lead with the decisions behind a code change, then show a complete local
+save-and-find journey. Put the verified install before advanced features.
+Explain existing-vault adoption, show measured context payload bytes with their
+limits, compare adjacent tools fairly, and preview a selected-note publication.
+Keep three interfaces, explicit local/external boundaries, questions, and final
+actions. Use the shared footer as the sole builder credit.
 
 ## FIRST VIEWPORT
 
@@ -59,8 +59,9 @@ gutter, and binds existing reading surfaces and open questions to material
 colors. On phone widths the wrapping header stays in document flow so its variable
 height cannot cover section headings reached through navigation links. Desktop
 chrome remains sticky. The existing theme check calls the canonical offline snapshot checker.
-Docs/README typography, content, links and release facts remain
-unchanged, as do package versions and the pinned kit/UI peer graph.
+Docs/README typography and the pinned kit/UI peer graph stay consistent.
+The current release is owned by `published-release.json`; pending features and
+source documentation use explicit preview labels until their release is admitted.
 
 After the released snapshot is installed, run the existing site theme check,
 source/home/style tests, and focused lint before the integration owner runs the

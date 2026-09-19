@@ -6,7 +6,7 @@ import {
 } from "./index-11621h23.js";
 import {
   scanVault
-} from "./index-0k2x4nn9.js";
+} from "./index-1tm7bgx7.js";
 import {
   analyzeAuthoredRepositoryScopes
 } from "./index-06c9ctr6.js";

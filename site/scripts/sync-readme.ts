@@ -15,6 +15,7 @@ if (import.meta.main) {
   await Bun.write(
     resolve(siteRoot, "app/readme.generated.ts"),
     "// Generated from ../README.md by scripts/sync-readme.ts. Do not edit.\n"
+      + `export const readmeVersion = ${JSON.stringify(manifest.version)};\n`
       + `export const readmeTitle = ${JSON.stringify(landing.title)};\n`
       + `export const readmeLead = ${JSON.stringify(landing.lead)};\n`
       + `export const readmeHtml = ${JSON.stringify(html)};\n`,

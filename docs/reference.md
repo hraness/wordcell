@@ -74,7 +74,7 @@ The resulting dependency should remain exact:
 ```
 
 Version 0.22.0 uses three public GitHub dependencies: `@hraness/oh` at
-immutable release archive `v0.4.3` for graph projection and closure verification and `@tobilu/qmd` at commit
+immutable release archive `v0.10.8` for graph projection and closure verification and `@tobilu/qmd` at commit
 `aa993dceb3ef8cfb71d470554ca437570f5a2b3c` for store-local model behavior, plus
 `@hraness/support-foundation` at commit
 `b32c1c81bb2444f50509ed54388758ecfab1f1c0` for standalone optional support.
@@ -146,6 +146,18 @@ so they did not change with the product name. Every `wordcell` command reads
 and writes the same vaults that `kb` did.
 
 ## Start a vault
+
+Existing Markdown folders can be searched without initialization or an
+`index.md` file:
+
+```sh
+wordcell search "a phrase from your notes" --root /path/to/notes --mode exact
+```
+
+This reads the existing files without writing a catalog. `refresh` still
+requires an explicit `index.md` front door; use `kb_catalog: authored` in its
+frontmatter if you want to keep it entirely hand-written. `init` creates a new
+directory and never merges into your existing notes.
 
 ```sh
 wordcell init my-kb

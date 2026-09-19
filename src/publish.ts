@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { lstat, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { basename, isAbsolute, posix, relative, resolve, sep } from "node:path";
+import type { Stats } from "node:fs";
+import { lstat, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
+import { basename, dirname, isAbsolute, posix, relative, resolve, sep } from "node:path";
 
 import { canonicalJson, canonicalSha256 } from "@hraness/oh";
 
@@ -19,6 +20,13 @@ import {
   type PublishRenderContext,
 } from "./publish-markdown.js";
 import {
+  parseSiteCatalogV1,
+  parseSiteDocsV1,
+  parseSiteGraphV1,
+  parseSiteManifestV1,
+  parseSiteNoteV1,
+  parseSitePostingsV1,
+  parseSiteTermsV1,
   WORDCELL_SITE_CATALOG_FORMAT_V1,
   WORDCELL_SITE_FORMAT_V1,
   WORDCELL_SITE_GRAPH_FORMAT_V1,
@@ -59,6 +67,21 @@ export function serializeSiteFile(value: unknown): string {
   return `${canonicalJson(value)}\n`;
 }
 
+/** Admit generated JSON under the same contract the reader uses, before writes. */
+function setSiteJson(
+  files: Map<string, Uint8Array>,
+  path: string,
+  value: unknown,
+  parse: (input: unknown) => unknown,
+): void {
+  try {
+    parse(value);
+  } catch (error: unknown) {
+    throw new Error(`Cannot publish ${path}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  files.set(path, encodeUtf8(serializeSiteFile(value)));
+}
+
 export type PublishOptions = {
   /** Vault root (the CLI defaults it to the working directory). */
   readonly root: string;
@@ -80,6 +103,8 @@ export type PublishOptions = {
   readonly deterministic?: boolean;
   /** Return the plan and file set without writing to disk. */
   readonly dryRun?: boolean;
+  /** Maximum selected ids in the report, default 20; never changes the selection. */
+  readonly listLimit?: number;
   /** Replace an existing non-empty output directory. */
   readonly force?: boolean;
   readonly selection?: PublishSelectionInput;
@@ -118,6 +143,41 @@ const SITE_PATHS = Object.freeze({
 
 /** Whole-artifact write budget; separate from per-asset and corpus bounds. */
 export const MAX_SITE_BYTES = 1_024 * 1_024 * 1_024;
+export const DEFAULT_PUBLISH_LIST_LIMIT = 20;
+export const MAX_PUBLISH_LIST_LIMIT = 1_000;
+export const MAX_PUBLISH_LIST_BYTES = 16_384;
+/** Portable filesystem component bound, including emitted file extensions. */
+export const MAX_PUBLISH_PATH_COMPONENT_BYTES = 255;
+
+/** Validate the complete artifact namespace before replacing an existing site. */
+function validateSitePaths(paths: Iterable<string>): void {
+  const files = new Set(paths);
+  for (const path of files) {
+    const segments = path.split("/");
+    if (/[:\\\u0000-\u001f\u007f]/u.test(path)
+      || segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
+      throw new Error(`Cannot publish unsafe artifact path ${JSON.stringify(path)}.`);
+    }
+    let ancestor = "";
+    for (const [index, segment] of segments.entries()) {
+      if (Buffer.byteLength(segment, "utf8") > MAX_PUBLISH_PATH_COMPONENT_BYTES) {
+        throw new RangeError(`Cannot publish ${JSON.stringify(path)}: a path component exceeds ${MAX_PUBLISH_PATH_COMPONENT_BYTES} UTF-8 bytes; shorten the source note or attachment filename.`);
+      }
+      ancestor = ancestor === "" ? segment : `${ancestor}/${segment}`;
+      if (index < segments.length - 1 && files.has(ancestor)) {
+        throw new Error(`Cannot publish ${JSON.stringify(path)}: ${JSON.stringify(ancestor)} is both a file and a parent directory; rename one of the conflicting source notes.`);
+      }
+    }
+  }
+}
+
+function publishListLimit(value: number | undefined): number {
+  const limit = value ?? DEFAULT_PUBLISH_LIST_LIMIT;
+  if (!Number.isSafeInteger(limit) || limit < 0 || limit > MAX_PUBLISH_LIST_LIMIT) {
+    throw new RangeError(`--list-limit must be an integer from 0 through ${MAX_PUBLISH_LIST_LIMIT}`);
+  }
+  return limit;
+}
 
 function encodeUtf8(text: string): Uint8Array {
   return new TextEncoder().encode(text);
@@ -155,21 +215,23 @@ function boundedNormalized(text: string, maximumBytes: number): {
   if (Buffer.byteLength(normalized, "utf8") <= maximumBytes) {
     return { text: normalized, truncated: false };
   }
+  const bytes = Buffer.from(normalized, "utf8");
   let end = maximumBytes;
-  while (end > 0 && (normalized.charCodeAt(end) & 0xc0) === 0x80) end -= 1;
-  return { text: normalized.slice(0, end), truncated: true };
+  while (end > 0 && ((bytes[end] ?? 0) & 0xc0) === 0x80) end -= 1;
+  return { text: bytes.subarray(0, end).toString("utf8"), truncated: true };
 }
 
 /**
  * Project a scanned vault into the `hraness.wordcell.site.v1` file set.
- * Selection is resolved first; nothing outside the selection is read, hashed,
- * or referenced, so a subset publication cannot leak excluded notes.
+ * Selection is resolved first; excluded notes do not enter structured output.
+ * Selected prose and attachments are published as authored, without redaction.
  */
 export async function projectVault(
   snapshot: Pick<VaultSnapshot, "root" | "notes" | "analysis">,
   options: Omit<PublishOptions, "out" | "dryRun" | "force">,
   io: PublishIo,
 ): Promise<PublishProjection> {
+  const listLimit = publishListLimit(options.listLimit);
   const selection = selectPublishNotes(snapshot.notes, snapshot.analysis, options.selection ?? {});
   if (selection.notes.length > WORDCELL_SITE_LIMITS_V1.notes) {
     throw new RangeError(
@@ -353,7 +415,7 @@ export async function projectVault(
   for (const note of selection.notes) {
     const slug = slugFor(note.id);
     if (slug !== "") {
-      files.set(`n/${slug}.json`, encodeUtf8(serializeSiteFile(payloadBySlug.get(slug))));
+      setSiteJson(files, `n/${slug}.json`, payloadBySlug.get(slug), parseSiteNoteV1);
       const ctx: PageContext = {
         site,
         rel: relativePrefix(slug),
@@ -383,7 +445,7 @@ export async function projectVault(
   }
   const indexPayload = payloadBySlug.get("");
   if (indexPayload !== undefined) {
-    files.set("index.json", encodeUtf8(serializeSiteFile(indexPayload)));
+    setSiteJson(files, "index.json", indexPayload, parseSiteNoteV1);
   }
 
   const landingCtx: PageContext = {
@@ -417,21 +479,21 @@ export async function projectVault(
     )));
   }
 
-  files.set(SITE_PATHS.catalog, encodeUtf8(serializeSiteFile(catalog)));
+  setSiteJson(files, SITE_PATHS.catalog, catalog, parseSiteCatalogV1);
 
   const index = buildSiteIndex(selection.notes, selection.slugById, {
     ...(options.indexContent === undefined ? {} : { indexContent: options.indexContent }),
   });
-  files.set(SITE_PATHS.docs, encodeUtf8(serializeSiteFile(index.docs)));
-  files.set(SITE_PATHS.terms, encodeUtf8(serializeSiteFile(index.terms)));
+  setSiteJson(files, SITE_PATHS.docs, index.docs, parseSiteDocsV1);
+  setSiteJson(files, SITE_PATHS.terms, index.terms, parseSiteTermsV1);
   for (const [shard, postings] of index.postings) {
-    files.set(`${SITE_PATHS.postingsPrefix}${shard}.json`, encodeUtf8(serializeSiteFile(postings)));
+    setSiteJson(files, `${SITE_PATHS.postingsPrefix}${shard}.json`, postings, parseSitePostingsV1);
   }
 
-  files.set(SITE_PATHS.graph, encodeUtf8(serializeSiteFile({
+  setSiteJson(files, SITE_PATHS.graph, {
     format: WORDCELL_SITE_GRAPH_FORMAT_V1,
     edges,
-  })));
+  }, parseSiteGraphV1);
 
   for (const [path, asset] of [...assetByPath.entries()].toSorted(([a], [b]) =>
     a.localeCompare(b))) {
@@ -502,15 +564,31 @@ export async function projectVault(
     },
     truncated,
   };
-  files.set("manifest.json", encodeUtf8(serializeSiteFile(manifest)));
+  setSiteJson(files, "manifest.json", manifest, parseSiteManifestV1);
+  validateSitePaths(files.keys());
   const ordered = new Map(
     [...files.entries()].toSorted(([a], [b]) => a.localeCompare(b)),
   );
+
+  const listedIds: string[] = [];
+  let listedBytes = 0;
+  for (const note of selection.notes) {
+    const bytes = Buffer.byteLength(note.id, "utf8");
+    if (listedIds.length >= listLimit || listedBytes + bytes > MAX_PUBLISH_LIST_BYTES) break;
+    listedIds.push(note.id);
+    listedBytes += bytes;
+  }
 
   const report: WordcellPublishReport = {
     format: WORDCELL_SITE_FORMAT_V1,
     out: "",
     deterministic: options.deterministic === true,
+    selection: {
+      ids: listedIds,
+      total: selection.notes.length,
+      truncated: listedIds.length < selection.notes.length,
+      digest: manifest.source.digest,
+    },
     files: ordered.size,
     bytes: totalBytes,
     notes: {
@@ -540,6 +618,150 @@ export async function projectVault(
 function withinRoot(root: string, candidate: string): boolean {
   const path = relative(root, candidate);
   return path === "" || (!path.startsWith(`..${sep}`) && path !== ".." && !isAbsolute(path));
+}
+
+/** Resolve missing output suffixes against the nearest existing real directory. */
+async function canonicalOutputPath(path: string): Promise<string> {
+  let ancestor = path;
+  const suffix: string[] = [];
+  for (;;) {
+    try {
+      const stat = await lstat(ancestor);
+      if (ancestor === path && stat.isSymbolicLink()) {
+        throw new Error("--out must not be a symbolic link.");
+      }
+      return resolve(await realpath(ancestor), ...suffix);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || !("code" in error) || error.code !== "ENOENT") throw error;
+      const parent = dirname(ancestor);
+      if (parent === ancestor) throw error;
+      suffix.unshift(basename(ancestor));
+      ancestor = parent;
+    }
+  }
+}
+
+function assertSeparateOutput(root: string, out: string): void {
+  if (withinRoot(root, out)) {
+    throw new Error("--out must not be the vault root or a directory inside it.");
+  }
+  if (withinRoot(out, root)) {
+    throw new Error("--out must not contain the vault root; replacement would delete the vault.");
+  }
+}
+
+async function existingPath(path: string): Promise<Stats | undefined> {
+  try {
+    return await lstat(path);
+  } catch (error: unknown) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return undefined;
+    throw error;
+  }
+}
+
+function sameOutputIdentity(expected: Stats | undefined, actual: Stats | undefined): boolean {
+  if (expected === undefined || actual === undefined) return expected === actual;
+  return actual.isDirectory() && !actual.isSymbolicLink()
+    && expected.dev === actual.dev && expected.ino === actual.ino
+    && expected.mtimeMs === actual.mtimeMs && expected.ctimeMs === actual.ctimeMs;
+}
+
+async function writeProjectedSite(
+  root: string,
+  out: string,
+  files: ReadonlyMap<string, Uint8Array>,
+  force: boolean,
+): Promise<void> {
+  const expected = await existingPath(out);
+  if (expected !== undefined) {
+    if (!expected.isDirectory() || expected.isSymbolicLink()) {
+      throw new Error(`--out ${out} exists and is not a directory.`);
+    }
+    if (!force && (await readdir(out)).length > 0) {
+      throw new Error(`--out ${out} is not empty (pass --force to overwrite).`);
+    }
+  }
+  const checkOutput = async (): Promise<void> => {
+    const canonical = await canonicalOutputPath(out);
+    assertSeparateOutput(await realpath(root), canonical);
+    if (canonical !== out || !sameOutputIdentity(expected, await existingPath(out))) {
+      throw new Error(`--out ${out} changed while publishing; leave it unchanged and retry.`);
+    }
+  };
+  await checkOutput();
+  await mkdir(dirname(out), { recursive: true });
+  const stageRoot = await mkdtemp(resolve(dirname(out), ".wordcell-stage-"));
+  // The staged path is longer than its final counterpart, so host path-length
+  // failures happen before the previous output moves.
+  const stage = resolve(stageRoot, basename(out));
+  let backupRoot: string | undefined;
+  let backup: string | undefined;
+  let backupHoldsOutput = false;
+  let primaryError: unknown;
+  try {
+    await mkdir(stage);
+    for (const [path, bytes] of files) {
+      const absolute = resolve(stage, path);
+      if (!withinRoot(stage, absolute)) throw new Error(`Refusing to write outside staged output: ${path}`);
+      await mkdir(resolve(stage, posix.dirname(path)), { recursive: true });
+      // A case-insensitive filesystem can reveal collisions absent from the map.
+      await writeFile(absolute, bytes, { flag: "wx" });
+    }
+    if (expected !== undefined) {
+      backupRoot = await mkdtemp(resolve(dirname(out), ".wordcell-backup-"));
+      backup = resolve(backupRoot, basename(out));
+    }
+    await checkOutput();
+    if (backup !== undefined) {
+      await rename(out, backup);
+      backupHoldsOutput = true;
+    }
+    try {
+      await rename(stage, out);
+    } catch (promotionError: unknown) {
+      if (backup !== undefined && backupHoldsOutput) {
+        try {
+          if (await existingPath(out) !== undefined) {
+            throw new Error("another entry appeared at the output path");
+          }
+          await rename(backup, out);
+          backupHoldsOutput = false;
+        } catch (restoreError: unknown) {
+          throw new Error(
+            `Could not promote the new site or restore --out; the previous site is preserved at ${backup}. `
+            + `Restore failed: ${restoreError instanceof Error ? restoreError.message : String(restoreError)}. `
+            + `Promotion failed: ${promotionError instanceof Error ? promotionError.message : String(promotionError)}`,
+          );
+        }
+      }
+      throw promotionError;
+    }
+    if (backupRoot !== undefined) {
+      try {
+        await rm(backupRoot, { recursive: true });
+        backupHoldsOutput = false;
+        backupRoot = undefined;
+      } catch (error: unknown) {
+        throw new Error(`Published the new site, but previous-site backup cleanup is incomplete at ${backup}; cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  } catch (error: unknown) {
+    primaryError = error;
+    throw error;
+  } finally {
+    try {
+      await rm(stageRoot, { recursive: true, force: true });
+    } catch (error: unknown) {
+      throw new Error(`Could not remove staging directory ${stageRoot}`
+        + `${backupHoldsOutput ? `; retained backup: ${backup}` : ""}. `
+        + `${error instanceof Error ? error.message : String(error)}`
+        + `${primaryError === undefined ? "" : `; original failure: ${primaryError instanceof Error ? primaryError.message : String(primaryError)}`}`);
+    }
+    // Never erase the only recoverable copy when promotion or rollback fails.
+    if (backupRoot !== undefined && !backupHoldsOutput) {
+      await rm(backupRoot, { recursive: true, force: true });
+    }
+  }
 }
 
 const READER_FILES = ["reader.js", "reader.css", "theme.js"] as const;
@@ -587,17 +809,22 @@ async function defaultVersion(): Promise<string> {
 export async function publishVault(
   options: PublishOptions,
 ): Promise<PublishProjection & { readonly out: string }> {
-  const resolvedRoot = resolve(options.root);
-  const out = resolve(options.out);
-  if (out === resolvedRoot || withinRoot(resolvedRoot, out)) {
-    throw new Error("--out must not be the vault root or a directory inside it.");
-  }
+  publishListLimit(options.listLimit);
+  const requestedRoot = resolve(options.root);
+  const requestedOut = resolve(options.out);
+  assertSeparateOutput(requestedRoot, requestedOut);
+  const resolvedRoot = await realpath(requestedRoot);
+  const out = await canonicalOutputPath(requestedOut);
+  assertSeparateOutput(resolvedRoot, out);
 
   const snapshot = await scanVault(resolvedRoot, {
     mentionScope: false,
     ...(options.index === undefined ? {} : { index: options.index }),
   });
   const selection = selectPublishNotes(snapshot.notes, snapshot.analysis, options.selection ?? {});
+  if (selection.notes.length === 0 && !options.dryRun) {
+    throw new Error("Publish selection is empty; check the selectors with --dry-run before replacing output.");
+  }
 
   // Validate attachments once against the real filesystem, over selected
   // documents only; the resolver then answers lookups from memory.
@@ -642,34 +869,7 @@ export async function publishVault(
   const report = { ...projection.report, out };
 
   if (!options.dryRun) {
-    let stat;
-    try {
-      stat = await lstat(out);
-    } catch {
-      stat = undefined;
-    }
-    if (stat !== undefined) {
-      if (!stat.isDirectory() || stat.isSymbolicLink()) {
-        throw new Error(`--out ${options.out} exists and is not a directory.`);
-      }
-      if ((await readdir(out)).length > 0) {
-        if (options.force !== true) {
-          throw new Error(`--out ${options.out} is not empty (pass --force to overwrite).`);
-        }
-        await rm(out, { recursive: true });
-        await mkdir(out, { recursive: true });
-      }
-    } else {
-      await mkdir(out, { recursive: true });
-    }
-    for (const [path, bytes] of projection.files) {
-      const absolute = resolve(out, path);
-      if (!withinRoot(out, absolute)) {
-        throw new Error(`Refusing to write outside --out: ${path}`);
-      }
-      await mkdir(resolve(out, posix.dirname(path)), { recursive: true });
-      await writeFile(absolute, bytes);
-    }
+    await writeProjectedSite(resolvedRoot, out, projection.files, options.force === true);
   }
 
   return { ...projection, report, out };
@@ -688,6 +888,13 @@ export function renderPublishReportText(
     `  excluded: ${report.notes.excludedPrivate} private, ${report.notes.excludedBySelection} by selection`,
     `  search: ${report.search.content} content index, ${report.search.terms.toLocaleString("en-US")} terms`,
   ];
+  if (report.selection.ids.length > 0) {
+    lines.push(`  selected ids: ${report.selection.ids.join(", ")}`);
+  }
+  if (report.selection.truncated) {
+    lines.push(`  selected ids shown: ${report.selection.ids.length} of ${report.selection.total} (use --list-limit to change the report bound)`);
+  }
+  lines.push(`  source: ${report.selection.digest}`);
   if (report.search.truncated) {
     lines.push("  warning: search index truncated at contract limits");
   }

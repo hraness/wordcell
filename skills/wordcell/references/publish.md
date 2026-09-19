@@ -1,65 +1,93 @@
-# Publish a knowledge base as a static site
+# Publish selected knowledge as a static site
 
-`wordcell publish` projects a vault or a selected subsection into a
-self-contained `hraness.wordcell.site.v1` static artifact: prerendered
-read-only pages, a selection-scoped graph, a browser-local exact-match search
-index, content-addressed attachments, and a bundled zero-dependency reader. The
-result hosts from plain object storage, a CDN, or `file://` with no server.
+Use `wordcell publish` to turn selected Markdown notes into read-only pages,
+backlinks, a graph, and browser-local search. It builds files locally with no
+model call. Publishing here means generating the artifact; uploading it to a
+host is a separate action.
 
-## 1. Confirm scope before publishing
+## Select and preview
 
-Publication is a projection of current Markdown, not a vault mutation. Before
-running it, agree on the selection and the host path:
+Use the scope in the user's request. Ask only when the selection or destination
+is materially ambiguous. Resolve `KB_ROOT` before running commands, and choose
+an output directory outside the vault that does not contain it.
 
-- Ask what the site should contain when the request does not say: the whole
-  vault, a directory prefix, a tag or metadata subset, or a bounded
-  neighborhood around one seed note.
-- Surface the no-leak boundary explicitly. A published note may still mention
-  an excluded note in prose; only its graph edges, metadata, and attachment
-  files are withheld. Links to excluded notes render as unresolved text, so the
-  excluded note's title and path never enter the artifact.
-- Check for `publish: false` frontmatter on anything the selection would emit;
-  the flag wins over every positive selector.
-- Ask for the deploy base path (`--base-path`) when the site will live under a
-  subpath, and the origin (`--base-url`) only when a sitemap is wanted.
-
-## 2. Publish
+Start with a compact, read-only preview:
 
 ```sh
-wordcell publish --root "$KB_ROOT" --out <directory>
+wordcell publish --root "$KB_ROOT" --out ./public-notes \
+  --include notes/decision --include plans/implementation \
+  --dry-run --list-limit 20 --json
 ```
 
-The output directory must sit outside the vault and is replaced only with
-`--force`. Useful options:
+The report contains counts, at most 20 selected note IDs, and a digest of the
+selected Markdown. It does not print note bodies. Inspect `selection.truncated` before
+treating the preview as a complete list. Raise `--list-limit` up to 1000 when
+individual IDs matter, or use zero for counts and a digest alone. Open only
+selected notes whose contents need review; do not load or summarize the whole
+vault to choose a known slice.
 
-- `--title`, `--description` — site identity for the chrome and manifest.
-- `--include`, `--exclude` — note ids or directory prefixes, repeatable.
-- `--where <path=value>`, `--has <path>`, `--tag <tag>`, `--scope <path>` — the
-  `wordcell list` metadata filters.
-- `--from <note> --depth <1-10> --direction in|out|both` — a bounded link and
-  relation neighborhood.
-- `--noindex` — robots disallow plus a noindex marker on every page.
-- `--no-index-content` — field-only search; no content index.
-- `--deterministic` — byte-identical output by omitting the timestamp.
-- `--dry-run` — report the plan and projected file set without writing.
-- `--json` — the machine-readable report.
+Selectors are repeatable:
 
-Read the report before handing off: dropped link counts reveal selection
-edges, and `skipped` attachment counts flag missing or unsafe files that the
-vault's `wordcell check` gate can diagnose.
+- `--include <id-or-directory>` selects exact notes or directory prefixes.
+- `--include-glob 'notes/**'` and `--exclude-glob '**/draft-*'` select by pattern.
+  Quote globs so the shell does not expand them. `*` matches within one segment,
+  `?` matches one character, and `**` matches whole path segments.
+- `--where type=concept`, `--has relations`, `--tag public`, and
+  `--scope packages/parser` select by authored metadata.
+- `--from notes/topic --depth 2 --direction both` selects a bounded neighborhood
+  of explicit links and relationships. Oversized neighborhoods fail rather
+  than silently publish an incomplete selection.
 
-## 3. Verify and host
+Positive path, glob, metadata, and graph selectors form a **union**. Metadata
+predicates within their group must all match. `--include notes --tag public`
+therefore includes all of `notes`, not only its public-tagged notes. Use a
+metadata conjunction or explicit note IDs when an intersection is required.
+Excludes and `publish: false` always win.
 
-Open `index.html` or preview over a real socket with
-`wordcell serve --root <site> --port 8080`, then exercise the site in a
-browser: the sidebar tree and breadcrumbs navigate without JavaScript, the
-`/` search overlay accepts `tag:`, `type:`, and `path:` field filters with
-`<mark>` highlighting, and `graph/` renders an interactive pan/zoom map of
-`graph.json` (deep-link a node with `graph/#n=<slug>`). The header's
-rightmost icon opens the appearance menu — Catppuccin, Gruvbox, Rosé Pine,
-Tokyo Night, or the neutral Wordcell palette in light, dark, or system —
-persisted under the shared `hraness-design-palette-v1` key. The bundled server
-binds the loopback interface by default, confines requests and symlinks to
-the root, and returns the published `404.html` for misses. Sync the directory
-to the target — `aws s3 sync`, `rclone`, Pages, or any bucket — and publish
-again rather than editing emitted files in place.
+Publication is not prose redaction. Review selected text and referenced assets
+for anything unsuitable for the intended audience. A selected note can mention
+excluded material in its own text. Private flags exclude a note's page, search
+record, and graph membership; they cannot remove information copied into another
+note or attachment. `--noindex` is a crawler preference, not access control.
+
+## Build the reviewed slice
+
+Repeat the preview command without `--dry-run`. Keep the same selectors and
+check the returned digest and counts; if the Markdown changed, review it again.
+The digest covers selected Markdown, not attachment bytes. Review referenced
+attachments separately before sharing.
+
+```sh
+wordcell publish --root "$KB_ROOT" --out ./public-notes \
+  --include notes/decision --include plans/implementation \
+  --title "Project decisions" --deterministic --json
+```
+
+Use `--force` only to replace a known generated output directory. Set
+`--base-path /handbook/` if the host serves the files at a subpath, and add
+`--base-url https://docs.example.com` when a sitemap is useful. Use
+`--no-index-content` for field-only search. None of these flags changes the
+source vault.
+
+Read dropped-link, skipped-asset, and search-truncation counts. Run
+`wordcell check --root "$KB_ROOT"` when missing links or attachments need
+diagnosis. Do not report missing content as complete.
+
+## Preview and host
+
+```sh
+wordcell serve --root ./public-notes --port 8080
+```
+
+Open the loopback URL. Check a note, its navigation, the Search overlay, and the
+Graph page. HTML can be read without JavaScript; browser search and graph need
+HTTP hosting rather than `file://`. The preview server is not a production
+service.
+
+Upload the generated directory to the user's selected static host only when
+hosting is in the request. Confirm the exact destination and preserve unrelated
+files. Verify the public URL and selected content after upload. A successful
+local build alone is not a live deployment.
+
+The full artifact contract and hosting options are in
+[the publishing guide](https://github.com/hraness/wordcell/blob/main/docs/publish.md).

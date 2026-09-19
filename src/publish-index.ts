@@ -31,9 +31,10 @@ export type SiteIndexBuild = {
 
 function bounded(value: string, maximumBytes: number): { text: string; truncated: boolean } {
   if (Buffer.byteLength(value, "utf8") <= maximumBytes) return { text: value, truncated: false };
+  const bytes = Buffer.from(value, "utf8");
   let end = maximumBytes;
-  while (end > 0 && (value.charCodeAt(end) & 0xc0) === 0x80) end -= 1;
-  return { text: value.slice(0, end), truncated: true };
+  while (end > 0 && ((bytes[end] ?? 0) & 0xc0) === 0x80) end -= 1;
+  return { text: bytes.subarray(0, end).toString("utf8"), truncated: true };
 }
 
 function previewText(note: Note): string {

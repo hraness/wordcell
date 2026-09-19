@@ -87,6 +87,24 @@ describe("buildSiteIndex", () => {
     expect(JSON.stringify(first.terms)).toBe(JSON.stringify(second.terms));
   });
 
+  test("multibyte content and metadata remain within the reader byte contracts", () => {
+    const text = "界😀é".repeat(6_000);
+    const unicode = note("unicode.md", `---\naliases: [${text}]\ntags: [${text}]\ncustom: ${text}\n---\n# Unicode\n\n${text}\n`);
+    const build = buildSiteIndex([unicode], slugs([unicode]));
+    const docs = parseSiteDocsV1(JSON.parse(JSON.stringify(build.docs)));
+    const doc = docs.docs[0];
+    expect(doc).toBeDefined();
+    expect(Buffer.byteLength(doc?.x ?? "", "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.inlineTextBytes);
+    expect(Buffer.byteLength(doc?.p ?? "", "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.docPreviewBytes);
+    for (const field of Object.values(doc?.f ?? {})) {
+      expect(Buffer.byteLength(field, "utf8")).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
+      expect(field).not.toContain("�");
+    }
+    expect(doc?.x).not.toContain("�");
+    expect(doc?.p).not.toContain("�");
+    expect(build.textTruncated).toBe(true);
+  });
+
   test("document previews stay within the byte cap", () => {
     const long = note("long.md", `# Long\n\n${"lorem ipsum ".repeat(200)}\n`);
     const build = buildSiteIndex([long], slugs([long]));
