@@ -146,11 +146,14 @@ import {
   MAX_SEARCH_RELATED_SEEDS,
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
+  searchEvidenceRank,
   type KnowledgeBaseGraphOptions,
   type KnowledgeBaseSearchMode,
   type KnowledgeBaseSearchOrdering,
   type KnowledgeBaseSearchResult,
 } from "./sdk.js";
+import type { SearchReranker } from "./rerank.js";
+import { createTypeSafeReranker } from "./rerank-typesafe.js";
 import {
   refreshVault,
   scanVault,
@@ -249,7 +252,7 @@ Usage:
   wordcell percolate [note] [--proofs] [--root <directory>] [--min-support <count>] [--limit <count>] [--json]
   wordcell list [--root <directory>] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--sort <field>] [--order <asc|desc>] [--limit <count>] [--json]
   wordcell index [--root <directory>] [--database <path>] [--force] [--json]
-  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--json]
+  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--json]
   wordcell history <note> [--root <directory>] [--repo <repository>] [--limit <count>] [--cochanged-limit <count>] [--json]
   wordcell history search <query-or-path> [--root <directory>] [--repo <repository>] [--limit <count>] [--commit-limit <count>] [--cochanged-limit <count>] [--json]
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
@@ -367,6 +370,7 @@ type ParsedCommand =
       readonly limit?: number;
       readonly candidateLimit?: number;
       readonly minScore?: number;
+      readonly rerank?: "typesafe";
       readonly query: string;
       readonly json: boolean;
     }
@@ -500,6 +504,8 @@ type CliDependencies = GraphCliDependencies & {
   readonly indexSemanticVault?: typeof indexSemanticVault;
   readonly openKnowledgeBase?: typeof openKnowledgeBase;
   readonly openKnowledgeBaseEvaluation?: typeof openKnowledgeBaseEvaluation;
+  /** Test seam; production wiring builds the TypeSafe reranker lazily per flag. */
+  readonly rerankers?: readonly SearchReranker[];
   readonly digestEvaluationModel?: (path: string) => Promise<string>;
   readonly evaluationNow?: () => Date;
   readonly createNote?: typeof createNote;
@@ -1149,6 +1155,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
   let limit: number | undefined;
   let candidateLimit: number | undefined;
   let minScore: number | undefined;
+  let rerank: "typesafe" | undefined;
   let graphDepth: number | undefined;
   let noGraph = false;
   let history = false;
@@ -1210,6 +1217,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       || argument === "--limit"
       || argument === "--candidate-limit"
       || argument === "--min-score"
+      || argument === "--rerank"
       || argument === "--where"
       || argument === "--has"
       || argument === "--tag"
@@ -1225,6 +1233,11 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
           return { ok: false, message: "--mode must be hybrid, exact, keyword, or semantic" };
         }
         mode = value;
+      } else if (argument === "--rerank") {
+        if (value !== "typesafe") {
+          return { ok: false, message: "--rerank must be typesafe" };
+        }
+        rerank = value;
       } else if (argument === "--where") {
         const equals = value.indexOf("=");
         const path = equals === -1 ? "" : value.slice(0, equals).trim();
@@ -1392,6 +1405,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       ...(limit === undefined ? {} : { limit }),
       ...(candidateLimit === undefined ? {} : { candidateLimit }),
       ...(minScore === undefined ? {} : { minScore }),
+      ...(rerank === undefined ? {} : { rerank }),
       query,
       json,
     },
@@ -2169,10 +2183,19 @@ function renderKnowledgeBaseSearch(result: KnowledgeBaseSearchResult): string {
   const lines = [
     `${result.mode[0]?.toLocaleUpperCase("en-US") ?? ""}${result.mode.slice(1)} results for “${safe(result.query)}” (${result.results.length})${result.partial ? " [partial]" : ""}`,
   ];
+  const rerankLane = result.diagnostics.lanes.find(({ lane }) => lane === "rerank");
+  if (rerankLane !== undefined) {
+    lines.push(
+      `  Rerank: typesafe over ${rerankLane.results} candidates (${rerankLane.status})`
+        + (rerankLane.message === undefined ? "" : ` — ${safe(rerankLane.message)}`),
+    );
+  }
   if (result.results.length === 0) lines.push("  None.");
   for (const hit of result.results) {
     const location = `${safe(hit.path)}${hit.line === undefined ? "" : `:${hit.line}`}`;
-    const evidence = hit.evidence.map((item) => `${item.kind}#${item.rank}`).join(", ");
+    const evidence = hit.evidence
+      .map((item) => `${item.kind}#${searchEvidenceRank(item)}`)
+      .join(", ");
     lines.push(`  ${hit.rank}. ${hit.score.toFixed(3)}  ${location} — ${safe(hit.title)} [${safe(evidence)}]`);
     if (hit.snippet !== "") lines.push(`    ${safe(hit.snippet)}`);
   }
@@ -2208,12 +2231,17 @@ async function runSemantic(
   const searchRules = command.rulesPath === undefined
     ? undefined
     : await loadSearchRulesFile(command.rulesPath);
-  const kb = await (dependencies.openKnowledgeBase ?? openKnowledgeBase)({
-    root: command.root,
-    repository: command.repository,
-    ...(command.database === undefined ? {} : { database: command.database }),
-    ...(searchRules === undefined ? {} : { searchRules }),
-  });
+  const kb = await (dependencies.openKnowledgeBase ?? openKnowledgeBase)(
+    {
+      root: command.root,
+      repository: command.repository,
+      ...(command.database === undefined ? {} : { database: command.database }),
+      ...(searchRules === undefined ? {} : { searchRules }),
+    },
+    ...(command.rerank === undefined
+      ? []
+      : [{ rerankers: dependencies.rerankers ?? [createTypeSafeReranker()] }]),
+  );
   try {
     const result = await kb.search({
       query: command.query,
@@ -2229,6 +2257,7 @@ async function runSemantic(
         ? {}
         : { candidateLimit: command.candidateLimit }),
       ...(command.minScore === undefined ? {} : { minScore: command.minScore }),
+      ...(command.rerank === undefined ? {} : { rerank: { engine: command.rerank } }),
     });
     output.stdout(command.json
       ? terminalSafeJson(result)

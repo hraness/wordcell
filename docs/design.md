@@ -363,6 +363,33 @@ position. `--mode exact` stays model-free,
 `--mode keyword` uses QMD's full-text index, and `--mode semantic` selects its
 vector lane.
 
+Reranking is additive and stays opt-in. `--rerank typesafe` sends the effective
+query and, for each of at most 25 candidates, its title, vault-relative path,
+and at most 512 UTF-8 bytes of snippet text to the fixed TypeSafe System One
+endpoint in a separate request. This hosted processing moves potentially
+private vault material off the local machine and incurs
+[provider input-token charges](https://docs.typesafe.ai/models).
+The endpoint assigns an independent relevance probability to each candidate.
+Exact identities stay first; other hits are sorted by that evidence inside the
+window only. Scores stay reciprocal-rank values, and each reranked hit carries a separate `rerank`
+evidence lane with its baseline rank, post-rerank rank, and probability.
+Explicit priority rules run afterward and retain final ordering authority. A
+missing `TYPESAFE_API_KEY` or a provider failure degrades to the baseline order
+with a diagnostic instead of failing the search, so rerank work never hides
+the deterministic lanes underneath.
+
+The adapter validates every serialized candidate state before sending any
+request, permits at most eight concurrent requests, and applies an 8-second
+timeout to each request. A 25-candidate window can therefore take four waves
+of requests; the timeout is not an 8-second search deadline. Requests are not
+retried, and a failure stops queued work. Already-started requests can still
+incur charges. The [`jev-latest` alias](https://docs.typesafe.ai/models) can
+change model versions; diagnostics record the returned model and successful
+token usage. These bounds and the
+synthetic regression fixtures do not establish retrieval quality, calibration,
+or production latency. Evaluate paired baseline and reranked results on
+independently judged, representative queries before relying on the lane.
+
 Wordcell pins QMD 2.5.3 and one full upstream revision of its compact
 EmbeddingGemma model for local vector retrieval. The revision prevents branch
 drift and gives the model a revision-specific cache identity. Without an

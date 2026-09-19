@@ -14,6 +14,8 @@ export * from "./percolate.js";
 export * from "./publish.js";
 export * from "./publish-model.js";
 export * from "./query.js";
+export * from "./rerank.js";
+export * from "./rerank-typesafe.js";
 export * from "./repository-memory.js";
 export * from "./search.js";
 export * from "./semantic.js";
