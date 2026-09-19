@@ -648,9 +648,9 @@ describe("TypeSafe window deadline and accounting", () => {
   test("default fetch cancels a stalled response body at the window deadline", async () => {
     const original = globalThis.fetch;
     let canceled = false;
-    globalThis.fetch = (async () => new Response(new ReadableStream({
+    globalThis.fetch = Object.assign(async () => new Response(new ReadableStream({
       cancel() { canceled = true; },
-    }))) as typeof fetch;
+    })), { preconnect: original.preconnect });
     try {
       const reranker = createTypeSafeReranker({ environment: { TYPESAFE_API_KEY: "key" }, timeoutMs: 25 });
       const result = await reranker.rerank({ query: "q", candidates: [candidate("a", 1)] });
