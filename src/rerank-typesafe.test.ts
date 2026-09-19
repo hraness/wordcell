@@ -52,7 +52,7 @@ function fakeTransport(
 
 function systemOneResponse(noul: number, extra: Record<string, unknown> = {}): unknown {
   return {
-    model: "jev-latest",
+    model: "jev-1.13.0",
     answers: { relevant: { type: "noul", noul } },
     usage: { input_tokens: 120, output_tokens: 8 },
     ...extra,
@@ -86,9 +86,10 @@ describe("createTypeSafeReranker", () => {
       expect(request.url).toBe("https://api.typesafe.ai/v1/systemone");
       expect(request.headers["authorization"]).toBe("Bearer key-abc");
       expect(request.headers["content-type"]).toBe("application/json");
-      expect(request.timeoutMs).toBe(8_000);
+      expect(request.timeoutMs).toBeGreaterThan(0);
+      expect(request.timeoutMs).toBeLessThanOrEqual(8_000);
       expect(request.maxResponseBytes).toBe(64 * 1_024);
-      expect(request.body["model"]).toBe("jev-latest");
+      expect(request.body["model"]).toBe("jev-1.13.0");
       const questions = request.body["questions"] as Record<string, unknown>;
       const relevant = questions["relevant"] as Record<string, unknown>;
       expect(relevant["type"]).toBe("noul");
@@ -105,7 +106,7 @@ describe("createTypeSafeReranker", () => {
     if (result.status === "ready") {
       expect(result.probabilities).toEqual({ a: 0.1, b: 0.9 });
       expect(result.ordering).toEqual(["b", "a"]);
-      expect(result.model).toBe("jev-latest");
+      expect(result.model).toBe("jev-1.13.0");
       expect(result.usage).toEqual({ inputTokens: 240, outputTokens: 16 });
     }
   });
@@ -359,7 +360,7 @@ describe("createTypeSafeReranker", () => {
       transport: async () => ({ status: 200, body: new Uint8Array(33) }),
     });
     expect(await reranker.rerank({ query: "q", candidates: [candidate("a", 1)] }))
-      .toEqual({
+      .toMatchObject({
         status: "failed",
         message: "TypeSafe rerank transport returned a malformed or oversized response.",
       });
@@ -379,7 +380,7 @@ describe("createTypeSafeReranker", () => {
       query: "q",
       candidates: [candidate("a", 1), candidate("b", 2), candidate("c", 3)],
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       status: "failed",
       message: "TypeSafe rerank request returned HTTP 429.",
     });
@@ -438,5 +439,224 @@ describe("createTypeSafeReranker", () => {
     const result = await reranker.rerank({ query: "q", candidates: [] });
     expect(result.status).toBe("ready");
     expect(calls).toBe(0);
+  });
+});
+
+function encodedResponse(noul = 0.5, extra: Record<string, unknown> = {}): {
+  status: number;
+  body: Uint8Array;
+} {
+  return { status: 200, body: new TextEncoder().encode(JSON.stringify(systemOneResponse(noul, extra))) };
+}
+
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
+describe("TypeSafe window deadline and accounting", () => {
+  test("pins both the requested and accepted model to the evaluated release", async () => {
+    for (const model of ["jev-latest", "jev-1.14.0", "jev-1.13.0-beta"]) {
+      const reranker = createTypeSafeReranker({
+        environment: { TYPESAFE_API_KEY: "key" },
+        transport: fakeTransport(() => systemOneResponse(0.5, { model })),
+      });
+      const result = await reranker.rerank({ query: "q", candidates: [candidate("a", 1)] });
+      expect(result).toMatchObject({
+        status: "failed", usage: { inputTokens: 120, outputTokens: 8 },
+        accounting: { attempted: 1, completed: 1, usageComplete: true },
+      });
+      expect(result.model).toBeUndefined();
+    }
+  });
+
+  test("defaults to four simultaneous calls and records complete settled usage", async () => {
+    let active = 0;
+    let peak = 0;
+    const reranker = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" },
+      transport: async () => {
+        peak = Math.max(peak, ++active);
+        await Bun.sleep(5);
+        active -= 1;
+        return encodedResponse();
+      },
+    });
+    const result = await reranker.rerank({
+      query: "q", candidates: Array.from({ length: 9 }, (_, i) => candidate(`c${i}`, i + 1)),
+    });
+    expect(peak).toBe(4);
+    expect(result).toMatchObject({
+      status: "ready", usage: { inputTokens: 1_080, outputTokens: 72 },
+      accounting: { candidates: 9, attempted: 9, completed: 9, usageComplete: true },
+    });
+    expect(result.accounting?.elapsedMs).toBeGreaterThan(0);
+  });
+
+  test("a single deadline covers successive waves and settles abort-ignoring transports", async () => {
+    const late = deferred<Awaited<ReturnType<SystemOneTransport>>>();
+    const requests: Parameters<SystemOneTransport>[0][] = [];
+    const reranker = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" }, timeoutMs: 150, concurrency: 1,
+      transport: async (request) => {
+        requests.push(request);
+        if (requests.length === 1) { await Bun.sleep(50); return encodedResponse(); }
+        return await late.promise;
+      },
+    });
+    const result = await reranker.rerank({
+      query: "q", candidates: [candidate("a", 1), candidate("b", 2), candidate("c", 3)],
+    });
+    expect(result).toMatchObject({
+      status: "failed", message: "TypeSafe rerank window exceeded its deadline.",
+      usage: { inputTokens: 120, outputTokens: 8 },
+      accounting: { candidates: 3, attempted: 2, completed: 1, usageComplete: false },
+    });
+    expect(requests[1]!.timeoutMs).toBeLessThan(requests[0]!.timeoutMs - 20);
+    expect(requests.every(({ signal }) => signal?.aborted)).toBe(true);
+    expect(result.accounting!.elapsedMs).toBeLessThan(2_000);
+    const snapshot = JSON.stringify(result);
+    late.resolve(encodedResponse());
+    await Bun.sleep(5);
+    expect(requests).toHaveLength(2);
+    expect(JSON.stringify(result)).toBe(snapshot);
+  });
+
+  test("caller abort returns promptly, marks unresolved charges unknown, and stops queued calls", async () => {
+    const caller = new AbortController();
+    const late = deferred<Awaited<ReturnType<SystemOneTransport>>>();
+    const dispatched = deferred<void>();
+    let calls = 0;
+    let transportSignal: AbortSignal | undefined;
+    const reranker = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" }, concurrency: 1,
+      transport: async ({ signal }) => {
+        calls += 1; transportSignal = signal; dispatched.resolve();
+        return await late.promise;
+      },
+    });
+    const pending = reranker.rerank({
+      query: "q", candidates: [candidate("a", 1), candidate("b", 2)], signal: caller.signal,
+    });
+    await dispatched.promise;
+    caller.abort();
+    const result = await pending;
+    expect(result).toMatchObject({ status: "failed",
+      usage: { inputTokens: 0, outputTokens: 0 },
+      accounting: { attempted: 1, completed: 0, usageComplete: false },
+    });
+    expect(transportSignal?.aborted).toBe(true);
+    const snapshot = JSON.stringify(result);
+    late.resolve(encodedResponse());
+    await Bun.sleep(5);
+    expect(calls).toBe(1);
+    expect(JSON.stringify(result)).toBe(snapshot);
+  });
+
+  test("first failure cancels siblings without waiting or dispatching another wave", async () => {
+    const late = deferred<Awaited<ReturnType<SystemOneTransport>>>();
+    const signals: (AbortSignal | undefined)[] = [];
+    const reranker = createTypeSafeReranker({
+      environment: { TYPESAFE_API_KEY: "key" },
+      transport: async ({ signal }) => {
+        signals.push(signal);
+        return signals.length === 1
+          ? { status: 429, body: new TextEncoder().encode("provider secret") }
+          : await late.promise;
+      },
+    });
+    const result = await reranker.rerank({
+      query: "q", candidates: Array.from({ length: 9 }, (_, i) => candidate(`c${i}`, i + 1)),
+    });
+    expect(result).toMatchObject({ status: "failed",
+      accounting: { attempted: 4, completed: 1, usageComplete: false },
+    });
+    expect(signals.every((signal) => signal?.aborted)).toBe(true);
+    expect(JSON.stringify(result)).not.toContain("provider secret");
+    late.resolve(encodedResponse());
+    await Bun.sleep(5);
+    expect(signals).toHaveLength(4);
+  });
+
+  test("malformed transport values stop dispatch before another wave", async () => {
+    for (const malformed of [null, { get status(): number { throw new Error("transport secret"); } }]) {
+      let calls = 0;
+      const reranker = createTypeSafeReranker({
+        environment: { TYPESAFE_API_KEY: "key" }, concurrency: 1,
+        transport: async () => { calls += 1; return malformed as never; },
+      });
+      const result = await reranker.rerank({ query: "q", candidates: [candidate("a", 1), candidate("b", 2)] });
+      expect(result).toMatchObject({ status: "failed",
+        accounting: { attempted: 1, completed: 1, usageComplete: false },
+      });
+      expect(calls).toBe(1);
+      expect(JSON.stringify(result)).not.toContain("transport secret");
+    }
+  });
+
+  test("retains paid receipt totals when a relevance answer or HTTP response fails", async () => {
+    for (const status of [200, 500]) {
+      const reranker = createTypeSafeReranker({
+        environment: { TYPESAFE_API_KEY: "key" }, concurrency: 1,
+        transport: async () => ({ ...encodedResponse(2), status }),
+      });
+      const result = await reranker.rerank({ query: "q", candidates: [candidate("a", 1), candidate("b", 2)] });
+      expect(result).toMatchObject({ status: "failed", model: "jev-1.13.0",
+        usage: { inputTokens: 120, outputTokens: 8 },
+        accounting: { candidates: 2, attempted: 1, completed: 1, usageComplete: true },
+      });
+    }
+  });
+
+  test("a missing usage receipt and aggregate overflow remain incomplete", async () => {
+    for (const bad of [undefined, { input_tokens: 1_000_000_000, output_tokens: 8 }]) {
+      let calls = 0;
+      const reranker = createTypeSafeReranker({
+        environment: { TYPESAFE_API_KEY: "key" }, concurrency: 1,
+        transport: async () => ++calls === 1 ? encodedResponse() : encodedResponse(0.5, { usage: bad }),
+      });
+      const result = await reranker.rerank({ query: "q", candidates: [candidate("a", 1), candidate("b", 2)] });
+      expect(result).toMatchObject({ status: "failed",
+        usage: { inputTokens: 120, outputTokens: 8 },
+        accounting: { attempted: 2, completed: 2, usageComplete: false },
+      });
+    }
+  });
+
+  test("default fetch cancels a response that arrives after the deadline", async () => {
+    const original = globalThis.fetch;
+    const late = deferred<Response>();
+    let canceled = false;
+    let fetchedSignal: AbortSignal | null | undefined;
+    globalThis.fetch = (async (_input: unknown, init?: RequestInit) => {
+      fetchedSignal = init?.signal;
+      expect(init?.redirect).toBe("error");
+      return await late.promise;
+    }) as typeof fetch;
+    try {
+      const reranker = createTypeSafeReranker({ environment: { TYPESAFE_API_KEY: "key" }, timeoutMs: 25 });
+      const result = await reranker.rerank({ query: "q", candidates: [candidate("a", 1)] });
+      expect(result).toMatchObject({ status: "failed", accounting: { attempted: 1, completed: 0, usageComplete: false } });
+      expect(fetchedSignal?.aborted).toBe(true);
+      late.resolve(new Response(new ReadableStream({ cancel() { canceled = true; } })));
+      await Bun.sleep(5);
+      expect(canceled).toBe(true);
+    } finally { globalThis.fetch = original; }
+  });
+
+  test("default fetch cancels a stalled response body at the window deadline", async () => {
+    const original = globalThis.fetch;
+    let canceled = false;
+    globalThis.fetch = Object.assign(async () => new Response(new ReadableStream({
+      cancel() { canceled = true; },
+    })), { preconnect: original.preconnect });
+    try {
+      const reranker = createTypeSafeReranker({ environment: { TYPESAFE_API_KEY: "key" }, timeoutMs: 25 });
+      const result = await reranker.rerank({ query: "q", candidates: [candidate("a", 1)] });
+      expect(result.status).toBe("failed");
+      expect(result.accounting?.usageComplete).toBe(false);
+      expect(canceled).toBe(true);
+    } finally { globalThis.fetch = original; }
   });
 });

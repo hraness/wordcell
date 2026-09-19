@@ -51,6 +51,8 @@ const importSpecifiers = [
   "@hraness/wordcell/publish-model",
   "@hraness/wordcell/publish-search",
   "@hraness/wordcell/query",
+  "@hraness/wordcell/rerank",
+  "@hraness/wordcell/rerank-typesafe",
   "@hraness/wordcell/repository-memory",
   "@hraness/wordcell/sdk",
   "@hraness/wordcell/search",
@@ -66,6 +68,8 @@ const importSpecifiers = [
   "@hraness/wordcell/workflows/plan-radar",
 ];
 const baselineRequiredNamedExports = {
+  "@hraness/wordcell/rerank": ["applyRerank"],
+  "@hraness/wordcell/rerank-typesafe": ["createTypeSafeReranker"],
   "@hraness/wordcell/graph-authority": ["openGraphAuthority", "queryGraph", "rebuildGraph", "verifyGraph"],
   "@hraness/wordcell/graph-percolation": ["percolateWithGraph"],
   "@hraness/wordcell/clip/bundle-reader": ["readCaptureBundle", "verifyCaptureBundle"],
@@ -334,6 +338,32 @@ async function verifyInstalledHelp(binary: string, cwd: string, expected: string
     throw new Error(`Installed ${binary} did not render its command help: exit=${exitCode}, stdout=${JSON.stringify(stdout)}, stderr=${JSON.stringify(stderr)}`);
   }
   if (stderr !== "") throw new Error(`Installed ${binary} emitted unexpected diagnostics: ${JSON.stringify(stderr)}`);
+}
+
+async function verifyInstalledRerankFallback(cwd: string, root: string): Promise<void> {
+  const search = async (rerank: boolean) => {
+    const child = Bun.spawn([
+      join(cwd, "node_modules", ".bin", "wordcell"),
+      "search", "Alpha Beta", "--root", root, "--mode", "exact", "--no-graph", "--json",
+      ...(rerank ? ["--rerank", "typesafe", "--rerank-limit", "2"] : []),
+    ], {
+      cwd,
+      // Explicitly invalid credentials forbid ambient keys and global file discovery.
+      env: { ...environment, TYPESAFE_API_KEY: "", HRANESS_SUPPORT: "off" },
+      stdout: "pipe", stderr: "pipe",
+    });
+    const [code, stdout] = await Promise.all([child.exited, new Response(child.stdout).text()]);
+    if (code !== 0) throw new Error("Installed rerank fallback command failed.");
+    return JSON.parse(stdout);
+  };
+  const baseline = await search(false);
+  const fallback = await search(true);
+  if (baseline.results.length === 0 || fallback.partial !== true
+    || JSON.stringify(baseline.results) !== JSON.stringify(fallback.results)
+    || !fallback.diagnostics.lanes.some((lane: { lane: string; status: string }) =>
+      lane.lane === "rerank" && lane.status === "unavailable")) {
+    throw new Error("Installed rerank fallback failed to preserve baseline results and diagnostics.");
+  }
 }
 
 async function verifyInstalledSupport(cwd: string): Promise<void> {
@@ -718,6 +748,7 @@ try {
     await writeFile(join(graphRoot, "index.md"), "---\nkb_catalog: authored\n---\n# Graph\n");
     await writeFile(join(graphRoot, "alpha.md"), "# Alpha\n[[beta]]\n");
     await writeFile(join(graphRoot, "beta.md"), "# Beta\n");
+    await verifyInstalledRerankFallback(installed, graphRoot);
     const graphBin = join(installed, "node_modules", ".bin", "wordcell");
     await run([graphBin, "graph", "rebuild", "--root", graphRoot, "--json"], installed);
     await run([graphBin, "graph", "verify", "--root", graphRoot, "--json"], installed);

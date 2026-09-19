@@ -43,7 +43,7 @@ import {
 
 // src/publish.ts
 import { createHash } from "crypto";
-import { lstat, mkdir, readdir, readFile, realpath, rm, writeFile } from "fs/promises";
+import { lstat, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, writeFile } from "fs/promises";
 import { basename, dirname, isAbsolute, posix as posix2, relative, resolve, sep } from "path";
 import { canonicalJson as canonicalJson2, canonicalSha256 } from "@hraness/oh";
 
@@ -1769,6 +1769,102 @@ function assertSeparateOutput(root, out) {
     throw new Error("--out must not contain the vault root; replacement would delete the vault.");
   }
 }
+async function existingPath(path) {
+  try {
+    return await lstat(path);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT")
+      return;
+    throw error;
+  }
+}
+function sameOutputIdentity(expected, actual) {
+  if (expected === undefined || actual === undefined)
+    return expected === actual;
+  return actual.isDirectory() && !actual.isSymbolicLink() && expected.dev === actual.dev && expected.ino === actual.ino && expected.mtimeMs === actual.mtimeMs && expected.ctimeMs === actual.ctimeMs;
+}
+async function writeProjectedSite(root, out, files, force) {
+  const expected = await existingPath(out);
+  if (expected !== undefined) {
+    if (!expected.isDirectory() || expected.isSymbolicLink()) {
+      throw new Error(`--out ${out} exists and is not a directory.`);
+    }
+    if (!force && (await readdir(out)).length > 0) {
+      throw new Error(`--out ${out} is not empty (pass --force to overwrite).`);
+    }
+  }
+  const checkOutput = async () => {
+    const canonical = await canonicalOutputPath(out);
+    assertSeparateOutput(await realpath(root), canonical);
+    if (canonical !== out || !sameOutputIdentity(expected, await existingPath(out))) {
+      throw new Error(`--out ${out} changed while publishing; leave it unchanged and retry.`);
+    }
+  };
+  await checkOutput();
+  await mkdir(dirname(out), { recursive: true });
+  const stageRoot = await mkdtemp(resolve(dirname(out), ".wordcell-stage-"));
+  const stage = resolve(stageRoot, basename(out));
+  let backupRoot;
+  let backup;
+  let backupHoldsOutput = false;
+  let primaryError;
+  try {
+    await mkdir(stage);
+    for (const [path, bytes] of files) {
+      const absolute = resolve(stage, path);
+      if (!withinRoot(stage, absolute))
+        throw new Error(`Refusing to write outside staged output: ${path}`);
+      await mkdir(resolve(stage, posix2.dirname(path)), { recursive: true });
+      await writeFile(absolute, bytes, { flag: "wx" });
+    }
+    if (expected !== undefined) {
+      backupRoot = await mkdtemp(resolve(dirname(out), ".wordcell-backup-"));
+      backup = resolve(backupRoot, basename(out));
+    }
+    await checkOutput();
+    if (backup !== undefined) {
+      await rename(out, backup);
+      backupHoldsOutput = true;
+    }
+    try {
+      await rename(stage, out);
+    } catch (promotionError) {
+      if (backup !== undefined && backupHoldsOutput) {
+        try {
+          if (await existingPath(out) !== undefined) {
+            throw new Error("another entry appeared at the output path");
+          }
+          await rename(backup, out);
+          backupHoldsOutput = false;
+        } catch (restoreError) {
+          throw new Error(`Could not promote the new site or restore --out; the previous site is preserved at ${backup}. ` + `Restore failed: ${restoreError instanceof Error ? restoreError.message : String(restoreError)}. ` + `Promotion failed: ${promotionError instanceof Error ? promotionError.message : String(promotionError)}`);
+        }
+      }
+      throw promotionError;
+    }
+    if (backupRoot !== undefined) {
+      try {
+        await rm(backupRoot, { recursive: true });
+        backupHoldsOutput = false;
+        backupRoot = undefined;
+      } catch (error) {
+        throw new Error(`Published the new site, but previous-site backup cleanup is incomplete at ${backup}; cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  } catch (error) {
+    primaryError = error;
+    throw error;
+  } finally {
+    try {
+      await rm(stageRoot, { recursive: true, force: true });
+    } catch (error) {
+      throw new Error(`Could not remove staging directory ${stageRoot}` + `${backupHoldsOutput ? `; retained backup: ${backup}` : ""}. ` + `${error instanceof Error ? error.message : String(error)}` + `${primaryError === undefined ? "" : `; original failure: ${primaryError instanceof Error ? primaryError.message : String(primaryError)}`}`);
+    }
+    if (backupRoot !== undefined && !backupHoldsOutput) {
+      await rm(backupRoot, { recursive: true, force: true });
+    }
+  }
+}
 var READER_FILES = ["reader.js", "reader.css", "theme.js"];
 async function defaultReaderFiles() {
   const packageRoot = findKbPackageRoot();
@@ -1850,35 +1946,7 @@ async function publishVault(options) {
   const projection = await projectVault(snapshot, options, io);
   const report = { ...projection.report, out };
   if (!options.dryRun) {
-    assertSeparateOutput(await realpath(resolvedRoot), await canonicalOutputPath(out));
-    let stat;
-    try {
-      stat = await lstat(out);
-    } catch {
-      stat = undefined;
-    }
-    if (stat !== undefined) {
-      if (!stat.isDirectory() || stat.isSymbolicLink()) {
-        throw new Error(`--out ${options.out} exists and is not a directory.`);
-      }
-      if ((await readdir(out)).length > 0) {
-        if (options.force !== true) {
-          throw new Error(`--out ${options.out} is not empty (pass --force to overwrite).`);
-        }
-        await rm(out, { recursive: true });
-        await mkdir(out, { recursive: true });
-      }
-    } else {
-      await mkdir(out, { recursive: true });
-    }
-    for (const [path, bytes] of projection.files) {
-      const absolute = resolve(out, path);
-      if (!withinRoot(out, absolute)) {
-        throw new Error(`Refusing to write outside --out: ${path}`);
-      }
-      await mkdir(resolve(out, posix2.dirname(path)), { recursive: true });
-      await writeFile(absolute, bytes);
-    }
+    await writeProjectedSite(resolvedRoot, out, projection.files, options.force === true);
   }
   return { ...projection, report, out };
 }

@@ -154,8 +154,8 @@ import {
   type KnowledgeBaseSearchOrdering,
   type KnowledgeBaseSearchResult,
 } from "./sdk.js";
-import type { SearchReranker } from "./rerank.js";
-import { createTypeSafeReranker } from "./rerank-typesafe.js";
+import { MAX_RERANK_CANDIDATES, type SearchReranker } from "./rerank.js";
+import { createCliTypeSafeReranker } from "./rerank-credentials.js";
 import {
   refreshVault,
   scanVault,
@@ -263,7 +263,7 @@ Usage:
   wordcell percolate [note] [--proofs] [--root <directory>] [--min-support <count>] [--limit <count>] [--json]
   wordcell list [--root <directory>] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--sort <field>] [--order <asc|desc>] [--limit <count>] [--json]
   wordcell index [--root <directory>] [--database <path>] [--force] [--json]
-  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--json]
+  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--rerank-limit <2..25>] [--json]
   wordcell history <note> [--root <directory>] [--repo <repository>] [--limit <count>] [--cochanged-limit <count>] [--json]
   wordcell history search <query-or-path> [--root <directory>] [--repo <repository>] [--limit <count>] [--commit-limit <count>] [--cochanged-limit <count>] [--json]
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
@@ -382,6 +382,7 @@ type ParsedCommand =
       readonly candidateLimit?: number;
       readonly minScore?: number;
       readonly rerank?: "typesafe";
+      readonly rerankLimit?: number;
       readonly query: string;
       readonly json: boolean;
     }
@@ -1184,6 +1185,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
   let candidateLimit: number | undefined;
   let minScore: number | undefined;
   let rerank: "typesafe" | undefined;
+  let rerankLimit: number | undefined;
   let graphDepth: number | undefined;
   let noGraph = false;
   let history = false;
@@ -1246,6 +1248,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       || argument === "--candidate-limit"
       || argument === "--min-score"
       || argument === "--rerank"
+      || argument === "--rerank-limit"
       || argument === "--where"
       || argument === "--has"
       || argument === "--tag"
@@ -1266,6 +1269,12 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
           return { ok: false, message: "--rerank must be typesafe" };
         }
         rerank = value;
+      } else if (argument === "--rerank-limit") {
+        const parsed = Number(value);
+        if (!Number.isSafeInteger(parsed) || parsed < 2 || parsed > MAX_RERANK_CANDIDATES) {
+          return { ok: false, message: `--rerank-limit must be an integer from 2 through ${MAX_RERANK_CANDIDATES}` };
+        }
+        rerankLimit = parsed;
       } else if (argument === "--where") {
         const equals = value.indexOf("=");
         const path = equals === -1 ? "" : value.slice(0, equals).trim();
@@ -1395,6 +1404,9 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       message: "Search minimum score applies only to hybrid, keyword, or semantic mode.",
     };
   }
+  if (rerankLimit !== undefined && rerank === undefined) {
+    return { ok: false, message: "--rerank-limit requires --rerank typesafe" };
+  }
   if (priority && rulesPath === undefined) {
     return { ok: false, message: "--priority requires --rules" };
   }
@@ -1434,6 +1446,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       ...(candidateLimit === undefined ? {} : { candidateLimit }),
       ...(minScore === undefined ? {} : { minScore }),
       ...(rerank === undefined ? {} : { rerank }),
+      ...(rerankLimit === undefined ? {} : { rerankLimit }),
       query,
       json,
     },
@@ -2217,6 +2230,15 @@ function renderKnowledgeBaseSearch(result: KnowledgeBaseSearchResult): string {
       `  Rerank: typesafe over ${rerankLane.results} candidates (${rerankLane.status})`
         + (rerankLane.message === undefined ? "" : ` — ${safe(rerankLane.message)}`),
     );
+    const receipt = rerankLane.rerank;
+    if (receipt?.accounting !== undefined) {
+      const { attempted, candidates, completed, elapsedMs, usageComplete } = receipt.accounting;
+      lines.push(`  Rerank requests: ${attempted}/${candidates} attempted, ${completed} settled; ${elapsedMs.toFixed(0)} ms`
+        + (usageComplete ? "; usage complete" : "; usage incomplete, additional charges may be unknown"));
+      if (rerankLane.status !== "ready" && receipt.usage !== undefined) {
+        lines.push(`  Known rerank usage: ${receipt.usage.inputTokens ?? 0} input tokens, ${receipt.usage.outputTokens ?? 0} output tokens`);
+      }
+    }
   }
   if (result.results.length === 0) lines.push("  None.");
   for (const hit of result.results) {
@@ -2268,7 +2290,7 @@ async function runSemantic(
     },
     ...(command.rerank === undefined
       ? []
-      : [{ rerankers: dependencies.rerankers ?? [createTypeSafeReranker()] }]),
+      : [{ rerankers: dependencies.rerankers ?? [await createCliTypeSafeReranker()] }]),
   );
   try {
     const result = await kb.search({
@@ -2285,7 +2307,12 @@ async function runSemantic(
         ? {}
         : { candidateLimit: command.candidateLimit }),
       ...(command.minScore === undefined ? {} : { minScore: command.minScore }),
-      ...(command.rerank === undefined ? {} : { rerank: { engine: command.rerank } }),
+      ...(command.rerank === undefined ? {} : {
+        rerank: {
+          engine: command.rerank,
+          ...(command.rerankLimit === undefined ? {} : { limit: command.rerankLimit }),
+        },
+      }),
     });
     output.stdout(command.json
       ? terminalSafeJson(result)

@@ -140,6 +140,19 @@ Open the returned Markdown and guides before acting on them.
 
 <!-- hraness:wordcell-landing:end -->
 
+## Rerank a search window
+
+```sh
+wordcell search "why releases use immutable archives" --root kb --mode exact \
+  --rerank typesafe --rerank-limit 25 --limit 5 --json
+```
+
+This optional hosted lane uses TypeSafe's pinned `jev-1.13.0` model. It sends
+bounded query and note snippets to the provider, needs a private local
+credential, and incurs provider charges. Exact identities remain first; a
+provider failure retains the baseline order with a diagnostic. See the
+[setup, SDK examples, measured results, and limits](https://github.com/hraness/wordcell/blob/main/docs/reranking.md).
+
 ## What you can do
 
 | Task | Command | Evidence and effects |
@@ -199,6 +212,12 @@ In a four-query example over a seven-note public vault, packed search snippets
 used **80% fewer UTF-8 bytes** than passing the same matching notes in full:
 12,126 versus 60,584 bytes. This measures context payload size, not tokenizer
 counts, answer quality, latency, or a win over another search tool.
+
+In a separate public SciFact study, optional hosted Jev reranking placed a
+judged relevant result first for **161 of 300 queries**, versus **101** with
+Wordcell exact search alone. It sends bounded context to a paid provider;
+this is evidence on scientific abstracts, not a comparison with QMD or a
+guarantee for repository notes. [Results and limits](https://github.com/hraness/wordcell/blob/main/docs/reranking.md#evidence-and-limits).
 
 Wordcell's benefit is selecting relevant context and keeping its sources
 inspectable. Local ownership is also available in other tools, and Wordcell

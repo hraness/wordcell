@@ -2,7 +2,7 @@
 import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase
-} from "./index-084evpsj.js";
+} from "./index-2hf27mws.js";
 import {
   MAX_EVALUATION_EVIDENCE_BYTES,
   redactEvaluationMachinePaths

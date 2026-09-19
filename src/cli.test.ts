@@ -647,6 +647,16 @@ describe("kb argument parsing", () => {
         ok: true,
         value: { kind: "search", rerank: "typesafe" },
       });
+    expect(parseArguments(["search", "query", "--rerank", "typesafe", "--rerank-limit", "10"]))
+      .toMatchObject({ ok: true, value: { rerank: "typesafe", rerankLimit: 10 } });
+    for (const value of ["0", "1", "26", "2.5", "NaN", "Infinity", ""]) {
+      expect(parseArguments(["search", "query", "--rerank", "typesafe", "--rerank-limit", value]))
+        .toEqual({ ok: false, message: "--rerank-limit must be an integer from 2 through 25" });
+    }
+    expect(parseArguments(["search", "query", "--rerank-limit", "10"]))
+      .toEqual({ ok: false, message: "--rerank-limit requires --rerank typesafe" });
+    expect(parseArguments(["search", "query", "--rerank-limit"]))
+      .toEqual({ ok: false, message: "--rerank-limit requires a value" });
     expect(parseArguments(["search", "query", "--rerank", "bogus"])).toEqual({
       ok: false,
       message: "--rerank must be typesafe",
@@ -2053,6 +2063,8 @@ describe("kb vault commands", () => {
       "vault",
       "--rerank",
       "typesafe",
+      "--rerank-limit",
+      "10",
     ], searchOutput.output, {
       rerankers: [fakeReranker],
       openKnowledgeBase: (options, dependencies) => {
@@ -2137,7 +2149,7 @@ describe("kb vault commands", () => {
         repositoryScopes: [],
         graph: {},
         history: false,
-        rerank: { engine: "typesafe" },
+        rerank: { engine: "typesafe", limit: 10 },
       },
     ]);
     const injected = opened[0] as { dependencies?: { rerankers?: unknown[] } };

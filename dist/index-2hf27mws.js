@@ -16,7 +16,7 @@ import {
   MAX_RERANK_CANDIDATES,
   MAX_RERANK_SNIPPET_BYTES,
   applyRerank
-} from "./index-q2t3bq2c.js";
+} from "./index-j70m75wd.js";
 import {
   percolateWithGraph
 } from "./index-t2bs9xdr.js";
@@ -229,7 +229,10 @@ function checkedRerankRequest(value, rerankers) {
   if (!Number.isSafeInteger(limit) || limit < 2 || limit > MAX_RERANK_CANDIDATES) {
     throw new RangeError(`Search rerank limit must be an integer from 2 through ${MAX_RERANK_CANDIDATES}.`);
   }
-  return { enabled: true, limit, reranker };
+  if (options.signal !== undefined && !(options.signal instanceof AbortSignal)) {
+    throw new TypeError("Search rerank signal must be an AbortSignal.");
+  }
+  return { enabled: true, limit, reranker, ...options.signal === undefined ? {} : { signal: options.signal } };
 }
 async function openKnowledgeBase(options, dependencies = {}) {
   const searchRules = options.searchRules === undefined ? null : parseSearchRules(options.searchRules);
@@ -498,7 +501,11 @@ async function openKnowledgeBase(options, dependencies = {}) {
         path: hit.path,
         snippet: utf8Prefix(hit.snippet, MAX_RERANK_SNIPPET_BYTES).value
       }));
-      const outcome = await Promise.resolve().then(() => rerankRequest.reranker.rerank({ query: effectiveQuery, candidates })).then((result) => ({ ok: true, result }), (error) => ({ ok: false, error }));
+      const outcome = await Promise.resolve().then(() => rerankRequest.reranker.rerank({
+        query: effectiveQuery,
+        candidates,
+        ...rerankRequest.signal === undefined ? {} : { signal: rerankRequest.signal }
+      })).then((result) => ({ ok: true, result }), (error) => ({ ok: false, error }));
       const applied = applyRerank(relevanceResults, outcome.ok ? outcome.result : {
         status: "failed",
         message: "Rerank engine failed before returning a result."
@@ -521,16 +528,21 @@ async function openKnowledgeBase(options, dependencies = {}) {
           ]
         };
       });
-      const readyResult = applied.result.status === "ready" ? applied.result : null;
+      const resultDetails = {
+        ...applied.result.model === undefined ? {} : { model: applied.result.model },
+        ...applied.result.usage === undefined ? {} : { usage: applied.result.usage },
+        ...applied.result.accounting === undefined ? {} : { accounting: applied.result.accounting }
+      };
       const details = [];
-      if (readyResult?.model !== undefined)
-        details.push(readyResult.model);
-      if (readyResult?.usage !== undefined) {
-        details.push(`${(readyResult.usage.inputTokens ?? 0).toLocaleString("en-US")} input tokens, ` + `${(readyResult.usage.outputTokens ?? 0).toLocaleString("en-US")} output tokens`);
+      if (resultDetails.model !== undefined)
+        details.push(resultDetails.model);
+      if (resultDetails.usage !== undefined) {
+        details.push(`${(resultDetails.usage.inputTokens ?? 0).toLocaleString("en-US")} input tokens, ` + `${(resultDetails.usage.outputTokens ?? 0).toLocaleString("en-US")} output tokens`);
       }
       const rerankMessage = applied.status === "ready" ? details.length === 0 ? undefined : details.join("; ") : applied.message ?? "Rerank engine did not return a result.";
       diagnostics.push({
         lane: "rerank",
+        ...Object.keys(resultDetails).length === 0 ? {} : { rerank: resultDetails },
         status: applied.status === "failed" ? "degraded" : applied.status,
         results: applied.status === "ready" ? applied.placements.size : 0,
         ...rerankMessage === undefined ? {} : { message: rerankMessage }

@@ -12,7 +12,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-db1c15m2.js";
+} from "./index-avbce90h.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -35,11 +35,11 @@ import {
 } from "./index-pj501bh1.js";
 import {
   createTypeSafeReranker
-} from "./index-s65zmdm2.js";
+} from "./index-9rf81m0p.js";
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-k857tecp.js";
+} from "./index-e6p9e926.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -48,7 +48,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-084evpsj.js";
+} from "./index-2hf27mws.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -60,6 +60,9 @@ import {
   recommendedEmbeddingModelSha256,
   sha256EmbeddingModelFile
 } from "./index-hcw140eb.js";
+import {
+  MAX_RERANK_CANDIDATES
+} from "./index-j70m75wd.js";
 import {
   MAX_EVALUATION_RESULTS_PER_QUERY,
   MAX_EVALUATION_TIMEOUT_MS,
@@ -97,7 +100,7 @@ import {
   MAX_PUBLISH_LIST_LIMIT,
   publishVault,
   renderPublishReportText
-} from "./index-8c7j1d27.js";
+} from "./index-138mv597.js";
 import {
   refreshVault,
   scanVault
@@ -810,7 +813,7 @@ function terminalIntro(terminal) {
 }
 
 // src/cli-program.ts
-import { open } from "fs/promises";
+import { open as open2 } from "fs/promises";
 import { cpus, release, totalmem } from "os";
 import { relative, resolve as resolve3 } from "path";
 import { format } from "util";
@@ -1059,13 +1062,53 @@ async function serveSite(options, io = {}) {
   });
 }
 
+// src/rerank-credentials.ts
+import { constants as constants2 } from "fs";
+import { open } from "fs/promises";
+import { homedir } from "os";
+import { isAbsolute as isAbsolute2, join as join3 } from "path";
+function unavailable(message) {
+  return { id: "typesafe", rerank: async () => ({ status: "unavailable", message }) };
+}
+async function createCliTypeSafeReranker(environment = process.env, homeDirectory = homedir()) {
+  if (Object.hasOwn(environment, "TYPESAFE_API_KEY")) {
+    return createTypeSafeReranker({ environment: { TYPESAFE_API_KEY: environment["TYPESAFE_API_KEY"] } });
+  }
+  const explicitFile = environment["TYPESAFE_API_KEY_FILE"];
+  const configDirectory = environment["XDG_CONFIG_HOME"];
+  if (explicitFile !== undefined && !isAbsolute2(explicitFile) || configDirectory !== undefined && configDirectory !== "" && !isAbsolute2(configDirectory)) {
+    return unavailable("TypeSafe credential file configuration requires absolute paths.");
+  }
+  const path = explicitFile ?? join3(configDirectory || join3(homeDirectory, ".config"), "wordcell", "typesafe-api-key");
+  let handle;
+  try {
+    handle = await open(path, constants2.O_RDONLY | constants2.O_NOFOLLOW | constants2.O_NONBLOCK);
+    const metadata = await handle.stat();
+    const uid = process.getuid?.();
+    if (!metadata.isFile() || metadata.nlink !== 1 || metadata.size < 1 || metadata.size > 514 || process.platform !== "win32" && ((metadata.mode & 63) !== 0 || metadata.uid !== uid)) {
+      return unavailable("TypeSafe credential file must be an owner-only regular file containing one API key.");
+    }
+    const bytes = Buffer.alloc(515);
+    const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
+    const key = bytes.subarray(0, bytesRead).toString("utf8").replace(/\r?\n$/u, "");
+    if (!/^[\x21-\x7e]{1,512}$/u.test(key)) {
+      return unavailable("TypeSafe credential file must contain one valid API key.");
+    }
+    return createTypeSafeReranker({ environment: { TYPESAFE_API_KEY: key } });
+  } catch {
+    return unavailable("TypeSafe credentials are unavailable; set TYPESAFE_API_KEY or an owner-only TYPESAFE_API_KEY_FILE.");
+  } finally {
+    await handle?.close();
+  }
+}
+
 // src/cli-program.ts
 var defaultOutput2 = {
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value)
 };
 async function readBoundedUtf8(path, maximumBytes, label) {
-  const handle = await open(path, "r");
+  const handle = await open2(path, "r");
   try {
     const bytes = new Uint8Array(maximumBytes + 1);
     let offset = 0;
@@ -1134,7 +1177,7 @@ Usage:
   wordcell percolate [note] [--proofs] [--root <directory>] [--min-support <count>] [--limit <count>] [--json]
   wordcell list [--root <directory>] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--sort <field>] [--order <asc|desc>] [--limit <count>] [--json]
   wordcell index [--root <directory>] [--database <path>] [--force] [--json]
-  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--json]
+  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--rerank-limit <2..25>] [--json]
   wordcell history <note> [--root <directory>] [--repo <repository>] [--limit <count>] [--cochanged-limit <count>] [--json]
   wordcell history search <query-or-path> [--root <directory>] [--repo <repository>] [--limit <count>] [--commit-limit <count>] [--cochanged-limit <count>] [--json]
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
@@ -1819,6 +1862,7 @@ function parseSemanticCommand(command, arguments_) {
   let candidateLimit;
   let minScore;
   let rerank;
+  let rerankLimit;
   let graphDepth;
   let noGraph = false;
   let history = false;
@@ -1876,7 +1920,7 @@ function parseSemanticCommand(command, arguments_) {
       cursor += 1;
       continue;
     }
-    if (command === "search" && (argument === "--mode" || argument === "--limit" || argument === "--candidate-limit" || argument === "--min-score" || argument === "--rerank" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--related" || argument === "--graph-depth")) {
+    if (command === "search" && (argument === "--mode" || argument === "--limit" || argument === "--candidate-limit" || argument === "--min-score" || argument === "--rerank" || argument === "--rerank-limit" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--related" || argument === "--graph-depth")) {
       const value = readValue(arguments_, cursor);
       if (value === null)
         return { ok: false, message: `${argument} requires a value` };
@@ -1890,6 +1934,12 @@ function parseSemanticCommand(command, arguments_) {
           return { ok: false, message: "--rerank must be typesafe" };
         }
         rerank = value;
+      } else if (argument === "--rerank-limit") {
+        const parsed = Number(value);
+        if (!Number.isSafeInteger(parsed) || parsed < 2 || parsed > MAX_RERANK_CANDIDATES) {
+          return { ok: false, message: `--rerank-limit must be an integer from 2 through ${MAX_RERANK_CANDIDATES}` };
+        }
+        rerankLimit = parsed;
       } else if (argument === "--where") {
         const equals = value.indexOf("=");
         const path = equals === -1 ? "" : value.slice(0, equals).trim();
@@ -2022,6 +2072,9 @@ function parseSemanticCommand(command, arguments_) {
       message: "Search minimum score applies only to hybrid, keyword, or semantic mode."
     };
   }
+  if (rerankLimit !== undefined && rerank === undefined) {
+    return { ok: false, message: "--rerank-limit requires --rerank typesafe" };
+  }
   if (priority && rulesPath === undefined) {
     return { ok: false, message: "--priority requires --rules" };
   }
@@ -2060,6 +2113,7 @@ function parseSemanticCommand(command, arguments_) {
       ...candidateLimit === undefined ? {} : { candidateLimit },
       ...minScore === undefined ? {} : { minScore },
       ...rerank === undefined ? {} : { rerank },
+      ...rerankLimit === undefined ? {} : { rerankLimit },
       query,
       json
     }
@@ -2833,6 +2887,14 @@ function renderKnowledgeBaseSearch(result) {
   const rerankLane = result.diagnostics.lanes.find(({ lane }) => lane === "rerank");
   if (rerankLane !== undefined) {
     lines.push(`  Rerank: typesafe over ${rerankLane.results} candidates (${rerankLane.status})` + (rerankLane.message === undefined ? "" : ` \u2014 ${safe(rerankLane.message)}`));
+    const receipt = rerankLane.rerank;
+    if (receipt?.accounting !== undefined) {
+      const { attempted, candidates, completed, elapsedMs, usageComplete } = receipt.accounting;
+      lines.push(`  Rerank requests: ${attempted}/${candidates} attempted, ${completed} settled; ${elapsedMs.toFixed(0)} ms` + (usageComplete ? "; usage complete" : "; usage incomplete, additional charges may be unknown"));
+      if (rerankLane.status !== "ready" && receipt.usage !== undefined) {
+        lines.push(`  Known rerank usage: ${receipt.usage.inputTokens ?? 0} input tokens, ${receipt.usage.outputTokens ?? 0} output tokens`);
+      }
+    }
   }
   if (result.results.length === 0)
     lines.push("  None.");
@@ -2870,7 +2932,7 @@ async function runSemantic(command, output, dependencies) {
     repository: command.repository,
     ...command.database === undefined ? {} : { database: command.database },
     ...searchRules === undefined ? {} : { searchRules }
-  }, ...command.rerank === undefined ? [] : [{ rerankers: dependencies.rerankers ?? [createTypeSafeReranker()] }]);
+  }, ...command.rerank === undefined ? [] : [{ rerankers: dependencies.rerankers ?? [await createCliTypeSafeReranker()] }]);
   try {
     const result = await kb.search({
       query: command.query,
@@ -2884,7 +2946,12 @@ async function runSemantic(command, output, dependencies) {
       ...command.limit === undefined ? {} : { limit: command.limit },
       ...command.candidateLimit === undefined ? {} : { candidateLimit: command.candidateLimit },
       ...command.minScore === undefined ? {} : { minScore: command.minScore },
-      ...command.rerank === undefined ? {} : { rerank: { engine: command.rerank } }
+      ...command.rerank === undefined ? {} : {
+        rerank: {
+          engine: command.rerank,
+          ...command.rerankLimit === undefined ? {} : { limit: command.rerankLimit }
+        }
+      }
     });
     output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderKnowledgeBaseSearch(result)));
     return 0;

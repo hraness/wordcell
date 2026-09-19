@@ -268,6 +268,7 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
             </div>
             <p className="install-note">This measures context payload size. It is not a token, accuracy, latency, or competitor benchmark. Actual savings depend on your notes and query.</p>
             <p className="record-link"><a href={`${repository}/blob/main/docs/evidence.md`}>Read the method, raw results, and reproduction command</a></p>
+            <p className="install-note">Optional hosted Jev reranking put a relevant result first for 161 of 300 public SciFact queries, versus 101 with Wordcell exact search alone. This paid external-provider study tests scientific abstracts, not repository notes or QMD. <a href={`${repository}/blob/main/docs/reranking.md#evidence-and-limits`}>Study and limits</a></p>
           </MarketingSection>
 
           <MarketingSection

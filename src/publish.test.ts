@@ -1,5 +1,6 @@
-import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { describe, expect, spyOn, test } from "bun:test";
+import * as publishFs from "node:fs/promises";
+import { mkdtemp, mkdir, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -216,6 +217,8 @@ describe("publishVault", () => {
       await publishVault({ root, out, force: true, deterministic: true });
       const remaining = await readFile(join(out, "manifest.json"), "utf8");
       expect(remaining).toContain(WORDCELL_SITE_FORMAT_V1);
+      await expect(readFile(join(out, "stale.txt"))).rejects.toThrow();
+      expect(await readdir(parent)).toEqual(["occupied"]);
     } finally {
       await rm(root, { recursive: true, force: true });
       await rm(parent, { recursive: true, force: true });
@@ -329,6 +332,114 @@ describe("publishVault", () => {
       await expect(publishVault({ root, out, dryRun: true })).rejects.toThrow(error);
     } finally {
       await rm(out, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("fresh and empty outputs promote without staging or backup leftovers", async () => {
+    const root = await makeVault();
+    const parent = await mkdtemp(join(tmpdir(), "hraness-wordcell-promote-"));
+    try {
+      const fresh = join(parent, "fresh");
+      const empty = join(parent, "empty");
+      await mkdir(empty);
+      await publishVault({ root, out: fresh });
+      await publishVault({ root, out: empty });
+      expect((await readdir(parent)).sort()).toEqual(["empty", "fresh"]);
+      parseSiteManifestV1(await readJson(fresh, "manifest.json"));
+      parseSiteManifestV1(await readJson(empty, "manifest.json"));
+    } finally {
+      await rm(parent, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test.skipIf(process.platform !== "darwin")("a host path-limit staging failure preserves the old output", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "wordcell-path-stage-"));
+    const root = join(parent, "kb");
+    const out = join(parent, "o".repeat(180));
+    const segments = Array.from({ length: 9 }, () => "a".repeat(90));
+    const id = segments.join("/");
+    await mkdir(join(root, ...segments.slice(0, -1)), { recursive: true });
+    await writeFile(join(root, `${id}.md`), "# Deep note\n");
+    await mkdir(out);
+    await writeFile(join(out, "keep.txt"), "old site");
+    try {
+      const preview = await publishVault({ root, out, dryRun: true });
+      expect(preview.report.notes.published).toBe(1);
+      await expect(publishVault({ root, out, force: true })).rejects.toThrow("ENAMETOOLONG");
+      expect(await readFile(join(out, "keep.txt"), "utf8")).toBe("old site");
+      expect((await readdir(parent)).sort()).toEqual(["kb", "o".repeat(180)]);
+    } finally {
+      await rm(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("a changed output directory is preserved instead of replaced during promotion", async () => {
+    const root = await makeVault();
+    const parent = await mkdtemp(join(tmpdir(), "wordcell-output-identity-"));
+    const out = join(parent, "site");
+    const displaced = join(parent, "previous");
+    await mkdir(out);
+    await writeFile(join(out, "keep.txt"), "original site");
+    const originalWrite = publishFs.writeFile;
+    let replaced = false;
+    const writeSpy = spyOn(publishFs, "writeFile").mockImplementation(async (path, data, options) => {
+      if (!replaced && String(path).includes(".wordcell-stage-")) {
+        replaced = true;
+        await publishFs.rename(out, displaced);
+        await mkdir(out);
+        await originalWrite(join(out, "new.txt"), "concurrent output");
+      }
+      return originalWrite(path, data, options);
+    });
+    try {
+      await expect(publishVault({ root, out, force: true })).rejects.toThrow("changed while publishing");
+      expect(await readFile(join(out, "new.txt"), "utf8")).toBe("concurrent output");
+      expect(await readFile(join(displaced, "keep.txt"), "utf8")).toBe("original site");
+      expect((await readdir(parent)).sort()).toEqual(["previous", "site"]);
+    } finally {
+      writeSpy.mockRestore();
+      await rm(parent, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test.each([false, true])("promotion failure preserves the previous site (rollback failure: %s)", async (failRollback) => {
+    const root = await makeVault();
+    const parent = await mkdtemp(join(tmpdir(), "wordcell-promotion-"));
+    const out = join(parent, "site");
+    await mkdir(out);
+    await writeFile(join(out, "keep.txt"), "old site");
+    const canonicalOut = await publishFs.realpath(out);
+    const originalRename = publishFs.rename;
+    const renameSpy = spyOn(publishFs, "rename").mockImplementation(async (source, target) => {
+      if (target === canonicalOut && (String(source).includes(".wordcell-stage-")
+        || (failRollback && String(source).includes(".wordcell-backup-")))) {
+        throw Object.assign(new Error("simulated promotion I/O failure"), { code: "EIO" });
+      }
+      return originalRename(source, target);
+    });
+    try {
+      let message = "";
+      try { await publishVault({ root, out, force: true }); }
+      catch (error: unknown) { message = error instanceof Error ? error.message : String(error); }
+      expect(message).toContain("simulated promotion I/O failure");
+      const entries = await readdir(parent);
+      expect(entries.some((entry) => entry.startsWith(".wordcell-stage-"))).toBe(false);
+      if (failRollback) {
+        const backup = entries.find((entry) => entry.startsWith(".wordcell-backup-"));
+        expect(backup).toBeDefined();
+        const preserved = join(parent, backup ?? "missing", "site");
+        expect(message).toContain(await publishFs.realpath(preserved));
+        expect(await readFile(join(preserved, "keep.txt"), "utf8")).toBe("old site");
+      } else {
+        expect(entries).toEqual(["site"]);
+        expect(await readFile(join(out, "keep.txt"), "utf8")).toBe("old site");
+      }
+    } finally {
+      renameSpy.mockRestore();
+      await rm(parent, { recursive: true, force: true });
       await rm(root, { recursive: true, force: true });
     }
   });

@@ -14,6 +14,20 @@
 - `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `LICENSE` – public usage, project policy, threat model, and terms.
 - `package.json`, `tsconfig.json`, and `bun.lock` – standalone package and frozen verification configuration.
 
+# Search repository knowledge
+
+Use `bun run kb:search "question" --json` for ordinary questions about this
+repository's `kb/`. It pins Wordcell 0.22.0 and enables hosted TypeSafe
+reranking for this public KB. Queries and bounded note identifiers, titles,
+paths, and snippets leave the machine. Keep the API key in the private
+Wordcell credential file or environment, never in this repository.
+
+Inspect the rerank lane before claiming it ran: `ready` means the complete
+window was accepted; `unavailable` or `degraded` preserves baseline results.
+Use `bun run kb:search:local "question" --json` for local-only search. Read the
+returned notes and source links before changing code; ranking is not proof.
+Existing catalog, context, and maintenance commands retain their own roles.
+
 # Guidelines
 
 - Use Bun 1.3.14 for repository commands and keep the authored Markdown compatible with Obsidian and ordinary text tooling.

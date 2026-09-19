@@ -39,7 +39,13 @@ until you upload the generated directory. When rebuilding an existing site,
 add `--force` to replace that output directory. Keep it separate from your
 source vault: neither directory may contain the other. An empty selection
 returns a zero-count dry-run report, but writing it fails so a mistyped selector
-cannot replace an existing site.
+cannot replace an existing site. Wordcell writes the complete replacement
+into a sibling staging directory first. A write failure leaves the previous
+site in place. Promotion moves the previous site to a temporary backup, then
+moves the staged site into place. These are two renames, so a running server can
+briefly see no output directory. If promotion fails, Wordcell restores the
+backup; if restoration also fails, the error names the retained backup path.
+The backup is removed only after successful promotion.
 
 For agent workflows, `--json` returns the report without note bodies, HTML,
 search postings, or file contents. `--list-limit 0` returns counts and the source
