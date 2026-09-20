@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-import { parseArguments } from "../src/cli.js";
+import { main, parseArguments } from "../src/cli.js";
+import { createNote } from "../src/authoring.js";
 
 const manifestUrl = new URL("../package.json", import.meta.url);
 const readmeUrl = new URL("../README.md", import.meta.url);
@@ -43,10 +46,13 @@ describe("durable-session documentation", () => {
   test("leads with the working narrative and keeps reference depth behind it", async () => {
     const { readme } = await publicSurface();
     const headings = [
+      "## Why Wordcell",
       "## Install",
       "## Keep one decision available to the next session",
       "## Recover the stopped session",
       "## What you can do",
+      "## Publish a selected part of your vault",
+      "## Evidence and comparisons",
       "## How the files fit together",
       "## Build with the TypeScript SDK",
       "## Privacy and boundaries",
@@ -65,11 +71,50 @@ describe("durable-session documentation", () => {
     for (const evidence of [
       "kb/notes/parser-contract.md",
       "wordcell backlinks notes/parser-contract --root kb",
-      "wordcell search \"why parser retries stop\" --root kb --mode exact",
+      "wordcell search \"parser retries\" --root kb --mode exact",
       "wordcell context packages/parser/src/index.ts --root kb --repo .",
       "wordcell history notes/parser-contract --root kb --repo .",
       "They do not reconstruct private chat or prove that the note is still correct.",
     ] as const) expect(landing).toContain(evidence);
+  });
+
+  test("the first-value journey finds the saved decision without model setup", async () => {
+    const root = await mkdtemp(join(tmpdir(), "wordcell-readme-"));
+    const vault = join(root, "kb");
+    let stdout = "";
+    let stderr = "";
+    const output = {
+      stdout: (text: string): void => { stdout += text; },
+      stderr: (text: string): void => { stderr += text; },
+    };
+    try {
+      expect(await main(["init", vault], output)).toBe(0);
+      const createExit = await main([
+        "note", "create", "notes/parser-contract", "--title", "Parser contract",
+        "--type", "concept", "--tag", "architecture", "--body",
+        "Parser retries stop after three attempts.", "--root", vault,
+      ], output, { createNote: (noteRoot, input, options) => createNote(noteRoot, input, { ...options, lock: { cacheHome: join(root, ".cache") } }) });
+      expect(stderr).toBe("");
+      expect(createExit).toBe(0);
+      stdout = "";
+      expect(await main(["search", "parser retries", "--root", vault, "--mode", "exact"], output)).toBe(0);
+      expect(stdout).toContain("notes/parser-contract");
+      expect(stdout).toContain("Parser retries stop after three attempts.");
+      expect(stderr).toBe("");
+      expect(await readFile(join(vault, "notes/parser-contract.md"), "utf8")).toContain("document_id:");
+      // Existing Markdown needs no init, generated identity, or semantic index.
+      const existingRoot = join(root, "existing");
+      await mkdir(existingRoot);
+      const existing = join(existingRoot, "existing.md");
+      await writeFile(existing, "# Existing decision\n\nAlways validate the parser input.\n");
+      stdout = "";
+      const existingExit = await main(["search", "validate the parser input", "--root", existingRoot, "--mode", "exact"], output);
+      expect(stderr).toBe("");
+      expect(existingExit).toBe(0);
+      expect(stdout).toContain("existing");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   test("keeps the package, README, and public skill on one immutable release", async () => {
@@ -103,7 +148,7 @@ describe("durable-session documentation", () => {
       ],
       ["context", "packages/parser/src/index.ts", "--root", "kb", "--repo", "."],
       [
-        "search", "why parser retries stop", "--root", "kb", "--mode", "exact",
+        "search", "parser retries", "--root", "kb", "--mode", "exact",
         "--history", "--repo", ".",
       ],
       ["backlinks", "notes/parser-contract", "--root", "kb"],

@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { LANDING_END, LANDING_START, readmeLanding, renderReadmeHtml } from "./readme-html.ts";
+import { publishedRelease } from "../app/publication.ts";
+import { readmeHtml, readmeLead, readmeTitle, readmeVersion } from "../app/readme.generated.ts";
 import { publishedReadme } from "./published-readme.ts";
 
 const repository = join(import.meta.dir, "..", "..");
@@ -61,6 +63,18 @@ test("omits repository landing markers and renders the skill badge as a durable 
   expect(html).not.toContain("assets/agent-skill.svg");
 });
 
+test("replacing the skill badge preserves the following paragraph boundary", () => {
+  for (const newline of ["\n", "\r\n"]) {
+    const html = renderReadmeHtml([
+      "[![Agent Skill](https://example.com/badge.svg)](https://example.com/skill) \t",
+      "",
+      "A local knowledge base for coding agents.",
+    ].join(newline));
+    expect(html).toContain('<p><a href="https://example.com/skill">Install the Agent Skill</a></p>');
+    expect(html).toContain('<p>A local knowledge base for coding agents.</p>');
+  }
+});
+
 
 describe("README HTML boundary", () => {
   test("derives stable fragments from parsed heading text", () => {
@@ -109,4 +123,29 @@ describe("README HTML boundary", () => {
       'href="https://github.com/hraness/wordcell/blob/main/docs/example.md"',
     );
   });
+});
+
+
+test("the generated docs match the source README and identify its source release", async () => {
+  const source = await readFile(join(repository, "README.md"), "utf8");
+  const manifest = JSON.parse(await readFile(join(repository, "package.json"), "utf8")) as { version: string };
+  const landing = readmeLanding(source);
+  expect(readmeVersion).toBe(manifest.version);
+  expect(readmeTitle).toBe(landing.title);
+  expect(readmeLead).toBe(landing.lead);
+  expect(readmeHtml).toBe(renderReadmeHtml(publishedReadme(source, manifest.version, publishedRelease?.version ?? null)));
+});
+
+
+test("the README landing selection rejects ambiguous boundaries and ignores surrounding prose", () => {
+  const selection = `${LANDING_START}\n# Wordcell\n\nA local knowledge base.\n${LANDING_END}`;
+  const expected = readmeLanding(selection);
+  expect(readmeLanding(`Before\n\n${selection}\n\nAfter`)).toEqual(expected);
+  for (const invalid of [
+    `${selection}\n${LANDING_END}`,
+    `${LANDING_START}\n${selection}`,
+    `${LANDING_END}\n# Wordcell\nA local knowledge base.\n${LANDING_START}`,
+    `${LANDING_START}\n${LANDING_END}`,
+    `prefix ${selection}`,
+  ]) expect(() => readmeLanding(invalid)).toThrow();
 });

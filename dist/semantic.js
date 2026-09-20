@@ -14,9 +14,9 @@ import {
   searchSemanticVault,
   semanticDatabasePath,
   sha256EmbeddingModelFile
-} from "./index-trgxvmy6.js";
+} from "./index-hcw140eb.js";
 import"./index-gm9t95d9.js";
-import"./index-0k2x4nn9.js";
+import"./index-1tm7bgx7.js";
 import"./index-d13v9ckt.js";
 import"./index-48pz4jpc.js";
 import"./index-06c9ctr6.js";

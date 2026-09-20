@@ -28,81 +28,96 @@ import { WordcellContentFooter } from "./site-footer";
 import { readmeLead, readmeTitle } from "./readme.generated";
 
 const releaseVersion = publishedRelease?.version;
+const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
 const repository = "https://github.com/hraness/wordcell";
 const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases/download/v${releaseVersion}/hraness-wordcell-${releaseVersion}.tgz`;
 
-const heading = "Memory your coding agents can open, search, and trust";
+const heading = "Give coding agents the decisions behind your code";
 const footnote =
-  `Free and MIT licensed. Bun 1.3.14 or newer, plain Markdown, no account.${releaseVersion === undefined ? " First Wordcell release in preparation." : ` Current verified release v${releaseVersion}.`}`;
+  `Free and MIT licensed. Local Markdown. No account or model for exact search.${releaseVersion === undefined ? " First Wordcell release in preparation." : ` Current verified release v${releaseVersion}.`}`;
 
 const primitives = [
   {
     icon: "markdown",
     label: "Notes",
-    summary: "Ordinary Markdown with frontmatter. A stable document id, tags, and typed relationships live in the file, so Obsidian, grep, and Git all read the same record.",
+    summary: "Keep decisions and explanations in files you can open in any editor. Obsidian, grep, Git, and Wordcell read the same record.",
   },
   {
     icon: "backlinks",
-    label: "Backlinks and graph views",
-    summary: "Derived at read time from wikilinks and typed relationships. Wordcell never writes reciprocal or inferred edges into your notes.",
+    label: "Connected decisions",
+    summary: "Link a plan to the decision behind it. Backlinks show the work that depends on that note, using the links you authored.",
   },
   {
     icon: "search",
-    label: "Search lanes",
-    summary: "Exact metadata filters, local full-text, and optional local embeddings stay separate evidence. Results join back to the current file, never to a stale index.",
+    label: "Local search",
+    summary: "Find a saved phrase without a model. Add optional local semantic search through QMD when the right wording is hard to remember.",
   },
   {
     icon: "git-provenance",
-    label: "Git provenance",
-    summary: "History and co-change come from your repository's own log, on request, as context rather than a silent relevance boost.",
+    label: "Recorded history",
+    summary: "Inspect the commits behind a note when its history matters. Git context is optional and comes from your repository's own log.",
   },
   {
     icon: "capture",
-    label: "Capture",
-    summary: "Clip a page or a PDF into the vault with its source metadata, assets, and a capture receipt an agent can verify later.",
+    label: "Sources you can reopen",
+    summary: "Save a web page or PDF with its source details and assets. Keep the evidence alongside the decisions it informed.",
   },
   {
     icon: "scopes",
-    label: "Repository scopes",
-    summary: "Route a code path to the notes, plans, and decisions that own it, so the next session starts from the right context.",
+    label: "Context for a code path",
+    summary: "Start from a file you are changing. Find its saved notes, plans, and applicable AGENTS.md rules before opening more context.",
   },
 ] as const;
 
 const trust = [
   {
-    label: "Markdown is authoritative",
-    detail: "Catalogs, backlinks, graph reports, semantic indexes, and repository context are derived and disposable. Nothing you commit depends on a database.",
+    label: "Your Markdown is the record",
+    detail: "Notes and Git history stay in your files. Search indexes and graph caches are replaceable, and you can keep reading the vault without Wordcell.",
   },
   {
-    label: "Bounded and inspectable",
-    detail: "Every command returns sorted, bounded results with the evidence behind them. Search never becomes graph authority, and percolation only proposes.",
+    label: "Local core, explicit external work",
+    detail: "Exact search and graph queries need no account or hosted service. Web capture contacts its source. Optional Jev reranking and your agent's provider can receive selected content.",
   },
   {
-    label: "Headless by design",
-    detail: "A CLI, a TypeScript SDK, and a packaged Agent Skill operate the same vault. Application code never has to import the knowledge system.",
+    label: "Sources stay inspectable",
+    detail: "Open the note, authored link, or commit behind a result. Saved context can be incomplete or out of date; Wordcell does not prove a note is true or recover unsaved conversations.",
   },
 ] as const;
 
 const questions = [
   {
-    question: "Where does my knowledge live?",
-    answer: "In a directory of Markdown files, conventionally kb/, committed beside your code. Wordcell reads and writes those files without a server or account. Optional support preferences are stored separately on this machine.",
+    question: "Can I use my existing Markdown or Obsidian vault?",
+    answer: releaseSupports0220
+      ? "Yes. Point exact search at your existing directory with --root. You can read and search without initializing or converting the files. Add links and repository scopes as you need them."
+      : "Version 0.22.0 adds read-only search of an existing Markdown folder without initialization or an index.md file. The current verified install still needs a Wordcell index.md. Check the release notes before using the new existing-folder workflow.",
   },
   {
-    question: "What changed with the Wordcell name?",
-    answer: "Only the product identity. The package is @hraness/wordcell and the command is wordcell, with kb kept as a deprecated alias through 0.20.x. The vault format keeps its kb names, so existing vaults need no migration.",
+    question: "Is Wordcell fully local?",
+    answer: "The core is local: your Markdown, exact search, graph queries, and optional QMD semantic search run on your machine. Semantic models download on first use. Web capture contacts the source, opt-in Jev reranking sends bounded context to a remote provider, and hosted agents follow their own data-handling settings.",
   },
   {
-    question: "Do I need an embedding model?",
-    answer: "No. Exact and keyword search work without one. Hybrid and semantic modes use a pinned local model through the optional QMD dependency, and the index is rebuildable from Markdown.",
+    question: "Do I need an embedding model or an account?",
+    answer: "No for the quick start. Exact search, backlinks, and publishing need neither. Hybrid and semantic search add an optional local model through QMD. Bun 1.3.14 or newer and Git are required to use the CLI.",
   },
   {
-    question: "How do agents use it?",
-    answer: "Install the wordcell Agent Skill through skills.sh. It teaches Codex, Claude Code, and compatible agents to search, capture, plan, percolate, refresh, and validate a vault with the installed command.",
+    question: "What does Wordcell add to QMD?",
+    answer: "QMD provides local retrieval and agent integrations, and Wordcell uses it for optional semantic search. Wordcell brings that retrieval together with authored relationships, repository-path context, AGENTS.md rules, Git history, and selective static publishing. Use QMD alone when document search covers your needs.",
   },
   {
-    question: "How is it published?",
-    answer: "Each release is an immutable GitHub Release with a packing receipt, checksums, and signed provenance. The same archive bytes are published to npm from the tag workflow through OIDC trusted publishing.",
+    question: "Does publishing upload my whole vault?",
+    answer: "No. Choose notes, folders, metadata, or linked neighborhoods, inspect a dry run, then build a local static site. You decide where to upload it. Notes marked publish: false stay out, but review selected text and attachments for private content before sharing.",
+  },
+  {
+    question: "How do I connect my coding agent?",
+    answer: "Install the wordcell Agent Skill after trying the CLI. It gives compatible agents instructions for working with a vault; it does not start a service, create a vault, or grant access to external accounts.",
+  },
+  {
+    question: "Can I keep using an older kb vault?",
+    answer: "Yes. Existing kb folders, Markdown, and identifiers need no migration. The command is wordcell; the deprecated kb command was removed in version 0.21.0.",
+  },
+  {
+    question: "How are releases verified?",
+    answer: "Each release is an immutable GitHub Release with a packing receipt, checksums, and signed provenance. The same archive bytes are mirrored to npm. The install section links the verification run for the advertised release.",
   },
   {
     question: "Who made it?",
@@ -111,8 +126,8 @@ const questions = [
 ] as const;
 
 const navigation = [
-  { href: "#model", label: "Model" },
-  { href: "#interfaces", label: "Interfaces" },
+  { href: "#model", label: "Why Wordcell" },
+  { href: "#compare", label: "Compare" },
   { href: "#install", label: "Install" },
   { href: "/docs", label: "Docs" },
   { href: repository, label: "GitHub" },
@@ -177,17 +192,16 @@ export default function Home() {
             frame={(
               <MarketingProofFrame
                 className="hraness-material-pane"
-                caption="Example commands: record a constraint, inspect repository context, and recover its backlinks and history."
+                caption="Example commands: save a decision, then find it locally. No model or account required."
                 credit="From the README"
-                title="Keep one decision available to the next session"
+                title="Save once. Find it next session."
               >
-                <pre className="transcript" tabIndex={0}><code>{`$ wordcell note create notes/parser-contract \\
-    --title "Parser contract" --type concept --tag architecture \\
+                <pre className="transcript" tabIndex={0}><code>{`$ wordcell init kb
+$ wordcell note create notes/parser-contract \\
+    --title "Parser contract" --type concept \\
     --body "Parser retries stop after three attempts." --root kb
-
-$ wordcell context packages/parser/src/index.ts --root kb --repo .
-$ wordcell backlinks notes/parser-contract --root kb
-$ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
+$ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
+                <p>The result points to <code>notes/parser-contract</code> and the saved constraint.</p>
               </MarketingProofFrame>
             )}
             heading={heading}
@@ -197,8 +211,39 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
           />
           </div>
 
+          <MarketingInstallPanel
+            eyebrow=""
+            heading="Save and find your first decision"
+            headingId="install-title"
+            id="install"
+          >
+            <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : `Current verified release · v${releaseVersion}`}</p>
+            {publishedRelease !== null && archiveUrl !== null ? (
+              <>
+                <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts ${archiveUrl}
+wordcell --help`}</code></pre>
+                <pre className="install-command" tabIndex={0}><code>{`wordcell init kb
+wordcell note create notes/parser-contract \\
+  --title "Parser contract" --type concept \\
+  --body "Parser retries stop after three attempts." --root kb
+wordcell search "parser retries" --root kb --mode exact`}</code></pre>
+                <p className="install-note">
+                  <a href={publishedRelease.verificationRun}>Public release verification</a>.{" "}
+                  Install <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git first.{" "}
+                  <a href="/docs#install">Use an existing vault or connect your agent</a>.
+                </p>
+              </>
+            ) : (
+              <p className="install-note">
+                Wordcell is being prepared for its first release under the new name.{" "}
+                <a href={`${repository}/releases`}>Check published releases</a> or{" "}
+                <a href="/docs">read the documentation</a>.
+              </p>
+            )}
+          </MarketingInstallPanel>
+
           <MarketingPrimitives
-            heading="Plain files, derived views."
+            heading="Find the context behind the change"
             headingId="model-title"
             id="model"
             items={primitives.map((primitive) => ({
@@ -207,11 +252,64 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
               summary: primitive.summary,
             }))}
             label=""
-            summary="A vault is Markdown under version control. Wordcell adds the write path and the bounded read paths an agent needs, and keeps every index replaceable."
+            summary="A vault is a folder of Markdown. Wordcell connects its notes to your code and returns focused results you can inspect before an agent acts."
           />
 
+          <MarketingSection
+            heading="Smaller context, with a measurement you can inspect"
+            headingId="evidence-title"
+            id="evidence"
+            label=""
+            summary="In a four-query example over a seven-note public vault, packed search snippets used 80% fewer UTF-8 bytes than passing the same matching notes in full."
+          >
+            <div className="wordcell-measurement">
+              <p><strong>12,126 bytes</strong><span>Packed snippets</span></p>
+              <p><strong>60,584 bytes</strong><span>The same notes in full</span></p>
+            </div>
+            <p className="install-note">This measures context payload size. It is not a token, accuracy, latency, or competitor benchmark. Actual savings depend on your notes and query.</p>
+            <p className="record-link"><a href={`${repository}/blob/main/docs/evidence.md`}>Read the method, raw results, and reproduction command</a></p>
+            <p className="install-note">Optional hosted Jev reranking put a relevant result first for 161 of 300 public SciFact queries, versus 101 with Wordcell exact search alone. This paid external-provider study tests scientific abstracts, not repository notes or QMD. <a href={`${repository}/blob/main/docs/reranking.md#evidence-and-limits`}>Study and limits</a></p>
+          </MarketingSection>
+
+          <MarketingSection
+            heading="Choose the workflow you need"
+            headingId="compare-title"
+            id="compare"
+            label=""
+            summary="Local files are a shared strength. Wordcell brings repository context, retrieval, and publishing into one workflow."
+          >
+            <div className="wordcell-comparison" role="region" aria-label="Workflow comparison" tabIndex={0}>
+              <table>
+                <thead><tr><th scope="col">Start with</th><th scope="col">When it fits</th><th scope="col">What Wordcell adds</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Markdown + Git</th><td>A small set of notes you can navigate yourself.</td><td>Backlinks, metadata queries, and code-path context without moving the files.</td></tr>
+                  <tr><th scope="row">QMD</th><td>Local document search with CLI, SDK, and agent integrations.</td><td>Current notes joined to authored relationships, AGENTS.md rules, Git evidence, and publishing.</td></tr>
+                  <tr><th scope="row">Basic Memory</th><td>A local Markdown knowledge graph for AI conversations.</td><td>A workflow centered on repository paths, explicit edit rules, and code history.</td></tr>
+                  <tr><th scope="row">Obsidian or a static publisher</th><td>An interactive notes workspace or a site built from Markdown.</td><td>Headless agent workflows and repeatable selection of notes to publish.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="record-link"><a href={`${repository}/blob/main/docs/comparisons.md`}>Compare capabilities, tradeoffs, and primary sources</a></p>
+          </MarketingSection>
+
+          <MarketingSection
+            heading="Share a selected part of your knowledge"
+            headingId="publish-title"
+            id="publish"
+            label=""
+            summary="Choose the notes, preview the selection, and build a static site with readable pages and browser-local search. No model or hosted knowledge service is required."
+          >
+            {releaseSupports0220 ? (
+              <pre className="install-command" tabIndex={0}><code>{`wordcell publish --root kb --out site \\
+  --include notes/parser-contract --include plans/parser-v2 \\
+  --dry-run --json`}</code></pre>
+            ) : <p className="install-note">Static publishing is introduced in v0.22.0. The current verified install above predates this feature; check the release notes before using it.</p>}
+            <p className="install-note">Publishing writes a local folder. You choose when and where to upload it. Review selected text and attachments before sharing; selection does not redact secrets.</p>
+            <p className="record-link"><a href={`${repository}/blob/main/docs/publish.md`}>Select notes, inspect the output, and host your site</a></p>
+          </MarketingSection>
+
           <MarketingInterfaceGrid
-            heading="One vault, three interfaces."
+            heading="Use it from your terminal, agent, or code"
             headingId="interfaces-title"
             id="interfaces"
             interfaces={[
@@ -221,7 +319,7 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 example: (
                   <>
                     <TopicIcon slug="cli" />
-                    <pre tabIndex={0}><code>{`wordcell search "why parser retries stop" \\
+                    <pre tabIndex={0}><code>{`wordcell search "parser retries" \\
   --root kb --mode exact --history --repo .`}</code></pre>
                   </>
                 ),
@@ -241,68 +339,41 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
               },
               {
                 label: "Agent Skill",
-                summary: "Teach a coding agent the vault rituals through skills.sh.",
+                summary: "Give your agent instructions for finding and maintaining saved context.",
                 example: (
                   <>
                     <TopicIcon slug="agent-skill" />
-                    {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <pre tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion}`}</code></pre>}
+                    {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <pre tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>}
                     <p className="interface-link"><a href={`${repository}/blob/main/skills/wordcell/SKILL.md`}>Inspect the packaged skill</a></p>
                   </>
                 ),
               },
             ]}
             label=""
-            summary="The CLI, the SDK, and the packaged skill read and write the same files. There is no agent-only path behind the convenient one."
+            summary="Start with the CLI. Add the Agent Skill for guided workflows, or use the SDK to build read-only context retrieval into your own tools."
           />
 
           <MarketingSection
-            heading="What Wordcell will not do."
+            heading="Keep control of the record"
             headingId="boundary-title"
             id="boundary"
             label=""
-            summary="Wordcell derives views from your files and refuses to become a second source of truth."
+            summary="The local core runs without a hosted knowledge service. External capabilities have separate, explicit boundaries."
           >
             <MarketingTrustBoundary
-              heading="Small enough to trust."
+              heading="Files, processing, and evidence"
               headingId="kernel-title"
               id="kernel"
               items={trust}
               label=""
-              summary="These rules are enforced by the command surface and its tests, not by convention."
+              summary="Know what stays on your machine and what each result can tell you."
             />
           </MarketingSection>
 
-          <MarketingInstallPanel
-            eyebrow=""
-            heading="Install and start a vault."
-            headingId="install-title"
-            id="install"
-          >
-            <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : `Current verified release · v${releaseVersion}`}</p>
-            {publishedRelease !== null && archiveUrl !== null ? (
-              <>
-                <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts ${archiveUrl}
-wordcell --help`}</code></pre>
-                <pre className="install-command" tabIndex={0}><code>{`wordcell init kb
-wordcell note create notes/first --title "First note" --root kb
-wordcell check --root kb`}</code></pre>
-                <p className="install-note">
-                  <a href={publishedRelease.verificationRun}>Public release verification</a>.{" "}
-                  GitHub Releases are the canonical distribution. Needs Bun 1.3.14 or newer.{" "}
-                  <a href="/docs#install">Read the full installation reference</a>.
-                </p>
-              </>
-            ) : (
-              <p className="install-note">
-                Wordcell is being prepared for its first release under the new name.{" "}
-                <a href={`${repository}/releases`}>Check published releases</a> or{" "}
-                <a href="/docs">read the documentation</a>.
-              </p>
-            )}
-          </MarketingInstallPanel>
+
 
           <MarketingQuestionList
-            heading="Before you install."
+            heading="Before you install"
             headingId="questions-title"
             id="questions"
             label=""
@@ -318,9 +389,9 @@ wordcell check --root kb`}</code></pre>
               { href: "/docs", label: "Read the docs" },
             ]}
             footnote={footnote}
-            heading="Give the next session what this one learned."
+            heading="Give the next session what this one learned"
             headingId="cta-title"
-            summary="Install the CLI, start one vault beside your code, and let your agents record what they should not have to rediscover."
+            summary="Save one decision, find it with exact search, and connect your agent when you are ready."
           />
         </MarketingPage>
       </main>

@@ -156,3 +156,26 @@ test("pins the shared footer release and leaves attribution to the package", asy
     expect(source).not.toContain("hraness-marketing-maker");
   }
 });
+
+
+test("public payload numbers stay tied to the committed evidence receipt", async () => {
+  const [home, readme, receiptSource] = await Promise.all([
+    read("app/page.tsx"),
+    readFile(join(site, "..", "README.md"), "utf8"),
+    readFile(join(site, "..", "docs/product-evidence.json"), "utf8"),
+  ]);
+  const receipt = record(JSON.parse(receiptSource) as unknown, "evidence receipt");
+  const aggregate = record(receipt.aggregate, "evidence aggregate");
+  expect(aggregate.queries).toBe(4);
+  expect(record(receipt.corpus, "evidence corpus").noteCount).toBe(7);
+  const number = (value: unknown): string => {
+    if (typeof value !== "number" || !Number.isSafeInteger(value)) throw new TypeError("Evidence byte count must be an integer.");
+    return new Intl.NumberFormat("en-US").format(value);
+  };
+  for (const text of [home, readme]) {
+    expect(text).toContain(number(aggregate.packedBytes));
+    expect(text).toContain(number(aggregate.selectedFullNoteBytes));
+    expect(text).toContain("80% fewer UTF-8 bytes");
+  }
+  expect(Math.round(Number(aggregate.reductionVsSelectedFullNotesPercent))).toBe(80);
+});

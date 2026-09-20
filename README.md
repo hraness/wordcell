@@ -3,40 +3,86 @@
 
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
-A knowledge base for coding agents, built from Markdown, backlinks, semantic
-search, and Git context.
-It turns sources, plans, and decisions into inspectable context that agents can
-recover across sessions without coupling application code to the knowledge
-system.
+A local knowledge base for coding agents. Save decisions in Markdown and recover
+the context behind your code. Give the next session only the context it needs.
 
-[Documentation](https://wordcell.io/docs) · [npm package](https://www.npmjs.com/package/@hraness/wordcell) · [Graph guide](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md) · [Changelog](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md)
+Your files stay yours: read them in Obsidian or any editor, review changes in
+Git, and rebuild every index from the Markdown. Exact search and graph queries
+run on your machine with no account or model. Web capture, hosted agents, and
+optional remote reranking have [separate privacy boundaries](#privacy-and-boundaries).
+
+[Documentation](https://wordcell.io/docs) · [Comparisons](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md) · [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md) · [Changelog](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md)
+
+## Why Wordcell
+
+- **Keep decisions with the work.** Link a plan to the notes that explain it,
+  attach those notes to a code path, and recover their Git history on request.
+  Only context you save becomes part of the record.
+- **Read what matters.** Start with a code path, search result, or linked note.
+  Get a limited set of summaries and open the sources you need, instead of
+  loading the whole vault into an agent conversation.
+- **Keep control of your knowledge.** Markdown and Git are the source of truth.
+  Use local search, export selected notes as a static site, and keep using the
+  files even without Wordcell.
+
+Plain Markdown may be enough for a small set of notes. QMD is a good fit for
+local document retrieval and also supplies Wordcell's optional semantic search.
+Wordcell adds a connected workflow for repository context, authored relationships,
+Git evidence, and selective publishing. [Compare the tradeoffs](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md).
 
 ## Install
 
 [Bun 1.3.14 or newer](https://bun.sh/docs/installation) and Git are required.
-The CLI and TypeScript SDK run with Bun. Choose one installation source:
+The CLI and TypeScript SDK run with Bun. Install the versioned GitHub archive:
 
 ```sh
-# Canonical, versioned GitHub archive
 bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz
 wordcell --help
 ```
 
-The same release is mirrored to [npm](https://www.npmjs.com/package/@hraness/wordcell):
+Prefer npm? The same release is [mirrored there](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
 npm install --global --ignore-scripts @hraness/wordcell@0.22.0
 wordcell --help
 ```
 
-Bun must remain in `PATH` when npm installs the commands. Exact search and
-Markdown graph commands need no account, service, or embedding model. Optional
-semantic search, browser capture, and PDF tools have [additional prerequisites](https://github.com/hraness/wordcell/blob/main/docs/reference.md#review-lifecycle-scripts-before-enabling-optional-adapters).
+Keep Bun in `PATH` for either installation. If your shell cannot find `wordcell`,
+add your package manager's global executable directory to `PATH` and reopen the
+terminal. Optional semantic search, browser capture, and PDF tools have
+[additional prerequisites](https://github.com/hraness/wordcell/blob/main/docs/reference.md#review-lifecycle-scripts-before-enabling-optional-adapters).
+
+## Keep one decision available to the next session
+
+Run this from a directory where you want a new `kb/` folder. It creates one
+Markdown note and finds it without downloading a model or contacting a service:
+
+```sh
+wordcell init kb
+wordcell note create notes/parser-contract \
+  --title "Parser contract" --type concept --tag architecture \
+  --body "Parser retries stop after three attempts." --root kb
+wordcell search "parser retries" --root kb --mode exact
+```
+
+The result includes `notes/parser-contract` and the saved retry constraint.
+Open `kb/notes/parser-contract.md` to see the ordinary Markdown file. Wordcell
+adds a stable `document_id` in its frontmatter; you can edit the prose normally.
+
+Already have Markdown or an Obsidian vault? In **v0.22.0 or newer**, search
+the existing folder without initialization or an `index.md` file:
+
+```sh
+wordcell search "a phrase from your notes" --root /path/to/your/vault --mode exact
+```
+
+Replace the path and phrase with your own. You don't need to initialize,
+convert, or move the existing files to search them.
 
 ### Use with a coding agent
 
-Install the single public Agent Skill into your choice of compatible agent,
-including Claude Code, Codex, Cursor, or GitHub Copilot:
+After trying the CLI, install the public Agent Skill into a compatible agent,
+such as Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
 bunx skills add hraness/wordcell#v0.22.0 --skill wordcell
@@ -45,71 +91,52 @@ bunx skills add hraness/wordcell#v0.22.0 --skill wordcell
 Then ask:
 
 ```text
-Use Wordcell to find the notes and plans about packages/parser in ./kb.
-Open the sources behind the result and explain the recorded decision.
+Use Wordcell to search for "parser retries" in ./kb using exact mode.
+Read the matching note and explain the saved constraint.
 ```
 
-The skill installs instructions, not a running service. It uses an existing
-`wordcell` command and prepares the pinned runtime only when needed. Installing
-it does not create a vault or modify your notes. [Read the skill](https://github.com/hraness/wordcell/blob/main/skills/wordcell/SKILL.md).
+The skill installs instructions, not a service. Installation does not create a
+vault, modify your notes, or grant an agent permission to access other accounts.
+The agent still follows its own provider and data-handling settings.
+[Inspect the skill](https://github.com/hraness/wordcell/blob/main/skills/wordcell/SKILL.md).
 
-## Keep one decision available to the next session
+## Recover the stopped session
 
-Suppose a parser must stop retrying after three attempts. Record that constraint
-in a note, then link the plan that will implement it:
+Link a plan to the decision you saved:
 
-```shell
-wordcell init kb
-wordcell note create notes/parser-contract \
-  --title "Parser contract" --type concept --tag architecture \
-  --body "Parser retries stop after three attempts." --root kb
+```sh
 wordcell note create plans/parser-v2 \
   --title "Parser v2" --type plan \
   --body "The plan implements [[notes/parser-contract|the parser contract]]." \
   --root kb
+wordcell backlinks notes/parser-contract --root kb
 ```
 
-The first `wordcell note create` command stores ordinary Markdown at
-`kb/notes/parser-contract.md` and assigns its stable `document_id`. Add the
-exact code boundary to that note's frontmatter so path lookup can recover it:
+The backlink result includes `plans/parser-v2`, so a later session can find the
+work that depends on the constraint.
+
+For code-path lookup, add this field inside the existing frontmatter of
+`kb/notes/parser-contract.md`:
 
 ```yaml
 repository_scopes:
   - packages/parser
 ```
 
-Commit the vault with the repository. The Markdown and its Git history are the
-durable record.
+From your repository root, use an actual path under that scope and inspect the
+returned notes and inherited `AGENTS.md` guides:
 
-## Recover the stopped session
-
-In a later session, start from the code path and inspect each independent
-signal:
-
-```shell
+```sh
 wordcell context packages/parser/src/index.ts --root kb --repo .
-wordcell search "why parser retries stop" --root kb --mode exact \
-  --history --repo .
-wordcell backlinks notes/parser-contract --root kb
-wordcell history notes/parser-contract --root kb --repo .
 ```
 
-| Signal | What it recovers |
-| --- | --- |
-| Markdown | The current parser constraint in the file you can review and edit. |
-| Backlinks | The plan that explicitly links to the constraint. |
-| Exact search | The current note matched from its words, without a network request or embedding model. |
-| Repository context | Inherited `AGENTS.md` guides and records scoped to `packages/parser`. |
-| Git history | The commits and bounded co-change evidence associated with the note. |
+Commit the vault with your repository to preserve its history, then use
+`wordcell history notes/parser-contract --root kb --repo .` to inspect the
+commits behind the note. History is optional and requires recorded Git commits.
 
-Together, those views recover the persisted decision, related plan, applicable
-rules, and provenance needed to resume the work. They do not reconstruct
-private chat or prove that the note is still correct. Open the returned
-Markdown and guides before acting on them.
-
-The boundaries stay visible: Markdown and Git are authoritative, backlinks and
-indexes are replaceable views, and Git work is opt-in. Application code imports
-neither the vault nor a hosted knowledge service.
+These views recover saved decisions, related work, rules, and provenance.
+They do not reconstruct private chat or prove that the note is still correct.
+Open the returned Markdown and guides before acting on them.
 
 <!-- hraness:wordcell-landing:end -->
 
@@ -138,11 +165,70 @@ provider failure retains the baseline order with a diagnostic. See the
 | Capture a source | `wordcell clip https://example.com/article --output kb/articles` | Reads the selected URL and writes a Markdown bundle with a capture receipt. |
 | Capture a PDF | `wordcell pdf /absolute/path/to/document.pdf --output kb/articles` | Preserves the original PDF and extracted evidence; Poppler is required. |
 | Check the vault | `wordcell check --root kb` | Reports structural and attachment problems without editing files. |
-| Publish a site | `wordcell publish --root kb --out site/` | Emits a self-contained static site with read-only pages and browser-local search; hosts from object storage with no server. |
+| Publish selected notes | `wordcell publish --root kb --out site/ --include notes/parser-contract --dry-run --json` | Previews a static site selection locally; remove `--dry-run` to build it. |
 | Preview a site | `wordcell serve --root site --port 8080` | Serves a published site on a loopback static file server with the emitted `404.html` fallback. |
 
 Use `--json` for structured output and `wordcell --help` for the complete command
 surface. [Full command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md#command-surface).
+
+## Publish a selected part of your vault
+
+Preview the decision and plan from the example before writing an output folder:
+
+```sh
+wordcell publish --root kb --out site \
+  --include notes/parser-contract --include plans/parser-v2 --dry-run --json
+```
+
+Review the selection, then build and preview it:
+
+```sh
+wordcell publish --root kb --out site \
+  --include notes/parser-contract --include plans/parser-v2
+wordcell serve --root site --port 8080
+```
+
+Open `http://127.0.0.1:8080`. You get readable pages, linked notes, and search
+that runs in the browser. Upload the `site/` folder to your chosen static host
+when you want to share it; `publish` itself never uploads anything.
+
+For a repeatable slice, use path patterns or combine folders, tags, metadata,
+code scopes, and linked neighborhoods:
+
+```sh
+wordcell publish --root kb --out site-notes \
+  --include-glob 'notes/**/*.md' --exclude-glob '**/draft-*' --dry-run --json
+```
+
+Preview reports show up to 20 selected IDs by default, with a total count and
+selection digest. They keep note bodies out of the agent's context. Use
+`--list-limit` to adjust that preview without changing what gets published. `publish: false` excludes a note, but selected
+prose and attachments still need review before sharing: selection is not secret
+redaction. [Selection recipes and hosting guide](https://github.com/hraness/wordcell/blob/main/docs/publish.md).
+
+## Evidence and comparisons
+
+In a four-query example over a seven-note public vault, packed search snippets
+used **80% fewer UTF-8 bytes** than passing the same matching notes in full:
+12,126 versus 60,584 bytes. This measures context payload size, not tokenizer
+counts, answer quality, latency, or a win over another search tool.
+
+In a separate public SciFact study, optional hosted Jev reranking placed a
+judged relevant result first for **161 of 300 queries**, versus **101** with
+Wordcell exact search alone. It sends bounded context to a paid provider;
+this is evidence on scientific abstracts, not a comparison with QMD or a
+guarantee for repository notes. [Results and limits](https://github.com/hraness/wordcell/blob/main/docs/reranking.md#evidence-and-limits).
+
+Wordcell's benefit is selecting relevant context and keeping its sources
+inspectable. Local ownership is also available in other tools, and Wordcell
+does not claim to beat QMD's retrieval quality or every Markdown workflow.
+
+[Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md)
+shows a reproducible public-vault example, with the inputs, output sizes, and
+limits beside each result. [The comparison guide](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md)
+covers Markdown alone, QMD, Basic Memory, Obsidian, and static publishing tools
+using their own documentation. Choose the smallest workflow that meets your
+needs.
 
 ## How the files fit together
 
@@ -190,7 +276,9 @@ show the public imports and lifecycle.
 ## Privacy and boundaries
 
 - Structural queries and exact search read local files. Optional semantic
-  search downloads its model on first use and runs locally.
+  search downloads its model on first use and runs locally. Optional Jev
+  reranking sends the query and bounded candidate context to a remote provider;
+  it is off by default.
 - URL capture contacts the requested source. Signed-in capture uses only
   explicitly selected browser state. Review the [security policy](https://github.com/hraness/wordcell/blob/main/SECURITY.md)
   before using it with private sources.
@@ -206,6 +294,7 @@ show the public imports and lifecycle.
 | [Agent workflow](https://github.com/hraness/wordcell/blob/main/docs/agent-workflow.md) | Set up, query, maintain, and revise repository memory. |
 | [Installation and command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md) | Exact interfaces, SDK imports, optional adapters, and troubleshooting prerequisites. |
 | [Web capture](https://github.com/hraness/wordcell/blob/main/docs/capture.md) and [PDF capture](https://github.com/hraness/wordcell/blob/main/docs/pdf.md) | Save sources with provenance, assets, and explicit completeness limits. |
+| [Publish selected notes](https://github.com/hraness/wordcell/blob/main/docs/publish.md) | Preview a slice, build a static site, and choose how to host it. |
 | [Graph guide](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md) | Named queries, proofs, revisions, resource limits, and cache recovery. |
 | [Portfolio federation](https://github.com/hraness/wordcell/blob/main/docs/portfolio.md) | Search only selected, authorized vaults. |
 | [Design](https://github.com/hraness/wordcell/blob/main/docs/design.md) and [memory rationale](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md) | File contracts, design choices, and evaluation context. |
@@ -239,8 +328,10 @@ The same skill is included at `node_modules/@hraness/wordcell/skills/wordcell/`.
 
 ## Release notes
 
-Version 0.21 adds Oh graph queries and proofs. The deprecated `kb` command was
-removed at this boundary; use `wordcell`. Existing vaults need no migration.
+Version 0.22 adds selective static publishing and local preview. Choose notes,
+folders, path patterns, metadata, or linked neighborhoods, then inspect a
+bounded selection report before building. Existing vaults need no migration.
+The deprecated `kb` command was removed in 0.21.0; use `wordcell`.
 [All release notes and upgrade instructions](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md).
 
 ## Contributing

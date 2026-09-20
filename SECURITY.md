@@ -4,6 +4,33 @@ Report suspected vulnerabilities through [GitHub private vulnerability reporting
 
 Security fixes target the latest version tag. Maintainers will coordinate disclosure and publish a new immutable release when a fix is ready.
 
+## Local data and optional network use
+
+Notes are ordinary local Markdown. Exact search, graph inspection, metadata
+queries, and static publication need no account, model, or network request.
+Optional QMD semantic search downloads its model on first use and then runs
+locally. Capturing a URL contacts the selected source and its allowed resources.
+
+`--rerank typesafe` explicitly enables hosted Jev reranking. It sends the query
+and bounded candidate titles, vault-relative paths, and snippets to TypeSafe.
+Leave that flag unset to keep search local. A coding agent that reads returned
+notes also follows its own provider settings; local storage does not make a
+hosted agent local.
+
+## Static publication
+
+Treat the generated site as public when you upload it to a public host.
+`publish: false` excludes a note's page, search record, and graph membership,
+but publication does not redact mentions copied into selected prose or
+referenced attachments. `--noindex` does not provide access control.
+
+Preview the selection with `--dry-run --json`, review the selected content,
+and use a dedicated output directory. `--force` replaces that directory.
+Wordcell refuses output paths that overlap the source vault, including
+resolved symlink aliases. Avoid concurrent filesystem changes during a build.
+The reader escapes authored HTML and restricts active content; this is not
+a content-classification or secret-scanning service.
+
 ## Capture security model
 
 hraness/wordcell treats every URL, redirect, response, browser page, cookie record, process output, and filesystem path as untrusted input.

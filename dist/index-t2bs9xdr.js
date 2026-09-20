@@ -5,7 +5,7 @@ import {
 import {
   createGraphSnapshot,
   openGraphAuthority
-} from "./index-7s6dytxy.js";
+} from "./index-famy7fhs.js";
 import {
   GraphAuthorityError,
   validateGraphPercolationOptions

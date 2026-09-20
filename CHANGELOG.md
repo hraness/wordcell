@@ -2,6 +2,14 @@
 
 ## 0.22.0
 
+Publish any selected slice of a Markdown vault as a static website, then preview it with `wordcell serve`. Select notes by ID, directory, glob, metadata, or explicit graph neighborhood. Preview counts, a bounded list of selected IDs, and a Markdown digest before writing; publishing needs no model or hosted service. Pages include navigation, backlinks, browser-local search, and a graph.
+
+Publication refuses output directories that contain or alias the source vault, and graph selection fails visibly when a neighborhood exceeds its limit. Excluded selectors do not enter the public manifest. `publish: false` excludes a note; selected prose and referenced attachments still require review for the intended audience.
+
+The README, CLI help, and website now start with a model-free save-and-find workflow. Existing Markdown folders can be searched without adding an index or converting their files. Published comparisons explain when Wordcell, QMD, plain Markdown, Basic Memory, Obsidian, or Quartz fit. A reproducible public-corpus demonstration measures context payload size without claiming search-quality or token-cost improvements.
+
+This release also includes the previously merged optional Rust graph/canonical engines, the Oh 0.10.8 update, reader appearance controls, and opt-in TypeSafe/Jev search reranking. Reranking is disabled by default; enabling `--rerank typesafe` sends bounded candidate context to that external provider. Existing Markdown vaults need no migration.
+
 Adds opt-in TypeSafe reranking to CLI and SDK search, pinned to the evaluated
 `jev-1.13.0` model. Exact note identities remain first; provider failures retain
 the baseline order. The hosted window has an eight-second deadline, four

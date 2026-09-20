@@ -42,6 +42,29 @@ afterEach(() => {
 });
 
 describe("vault scan and refresh", () => {
+  test("reads an ordinary Markdown folder without creating a front door", async () => {
+    const root = fixture();
+    unlinkSync(join(root, "index.md"));
+    const before = readdirSync(root).sort();
+    const result = await scanVault(root);
+    expect(result.catalogMode).toBe("authored");
+    expect(result.index).toBe("authored");
+    expect(result.notes.map((note) => note.id)).toEqual(["notes/alpha", "notes/beta"]);
+    expect(readdirSync(root).sort()).toEqual(before);
+    await expect(refreshVault(root)).rejects.toThrow("Refresh requires an index.md front door");
+    expect(readdirSync(root).sort()).toEqual(before);
+  });
+
+  test("missing explicit indexes and managed catalogs still fail", async () => {
+    const root = fixture();
+    unlinkSync(join(root, "index.md"));
+    await expect(scanVault(root, { index: "front.md" })).rejects.toThrow();
+    await expect(scanVault(root, { catalogMode: "managed" })).rejects.toThrow();
+    // A dangling link is not an absent front door and must not be adopted.
+    symlinkSync(join(root, "missing.md"), join(root, "index.md"));
+    await expect(scanVault(root)).rejects.toThrow();
+  });
+
   test("rejects the discovered note count before reading or parsing notes", async () => {
     const root = fixture();
     writeFileSync(join(root, "index.md"), "---\nmalformed: [\n---\n", "utf8");

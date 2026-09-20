@@ -1,10 +1,10 @@
 # wordcell
 
-> A knowledge base for coding agents, built from Markdown, backlinks,
-> semantic search, and Git context. Wordcell turns sources, plans, and
-> decisions into inspectable context that agents can recover across sessions
-> without coupling application code to the knowledge system. Markdown and Git
-> stay authoritative; every index is derived and rebuildable.
+> A local knowledge base for coding agents. Save decisions in Markdown, find
+> the notes behind a code change, and give the next session only the context
+> it needs. Exact search and graph queries run locally without an account or
+> model. Web capture, optional remote reranking, and hosted agents have separate
+> data-handling boundaries.
 
 When to use this site:
 - Use wordcell.io to learn what Wordcell is, the boundaries it keeps, and the
@@ -14,8 +14,8 @@ When to use this site:
 
 ## Pages
 
-- [Wordcell](https://wordcell.io/): Memory model, interfaces (CLI, TypeScript
-  SDK, Agent Skill), trust boundaries, questions, and the verified install.
+- [Wordcell](https://wordcell.io/): Quick start, measured context payloads, comparisons,
+  selected-note publishing, local-data boundaries, and the verified install.
 - [Documentation](https://wordcell.io/docs): The complete Wordcell README
   rendered as a page, including the install reference.
 
@@ -23,6 +23,9 @@ When to use this site:
 
 - Repository and packaged Agent Skill: https://github.com/hraness/wordcell
 - README as Markdown: https://github.com/hraness/wordcell/blob/main/README.md
+- Comparisons: https://github.com/hraness/wordcell/blob/main/docs/comparisons.md
+- Measured evidence: https://github.com/hraness/wordcell/blob/main/docs/evidence.md
+- Publish selected notes: https://github.com/hraness/wordcell/blob/main/docs/publish.md
 - Immutable releases: https://github.com/hraness/wordcell/releases
 - npm mirror: https://www.npmjs.com/package/@hraness/wordcell
 

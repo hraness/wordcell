@@ -9,7 +9,7 @@ import {
   MAX_VAULT_UTF8_BYTES,
   VaultScanBudgetError,
   scanVault
-} from "./index-0k2x4nn9.js";
+} from "./index-1tm7bgx7.js";
 
 // src/semantic.ts
 import { createHash as createHash2 } from "crypto";

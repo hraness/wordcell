@@ -1135,7 +1135,7 @@ function drawGraph(context, ratio, theme, view, points, titles, degrees, edges, 
   const labelEverywhere = points.length <= 48;
   for (const [index, point] of points.entries()) {
     const degree = degrees[index] ?? 0;
-    const radius = Math.min(9, 3 + degree * 0.8);
+    const radius = Math.min(9, 3 + degree * 0.8) * inv;
     const active = index === view.hover || index === view.focus || neighborFocus.has(index);
     context.beginPath();
     context.arc(point.x, point.y, radius, 0, Math.PI * 2);
@@ -1154,7 +1154,7 @@ function drawGraph(context, ratio, theme, view, points, titles, degrees, edges, 
     if (!labelEverywhere && !active && degree < 3)
       continue;
     context.fillStyle = active ? theme.fg : theme.muted;
-    context.fillText(titles[index] ?? "", point.x, point.y + Math.min(9, 3 + degree * 0.8) + 4 * inv);
+    context.fillText(titles[index] ?? "", point.x, point.y + (Math.min(9, 3 + degree * 0.8) + 4) * inv);
   }
 }
 function initGraph(base) {

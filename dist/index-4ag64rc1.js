@@ -12,7 +12,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-gnz1xzpa.js";
+} from "./index-avbce90h.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -39,7 +39,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-zpwqmf72.js";
+} from "./index-e6p9e926.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -48,7 +48,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-bcn9efk5.js";
+} from "./index-2hf27mws.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -59,7 +59,7 @@ import {
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
   sha256EmbeddingModelFile
-} from "./index-trgxvmy6.js";
+} from "./index-hcw140eb.js";
 import {
   MAX_RERANK_CANDIDATES
 } from "./index-j70m75wd.js";
@@ -72,7 +72,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-py7681h5.js";
+} from "./index-t2bs9xdr.js";
 import {
   MAX_PERCOLATION_MENTIONS,
   MAX_PERCOLATION_MENTION_PAIRS,
@@ -84,7 +84,7 @@ import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-7s6dytxy.js";
+} from "./index-famy7fhs.js";
 import {
   validateGraphQueryRequest
 } from "./index-11621h23.js";
@@ -96,13 +96,15 @@ import {
   sanitizeTerminalText
 } from "./index-1xxnjn0d.js";
 import {
+  DEFAULT_PUBLISH_LIST_LIMIT,
+  MAX_PUBLISH_LIST_LIMIT,
   publishVault,
   renderPublishReportText
-} from "./index-jsn2tmjz.js";
+} from "./index-0dqfnrz9.js";
 import {
   refreshVault,
   scanVault
-} from "./index-0k2x4nn9.js";
+} from "./index-1tm7bgx7.js";
 import {
   navigateLinks
 } from "./index-d13v9ckt.js";
@@ -1138,7 +1140,16 @@ async function loadSearchRulesFile(path) {
   }
   return parseSearchRules(input);
 }
-var usage = `wordcell \u2014 auditable capture and derived links for Markdown vaults
+var usage = `wordcell \u2014 a local knowledge base for coding agents
+
+Start here (no account or model needed):
+  wordcell init kb
+  wordcell note create notes/decision --title "A decision" --body "Keep retries bounded." --root kb
+  wordcell search "retries" --root kb --mode exact
+
+Already have Markdown? Search it with --root <your-notes-directory>.
+Use --mode exact for model-free search; optional hybrid search needs a local index.
+Quick start and examples: https://wordcell.io/docs
 
 Usage:
   wordcell init [directory] [--json]
@@ -1172,7 +1183,7 @@ Usage:
   wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
   wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
-  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--force] [--json]
+  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--include-glob <pattern>]... [--exclude-glob <pattern>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--list-limit <0-1000>] [--force] [--json]
   wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
@@ -1576,6 +1587,7 @@ function parsePublishCommand(arguments_) {
   let indexContent = true;
   let deterministic = false;
   let dryRun = false;
+  let listLimit = DEFAULT_PUBLISH_LIST_LIMIT;
   let force = false;
   let json = false;
   let from;
@@ -1583,6 +1595,8 @@ function parsePublishCommand(arguments_) {
   let direction = "both";
   const includes = [];
   const excludes = [];
+  const includeGlobs = [];
+  const excludeGlobs = [];
   const filters = [];
   const tags = [];
   const repositoryScopes = [];
@@ -1614,7 +1628,7 @@ function parsePublishCommand(arguments_) {
       force = true;
       continue;
     }
-    if (argument === "--root" || argument === "--out" || argument === "--index" || argument === "--title" || argument === "--description" || argument === "--base-path" || argument === "--base-url" || argument === "--include" || argument === "--exclude" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--from" || argument === "--depth" || argument === "--direction") {
+    if (argument === "--root" || argument === "--out" || argument === "--index" || argument === "--title" || argument === "--description" || argument === "--base-path" || argument === "--base-url" || argument === "--include" || argument === "--exclude" || argument === "--include-glob" || argument === "--exclude-glob" || argument === "--list-limit" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--from" || argument === "--depth" || argument === "--direction") {
       const value = readValue(arguments_, cursor);
       if (value === null)
         return { ok: false, message: `${argument} requires a value` };
@@ -1636,7 +1650,16 @@ function parsePublishCommand(arguments_) {
         includes.push(value);
       else if (argument === "--exclude")
         excludes.push(value);
-      else if (argument === "--from")
+      else if (argument === "--include-glob")
+        includeGlobs.push(value);
+      else if (argument === "--exclude-glob")
+        excludeGlobs.push(value);
+      else if (argument === "--list-limit") {
+        if (!/^(0|[1-9][0-9]*)$/u.test(value) || Number(value) > MAX_PUBLISH_LIST_LIMIT) {
+          return { ok: false, message: `--list-limit must be an integer from 0 through ${MAX_PUBLISH_LIST_LIMIT}` };
+        }
+        listLimit = Number(value);
+      } else if (argument === "--from")
         from = value;
       else if (argument === "--depth") {
         const parsed = Number(value);
@@ -1697,6 +1720,8 @@ function parsePublishCommand(arguments_) {
   const selection = {
     includes,
     excludes,
+    includeGlobs,
+    excludeGlobs,
     filters,
     tags,
     repositoryScopes,
@@ -1712,6 +1737,7 @@ function parsePublishCommand(arguments_) {
       indexContent,
       deterministic,
       dryRun,
+      listLimit,
       force,
       selection,
       json,
@@ -3548,6 +3574,7 @@ async function runPublish(command, output, dependencies) {
     indexContent: command.indexContent,
     deterministic: command.deterministic,
     dryRun: command.dryRun,
+    listLimit: command.listLimit,
     force: command.force,
     selection: command.selection,
     ...command.index === undefined ? {} : { index: command.index },

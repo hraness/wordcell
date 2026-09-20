@@ -124,7 +124,10 @@ repair them. All eight regressions remain in the report.
 The 5,886 requests used 3,307,096 reported input tokens and 129,492 output
 tokens, with no provider failures. Added reranking latency in this local run
 was median 1.782 seconds and p95 1.897 seconds at concurrency four. These are
-warm local measurements, not an end-to-end service guarantee.
+warm local measurements, not an end-to-end service guarantee. The run host
+was an Apple M4 Max with 128 GiB RAM, macOS 26.5.2, and Bun 1.3.14;
+that environment was checked after the run rather than captured in a frozen
+run receipt.
 
 See the [frozen result report](evaluations/wordcell-scifact-20260919.json).
 The public dataset can overlap model training data; it does not prove private
