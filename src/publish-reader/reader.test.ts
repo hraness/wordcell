@@ -7,7 +7,6 @@ beforeAll(async () => {
     entrypoints: [new URL("./reader.ts", import.meta.url).pathname],
     target: "browser",
     format: "iife",
-    write: false,
   });
   expect(bundle.success).toBe(true);
   readerCode = await bundle.outputs[0]!.text();
