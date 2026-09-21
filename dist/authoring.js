@@ -13,9 +13,9 @@ import {
   normalizeRelationPredicate,
   noteRevision,
   removeNoteRelation
-} from "./index-6sw24nvv.js";
+} from "./index-a2rp0wt3.js";
 import"./index-3rm7cz6h.js";
-import"./index-ekpwvbra.js";
+import"./index-qbssx940.js";
 import"./index-z1w83f81.js";
 export {
   removeNoteRelation,

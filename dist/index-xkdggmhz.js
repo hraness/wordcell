@@ -12,7 +12,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-avbce90h.js";
+} from "./index-bqtqeak3.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -39,7 +39,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-e6p9e926.js";
+} from "./index-1k595z6v.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -48,7 +48,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-2hf27mws.js";
+} from "./index-q7tbg07z.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -59,7 +59,7 @@ import {
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
   sha256EmbeddingModelFile
-} from "./index-hcw140eb.js";
+} from "./index-rr9kzq4n.js";
 import {
   MAX_RERANK_CANDIDATES
 } from "./index-j70m75wd.js";
@@ -72,25 +72,25 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-t2bs9xdr.js";
+} from "./index-djrcc1yf.js";
 import {
   MAX_PERCOLATION_MENTIONS,
   MAX_PERCOLATION_MENTION_PAIRS,
   MAX_PERCOLATION_NOTES,
   MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
   percolateVault
-} from "./index-nd6nynv2.js";
+} from "./index-jk1sgx36.js";
 import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-famy7fhs.js";
+} from "./index-xv80vzfp.js";
 import {
   validateGraphQueryRequest
-} from "./index-11621h23.js";
+} from "./index-tf4wzjew.js";
 import {
   validateSearchQuery
-} from "./index-gm9t95d9.js";
+} from "./index-vnybgywh.js";
 import {
   sanitizeTerminalLine,
   sanitizeTerminalText
@@ -100,11 +100,11 @@ import {
   MAX_PUBLISH_LIST_LIMIT,
   publishVault,
   renderPublishReportText
-} from "./index-0dqfnrz9.js";
+} from "./index-hmw17zaa.js";
 import {
   refreshVault,
   scanVault
-} from "./index-1tm7bgx7.js";
+} from "./index-233z9wmn.js";
 import {
   navigateLinks
 } from "./index-d13v9ckt.js";
@@ -141,12 +141,12 @@ import {
   addNoteRelation,
   createNote,
   removeNoteRelation
-} from "./index-6sw24nvv.js";
+} from "./index-a2rp0wt3.js";
 import {
   lookupNote,
   parseVaultKey,
   renderCatalog
-} from "./index-ekpwvbra.js";
+} from "./index-qbssx940.js";
 
 // src/clip/url-metadata-cli.ts
 import { resolve as resolve2 } from "path";

@@ -15,7 +15,7 @@ import {
   createSyntheticRankFusionFixture,
   evaluateRanking,
   evaluateRetrievalBenchmark
-} from "./index-qwgsmtsz.js";
+} from "./index-n386evxj.js";
 import {
   initVault
 } from "./index-23z4zxgg.js";
@@ -37,7 +37,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-e6p9e926.js";
+} from "./index-1k595z6v.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -50,7 +50,7 @@ import {
   packUntrustedSearchContext,
   searchEvidenceRank,
   validateKnowledgeBaseSearchHistory
-} from "./index-2hf27mws.js";
+} from "./index-q7tbg07z.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -67,7 +67,7 @@ import {
   searchSemanticVault,
   semanticDatabasePath,
   sha256EmbeddingModelFile
-} from "./index-hcw140eb.js";
+} from "./index-rr9kzq4n.js";
 import"./index-4j3tt0c3.js";
 import {
   MAX_RERANK_CANDIDATES,
@@ -94,7 +94,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-t2bs9xdr.js";
+} from "./index-djrcc1yf.js";
 import {
   DEFAULT_PERCOLATION_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
@@ -115,19 +115,19 @@ import {
   parsePercolationResultV1,
   parsePercolationResultV2,
   percolateVault
-} from "./index-nd6nynv2.js";
+} from "./index-jk1sgx36.js";
 import {
   createGraphSnapshot,
   openGraphAuthority,
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-famy7fhs.js";
+} from "./index-xv80vzfp.js";
 import {
   GRAPH_LIMITS,
   GraphAuthorityError,
   validateGraphQueryRequest
-} from "./index-11621h23.js";
+} from "./index-tf4wzjew.js";
 import {
   GitHistoryError,
   MAX_GIT_HISTORY_COMMITS,
@@ -154,7 +154,7 @@ import {
   fuseRankedCandidates,
   searchExactVault,
   validateSearchQuery
-} from "./index-gm9t95d9.js";
+} from "./index-vnybgywh.js";
 import"./index-1xxnjn0d.js";
 import {
   DEFAULT_PUBLISH_LIST_LIMIT,
@@ -167,7 +167,7 @@ import {
   publishVault,
   renderPublishReportText,
   serializeSiteFile
-} from "./index-0dqfnrz9.js";
+} from "./index-hmw17zaa.js";
 import {
   MAX_NOTE_UTF8_BYTES,
   MAX_SCANNED_NOTES,
@@ -178,7 +178,7 @@ import {
   readVaultNotes,
   refreshVault,
   scanVault
-} from "./index-1tm7bgx7.js";
+} from "./index-233z9wmn.js";
 import {
   MAX_NAVIGATION_INDEXED_CONNECTIONS,
   MAX_NAVIGATION_RETURNED_CONNECTIONS,
@@ -294,7 +294,7 @@ import {
   normalizeRelationPredicate,
   noteRevision,
   removeNoteRelation
-} from "./index-6sw24nvv.js";
+} from "./index-a2rp0wt3.js";
 import"./index-3rm7cz6h.js";
 import {
   MAX_ANALYZED_NOTES,
@@ -315,7 +315,7 @@ import {
   replaceCatalog,
   searchableMarkdown,
   wikiLinks
-} from "./index-ekpwvbra.js";
+} from "./index-qbssx940.js";
 import"./index-z1w83f81.js";
 // src/oh-adoption.ts
 import { createHash } from "crypto";

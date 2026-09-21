@@ -7,7 +7,7 @@ import {
   isCanonicalRelationPredicate,
   parseDocumentId,
   parseQualifiedDocumentUri
-} from "./index-ekpwvbra.js";
+} from "./index-qbssx940.js";
 
 // src/authoring-model.ts
 import { createHash } from "crypto";

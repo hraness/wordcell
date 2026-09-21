@@ -8,7 +8,7 @@ import {
   parseNote,
   renderCatalog,
   replaceCatalog
-} from "./index-ekpwvbra.js";
+} from "./index-qbssx940.js";
 
 // src/vault.ts
 import { randomUUID } from "crypto";

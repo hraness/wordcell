@@ -374,8 +374,7 @@ function aliasesFromMetadata(metadata) {
   return value.filter((candidate) => typeof candidate === "string" && candidate.trim() !== "");
 }
 function frontmatterOf(content, path) {
-  const lines = content.split(`
-`);
+  const lines = content.split(/\r?\n/u);
   if (lines[0]?.trim() !== "---") {
     return {
       values: new Map,

@@ -5,7 +5,7 @@ import {
 import {
   isCanonicalNoteId,
   isCanonicalRelationPredicate
-} from "./index-ekpwvbra.js";
+} from "./index-qbssx940.js";
 
 // src/graph-authority-model.ts
 var GRAPH_LIMITS = Object.freeze({

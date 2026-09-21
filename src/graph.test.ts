@@ -49,6 +49,25 @@ describe("note parsing", () => {
     expect(note.links).toEqual([{ target: "notes/agents", line: 9, embedded: false }]);
   });
 
+  test("parses CRLF frontmatter without corrupting the final line", () => {
+    const flow = parseNote("notes/flow.md", [
+      "---",
+      'title: "Flow"',
+      "repository_scopes: [packages/parser]",
+      "---",
+      "# Body",
+    ].join("\r\n"));
+    expect(flow.metadata.repository_scopes).toEqual(["packages/parser"]);
+    const scalar = parseNote("notes/scalar.md", [
+      "---",
+      'title: "Scalar"',
+      "type: note",
+      "---",
+      "# Body",
+    ].join("\r\n"));
+    expect(scalar.properties.type).toBe("note");
+  });
+
   test("keeps commas inside quoted inline aliases", () => {
     const note = parseNote("notes/person.md", [
       "---",

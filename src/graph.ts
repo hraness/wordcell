@@ -608,7 +608,7 @@ function aliasesFromMetadata(metadata: MetadataObject): readonly string[] {
 }
 
 function frontmatterOf(content: string, path: string): Frontmatter {
-  const lines = content.split("\n");
+  const lines = content.split(/\r?\n/u);
   if (lines[0]?.trim() !== "---") {
     return {
       values: new Map(),
