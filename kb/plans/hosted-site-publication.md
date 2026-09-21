@@ -199,7 +199,9 @@ Two findings worth the record:
   is not yet a `suite-accounts` consumer: mint self-serve, store only the
   digest, let the digest own the namespace. Accounts OIDC stays the upgrade
   path.
-- Follow-ups remain open by design: the `skills/wordcell/` hosted-publish
-  reference and the MCP adapter (`wordcell.publish_site` et al.) are the
-  next changes once this REST shape settles; the evidence pack lives at
+- Follow-ups landed after the REST shape settled: the `skills/wordcell/`
+  hosted-publish reference and the MCP adapter shipped as `POST /api/v1/mcp`
+  (stateless JSON-RPC over the identical route handlers — `create_token`,
+  `publish_site`, `list_sites`, `delete_site`) and were live-verified,
+  including an upload-consuming publish. The evidence pack lives at
   `docs/platform-submission.md`.
