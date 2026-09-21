@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@hraness/ui/styles.css";
 @import "@hraness/design-kit/fonts.css";
+@import "@hraness/design-kit/components.css";
 @import "@hraness/design-kit/product-marketing.css";
 @import "@hraness/design-kit/palettes.css";
 
