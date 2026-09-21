@@ -1,10 +1,15 @@
 # Wordcell website identity
 
-The 📝 identity follows the owner’s September 13, 2026 identity selection. Header marks use the native emoji; browser and touch icons use the supplied PNG artwork.
+The header switches from the opaque `public/icon.png` favicon to the checked transparent `public/marks/kb.svg` artwork adopted
+in PR #83. `MarketingSiteHeader` paints metallic foil with a subtle rainbow
+reflection on that original silhouette and the Wordcell name. The image remains
+as the fallback when masking is unavailable or forced colors are active; the
+enclosing home link names the product once.
 
-The supplied PNGs are the website’s checked artwork. Preserve their bytes when updating other branding.
+Preserve the mark geometry and the browser/touch PNG bytes. The header uses the
+transparent SVG instead of the opaque favicon; the content footer retains its
+existing image. The `kb` asset filename is the catalog’s stable product key.
 
-| File | Size | SHA-256 |
-| --- | --- | --- |
-| icon.png | 512×512 | `54f4dae5c7342afb662b121e871ff3fb083ee6308833ef911eb41d2ecd50a605` |
-| apple-icon.png | 180×180 | `fc9a27a056f38ff4a4450b547333bcb49490952c929402ed4c3e481227d1c446` |
+| File | SHA-256 |
+| --- | --- |
+| marks/kb.svg | `0558395c7a0e4abf94735c710a23ff9348be623fca5bc0587b3d41552a63711f` |

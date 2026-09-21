@@ -133,10 +133,6 @@ const navigation = [
   { href: repository, label: "GitHub" },
 ] as const;
 
-function BrandMark() {
-  return <img alt="" height={20} src="/icon.png" width={20} />;
-}
-
 export default function Home() {
   const structuredData = [
     {
@@ -171,7 +167,8 @@ export default function Home() {
       <MarketingSiteHeader
         className="hraness-material-chrome"
         action={{ href: "#install", label: "Install Wordcell" }}
-        brand={<><BrandMark />Wordcell</>}
+        brand="Wordcell"
+        brandMark="/marks/kb.svg"
         brandLabel="Wordcell home"
         links={navigation}
         trailing={<ThemeMenuButton aria-label="Appearance" />}

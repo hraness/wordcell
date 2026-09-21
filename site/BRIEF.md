@@ -38,13 +38,13 @@ frame. Code remains selectable and keyboard-scrollable.
 This is an adoption of the user-approved shared appearance, not a new concept
 round. `data-hraness-marketing-preset="editorial"` is local to the homepage and
 encloses its header and main content. `/docs` retains its README reading type
-and layout. Existing kit/UI versions and the Paper snapshot are unchanged; the
+and layout. The Paper snapshot is unchanged; the
 separate marketing snapshot carries its own immutable source and file hashes.
 
 ## FINISH
 
 Check actual desktop and phone layouts in both themes, including command
-readability, navigation fit, focus, section anchors, and the canonical square wall without any texture on the product mark. Keep README synchronization, published-release validation, and
+readability, navigation fit, focus, section anchors, and the canonical square wall and the product mark’s silhouette. Keep README synchronization, published-release validation, and
 stylesheet delivery checks. The integration owner runs final repository and
 production gates; this brief records requirements, not their completion.
 
@@ -68,3 +68,12 @@ source/home/style tests, and focused lint before the integration owner runs the
 required final gates. Native review must cover desktop and phone, both palettes,
 header blur and opaque fallback, readable proof, open questions and keyboard
 focus; earlier System-only dark captures do not establish light coverage.
+
+
+## METALLIC HEADER
+
+The header name and transparent product mark use the shared design-kit metallic
+foil treatment with a subtle rainbow reflection. Keep the original vector
+geometry, an accessible home link, and the image fallback for forced colors or
+unavailable masks. Static paint must remain legible without hover or animation.
+Browser/touch icons and the content footer retain their existing artwork.

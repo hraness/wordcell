@@ -21,8 +21,8 @@
     "check": "bun run check:theme && bun run sync:readme && bun run build:theme && bun run test && bun run lint && bun run typecheck && bun run build"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.10.0",
-    "@hraness/ui": "github:hraness/ui#v0.5.13",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.11.1",
+    "@hraness/ui": "github:hraness/ui#v0.5.16",
     "next": "16.3.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
