@@ -35,7 +35,7 @@ selected.
 | Create or update an implementation plan, proposal, RFC, migration plan, execution audit, or phased checklist in the vault | [Write a durable plan](references/plan.md) and [use its structure](references/plan-structure.md) |
 | Review recurring ideas, promote concepts, or add and verify typed relationships | [Percolate concepts and relationships](references/percolate.md) |
 | Refresh or validate the catalog, graph, attachments, repository scopes, context mappings, or overall vault health | [Refresh and check the knowledge base](references/refresh.md) |
-| Publish a vault or a selected subsection as a hosted read-only static site with browser-local search | [Publish a static site](references/publish.md) |
+| Publish a vault or a selected subsection as a hosted read-only static site with browser-local search — locally via `wordcell publish`, or over the wordcell.io REST/MCP surface when no filesystem or Bun runtime is available | [Publish a static site](references/publish.md) |
 
 Read more than one primary reference only when the request spans those
 workflows. For example, saving a source and linking it from a maintained note

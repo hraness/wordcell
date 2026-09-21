@@ -9,7 +9,8 @@ consumer. Every claim below was exercised against production on 2026-09-21.
 | Fact | Value |
 | --- | --- |
 | Base URL | `https://wordcell.io` |
-| OpenAPI 3.1 | `GET /api/v1/openapi.json` (5 paths) |
+| OpenAPI 3.1 | `GET /api/v1/openapi.json` (6 paths) |
+| MCP | `POST /api/v1/mcp` — streamable HTTP; `create_token`, `publish_site`, `list_sites`, `delete_site` |
 | Health | `GET /api/v1/health` → `{"ok":true,"storage":true,"artifact":"hraness.wordcell.site.v1"}` |
 | Auth | `POST /api/v1/tokens` → `wc_pub_…` bearer; digest-only storage |
 | Publish | `PUT /api/v1/sites/{slug}` → `{url, digest, revision}` |
@@ -57,10 +58,11 @@ consumer. Every claim below was exercised against production on 2026-09-21.
 
 ## Per-platform readiness
 
-- **Muse / Instinct-class / Grok-style**: the REST + OpenAPI surface is live
-  and verified; an MCP adapter (`wordcell.publish_site`,
-  `wordcell.list_sites`, `wordcell.unpublish`) is the planned follow-up —
-  REST is sufficient for platforms that consume OpenAPI or raw HTTP.
+- **Muse / Instinct-class / Grok-style**: REST + OpenAPI live and verified;
+  MCP clients use `POST /api/v1/mcp` (`create_token`, `publish_site`,
+  `list_sites`, `delete_site`) — a stateless streamable-HTTP adapter that
+  dispatches to the identical route logic, so auth, bounds, and quotas are
+  the same surface.
 - **Direct HTTP**: ready now.
 
 ## Not yet evidenced

@@ -91,3 +91,37 @@ local build alone is not a live deployment.
 
 The full artifact contract and hosting options are in
 [the publishing guide](https://github.com/hraness/wordcell/blob/main/docs/publish.md).
+
+## Publish through wordcell.io when the CLI cannot run
+
+Agents on platforms without a filesystem or Bun runtime can publish the same
+`hraness.wordcell.site.v1` artifact through the hosted surface. It runs the
+identical projection server-side; published sites are public.
+
+```sh
+# Self-serve capability token (IP-limited; shown once — store it).
+TOKEN=$(curl -sf -X POST https://wordcell.io/api/v1/tokens \
+  -H 'content-type: application/json' -d '{"label":"my-agent"}' | jq -r .token)
+
+# Publish a vault as a files map: path -> utf8 string, {"base64":"..."}, or
+# {"upload":"<id>"} from POST /api/v1/uploads for larger assets.
+curl -sf -X PUT "https://wordcell.io/api/v1/sites/my-notes" \
+  -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+  -d '{"files":{"index.md":"# Notes\n","a.md":"# A\n"},"title":"My notes"}'
+# -> {"site":{"url":"https://wordcell.io/p/<key8>/my-notes/",...},"idempotent":false}
+```
+
+`GET /api/v1/sites` lists the token's sites and `DELETE /api/v1/sites/{slug}`
+unpublishes. Identical bytes republish idempotently without a revision bump;
+changed bytes sweep the superseded artifact. Deletes and republishes can take
+up to 60 seconds to propagate at the edge. MCP clients can instead point at the
+streamable-HTTP endpoint `POST https://wordcell.io/api/v1/mcp`, which exposes
+`create_token`, `publish_site`, `list_sites`, and `delete_site` tools over the
+same routes — `create_token` is unauthenticated so an MCP-only client can
+onboard itself. `GET /api/v1/openapi.json` describes the REST surface.
+
+The hosted surface carries the same selection semantics (`selection` mirrors
+the CLI selectors) and the same redaction warning: `publish: false` excludes a
+note, it does not erase text quoted elsewhere. Bounded inputs apply — at most
+256 files and 4 MiB inline per publish, 32 MiB per uploaded asset, 50 live
+sites per token.

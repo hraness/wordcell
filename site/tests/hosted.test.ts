@@ -12,6 +12,7 @@ import {
   projectHostedVault,
 } from "../lib/hosted/publish";
 import { HOSTED_PACKAGE_VERSION } from "../lib/hosted/reader.generated";
+import { POST as mcpPost } from "../app/api/v1/mcp/route";
 import { access } from "node:fs/promises";
 
 const enc = (value: string) => new TextEncoder().encode(value);
@@ -195,5 +196,63 @@ describe("projectHostedVault", () => {
       await first.cleanup();
       await second.cleanup();
     }
+  });
+});
+
+describe("mcp adapter", () => {
+  const rpc = (payload: unknown) =>
+    mcpPost(new Request("https://wordcell.io/api/v1/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: typeof payload === "string" ? payload : JSON.stringify(payload),
+    }));
+
+  test("initialize and tools/list describe the connector tools", async () => {
+    const init = await rpc({ jsonrpc: "2.0", id: 1, method: "initialize" });
+    expect(init.status).toBe(200);
+    const initBody = await init.json() as { result: { protocolVersion: string } };
+    expect(initBody.result.protocolVersion).toBe("2025-11-25");
+
+    const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list" });
+    const { tools } = (await list.json() as { result: { tools: Array<{ name: string }> } }).result;
+    expect(tools.map((tool) => tool.name).sort()).toEqual([
+      "create_token", "delete_site", "list_sites", "publish_site",
+    ]);
+  });
+
+  test("notifications return 202 and malformed frames are JSON-RPC errors", async () => {
+    const notification = await rpc({ jsonrpc: "2.0", method: "notifications/initialized" });
+    expect(notification.status).toBe(202);
+    const badJson = await rpc("not json{");
+    expect((await badJson.json() as { error: { code: number } }).error.code).toBe(-32700);
+    const noMethod = await rpc({ jsonrpc: "2.0", id: 3 });
+    expect((await noMethod.json() as { error: { code: number } }).error.code).toBe(-32600);
+    const unknown = await rpc({ jsonrpc: "2.0", id: 4, method: "resources/list" });
+    expect((await unknown.json() as { error: { code: number } }).error.code).toBe(-32601);
+  });
+
+  test("tools/call dispatches to the REST surface and reports isError on failure", async () => {
+    // With no hosted config the underlying route fails closed; the MCP layer
+    // still returns a well-formed tool result carrying the REST error body.
+    const call = await rpc({
+      jsonrpc: "2.0", id: 5, method: "tools/call",
+      params: { name: "list_sites", arguments: {} },
+    });
+    expect(call.status).toBe(200);
+    const body = await call.json() as {
+      result: { isError?: boolean; structuredContent?: { error?: { code?: string } } };
+    };
+    expect(body.result.isError).toBe(true);
+    expect(body.result.structuredContent?.error?.code).toBeDefined();
+
+    const unknownTool = await rpc({
+      jsonrpc: "2.0", id: 6, method: "tools/call",
+      params: { name: "drop_table", arguments: {} },
+    });
+    const unknownBody = await unknownTool.json() as {
+      result: { isError?: boolean; structuredContent?: { error?: { code?: string } } };
+    };
+    expect(unknownBody.result.isError).toBe(true);
+    expect(unknownBody.result.structuredContent?.error?.code).toBe("UNKNOWN_TOOL");
   });
 });
