@@ -32,6 +32,14 @@ consumer. Every claim below was exercised against production on 2026-09-21.
   objects were swept.
 - `GET /api/v1/sites` listed the caller's sites; `DELETE` unpublished —
   the public URL returns 404 (worker immediately, edge after ≤60s cache TTL).
+- `POST /api/v1/mcp` answered `tools/list` with `create_token`, `publish_site`,
+  `list_sites`, `delete_site`; `create_token` minted a working `wc_pub_` token
+  through the adapter; `publish_site` consumed a `{"upload": id}` asset,
+  `list_sites` reported the revision, and `delete_site` unpublished it.
+- `POST /api/v1/uploads` minted a presigned PUT; raw bytes uploaded to the
+  signed URL; `publish_site` consumed `{"upload": id}` and the asset served
+  byte-identical under `assets/<digest>.png` on both worker-direct and CDN
+  reads.
 - Unauthenticated `PUT` returns 401.
 
 ## Submission-form facts
@@ -67,8 +75,5 @@ consumer. Every claim below was exercised against production on 2026-09-21.
 
 ## Not yet evidenced
 
-- The `{"upload": id}` path is unit-tested and the presigned-PUT machinery is
-  live-verified on the worker, but an end-to-end publish *consuming* an
-  uploaded binary through `wordcell.io` has not been run.
 - Vaults near the intake bounds (256 files / 4 MiB) are enforced by tests but
   not exercised at the limit live.
