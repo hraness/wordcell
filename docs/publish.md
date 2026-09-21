@@ -253,6 +253,66 @@ server works for previews too:
 python3 -m http.server --directory site 8080
 ```
 
+## Host on wordcell.io
+
+`wordcell.io` also publishes a vault for you: the API runs the same projection
+server-side and serves the emitted artifact at `https://wordcell.io/p/<key8>/<slug>/`.
+This path exists for agents and machines that cannot hold files or deploy a
+static host; the CLI remains the primary publication path, and the artifact
+contract is identical either way.
+
+```sh
+curl -s -X POST https://wordcell.io/api/v1/tokens -d '{"label":"my agent"}'
+# → { "ok": true, "token": "wc_pub_…", "key8": "…", "urlBase": "…/p/<key8>/" }
+
+curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
+  -H "Authorization: Bearer wc_pub_…" -H "content-type: application/json" -d '{
+    "title": "Team Handbook",
+    "files": {
+      "index.md": "# Handbook\n\nStart with [[onboarding]].\n",
+      "onboarding.md": "# Onboarding\n\nWelcome.\n",
+      "assets/logo.png": {"upload": "<id from POST /api/v1/uploads>"}
+    }
+  }'
+# → { "ok": true, "site": { "url": "https://wordcell.io/p/<key8>/handbook/", … } }
+```
+
+- **Tokens are capability tokens.** `POST /api/v1/tokens` is self-serve and
+  free, bounded per client address. The server stores only the token's SHA-256
+  digest; the digest's first 8 hex chars form the site namespace, so a token
+  can only create or replace its own sites. There is no account and no device
+  flow at this stage.
+- **Files** map vault-relative paths to a UTF-8 string, `{"base64": "…"}`, or
+  `{"upload": "<id>"}`. Uploads come from `POST /api/v1/uploads`, which mints a
+  short-lived presigned PUT (≤32 MiB); unreferenced uploads expire after a day.
+  Inline bytes are capped at 4 MiB per request, 256 files per request.
+- **Options** (`title`, `description`, `index`, `noindex`, `indexContent`,
+  `selection`) mirror the CLI flags; `selection` accepts the same
+  includes/excludes/globs/tags/repositoryScopes/filters/from shape. `index`
+  selects the vault's index note path when it is not `index.md`.
+- **Idempotent and atomic.** Emitted bytes are stored under a content digest;
+  republishing identical output is a no-op. The public slug pointer moves only
+  after every artifact object is durable, so a failed publish never leaves a
+  half-updated site. `GET` returns the site record; `DELETE` unpublishes it and
+  removes the artifact objects.
+- **Bounds.** Hosted publication accepts ≤256 files per request, applies the
+  contract's per-note and per-asset byte caps, and rejects projected output
+  over 3,500 files or 256 MiB. Tokens get 60 publishes and 50 live sites per
+  day-scale quota; addresses get 8 token mints and 120 publishes per day.
+  Public reads carry no quota beyond ordinary CDN caching.
+- **Data.** The request vault is materialized to a temporary directory for the
+  projection and deleted when the request ends; only the emitted artifact
+  persists. Quota counters expire within two days; token digests, site records,
+  and slug pointers persist until the site is deleted. Published sites are
+  public by contract — never publish private content.
+
+`GET /api/v1/openapi.json` returns the OpenAPI 3.1 description;
+`GET /api/v1/health` reports service and storage health. The storage layer is
+a private Cloudflare R2 bucket behind the `wordcell-sites` worker — object
+reads and writes are HMAC-signed, and the public `/p/` path resolves the slug
+pointer to immutable artifact bytes with directory-index and `404.html`
+semantics identical to `wordcell serve`.
+
 ## Programmatic use
 
 `publishVault` drives the filesystem pipeline; `projectVault` projects an

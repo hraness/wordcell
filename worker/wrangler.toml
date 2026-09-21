@@ -1,0 +1,12 @@
+name = "wordcell-sites"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# Private object store for hosted site publication (docs/publish.md). Site
+# artifacts are immutable and digest-addressed under s/; live slug pointers
+# live under m/; uploads under up/ and device-flow state under dev/ expire via
+# bucket lifecycle rules. Public reads resolve m/ -> s/ on /p/{key8}/{slug}/.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "wordcell-sites"

@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "bun run check",
   "framework": "nextjs",
-  "installCommand": "bun install --frozen-lockfile --ignore-scripts"
+  "installCommand": "bun install --frozen-lockfile --ignore-scripts",
+  "rewrites": [
+    {
+      "source": "/p/:path*",
+      "destination": "https://wordcell-sites.972abc65.workers.dev/p/:path*"
+    }
+  ]
 }
