@@ -294,7 +294,8 @@ curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
   republishing identical output is a no-op. The public slug pointer moves only
   after every artifact object is durable, so a failed publish never leaves a
   half-updated site. `GET` returns the site record; `DELETE` unpublishes it and
-  removes the artifact objects.
+  removes the artifact objects. Public reads are CDN-cached for up to 60
+  seconds, so a republish or delete can take that long to become visible.
 - **Bounds.** Hosted publication accepts ≤256 files per request, applies the
   contract's per-note and per-asset byte caps, and rejects projected output
   over 3,500 files or 256 MiB. Tokens get 60 publishes and 50 live sites per
