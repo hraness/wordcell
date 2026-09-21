@@ -3,7 +3,7 @@ title: Hosted site publication
 description: Accept a bounded vault over HTTPS, project it server-side into the hraness.wordcell.site.v1 contract, and serve it from wordcell.io — the soulscrape-style publishing surface that lets cloud agents publish without the local CLI.
 type: plan
 area: publication
-status: proposed
+status: in-progress
 tags:
   - publishing
   - hosted-api
@@ -57,17 +57,25 @@ natively — no catch-all workaround needed.
   sha256 of the canonical emitted file set. Republishing identical vault
   bytes returns the same site record without a rewrite; revision N replaces
   the served pointer only after the new artifact is durably stored.
-- **Admission mirrors soulscrape.** Publishing is a write and writes go
-  through Hraness Accounts sign-in plus the device flow. Tokens are stored
-  as digests; the caller's bearer token never persists. Anonymous requests
-  get `401` with the `/connect` instructions, not a quota.
-- **Namespace**: `wordcell.io/p/<username>/<slug>/` — same public-by-contract
+- **Admission is capability tokens, not Accounts.** Wordcell is not a
+  registered `@hraness/suite-accounts` consumer — OIDC sign-in would need a
+  cross-repo registry change and issuer-side client registration that cannot
+  be live-verified here. Instead `POST /api/v1/tokens` mints a `wc_pub_`
+  bearer self-serve (IP-bounded); the server stores only its SHA-256 digest,
+  and the digest's first 8 hex chars own the site namespace. Published sites
+  are public artifacts, so token-keyed ownership plus IP quotas is the honest
+  bound; suite-accounts OIDC remains the documented upgrade path when the
+  consumer registration lands.
+- **Namespace**: `wordcell.io/p/<key8>/<slug>/` — same public-by-contract
   posture as soulscrape person indexes; emitted pages may set `noindex` only
   when the caller asks for it, never to hide public content.
-- **Object storage over the Convex path**: the emitted file set is immutable
-  by digest, so R2 (or the `slopcamera-objects`-style bound-worker proxy, no
-  S3 credentials) serves bytes; Convex keeps only the site record —
-  `{owner, slug, digest, createdAt, byteCount}` — bounded per account.
+- **R2 holds everything — no Convex.** The emitted file set is immutable by
+  digest, and the control plane (token digests, site records, slug pointers,
+  daily quota counters) is a handful of small JSON objects in the same
+  bucket behind the `wordcell-sites` worker — the `slopcamera-objects`
+  pattern: HMAC-signed ops on the bound worker, zero S3 credentials, zero
+  database spend. `s/<key8>/<digest>/` keys are owner-scoped so a delete or
+  republish sweep can never remove another namespace's identical bytes.
 - **Bounds are tighter than the local contract.** Hosted intake caps the
   vault at a small fixed budget (order: 512 files, 32 MiB total, per-file
   inline cap; larger attachments via a presigned upload reference) even
@@ -96,28 +104,37 @@ natively — no catch-all workaround needed.
 ## Work
 
 1. `site/app/api/v1/sites/[slug]/route.ts` — `PUT` accepts the bounded file
-   map, runs `publishVault` against an in-memory `PublishIo`, stores the
-   artifact, and returns `{url, digest, revision}`; `DELETE` unpublishes;
-   `GET` returns the record. `GET /api/v1/openapi.json` describes all three.
-2. In-memory `PublishIo` adapter: `readAsset` resolves from the posted map or
-   a fetched upload object; `resolveAssetPath` confines targets to the map's
-   namespace. Projection runs exactly the shipped `src/publish.ts` code path
-   — no fork.
-3. Convex schema: `sites` (owner, slug, digest, bytes, created), digest-only
-   token store, device-flow tables — mirroring soulscrape's `site/convex/`
-   shape, minus person-index specifics.
-4. Object storage: new R2 bucket `wordcell-sites` (or a shared
-   `hraness-objects` worker with per-product namespaces); `s/<digest>/<path>`
-   keys; public reads stream through `app/p/[username]/[slug]/[...path]` which
-   resolves the site record and serves bytes with the emitted content types.
-5. Device flow: `POST /api/v1/device/start|poll` + the `/connect` page,
-   digesting tokens like soulscrape.
+   map, runs the projection server-side, stores the artifact, and returns
+   `{url, digest, revision}`; `DELETE` unpublishes; `GET` returns the record.
+   `GET /api/v1/sites` lists the caller's sites; `GET /api/v1/openapi.json`
+   and `GET /api/v1/health` describe the surface.
+2. Projection via `projectVault`, not `publishVault` — the packaged
+   `publishVault` defaults to `findKbPackageRoot()` on `import.meta.dir`
+   (Bun-only). The hosted route materializes the request vault to a
+   temporary directory, runs `scanVault` + `validateMarkdownAttachments` +
+   `projectVault` with an injected `PublishIo` (reader files synced from the
+   pinned release into `lib/hosted/reader.generated.ts`), and collects
+   emitted files from memory. Exactly the shipped pipeline — no fork.
+3. `worker/` — the `wordcell-sites` Cloudflare Worker bound to the
+   `wordcell-sites` R2 bucket: HMAC-signed PUT/GET/HEAD/DELETE/LIST for the
+   API, plus the unsigned `/p/<key8>/<slug>/` read path that resolves the
+   `m/` pointer and serves `s/<key8>/<digest>/` bytes with directory-index
+   and `404.html` semantics identical to `wordcell serve`. Lifecycle rules
+   expire `up/` uploads and `q/` quota counters; `s/`, `m/`, `sites/`,
+   `tok/` persist.
+4. Public reads reach the worker through a `site/vercel.json` rewrite of
+   `/p/:path*` — zero Next.js compute on the read path, ordinary CDN
+   caching in front.
+5. `POST /api/v1/tokens` mints capability tokens; `POST /api/v1/uploads`
+   mints presigned PUTs (≤32 MiB) for binary assets referenced as
+   `{"upload": id}` in the files map.
 6. Skill update: `skills/wordcell/` gains a hosted-publish reference —
    assemble a vault, `PUT`, get the URL — for cloud agents that never install
-   the CLI. Local `wordcell publish` is unchanged.
-7. `costs.json` (or the site-side registry equivalent) gains the sites table,
-   the bucket, the device-flow tables, and the per-route meters.
-8. Evidence pack in `docs/` mirroring slopcamera's `platform-submission.md`.
+   the CLI. Local `wordcell publish` is unchanged. (Follow-up change.)
+7. `docs/publish.md` documents the hosted surface — bounds, retention,
+   auth posture, and the storage layout.
+8. Evidence pack in `docs/` mirroring slopcamera's `platform-submission.md`
+   once the live endpoint is verified.
 
 ## Verification
 
