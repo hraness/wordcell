@@ -5,7 +5,7 @@ import {
   isCanonicalNoteId,
   isCanonicalRelationPredicate,
   lookupNote
-} from "./index-ekpwvbra.js";
+} from "./index-qbssx940.js";
 
 // src/percolate.ts
 import { createHash } from "crypto";

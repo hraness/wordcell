@@ -7,7 +7,7 @@ import {
 import {
   openSemanticSearchSession,
   recommendedEmbeddingModel
-} from "./index-hcw140eb.js";
+} from "./index-rr9kzq4n.js";
 import {
   UntrustedContentBudgetError,
   createUntrustedToolResult
@@ -19,14 +19,14 @@ import {
 } from "./index-j70m75wd.js";
 import {
   percolateWithGraph
-} from "./index-t2bs9xdr.js";
+} from "./index-djrcc1yf.js";
 import {
   openGraphAuthority
-} from "./index-famy7fhs.js";
+} from "./index-xv80vzfp.js";
 import {
   validateGraphPercolationOptions,
   validateGraphQueryRequest
-} from "./index-11621h23.js";
+} from "./index-tf4wzjew.js";
 import {
   GitHistoryError,
   gitHistoryForNotes,
@@ -41,10 +41,10 @@ import {
   fuseRankedCandidates,
   searchExactVault,
   validateSearchQuery
-} from "./index-gm9t95d9.js";
+} from "./index-vnybgywh.js";
 import {
   scanVault
-} from "./index-1tm7bgx7.js";
+} from "./index-233z9wmn.js";
 import {
   NavigationBudgetError,
   navigateLinks
@@ -54,7 +54,7 @@ import {
 } from "./index-48pz4jpc.js";
 import {
   lookupNote
-} from "./index-ekpwvbra.js";
+} from "./index-qbssx940.js";
 
 // src/sdk.ts
 import { resolve } from "path";
