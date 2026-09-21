@@ -9,6 +9,8 @@
 - `kb/` – this source repository's authored rationale, maintained synthesis, and implementation plans; it is separate from the package's graph implementation and fixtures.
 - `WRITING.md` and `STYLE.md` – internal and public prose contracts.
 - `docs/` – design, capture, and agent-workflow documentation.
+- `site/` – the wordcell.io Next.js site: marketing/docs pages plus the hosted publication API under `app/api/v1/` (capability tokens, bounded vault intake, server-side projection, digest-addressed artifact storage) and the `lib/hosted/` server modules.
+- `worker/` – the `wordcell-sites` Cloudflare Worker holding the R2 bucket binding: signed-object operations for the API and the public `/p/<key8>/<slug>/` read path.
 - `.github/workflows/` – read-only branch validation, canonical attested immutable GitHub Releases with automatic npm publication of the same bytes, and the wordcell.io site build.
 - `portfolio-inventory.json`, `scripts/check-portfolio-inventory.ts`, and `scripts/check-installed-command-docs.ts` – canonical public package inventory and standalone public-command consistency gates.
 - `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `LICENSE` – public usage, project policy, threat model, and terms.

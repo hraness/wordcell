@@ -76,7 +76,7 @@ jobs:
           bun-version: "1.3.14"
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run check
-      - run: git diff --exit-code -- app/readme.generated.ts bun.lock
+      - run: git diff --exit-code -- app/readme.generated.ts lib/hosted/reader.generated.ts bun.lock
 
   required:
     name: Required
