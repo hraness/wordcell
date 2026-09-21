@@ -3,7 +3,7 @@ title: Hosted site publication
 description: Accept a bounded vault over HTTPS, project it server-side into the hraness.wordcell.site.v1 contract, and serve it from wordcell.io — the soulscrape-style publishing surface that lets cloud agents publish without the local CLI.
 type: plan
 area: publication
-status: in-progress
+status: completed
 tags:
   - publishing
   - hosted-api
@@ -155,3 +155,51 @@ Unpublish is a record delete; the digest-addressed objects are garbage under
 the bucket lifecycle or an explicit sweep of unreferenced digests. A bad
 revision is reverted by repointing `slug` to the prior digest — emitted
 objects are immutable, so rollback is a record write.
+
+## Result
+
+Shipped and verified live on `wordcell.io` (PR #92, squash `d30a575`;
+production deployment `wordcell-mlurloauf`). The full lifecycle ran against
+the real bucket through the real domain: token mint → `PUT` (revision 1, 16
+files, 91,729 bytes) → public `GET /p/<key8>/<slug>/` returning prerendered
+HTML through the `vercel.json` rewrite → `catalog.json` in
+`hraness.wordcell.site-catalog.v1` → identical republish returning
+`idempotent: true` at the same digest and revision → changed vault producing
+revision 2 under a new digest with the old `s/` objects swept → list →
+`DELETE` → public 404. A bad bearer returns 401; `openapi.json` reports 3.1.0
+with five paths. Site `check` (47 tests, lint, typecheck, `next build`) and
+root `bun run check` both pass.
+
+Two findings worth the record:
+
+- **Vercel edge caches rewrite-proxied `/p/` responses** under the worker's
+  `cache-control: public, max-age=60`. Deletes and republishes propagate in
+  ≤60s; a direct read of the worker returns 404 immediately after delete.
+  This is bounded CDN staleness, kept deliberately — it is the cheap-read
+  mechanism — and is documented in `docs/publish.md`.
+- **The vault root basename leaks into emitted titles.** `projectVault`
+  derives a default site title from the vault directory name, so the hosted
+  materialization uses a fixed `vault/` subdirectory and the route defaults
+  `title` to the slug; otherwise the per-request tempdir name would have been
+  baked into every page and broken digest determinism.
+
+## Durable memory
+
+- **`projectVault` + injected `PublishIo` is the Node-safe hosted-projection
+  seam.** The packaged `publishVault` resolves the package root through
+  `import.meta.dir` (Bun-only); composing `scanVault` →
+  `validateMarkdownAttachments` → `projectVault` with injected
+  `version`/`readerFiles` runs the identical pipeline under Next.js Node
+  route handlers. Recorded in [[notes/publishing|Publishing]].
+- **Owner-scope content-addressed artifact keys** (`s/<key8>/<digest>/`)
+  whenever one namespace's deletes can sweep shared storage — plain `s/<digest>`
+  lets one owner remove another's identical bytes. Same rule applies to the
+  next Hraness product that digest-addresses user content.
+- **Capability tokens are the honest auth floor** for a Hraness product that
+  is not yet a `suite-accounts` consumer: mint self-serve, store only the
+  digest, let the digest own the namespace. Accounts OIDC stays the upgrade
+  path.
+- Follow-ups remain open by design: the `skills/wordcell/` hosted-publish
+  reference and the MCP adapter (`wordcell.publish_site` et al.) are the
+  next changes once this REST shape settles; the evidence pack lives at
+  `docs/platform-submission.md`.
