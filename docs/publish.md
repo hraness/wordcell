@@ -308,7 +308,12 @@ curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
   public by contract — never publish private content.
 
 `GET /api/v1/openapi.json` returns the OpenAPI 3.1 description;
-`GET /api/v1/health` reports service and storage health. The storage layer is
+`GET /api/v1/health` reports service and storage health. MCP clients can use
+the streamable-HTTP endpoint `POST /api/v1/mcp` instead of REST: it exposes
+`create_token`, `publish_site`, `list_sites`, and `delete_site` tools that
+dispatch to the identical route logic — send the `wc_pub_` Bearer token as on
+REST, and `create_token` stays unauthenticated so an MCP-only client can
+onboard itself. The storage layer is
 a private Cloudflare R2 bucket behind the `wordcell-sites` worker — object
 reads and writes are HMAC-signed, and the public `/p/` path resolves the slug
 pointer to immutable artifact bytes with directory-index and `404.html`

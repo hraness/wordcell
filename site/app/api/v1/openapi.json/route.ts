@@ -20,6 +20,18 @@ const SPEC = {
         responses: { "200": { description: "ok" }, "503": { description: "unconfigured" } },
       },
     },
+    "/api/v1/mcp": {
+      post: {
+        operationId: "mcp",
+        summary: "Streamable-HTTP MCP endpoint",
+        description:
+          "JSON-RPC adapter over this REST surface: tools create_token, publish_site, " +
+          "list_sites, delete_site dispatch to the identical route logic. Send the " +
+          "wc_pub_ Bearer token as on REST; the self-serve create_token tool is the " +
+          "onboarding path for MCP-only clients.",
+        responses: { "200": { description: "JSON-RPC result or tool-level isError result" } },
+      },
+    },
     "/api/v1/tokens": {
       post: {
         operationId: "mintToken",
