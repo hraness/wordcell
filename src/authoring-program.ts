@@ -3,13 +3,13 @@ import { Effect, Exit } from "effect";
 import {
   MAX_NOTE_BYTES, NoteRevisionConflictError, addRelationToParts, assertCompatibleCreate,
   assertExpected, canonicalNoteId, canonicalRelationTarget, checkedExpectedRevision,
-  frontmatter, isErrno, normalizeRelationPredicate, noteResult, pathFor, relationsFromParts,
-  removeRelationFromParts, renderCreatedNote, renderFrontmatter, revisionFor,
+  existingDocumentId, frontmatter, isErrno, normalizeRelationPredicate, noteResult, pathFor, relationsFromParts,
+  removeRelationFromParts, renderCreatedNote, renderFrontmatter, renderUpdatedNoteBody, requireRevision, revisionFor,
   sameQuarantinedSnapshot, sameSnapshot, withRecoveryPath,
 } from "./authoring-model.js";
 import type {
   AuthoringDependencies, AuthoringInstallContext, AuthoringOptions, CreateNoteInput,
-  DirectoryIdentity, NoteAuthoringResult, NoteRevision, NoteSnapshot, RecoveryLocation, Vault,
+  DirectoryIdentity, NoteAuthoringResult, NoteRevision, NoteSnapshot, RecoveryLocation, UpdateNoteBodyOptions, Vault,
 } from "./authoring-model.js";
 import type { NoteLock } from "./note-lock.js";
 import { parseDocumentId } from "./portfolio-identity.js";
@@ -271,6 +271,41 @@ export function editNoteRelationProgram(
         const relations = yield* authoringSync(() => relationsFromParts(frontmatter(content, source.relativePath), source.relativePath));
         const revision = yield* installNote(platform, vault, sourceId, content, source, lock, dependencies);
         return { changed: true, path: source.relativePath, revision, relations };
+      }),
+      (lock) => authoringNative(() => lock.release()),
+    );
+  });
+}
+
+export function updateNoteBodyProgram(
+  platform: AuthoringPlatform, root: string, idInput: string, body: string,
+  options: UpdateNoteBodyOptions,
+): Effect.Effect<NoteAuthoringResult, AuthoringFailure> {
+  return Effect.gen(function*() {
+    const id = yield* authoringSync(() => canonicalNoteId(idInput));
+    const expected = yield* authoringSync(() => {
+      if (typeof options?.expectedRevision !== "string") {
+        throw new TypeError("expectedRevision is required for a note body update");
+      }
+      return requireRevision(options.expectedRevision);
+    });
+    const vault = yield* authoringNative(() => platform.resolveVault(root));
+    const dependencies = yield* authoringSync(() => platform.dependenciesFor(options.dependencies));
+    return yield* authoringResource(
+      authoringNative(() => platform.acquireNoteLock(vault.root, id, options.lock)),
+      (lock) => Effect.gen(function*() {
+        yield* authoringNative(() => platform.recoverInterruptedAuthoring(vault, id, lock));
+        const source = yield* authoringNative(() => platform.readSnapshot(vault, id));
+        yield* authoringSync(() => assertExpected(source, expected));
+        const parts = yield* authoringSync(() => frontmatter(source.content, source.relativePath));
+        const identity = yield* authoringSync(() => existingDocumentId(parts));
+        if (identity.kind === "invalid") return yield* fail(new TypeError("the note has an invalid document_id"));
+        const documentId = identity.kind === "valid" ? identity.documentId : undefined;
+        const relations = yield* authoringSync(() => relationsFromParts(parts, source.relativePath));
+        const content = yield* authoringSync(() => renderUpdatedNoteBody(source, parts, body));
+        if (content === source.content) return yield* authoringSync(() => noteResult(source, relations, false, documentId));
+        const revision = yield* installNote(platform, vault, id, content, source, lock, dependencies);
+        return yield* authoringSync(() => noteResult({ relativePath: source.relativePath, revision }, relations, true, documentId));
       }),
       (lock) => authoringNative(() => lock.release()),
     );

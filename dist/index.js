@@ -293,8 +293,9 @@ import {
   listNoteRelations,
   normalizeRelationPredicate,
   noteRevision,
-  removeNoteRelation
-} from "./index-a2rp0wt3.js";
+  removeNoteRelation,
+  updateNoteBody
+} from "./index-ecqpgr5y.js";
 import"./index-3rm7cz6h.js";
 import {
   MAX_ANALYZED_NOTES,
@@ -756,6 +757,7 @@ export {
   validateGitHistoryForNotesRequest,
   validateGitHistoryForNotesOptions,
   validateAttachmentReferences,
+  updateNoteBody,
   terminalPlanStatuses,
   sourceInbox,
   sha256EmbeddingModelFile,

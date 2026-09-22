@@ -443,6 +443,25 @@ function normalizedRequestedBody(body) {
 `) ? body : `${body}
 `;
 }
+function renderUpdatedNoteBody(snapshot, parts, body) {
+  if (typeof body !== "string")
+    throw new TypeError("a note body must be a string");
+  if (Buffer.byteLength(body, "utf8") > MAX_NOTE_BYTES) {
+    throw new RangeError("the note body is too large for bounded authoring");
+  }
+  if (Buffer.from(body, "utf8").toString("utf8") !== body) {
+    throw new TypeError("a note body must contain well-formed Unicode");
+  }
+  const normalized = normalizedRequestedBody(body);
+  if (!parts.hadFrontmatter) {
+    if (frontmatter(normalized, snapshot.relativePath).hadFrontmatter) {
+      throw new TypeError("a body update cannot introduce frontmatter into a note");
+    }
+    return normalized;
+  }
+  const header = snapshot.content.slice(0, snapshot.content.length - parts.bodySuffix.length);
+  return `${header}${parts.newline}${parts.newline}${normalized}`;
+}
 function renderCreatedNote(input, documentId) {
   const title = validateTitle(input.title);
   const type = validateType(input.type);
@@ -1158,6 +1177,35 @@ function editNoteRelationProgram(platform, operation, root, sourceIdInput, predi
     }), (lock) => authoringNative(() => lock.release()));
   });
 }
+function updateNoteBodyProgram(platform, root, idInput, body, options) {
+  return Effect2.gen(function* () {
+    const id = yield* authoringSync(() => canonicalNoteId(idInput));
+    const expected = yield* authoringSync(() => {
+      if (typeof options?.expectedRevision !== "string") {
+        throw new TypeError("expectedRevision is required for a note body update");
+      }
+      return requireRevision(options.expectedRevision);
+    });
+    const vault = yield* authoringNative(() => platform.resolveVault(root));
+    const dependencies = yield* authoringSync(() => platform.dependenciesFor(options.dependencies));
+    return yield* authoringResource(authoringNative(() => platform.acquireNoteLock(vault.root, id, options.lock)), (lock) => Effect2.gen(function* () {
+      yield* authoringNative(() => platform.recoverInterruptedAuthoring(vault, id, lock));
+      const source = yield* authoringNative(() => platform.readSnapshot(vault, id));
+      yield* authoringSync(() => assertExpected(source, expected));
+      const parts = yield* authoringSync(() => frontmatter(source.content, source.relativePath));
+      const identity = yield* authoringSync(() => existingDocumentId(parts));
+      if (identity.kind === "invalid")
+        return yield* fail(new TypeError("the note has an invalid document_id"));
+      const documentId = identity.kind === "valid" ? identity.documentId : undefined;
+      const relations = yield* authoringSync(() => relationsFromParts(parts, source.relativePath));
+      const content = yield* authoringSync(() => renderUpdatedNoteBody(source, parts, body));
+      if (content === source.content)
+        return yield* authoringSync(() => noteResult(source, relations, false, documentId));
+      const revision = yield* installNote(platform, vault, id, content, source, lock, dependencies);
+      return yield* authoringSync(() => noteResult({ relativePath: source.relativePath, revision }, relations, true, documentId));
+    }), (lock) => authoringNative(() => lock.release()));
+  });
+}
 
 // src/authoring.ts
 async function noteRevision(root, id) {
@@ -1179,6 +1227,9 @@ async function createNote(root, input, options = {}) {
 async function createConceptNote(root, input, options = {}) {
   return createNote(root, { ...input, type: "concept" }, options);
 }
+async function updateNoteBody(root, id, body, options) {
+  return runAuthoring(updateNoteBodyProgram(nativeAuthoringPlatform, root, id, body, options));
+}
 async function addNoteRelation(root, sourceId, predicate, targetId, options = {}) {
   return runAuthoring(editNoteRelationProgram(nativeAuthoringPlatform, "add", root, sourceId, predicate, targetId, options));
 }
@@ -1186,4 +1237,4 @@ async function removeNoteRelation(root, sourceId, predicate, targetId, options =
   return runAuthoring(editNoteRelationProgram(nativeAuthoringPlatform, "remove", root, sourceId, predicate, targetId, options));
 }
 
-export { InvalidCanonicalNoteIdError, NoteRevisionConflictError, NoteAlreadyExistsError, NoteRecoveryRequiredError, canonicalNoteId, canonicalRelationTarget, normalizeRelationPredicate, noteRevision, listNoteRelations, createNote, createConceptNote, addNoteRelation, removeNoteRelation };
+export { InvalidCanonicalNoteIdError, NoteRevisionConflictError, NoteAlreadyExistsError, NoteRecoveryRequiredError, canonicalNoteId, canonicalRelationTarget, normalizeRelationPredicate, noteRevision, listNoteRelations, createNote, createConceptNote, updateNoteBody, addNoteRelation, removeNoteRelation };

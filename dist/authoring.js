@@ -12,12 +12,14 @@ import {
   listNoteRelations,
   normalizeRelationPredicate,
   noteRevision,
-  removeNoteRelation
-} from "./index-a2rp0wt3.js";
+  removeNoteRelation,
+  updateNoteBody
+} from "./index-ecqpgr5y.js";
 import"./index-3rm7cz6h.js";
 import"./index-qbssx940.js";
 import"./index-z1w83f81.js";
 export {
+  updateNoteBody,
   removeNoteRelation,
   noteRevision,
   normalizeRelationPredicate,

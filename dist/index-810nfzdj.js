@@ -143,7 +143,7 @@ import {
   addNoteRelation,
   createNote,
   removeNoteRelation
-} from "./index-a2rp0wt3.js";
+} from "./index-ecqpgr5y.js";
 import {
   lookupNote,
   parseVaultKey,
