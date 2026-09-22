@@ -1,0 +1,275 @@
+/* Wordcell theme — the product-owned design layer on the shared Hraness
+ * foundations. Opt in with data-hraness-theme="wordcell". Import after the
+ * palette, marketing, and material stylesheets so its tokens resolve last.
+ *
+ * Wordcell keeps the paper palette's warm paper but moves the geometry softer,
+ * the rhythm roomier, and the accent botanical. Colors ride on the palette
+ * system: everything below is scoped to the default paper palette (or no
+ * palette), so the appearance menu still works — another palette brings its
+ * own colors to wordcell shapes. No imports, asset requests, or resets; the
+ * same file can be lifted into any surface that loads the shared foundations.
+ * Requires CSS light-dark() (Chrome 123+, Firefox 120+, Safari 17.5+).
+ */
+
+[data-hraness-theme="wordcell"] {
+  --font-text: "Nebula Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-heading: var(--font-text);
+  --font-sans: var(--font-text);
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  --ui-font-sans: var(--font-text);
+  --ui-font-heading: var(--font-heading);
+  --ui-font-mono: var(--font-mono);
+  --text-body: 1rem;
+  --text-caption: .75rem;
+  --text-label: .875rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 550;
+  --font-weight-bold: 700;
+
+  /* Softer geometry: notes are cards, not terminals. */
+  --radius-sm: .5rem;
+  --radius-md: .875rem;
+  --radius-lg: 1.25rem;
+  --ui-radius: 1rem;
+  --control-radius: .75rem;
+
+  --hraness-paper-heading-size: clamp(1.9rem, 3.4vw, 2.625rem);
+  --hraness-paper-section-heading-size: clamp(1.375rem, 2.4vw, 1.875rem);
+  --hraness-paper-summary-size: 1.0625rem;
+  --hraness-paper-heading-leading: 1.12;
+  --hraness-paper-heading-tracking: -.028em;
+  --hraness-marketing-measure: 78rem;
+  --hraness-marketing-copy-measure: 42rem;
+  --hraness-marketing-prose-measure: 68ch;
+  --hraness-marketing-gutter: clamp(1.25rem, 4.5vw, 3.5rem);
+  --hraness-marketing-radius: 1rem;
+  --hraness-marketing-frame-radius: 1.375rem;
+  --hraness-marketing-heading-weight: 550;
+  --hraness-marketing-heading-tracking: -.024em;
+  --hraness-marketing-section-space: clamp(3.5rem, 8vw, 7rem);
+  --hraness-marketing-action-height: 2.875rem;
+
+  /* The product accent follows whichever palette is active. */
+  --hraness-site-accent: var(--primary, #356a54);
+  --hraness-site-accent-ink: var(--primary-foreground, #f6f5ef);
+
+  /* Wordcell component tokens. */
+  --wordcell-note-surface: var(--surface-raised);
+  --wordcell-note-line: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --wordcell-note-shadow:
+    0 1px 2px oklch(0 0 0 / .04),
+    0 10px 30px -18px oklch(0 0 0 / .25);
+  --wordcell-edge: color-mix(in oklch, var(--hraness-site-accent) 45%, transparent);
+  --wordcell-edge-ink: color-mix(in oklch, var(--muted) 80%, transparent);
+  --wordcell-tag: color-mix(in oklch, var(--hraness-site-accent) 12%, transparent);
+  --wordcell-tag-ink: color-mix(in oklch, var(--hraness-site-accent) 88%, var(--foreground));
+  --wordcell-drift-ease: cubic-bezier(.37, .08, .31, .92);
+
+  font-family: var(--font-text);
+}
+
+/* The rhythm tokens inherit through each marketing role boundary, matching
+ * the shared theme contract so presets still compose with wordcell. */
+[data-hraness-theme="wordcell"] :where(.hraness-marketing-page, .hraness-marketing-header, .hraness-marketing-hero, .hraness-marketing-pillars, .hraness-marketing-install, .hraness-marketing-section, .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces, .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing, .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-cta, .hraness-marketing-proof-frame) {
+  --hraness-marketing-measure: inherit;
+  --hraness-marketing-copy-measure: inherit;
+  --hraness-marketing-prose-measure: inherit;
+  --hraness-marketing-gutter: inherit;
+  --hraness-marketing-radius: inherit;
+  --hraness-marketing-frame-radius: inherit;
+  --hraness-marketing-heading-weight: inherit;
+  --hraness-marketing-heading-tracking: inherit;
+  --hraness-marketing-section-space: inherit;
+  --hraness-marketing-action-height: inherit;
+}
+
+:root[data-hraness-theme="wordcell"]:where(:not([data-theme]):not(.dark), [data-theme="system"]) { color-scheme: light dark; }
+[data-hraness-theme="wordcell"]:where([data-theme="dark"], .dark:not([data-theme="light"])) { color-scheme: dark; }
+[data-hraness-theme="wordcell"][data-theme="light"] { color-scheme: light; }
+
+/* Opted-in shared headers retain their layout and receive the shared paint
+ * contract, including snapshots used with older component releases. */
+@layer components.hraness-design-kit.legacy {
+/* Keep the browser aliases in separate feature queries: CSS optimizers can
+ * collapse adjacent aliases to the prefixed property and lose Chromium blur. */
+:where([data-hraness-theme="wordcell"]) .hraness-marketing-header, .hraness-marketing-header:where([data-hraness-theme="wordcell"]) {
+  --hraness-marketing-header-background: var(--hraness-marketing-background);
+  --hraness-marketing-header-backdrop: none;
+  background: var(--hraness-marketing-header-background);
+}
+
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  :where([data-hraness-theme="wordcell"]) .hraness-marketing-header, .hraness-marketing-header:where([data-hraness-theme="wordcell"]) {
+    --hraness-marketing-header-background: color-mix(in oklch, var(--hraness-marketing-background) 82%, transparent);
+    --hraness-marketing-header-backdrop: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: var(--hraness-marketing-header-backdrop);
+  }
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  :where([data-hraness-theme="wordcell"]) .hraness-marketing-header, .hraness-marketing-header:where([data-hraness-theme="wordcell"]) {
+    --hraness-marketing-header-background: color-mix(in oklch, var(--hraness-marketing-background) 82%, transparent);
+    --hraness-marketing-header-backdrop: blur(14px) saturate(1.4);
+    backdrop-filter: var(--hraness-marketing-header-backdrop);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  :where([data-hraness-theme="wordcell"]) .hraness-marketing-header, .hraness-marketing-header:where([data-hraness-theme="wordcell"]) {
+    --hraness-marketing-header-background: var(--hraness-marketing-background);
+    --hraness-marketing-header-backdrop: none;
+  }
+}
+}
+
+/* The standalone semantic layer: paper's warm base with the wordcell
+ * botanical accent. When the palette controller supplies its own palette
+ * (any [data-palette] besides the default paper path), those colors win. */
+:root[data-hraness-theme="wordcell"]:where(:not([data-palette]), [data-palette="paper"]),
+[data-hraness-theme="wordcell"]:where(:not([data-palette]), [data-palette="paper"]) {
+  --background: light-dark(#f7f4ee, #16130f);
+  --foreground: light-dark(#26221b, #f0ece3);
+  --muted: light-dark(#6d675b, #a89e8e);
+  --faint: light-dark(#6d675b, #a89e8e);
+  --grid: light-dark(#e0dacc, #332d24);
+  --line: light-dark(#bfb6a4, #574e42);
+  --control-border: light-dark(#8f8676, #867c6e);
+  --surface: light-dark(#fffdf8, #1e1a15);
+  --surface-raised: light-dark(#fffdf8, #231e18);
+  --surface-hover: light-dark(#ece7dc, #2b251d);
+  --card: light-dark(#fffdf8, #1e1a15);
+  --card-foreground: light-dark(#26221b, #f0ece3);
+  --popover: light-dark(#fffdf8, #231e18);
+  --popover-foreground: light-dark(#26221b, #f0ece3);
+  --primary: light-dark(#356a54, #9ec7ae);
+  --primary-foreground: light-dark(#f8f7f0, #16130f);
+  --primary-soft: light-dark(#dfe8dc, #262e27);
+  --secondary: light-dark(#ece7dc, #2b251d);
+  --secondary-foreground: light-dark(#26221b, #f0ece3);
+  --accent: light-dark(#dfe8dc, #262e27);
+  --accent-foreground: light-dark(#26221b, #f0ece3);
+  --focus: light-dark(#356a54, #9ec7ae);
+  --scrim: light-dark(#00000070, #000000b8);
+  --disabled: light-dark(#fffdf8, #231e18);
+  --disabled-foreground: light-dark(#6d675b, #a89e8e);
+  --inverse: light-dark(#26221b, #f0ece3);
+  --inverse-foreground: light-dark(#f7f4ee, #16130f);
+  --danger: light-dark(#a8442f, #e8927c);
+  --danger-foreground: light-dark(#f8f7f0, #16130f);
+  --danger-soft: light-dark(#efe0da, #2e201b);
+  --warning: light-dark(#8f5a17, #e8b568);
+  --warning-foreground: light-dark(#f8f7f0, #16130f);
+  --warning-soft: light-dark(#efe6d4, #2e2617);
+  --success: light-dark(#2f6e4f, #8cc7a0);
+  --success-foreground: light-dark(#f8f7f0, #16130f);
+  --success-soft: light-dark(#dfe8dc, #222b24);
+  --info: light-dark(#3d6e8c, #93bdd3);
+  --info-foreground: light-dark(#f8f7f0, #16130f);
+  --info-soft: light-dark(#dee7ec, #232d33);
+  --chart1: light-dark(#9c5560, #d99aa4);
+  --chart2: light-dark(#2f6e4f, #8cc7a0);
+  --chart3: light-dark(#3d6e8c, #93bdd3);
+  --chart4: light-dark(#8f5a17, #e8b568);
+  --chart5: light-dark(#7a5f9e, #bfa9dd);
+  --ui-background: var(--background);
+  --ui-foreground: var(--foreground);
+  --ui-card: var(--card);
+  --ui-card-foreground: var(--card-foreground);
+  --ui-popover: var(--popover);
+  --ui-popover-foreground: var(--popover-foreground);
+  --ui-primary: var(--primary);
+  --ui-primary-foreground: var(--primary-foreground);
+  --ui-secondary: var(--secondary);
+  --ui-secondary-foreground: var(--secondary-foreground);
+  --ui-muted: var(--secondary);
+  --ui-muted-foreground: var(--muted);
+  --ui-accent: var(--accent);
+  --ui-accent-foreground: var(--accent-foreground);
+  --ui-destructive: var(--danger);
+  --ui-destructive-foreground: var(--danger-foreground);
+  --ui-destructive-soft: var(--danger-soft);
+  --ui-border: var(--line);
+  --ui-input: var(--control-border);
+  --ui-ring: var(--focus);
+  --ui-success: var(--success);
+  --ui-success-foreground: var(--success-foreground);
+  --ui-success-soft: var(--success-soft);
+  --ui-warning: var(--warning);
+  --ui-warning-foreground: var(--warning-foreground);
+  --ui-warning-soft: var(--warning-soft);
+  --ui-info: var(--info);
+  --ui-info-foreground: var(--info-foreground);
+  --ui-info-soft: var(--info-soft);
+  --ui-chart-1: var(--chart1);
+  --ui-chart-2: var(--chart2);
+  --ui-chart-3: var(--chart3);
+  --ui-chart-4: var(--chart4);
+  --ui-chart-5: var(--chart5);
+  --plain-background: var(--background);
+  --plain-foreground: var(--foreground);
+  --plain-muted: var(--muted);
+  --plain-line: var(--grid);
+  --plain-surface: var(--secondary);
+  --plain-link: var(--primary);
+  --plain-syntax-keyword: var(--warning);
+  --plain-syntax-string: var(--success);
+  --plain-syntax-number: var(--danger);
+  --plain-syntax-name: var(--info);
+  --elevation-low: 0 1px 2px light-dark(rgb(46 38 24 / 8%), rgb(0 0 0 / 26%));
+  --elevation-raised: 0 8px 24px -12px light-dark(rgb(46 38 24 / 20%), rgb(0 0 0 / 50%));
+  --elevation-overlay: 0 18px 54px light-dark(rgb(46 38 24 / 18%), rgb(0 0 0 / 60%));
+}
+
+/* The palette controller's compiled paper class still supplies the
+ * --hraness-palette-* primitives once a palette is selected; retune just the
+ * accent family so wordcell keeps its signature color under paper. */
+:root[data-hraness-theme="wordcell"][data-palette="paper"],
+[data-hraness-theme="wordcell"][data-palette="paper"] {
+  --hraness-palette-primary: light-dark(#356a54, #9ec7ae);
+  --hraness-palette-primary-foreground: light-dark(#f8f7f4, #14201a);
+  --hraness-palette-primary-soft: light-dark(#dfe8dc, #262e27);
+  --hraness-palette-accent: light-dark(#dfe8dc, #262e27);
+  --hraness-palette-accent-foreground: light-dark(#1c1917, #f5f2ed);
+  --hraness-palette-focus: light-dark(#356a54, #9ec7ae);
+  --hraness-palette-success: light-dark(#2f6e4f, #8cc7a0);
+  --hraness-palette-success-foreground: light-dark(#f8f7f4, #14201a);
+  --hraness-palette-success-soft: light-dark(#dfe8dc, #222b24);
+  --hraness-palette-info: light-dark(#3d6e8c, #93bdd3);
+  --hraness-palette-info-foreground: light-dark(#f8f7f4, #14201a);
+  --hraness-palette-info-soft: light-dark(#dee7ec, #232d33);
+}
+
+@media (forced-colors: active) {
+  :root[data-hraness-theme="wordcell"]:where(:not([data-palette]), [data-palette="paper"]),
+  [data-hraness-theme="wordcell"]:where(:not([data-palette]), [data-palette="paper"]) {
+    --background: Canvas;
+    --foreground: CanvasText;
+    --muted: CanvasText;
+    --faint: CanvasText;
+    --surface: Canvas;
+    --surface-raised: Canvas;
+    --surface-hover: Canvas;
+    --card: Canvas;
+    --card-foreground: CanvasText;
+    --popover: Canvas;
+    --popover-foreground: CanvasText;
+    --secondary: Canvas;
+    --secondary-foreground: CanvasText;
+    --grid: CanvasText;
+    --line: CanvasText;
+    --control-border: ButtonText;
+    --primary: Highlight;
+    --primary-foreground: HighlightText;
+    --plain-link: LinkText;
+    --accent: Highlight;
+    --accent-foreground: HighlightText;
+    --focus: Highlight;
+    --inverse: CanvasText;
+    --inverse-foreground: Canvas;
+    --disabled: Canvas;
+    --disabled-foreground: GrayText;
+    --elevation-low: none;
+    --elevation-raised: none;
+    --elevation-overlay: none;
+  }
+}

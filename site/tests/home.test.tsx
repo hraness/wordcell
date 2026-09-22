@@ -120,20 +120,21 @@ test("the overview page renders the README with its installation anchor", async 
   expect(html).toContain("wordcell --help");
 });
 
-test("scopes the editorial preset to the homepage header and real command example", () => {
+test("scopes the editorial preset to the homepage header and the living vault field", () => {
   const html = renderToStaticMarkup(<Home />);
   const elements: string[] = [];
   new HTMLRewriter()
     .on('[data-hraness-marketing-preset="editorial"] .hraness-marketing-header.hraness-material-chrome', {
       element() { elements.push("header"); },
     })
-    .on('[data-hraness-marketing-preset="editorial"] #main .hraness-material-wall .hraness-marketing-proof-frame.hraness-material-pane', {
-      element() { elements.push("proof"); },
+    .on('[data-hraness-marketing-preset="editorial"] #main .hraness-material-wall .wordcell-field[aria-hidden="true"]', {
+      element() { elements.push("field"); },
     })
     .transform(html);
-  expect(elements).toEqual(["header", "proof"]);
+  expect(elements).toEqual(["header", "field"]);
   expect(html).toContain('wordcell search &quot;parser retries&quot; --root kb --mode exact');
-  expect(html).toContain("Example commands:");
+  expect(html).toContain("wordcell-note");
+  expect(html).toContain("wordcell-edge");
 });
 
 

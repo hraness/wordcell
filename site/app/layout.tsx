@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-hraness-theme="paper"
+      data-hraness-theme="wordcell"
       data-hraness-material="lantern"
       data-palette="paper"
       className={initialPalette.className}

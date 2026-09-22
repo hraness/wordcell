@@ -72,7 +72,7 @@ describe("Wordcell site source contract", () => {
     const globals = await read("app/globals.css");
     expect(globals).toContain('@import "@hraness/design-kit/fonts.css"');
     expect(globals).toContain('@import "@hraness/design-kit/product-marketing.css"');
-    expect(globals).toContain('@import "../vendor/paper-theme/paper-theme.css"');
+    expect(globals).toContain('@import "../wordcell/wordcell-theme.css"');
     expect(globals).not.toMatch(/Georgia|Times New Roman/u);
   });
 
@@ -138,10 +138,30 @@ test("adopts the shared palette contract with Paper as the default appearance", 
   // The blocking bootstrap keeps Paper as the system-following default.
   expect(bootstrap).toContain("initDesignPalette");
   expect(bootstrap).toContain('palette: "paper", mode: "system"');
-  // Palette themes and the semantic bridge load before the vendored theme.
+  // Palette themes and the semantic bridge load before the product theme.
   expect(css).toContain('@import "@hraness/design-kit/palettes.css";');
-  expect(css.indexOf('palettes.css')).toBeLessThan(css.indexOf("vendor/paper-theme"));
+  expect(css.indexOf('palettes.css')).toBeLessThan(css.indexOf("wordcell/wordcell-theme"));
   expect(packageJson).toContain('"build:theme"');
+});
+
+test("adopts the wordcell product theme on the shared foundations", async () => {
+  const [layout, theme, components] = await Promise.all([
+    read("app/layout.tsx"),
+    read("wordcell/wordcell-theme.css"),
+    read("wordcell/wordcell.css"),
+  ]);
+  expect(layout).toContain('data-hraness-theme="wordcell"');
+  // The theme owns the complete standalone token surface for the default
+  // paper path, like the shared themes it sits beside.
+  expect(theme).toContain('[data-hraness-theme="wordcell"]');
+  expect(theme).toContain("--ui-foreground: var(--foreground)");
+  expect(theme).toContain("--ui-ring: var(--focus)");
+  expect(theme).toContain("forced-colors: active");
+  expect(theme).toContain("color-scheme");
+  // Component motion stays decorative: pointer-transparent and collapsible.
+  expect(components).toContain("prefers-reduced-motion: reduce");
+  expect(components).toContain("forced-colors: active");
+  expect(components).toContain("pointer-events: none");
 });
 
 test("pins the shared footer release and leaves attribution to the package", async () => {

@@ -5,10 +5,14 @@
 @import "@hraness/design-kit/product-marketing.css";
 @import "@hraness/design-kit/palettes.css";
 
-@import "../vendor/paper-theme/paper-theme.css";
 @import "../vendor/hraness-marketing/product-marketing-preset.css";
 @import "../vendor/hraness-lantern/lantern-material.css";
 @import "@hraness/site-footer/styles.css";
+
+/* The wordcell design layer: product-owned theme + components on the shared
+ * foundations. */
+@import "../wordcell/wordcell-theme.css";
+@import "../wordcell/wordcell.css";
 
 :root {
   --inverse-background: #14202a;
@@ -204,12 +208,6 @@ a { text-underline-offset: 0.2em; }
 .docs-install pre { margin: 0.75rem 0; }
 .document-nav-quadrant { color: var(--muted); }
 .document-source { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.92rem; }
-
-/* The product's command transcript retains its fixed code contrast. */
-.wordcell-marketing-hero .hraness-marketing-proof-frame {
-  --hraness-marketing-inverse: var(--inverse-background);
-  --hraness-marketing-inverse-ink: var(--wordcell-code-foreground);
-}
 
 /* The existing grammar owns layout and controls. Lantern supplies only material
    paint; these bridges keep old compiled peers and their focus rules intact. */

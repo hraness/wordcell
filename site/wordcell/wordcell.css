@@ -1,0 +1,205 @@
+/* Wordcell components — product-level surfaces for the wordcell design
+ * language. Requires the wordcell theme (or any layer that defines the
+ * --wordcell-* tokens). All field motion is decorative: pointer-transparent,
+ * reduced-motion aware, and removable without losing content. */
+
+.wordcell-field-band {
+  padding-inline: var(--hraness-marketing-gutter);
+  margin-block-end: clamp(2rem, 5vw, 4rem);
+}
+
+.wordcell-field {
+  position: relative;
+  overflow: clip;
+  block-size: clamp(19rem, 34vw, 27rem);
+  border-radius: var(--hraness-marketing-frame-radius, 1.375rem);
+  background:
+    radial-gradient(120% 90% at 30% 20%, color-mix(in oklch, var(--hraness-site-accent, #356a54) 8%, transparent) 0%, transparent 60%),
+    var(--surface, #fffefa);
+  box-shadow: inset 0 0 0 1px var(--wordcell-note-line);
+}
+
+.wordcell-field::before {
+  /* Soft paper grain and a faint cell lattice behind the notes. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    url("../vendor/hraness-marketing/marketing-assets/grain.svg"),
+    url("../vendor/hraness-marketing/marketing-assets/cells.svg");
+  background-size: 64px 64px, 42rem 42rem;
+  background-position: center;
+  opacity: .5;
+  pointer-events: none;
+}
+
+.wordcell-field::after {
+  /* Edge fade: the vault continues beyond the frame. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, var(--surface, #fffefa), transparent 14%),
+    linear-gradient(to left, var(--surface, #fffefa), transparent 14%),
+    linear-gradient(to bottom, var(--surface, #fffefa), transparent 18%),
+    linear-gradient(to top, var(--surface, #fffefa), transparent 18%);
+  pointer-events: none;
+}
+
+.wordcell-edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.wordcell-edge {
+  fill: none;
+  stroke: var(--wordcell-edge);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-dasharray: 4 5;
+}
+
+.wordcell-edge--pulse {
+  stroke-dasharray: none;
+  stroke: var(--hraness-site-accent, #356a54);
+  stroke-width: 1.5;
+  stroke-dasharray: 26 400;
+  animation: wordcell-edge-pulse 14s linear infinite;
+  opacity: 0;
+}
+
+@keyframes wordcell-edge-pulse {
+  0%, 12% { opacity: 0; stroke-dashoffset: 420; }
+  16%, 52% { opacity: .9; }
+  60%, 100% { opacity: 0; stroke-dashoffset: 0; }
+}
+
+.wordcell-edge-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: .625rem;
+  color: var(--wordcell-edge-ink);
+  letter-spacing: .06em;
+  padding: .1rem .45rem;
+  background: color-mix(in oklch, var(--surface, #fffefa) 82%, transparent);
+  border-radius: 999px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.wordcell-note {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w, 11.5rem);
+  padding: .625rem .75rem .625rem;
+  border-radius: var(--radius-md, .875rem);
+  background: var(--wordcell-note-surface);
+  box-shadow: var(--wordcell-note-shadow);
+  border: 1px solid var(--wordcell-note-line);
+  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+  animation: wordcell-note-drift var(--t, 34s) var(--wordcell-drift-ease) var(--d, 0s) infinite alternate;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes wordcell-note-drift {
+  from { transform: translate(-50%, -50%) rotate(var(--r, 0deg)) translate(0, 0); }
+  to { transform: translate(-50%, -50%) rotate(var(--r, 0deg)) translate(var(--dx, 6px), var(--dy, 10px)); }
+}
+
+.wordcell-note-type {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: .625rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--wordcell-tag-ink);
+  background: var(--wordcell-tag);
+  border-radius: 999px;
+  padding: .125rem .5rem;
+  margin-bottom: .375rem;
+}
+
+.wordcell-note-title {
+  font-family: var(--font-heading);
+  font-size: .8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0 0 .25rem;
+  color: var(--card-foreground);
+  letter-spacing: -.01em;
+}
+
+.wordcell-note-body {
+  font-size: .75rem;
+  line-height: 1.45;
+  color: var(--muted);
+  margin: 0;
+}
+
+.wordcell-note-tags {
+  margin-top: .375rem;
+  font-size: .6875rem;
+  color: var(--wordcell-tag-ink);
+  display: flex;
+  gap: .375rem;
+  flex-wrap: wrap;
+}
+
+.wordcell-note-tags span {
+  background: var(--wordcell-tag);
+  border-radius: 999px;
+  padding: .05rem .4rem;
+}
+
+.wordcell-note-link {
+  color: var(--hraness-site-accent, #356a54);
+  font-weight: 500;
+}
+
+/* A gentle bloom on one note at a time keeps the wall alive without noise. */
+.wordcell-note--bloom {
+  animation:
+    wordcell-note-drift var(--t, 34s) var(--wordcell-drift-ease) var(--d, 0s) infinite alternate,
+    wordcell-note-bloom var(--bt, 26s) ease-in-out var(--bd, 0s) infinite;
+}
+
+@keyframes wordcell-note-bloom {
+  0%, 68%, 100% { box-shadow: var(--wordcell-note-shadow); }
+  78%, 88% {
+    box-shadow:
+      var(--wordcell-note-shadow),
+      0 0 0 6px color-mix(in oklch, var(--hraness-site-accent, #356a54) 18%, transparent);
+  }
+}
+
+@media (max-width: 720px) {
+  .wordcell-field { block-size: auto; aspect-ratio: 4 / 5; }
+  .wordcell-note { width: calc(var(--w, 11.5rem) * .82); }
+  .wordcell-note-title { font-size: .75rem; }
+  .wordcell-note-body { font-size: .6875rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordcell-note,
+  .wordcell-note--bloom,
+  .wordcell-edge--pulse {
+    animation: none;
+  }
+  .wordcell-edge--pulse { opacity: 0; }
+}
+
+@media (forced-colors: active) {
+  .wordcell-note {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+  .wordcell-edge-label { background: none; }
+  .wordcell-edge { stroke: CanvasText; }
+  .wordcell-edge--pulse, .wordcell-field::before, .wordcell-field::after { display: none; }
+}

@@ -4,7 +4,6 @@ import {
   MarketingInterfaceGrid,
   MarketingPage,
   MarketingPrimitives,
-  MarketingProofFrame,
   MarketingQuestionList,
   MarketingSection,
   MarketingSiteHeader,
@@ -26,6 +25,7 @@ function TopicIcon({ slug }: Readonly<{ slug: string }>) {
 
 import { publishedRelease } from "./publication";
 import { WordcellContentFooter } from "./site-footer";
+import { WordcellField } from "../wordcell/field";
 import { readmeLead, readmeTitle } from "./readme.generated";
 
 const releaseVersion = publishedRelease?.version;
@@ -208,26 +208,14 @@ export default function Home() {
             boundary={footnote}
             className="wordcell-marketing-hero"
             eyebrow=""
-            frame={(
-              <MarketingProofFrame
-                className="hraness-material-pane"
-                caption="Example commands: save a decision, then find it locally. No model or account required."
-                credit="From the README"
-                title="Save once. Find it next session."
-              >
-                <pre className="transcript" tabIndex={0}><code>{`$ wordcell init kb
-$ wordcell note create notes/parser-contract \\
-    --title "Parser contract" --type concept \\
-    --body "Parser retries stop after three attempts." --root kb
-$ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
-                <p>The result points to <code>notes/parser-contract</code> and the saved constraint.</p>
-              </MarketingProofFrame>
-            )}
             heading={heading}
             headingId="hero-title"
             name=""
             summary={readmeLead}
           />
+          <div className="wordcell-field-band">
+            <WordcellField />
+          </div>
           </div>
 
           <MarketingInstallPanel
