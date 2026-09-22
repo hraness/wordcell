@@ -484,7 +484,7 @@
     "check:worker": "tsc -p worker/tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.10.8/hraness-oh-0.10.8.tgz",
+    "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.11.0/hraness-oh-0.11.0.tgz",
     "@steipete/sweet-cookie": "0.4.3",
     "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c",
     "agent-browser": "0.32.3",
