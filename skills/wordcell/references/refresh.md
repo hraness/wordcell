@@ -126,6 +126,20 @@ After any note or link edit, run the refresh command again so derived state and 
 wordcell check --root "$KB_ROOT"
 ```
 
+When the vault lives inside a repository and `KB_REPO` is set, add the advisory
+repository-state pass:
+
+```sh
+wordcell check --root "$KB_ROOT" --repo "$KB_REPO"
+```
+
+This compares every authored `repository_scopes` declaration with the current
+working tree and reports each current record whose declared path is now absent
+or unusable. It is advisory: the exit code does not change, and a terminal plan
+that names a removed path stays silent because that is valid authored history.
+Treat an absent-scope advisory as a note to reread against the code, not as a
+proven error; confirm the path in the repository before editing the note.
+
 Finish only when the graph check and any required agent-context check succeed,
 the configured catalog mode is satisfied, and broken or ambiguous links,
 relationships, and local attachments are resolved. Summarize deliberate

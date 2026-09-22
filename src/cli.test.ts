@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -1103,6 +1103,25 @@ describe("kb argument parsing", () => {
           json: true,
         },
       });
+    expect(parseArguments(["check", "--root", "vault", "--repo", "../repo"]))
+      .toEqual({
+        ok: true,
+        value: {
+          kind: "check",
+          root: "vault",
+          options: {},
+          repository: "../repo",
+          json: false,
+        },
+      });
+    expect(parseArguments(["check", "--repo"]))
+      .toEqual({ ok: false, message: "--repo requires a value" });
+    for (const command of ["refresh", "graph"] as const) {
+      expect(parseArguments([command, "--repo", "."]))
+        .toEqual({ ok: false, message: `unknown ${command} option` });
+    }
+    expect(parseArguments(["backlinks", "notes/alpha", "--repo", "."]))
+      .toEqual({ ok: false, message: "unknown backlinks option" });
     expect(parseArguments([
       "catalog",
       "--root",
@@ -3130,6 +3149,226 @@ describe("kb agent context commands", () => {
         repository,
       ], brokenOutput.output)).toBe(3);
       expect(brokenOutput.stdout()).toContain("missing its kb:context marker");
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("kb check repository scope advisories", () => {
+  test("reports absent current references, stays advisory, and never leaves the repository", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-stale-"));
+    const repository = join(temporary, "repository");
+    const vault = join(repository, "kb");
+    try {
+      await mkdir(join(repository, "src"), { recursive: true });
+      await writeFile(join(repository, "src", "present.ts"), "export const present = 1;\n", "utf8");
+      await writeFile(join(temporary, "outside.md"), "# Outside the repository\n", "utf8");
+      await symlink(temporary, join(repository, "linked"), "dir");
+
+      const initOutput = captureOutput();
+      expect(await main(["init", vault], initOutput.output)).toBe(0);
+      await mkdir(join(vault, "notes"), { recursive: true });
+      await mkdir(join(vault, "plans"), { recursive: true });
+
+      const note = async (path: string, lines: readonly string[]): Promise<void> => {
+        await writeFile(join(vault, path), `${lines.join("\n")}\n`, "utf8");
+      };
+      // A current note whose referenced path still exists.
+      await note("notes/present.md", [
+        "---",
+        "type: note",
+        "repository_scopes:",
+        "  - src/present.ts",
+        "---",
+        "# Present",
+        "",
+        "The exported helper lives in the declared source file.",
+      ]);
+      // A current note whose referenced path was deleted.
+      await note("notes/removed.md", [
+        "---",
+        "type: note",
+        "repository_scopes:",
+        "  - src/removed.ts",
+        "---",
+        "# Removed",
+        "",
+        "This note still asserts a path the repository no longer has.",
+      ]);
+      // Authored history: a terminal plan may name a path that is gone.
+      await note("plans/retired.md", [
+        "---",
+        "type: plan",
+        "status: completed",
+        "repository_scopes:",
+        "  - src/removed.ts",
+        "---",
+        "# Retired",
+        "",
+        "Completed work that removed the source file.",
+      ]);
+      // No repository reference at all.
+      await note("notes/plain.md", [
+        "---",
+        "type: note",
+        "---",
+        "# Plain",
+        "",
+        "Prose with no repository assertion.",
+      ]);
+      // Path confinement: traversal is rejected as a declaration, never resolved.
+      await note("notes/escape.md", [
+        "---",
+        "type: note",
+        "repository_scopes:",
+        "  - ../outside.md",
+        "---",
+        "# Escape",
+        "",
+        "An attempt to point a scope outside the repository root.",
+      ]);
+      // Path confinement: a symlinked scope is reported, never followed.
+      await note("notes/linked.md", [
+        "---",
+        "type: note",
+        "repository_scopes:",
+        "  - linked",
+        "---",
+        "# Linked",
+        "",
+        "A scope that resolves through a symbolic link.",
+      ]);
+
+      const refreshOutput = captureOutput();
+      expect(await main(["refresh", "--root", vault], refreshOutput.output)).toBe(0);
+
+      const withoutRepository = captureOutput();
+      const baselineExit = await main(["check", "--root", vault], withoutRepository.output);
+      expect(baselineExit).toBe(0);
+      expect(withoutRepository.stdout()).not.toContain("Repository scopes:");
+
+      const text = captureOutput();
+      expect(await main([
+        "check",
+        "--root",
+        vault,
+        "--repo",
+        repository,
+      ], text.output)).toBe(baselineExit);
+      const lane = text.stdout().slice(text.stdout().indexOf("Repository scopes:"));
+      expect(lane).toStartWith(
+        "Repository scopes: 5 declaring notes; 3 distinct scopes (1 present, 1 absent, 1 unusable).",
+      );
+      expect(lane).toContain(
+        "Advisory: 1 current note declares a repository path that no longer exists.",
+      );
+      expect(lane).toContain("notes/removed.md declares absent scope src/removed.ts");
+      expect(lane).not.toContain("plans/retired.md");
+      expect(lane).not.toContain("notes/present.md");
+      expect(lane).not.toContain("notes/plain.md");
+      expect(lane).toContain("Advisory: 2 repository scope declaration problems.");
+      expect(lane).toContain("linked: symlink at linked (declared by notes/linked.md)");
+      expect(lane).toContain("notes/escape.md: A repository scope must not contain parent traversal.");
+
+      const json = captureOutput();
+      expect(await main([
+        "check",
+        "--root",
+        vault,
+        "--repo",
+        repository,
+        "--json",
+      ], json.output)).toBe(baselineExit);
+      const payload = parseJsonObject(json.stdout());
+      expect(payload).toMatchObject({
+        repositoryScopes: {
+          repositoryRoot: await realpath(repository),
+          counts: {
+            authoredRecords: 5,
+            validDeclarationRecords: 4,
+            currentRecords: 3,
+            terminalRecords: 1,
+            invalidRecords: 1,
+            distinctScopes: 3,
+            presentScopes: 1,
+            absentScopes: 1,
+            invalidScopes: 1,
+            errors: 2,
+            advisories: 1,
+          },
+          advisories: {
+            total: 1,
+            returned: 1,
+            truncated: false,
+            details: [{
+              kind: "absent-current-scope",
+              path: "notes/removed.md",
+              scope: "src/removed.ts",
+            }],
+          },
+        },
+      });
+      const audit = payload.repositoryScopes;
+      if (audit === null || typeof audit !== "object") throw new TypeError("expected an audit object");
+      const states = (audit as { readonly states: { readonly details: readonly { readonly scope: string }[] } })
+        .states.details;
+      expect(states.map(({ scope }) => scope)).toEqual(["linked", "src/present.ts", "src/removed.ts"]);
+      for (const { scope } of states) {
+        expect(resolve(repository, scope).startsWith(`${repository}/`)).toBe(true);
+      }
+      expect(await Bun.file(join(temporary, "outside.md")).text()).toContain("Outside the repository");
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("a vault with no repository references reports an empty advisory lane", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-stale-empty-"));
+    const repository = join(temporary, "repository");
+    const vault = join(repository, "kb");
+    try {
+      await mkdir(repository, { recursive: true });
+      const initOutput = captureOutput();
+      expect(await main(["init", vault], initOutput.output)).toBe(0);
+      await mkdir(join(vault, "notes"), { recursive: true });
+      await writeFile(
+        join(vault, "notes", "plain.md"),
+        "---\ntype: note\n---\n# Plain\n\nNo repository assertion here.\n",
+        "utf8",
+      );
+      const refreshOutput = captureOutput();
+      expect(await main(["refresh", "--root", vault], refreshOutput.output)).toBe(0);
+
+      const output = captureOutput();
+      expect(await main(["check", "--root", vault, "--repo", repository], output.output)).toBe(0);
+      expect(output.stdout()).toContain("Repository scopes: 0 declaring notes; 0 distinct scopes");
+      expect(output.stdout()).not.toContain("declares absent scope");
+      expect(output.stdout()).not.toContain("repository scope declaration problem");
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("an unusable --repo value fails the command instead of inventing advisories", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-stale-repo-"));
+    const vault = join(temporary, "kb");
+    try {
+      const initOutput = captureOutput();
+      expect(await main(["init", vault], initOutput.output)).toBe(0);
+      const refreshOutput = captureOutput();
+      expect(await main(["refresh", "--root", vault], refreshOutput.output)).toBe(0);
+
+      const missing = captureOutput();
+      expect(await main([
+        "check",
+        "--root",
+        vault,
+        "--repo",
+        join(temporary, "absent-repository"),
+      ], missing.output)).toBe(1);
+      expect(missing.stderr()).toStartWith("error:");
+      expect(missing.stdout()).toBe("");
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }

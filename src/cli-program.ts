@@ -122,10 +122,14 @@ import {
   type QuerySort,
 } from "./query.js";
 import {
+  auditRepositoryMemoryScopes,
   buildRepositoryMemoryContext,
+  MAX_REPOSITORY_MEMORY_DETAIL_LIMIT,
   MAX_REPOSITORY_SCOPES,
   repositoryMemoryGroupKeys,
   type RepositoryMemoryContext,
+  type RepositoryMemoryScopeAudit,
+  type RepositoryMemoryScopeAuditError,
 } from "./repository-memory.js";
 import { validateSearchQuery } from "./search.js";
 import {
@@ -248,7 +252,7 @@ Usage:
   wordcell inspect <url> [capture options]
   wordcell pdf <file-or-url> [PDF options]
   wordcell refresh [--root <directory>] [--index <path>] [--json]
-  wordcell check [--root <directory>] [--index <path>] [--no-catalog] [--json]
+  wordcell check [--root <directory>] [--index <path>] [--no-catalog] [--repo <repository>] [--json]
   wordcell catalog [--root <directory>] [--index <path>] [--json]
   wordcell graph [--root <directory>] [--index <path>] [--json]
   wordcell graph rebuild [--fresh] [--root <directory>] [--index <path>] [--json]
@@ -443,6 +447,8 @@ type ParsedCommand =
       readonly depth?: number;
       readonly limit?: number;
       readonly noCatalog?: boolean;
+      /** `check --repo` only: repository working tree for the advisory scope lane. */
+      readonly repository?: string;
     }
   | {
       readonly kind: "note-create";
@@ -528,6 +534,7 @@ type CliDependencies = GraphCliDependencies & {
   readonly percolateWithGraph?: typeof percolateWithGraph;
   readonly inspectAgentContextRepository?: typeof inspectAgentContextRepository;
   readonly buildRepositoryMemoryContext?: typeof buildRepositoryMemoryContext;
+  readonly auditRepositoryMemoryScopes?: typeof auditRepositoryMemoryScopes;
   readonly auditAgentGuideRepository?: typeof auditAgentGuideRepository;
   readonly validateMarkdownAttachments?: typeof validateMarkdownAttachments;
   readonly publishVault?: typeof publishVault;
@@ -623,6 +630,7 @@ function parseVaultCommand(command: VaultCommand, arguments_: readonly string[])
   let depth = 1;
   let limit: number | undefined;
   let noCatalog = false;
+  let repository: string | undefined;
   const positional: string[] = [];
 
   for (let cursor = 0; cursor < arguments_.length; cursor += 1) {
@@ -634,6 +642,13 @@ function parseVaultCommand(command: VaultCommand, arguments_: readonly string[])
     }
     if (argument === "--no-catalog" && command === "check") {
       noCatalog = true;
+      continue;
+    }
+    if (argument === "--repo" && command === "check") {
+      const value = readValue(arguments_, cursor);
+      if (value === null) return { ok: false, message: "--repo requires a value" };
+      repository = value;
+      cursor += 1;
       continue;
     }
     if (argument === "--root" || argument === "--index") {
@@ -700,6 +715,7 @@ function parseVaultCommand(command: VaultCommand, arguments_: readonly string[])
       options: index === undefined ? {} : { index },
       json,
       ...(command === "check" && noCatalog ? { noCatalog: true } : {}),
+      ...(command === "check" && repository !== undefined ? { repository } : {}),
     },
   };
 }
@@ -2637,6 +2653,7 @@ function summary(
   options: {
     readonly noCatalog?: boolean;
     readonly attachments?: AttachmentValidationReport;
+    readonly repositoryScopes?: RepositoryMemoryScopeAudit;
   } = {},
 ): Record<string, unknown> {
   return {
@@ -2662,6 +2679,9 @@ function summary(
             issues: options.attachments.issues,
           },
         }),
+    ...(options.repositoryScopes === undefined
+      ? {}
+      : { repositoryScopes: options.repositoryScopes }),
   };
 }
 
@@ -2697,6 +2717,60 @@ function renderAdvisories(analysis: VaultAnalysis): string[] {
   return lines;
 }
 
+function renderRepositoryScopeAuditError(error: RepositoryMemoryScopeAuditError): string {
+  if (error.kind === "invalid-record") {
+    return `${safe(error.path)}: ${error.issues.map(safe).join(" ")}`;
+  }
+  const declared = error.recordPaths.map(safe).join(", ")
+    + (error.recordPathsTruncated ? ", …" : "");
+  return `${safe(error.scope)}: ${safe(error.state.reason)} at ${safe(error.state.path)}`
+    + ` (declared by ${declared})`;
+}
+
+/**
+ * Advisory repository-state lane for `check --repo`.
+ *
+ * Every line derives from authored `repository_scopes` declarations and the
+ * working tree they name. Nothing here changes the exit code: a current note
+ * that names a path the repository no longer has is reported for a reader to
+ * judge, never treated as a vault correctness failure.
+ */
+function renderRepositoryScopeAudit(audit: RepositoryMemoryScopeAudit): string[] {
+  const { counts } = audit;
+  const lines = [
+    `Repository scopes: ${counts.authoredRecords} declaring note${counts.authoredRecords === 1 ? "" : "s"}; `
+      + `${counts.distinctScopes} distinct scope${counts.distinctScopes === 1 ? "" : "s"} `
+      + `(${counts.presentScopes} present, ${counts.absentScopes} absent, ${counts.invalidScopes} unusable).`,
+  ];
+  if (audit.advisories.total > 0) {
+    lines.push(audit.advisories.total === 1
+      ? "Advisory: 1 current note declares a repository path that no longer exists."
+      : `Advisory: ${audit.advisories.total} current notes declare repository paths that no longer exist.`);
+    for (const advisory of audit.advisories.details) {
+      lines.push(`  ${safe(advisory.path)} declares absent scope ${safe(advisory.scope)}`);
+    }
+    if (audit.advisories.truncated) {
+      lines.push(
+        `  … ${audit.advisories.total - audit.advisories.returned} more; rerun with --json for the complete audit.`,
+      );
+    }
+  }
+  if (audit.errors.total > 0) {
+    lines.push(
+      `Advisory: ${audit.errors.total} repository scope declaration problem${audit.errors.total === 1 ? "" : "s"}.`,
+    );
+    for (const error of audit.errors.details) {
+      lines.push(`  ${renderRepositoryScopeAuditError(error)}`);
+    }
+    if (audit.errors.truncated) {
+      lines.push(
+        `  … ${audit.errors.total - audit.errors.returned} more; rerun with --json for the complete audit.`,
+      );
+    }
+  }
+  return lines;
+}
+
 function checkExitCode(
   snapshot: VaultSnapshot,
   noCatalog = false,
@@ -2723,6 +2797,7 @@ function renderSnapshot(
   snapshot: VaultSnapshot,
   noCatalog = false,
   attachments?: AttachmentValidationReport,
+  repositoryScopes?: RepositoryMemoryScopeAudit,
 ): string {
   const lines = [
     `${command === "refresh" ? "Refreshed" : "Checked"} ${safe(snapshot.root)}`,
@@ -2742,6 +2817,7 @@ function renderSnapshot(
     lines.push("error: attachment validation was truncated by a resource limit");
   }
   lines.push(...renderAdvisories(snapshot.analysis));
+  if (repositoryScopes !== undefined) lines.push(...renderRepositoryScopeAudit(repositoryScopes));
   return `${lines.join("\n")}\n`;
 }
 
@@ -3806,9 +3882,24 @@ async function runVault(
           documents: snapshot.notes.map(({ path, content }) => ({ path, content })),
         })
       : undefined;
+    const repositoryScopes = command.kind === "check" && command.repository !== undefined
+      ? await (dependencies.auditRepositoryMemoryScopes ?? auditRepositoryMemoryScopes)(
+          snapshot.notes,
+          {
+            repositoryRoot: command.repository,
+            detailLimit: MAX_REPOSITORY_MEMORY_DETAIL_LIMIT,
+          },
+        )
+      : undefined;
     output.stdout(command.json
-      ? terminalSafeJson(summary(snapshot, { noCatalog, ...(attachments === undefined ? {} : { attachments }) }))
-      : sanitizeTerminalText(renderSnapshot(command.kind, snapshot, noCatalog, attachments)));
+      ? terminalSafeJson(summary(snapshot, {
+          noCatalog,
+          ...(attachments === undefined ? {} : { attachments }),
+          ...(repositoryScopes === undefined ? {} : { repositoryScopes }),
+        }))
+      : sanitizeTerminalText(
+        renderSnapshot(command.kind, snapshot, noCatalog, attachments, repositoryScopes),
+      ));
     return checkExitCode(snapshot, noCatalog, attachments);
   }
   if (command.kind === "graph") {
