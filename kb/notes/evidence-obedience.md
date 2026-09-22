@@ -54,26 +54,31 @@ costs a reader nothing and guessing it costs correctness.
 
 ## Which review signals are worth building
 
-Measured on two external corpora, as lift over asking a curator to read an
-equal-size random sample. Above 1.0 beats random review; at or below it the
-signal is worthless.
+Measured as lift over asking a curator to read an equal-size random sample.
+Above 1.0 beats random review; at or below it the signal is worthless. The two
+figures in each row are two models on one corpus, not two corpora — only the
+worse-than-random verdict on the last row was reproduced on a second corpus.
 
-| signal | lift | verdict |
-| --- | --- | --- |
-| disagreement between two models on the same extraction | 1.88x and 2.38x | worth building |
-| the model's own self-reported confidence | 1.21x and 1.03x | undemonstrated |
-| checking the source text for vocabulary supporting the claim | 0.54x and 0.45x | worse than random |
+| signal | model A | model B | verdict |
+| --- | --- | --- | --- |
+| disagreement between two models on the same extraction | 1.88x | 2.38x | worth building |
+| the model's own self-reported confidence, below high | 1.21x | 1.03x | undemonstrated |
+| the same confidence, its lowest bucket only | 2.02x | fires 2 of 300 | works for one model |
+| checking the source text for vocabulary supporting the claim | 0.54x | 0.45x | worse than random |
 
-Self-reported confidence did not separate its own strata: items marked high and
-medium were indistinguishable in accuracy, and one model marked 91% of its
-claims high. The same conclusion held against a third party's published
-confidence field, which across 15,394 samples appearing in two of its releases
-failed to predict which of its own labels would later be revised.
+The coarse confidence split did not separate its own strata: items marked high
+and medium were indistinguishable in accuracy, and one model marked 91% of its
+claims high. Only the lowest bucket carried information, only on one field, and
+only for the model that actually used the scale. The same conclusion held
+against a third party's published confidence field: of 15,394 samples appearing
+in two of its releases, 14,560 were resolvable through its own vocabulary, and
+on those a high label did not predict which of its own labels would be revised.
 
-Inter-model disagreement is the one signal that survived, and it is a property
-of a model pair on a corpus rather than of a model. On a second corpus the same
-two models agreed on 117 of 120 values and were wrong together, so disagreement
-carried nothing there. Measure it on the corpus in hand before relying on it.
+Inter-model disagreement is the one signal that survived on both models, and it
+is a property of a model pair on a corpus rather than of a model. On a second
+corpus the same two models almost never disagreed on a classifiable value, so
+the signal had no room to carry information and caught nothing there. Measure it
+on the corpus in hand before relying on it.
 
 Full scripts, data, and the retraction history behind these numbers are in
 [algal-bio](https://github.com/0thernet/algal-bio).
