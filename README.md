@@ -3,8 +3,11 @@
 
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
-A local knowledge base for coding agents. Save decisions in Markdown and recover
-the context behind your code. Give the next session only the context it needs.
+A local Markdown knowledge base with superpowers. Save decisions, sources, and
+plans as files you own, then recover them through exact and semantic search,
+typed relationships, backlinks, and Git history. Coding agents get the context
+behind your code, and the same record holds everything else you need to
+remember.
 
 Your files stay yours: read them in Obsidian or any editor, review changes in
 Git, and rebuild every index from the Markdown. Exact search and graph queries
@@ -15,15 +18,18 @@ optional remote reranking have [separate privacy boundaries](#privacy-and-bounda
 
 ## Why Wordcell
 
-- **Keep decisions with the work.** Link a plan to the notes that explain it,
-  attach those notes to a code path, and recover their Git history on request.
+- **Keep what you learn in files you own.** Write decisions, sources, and plans
+  in Markdown. Obsidian, Git, and Wordcell read the same record, and every
+  index rebuilds from the files.
+- **Find it by words or by meaning.** Exact search needs no model or account.
+  Optional local semantic search joins each match to current metadata, links,
+  and history instead of returning isolated text.
+- **Author the connections.** Wikilinks and typed relationships turn notes into
+  a queryable ontology. Backlinks, bounded graph proofs, and percolation
+  suggestions recover them without injecting edges you did not write.
+- **Ground coding agents in context.** Scope notes to repository paths, recover
+  the commits behind a note, and give the next session only what it needs.
   Only context you save becomes part of the record.
-- **Read what matters.** Start with a code path, search result, or linked note.
-  Get a limited set of summaries and open the sources you need, instead of
-  loading the whole vault into an agent conversation.
-- **Keep control of your knowledge.** Markdown and Git are the source of truth.
-  Use local search, export selected notes as a static site, and keep using the
-  files even without Wordcell.
 
 Plain Markdown may be enough for a small set of notes. QMD is a good fit for
 local document retrieval and also supplies Wordcell's optional semantic search.
@@ -289,8 +295,13 @@ show the public imports and lifecycle.
 
 ## Documentation
 
+The documentation follows the Diataxis split: a tutorial to learn the loop,
+how-to guides for tasks, reference for exact interfaces, and explanation for
+the design. Browse it on the [documentation index](https://wordcell.io/docs).
+
 | Read next | Purpose |
 | --- | --- |
+| [Get started](https://github.com/hraness/wordcell/blob/main/docs/getting-started.md) | Learn the full loop on a first vault: save, find, connect, and publish one note. |
 | [Agent workflow](https://github.com/hraness/wordcell/blob/main/docs/agent-workflow.md) | Set up, query, maintain, and revise repository memory. |
 | [Installation and command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md) | Exact interfaces, SDK imports, optional adapters, and troubleshooting prerequisites. |
 | [Web capture](https://github.com/hraness/wordcell/blob/main/docs/capture.md) and [PDF capture](https://github.com/hraness/wordcell/blob/main/docs/pdf.md) | Save sources with provenance, assets, and explicit completeness limits. |

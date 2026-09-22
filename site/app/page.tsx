@@ -8,6 +8,7 @@ import {
   MarketingQuestionList,
   MarketingSection,
   MarketingSiteHeader,
+  MarketingStatStrip,
   MarketingTrustBoundary,
   ProductHero,
 } from "@hraness/design-kit/react/server";
@@ -30,42 +31,53 @@ import { readmeLead, readmeTitle } from "./readme.generated";
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
 const repository = "https://github.com/hraness/wordcell";
+const memoryBenchmarks = "https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md";
 const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases/download/v${releaseVersion}/hraness-wordcell-${releaseVersion}.tgz`;
 
-const heading = "Give coding agents the decisions behind your code";
+const heading = "The Markdown knowledge base with superpowers";
 const footnote =
   `Free and MIT licensed. Local Markdown. No account or model for exact search.${releaseVersion === undefined ? " First Wordcell release in preparation." : ` Current verified release v${releaseVersion}.`}`;
 
 const primitives = [
   {
     icon: "markdown",
-    label: "Notes",
-    summary: "Keep decisions and explanations in files you can open in any editor. Obsidian, grep, Git, and Wordcell read the same record.",
+    label: "Files you own",
+    summary: "Notes stay plain Markdown with YAML frontmatter. Read them in Obsidian or any editor, diff them in Git, and rebuild every index from the files.",
   },
   {
-    icon: "backlinks",
-    label: "Connected decisions",
-    summary: "Link a plan to the decision behind it. Backlinks show the work that depends on that note, using the links you authored.",
+    icon: "kb",
+    label: "A typed ontology",
+    summary: "Give a note a type and typed relationships: supports, supersedes, informed-by. Backlinks and graph queries recover the structure you authored; percolation proposes candidates you review.",
   },
   {
     icon: "search",
-    label: "Local search",
-    summary: "Find a saved phrase without a model. Add optional local semantic search through QMD when the right wording is hard to remember.",
+    label: "Search by words or meaning",
+    summary: "Exact search needs no model or account. Optional local semantic search fuses keyword and vector ranks, then joins each match to live metadata and the graph.",
+  },
+  {
+    icon: "backlinks",
+    label: "Backlinks",
+    summary: "Every note knows what links to it. Traverse authored connections in either direction with explicit depth and node limits.",
   },
   {
     icon: "git-provenance",
-    label: "Recorded history",
-    summary: "Inspect the commits behind a note when its history matters. Git context is optional and comes from your repository's own log.",
+    label: "History you can inspect",
+    summary: "When a vault lives in Git, the commits behind a note are one command away. History returns as evidence, not a rewrite.",
   },
   {
     icon: "capture",
     label: "Sources you can reopen",
-    summary: "Save a web page or PDF with its source details and assets. Keep the evidence alongside the decisions it informed.",
+    summary: "Save a web page or PDF with its assets and a provenance receipt. Keep the evidence beside the decision it informed.",
   },
   {
     icon: "scopes",
     label: "Context for a code path",
-    summary: "Start from a file you are changing. Find its saved notes, plans, and applicable AGENTS.md rules before opening more context.",
+    summary: "Scope notes to repository paths. Starting from a file returns its notes, plans, and the AGENTS.md rules that govern the edit.",
+  },
+  {
+    icon: "cli",
+    label: "Publish a selection",
+    summary: "Choose notes, folders, metadata, or a linked neighborhood and emit a static site with browser-local search. You decide what ships and where it goes.",
   },
 ] as const;
 
@@ -84,7 +96,16 @@ const trust = [
   },
 ] as const;
 
-const questions = [
+const questions: readonly { question: string; answer: string; after?: React.ReactNode }[] = [
+  {
+    question: "What does \"superpowers\" mean here?",
+    answer: "The vault keeps Markdown authoritative while adding the structure a database usually owns: typed relationships, backlinks, graph proofs, semantic search joined to live metadata, Git provenance, and selective publishing. Each layer rebuilds from the files.",
+  },
+  {
+    question: "Is Wordcell only for code?",
+    answer: "No. The vault itself is general: notes, captured sources, plans, and research in plain Markdown. The code-related layers, repository scopes, AGENTS.md rules, and Git history, activate when the vault sits beside a repository.",
+    after: <>{" "}The developer workflow has <a href="/developers">its own page</a>.</>,
+  },
   {
     question: "Can I use my existing Markdown or Obsidian vault?",
     answer: releaseSupports0220
@@ -127,7 +148,8 @@ const questions = [
 
 const navigation = [
   { href: "#model", label: "Why Wordcell" },
-  { href: "#compare", label: "Compare" },
+  { href: "#evidence", label: "Evidence" },
+  { href: "/developers", label: "Developers" },
   { href: "#install", label: "Install" },
   { href: "/docs", label: "Docs" },
   { href: repository, label: "GitHub" },
@@ -227,7 +249,8 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
                 <p className="install-note">
                   <a href={publishedRelease.verificationRun}>Public release verification</a>.{" "}
                   Install <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git first.{" "}
-                  <a href="/docs#install">Use an existing vault or connect your agent</a>.
+                  <a href="/docs/getting-started">Walk the first-vault tutorial</a> or{" "}
+                  <a href="/docs/overview#install">use an existing vault or connect your agent</a>.
                 </p>
               </>
             ) : (
@@ -240,7 +263,7 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
           </MarketingInstallPanel>
 
           <MarketingPrimitives
-            heading="Find the context behind the change"
+            heading="The superpowers, concretely"
             headingId="model-title"
             id="model"
             items={primitives.map((primitive) => ({
@@ -249,8 +272,40 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
               summary: primitive.summary,
             }))}
             label=""
-            summary="A vault is a folder of Markdown. Wordcell connects its notes to your code and returns focused results you can inspect before an agent acts."
+            summary="A vault is a folder of Markdown. Wordcell layers the structure a database would own over files you can still read anywhere."
           />
+
+          <MarketingSection
+            heading="A memory core measured against published baselines"
+            headingId="memory-title"
+            id="memory"
+            label=""
+            summary="Wordcell embeds Oh, the Hraness record and memory kernel, as its graph authority. In Oh's completed LongMemEval-S study, its semantic retrieval reached 89.8% answer accuracy with a mid-tier reader, among the strongest published results."
+          >
+            <MarketingStatStrip
+              ariaLabel="Oh memory-kernel benchmark results"
+              columns={3}
+              source={<>Oh full-release memory studies, September 2026. Descriptive in-sample scores; reader and protocol differences prevent leaderboard claims. <a href={memoryBenchmarks}>Method, limits, and raw reports</a>.</>}
+              stats={[
+                {
+                  label: "LongMemEval-S, 500 questions",
+                  value: "89.8%",
+                  detail: "Oh semantic retrieval, GPT-5 mini reader. Identical-budget BM25 scored 85.4% on the same frozen contexts.",
+                },
+                {
+                  label: "LoCoMo, 1,540 questions",
+                  value: "84.4%",
+                  detail: "Same retrieval at a 24 KB budget. Published gpt-4o-mini comparisons: Mem0 66.9, Letta 74.0, Zep 75.1.",
+                },
+                {
+                  label: "Paired wins vs BM25",
+                  value: "39–17",
+                  detail: "On identical frozen contexts, Oh semantic beat BM25 39 wins to 17 losses under the same reader; sign test p = 0.0023.",
+                },
+              ]}
+            />
+            <p className="install-note">The studies measure Oh as agent memory, which is the same kernel Wordcell derives its graph from. They do not measure Wordcell retrieval on your vault.</p>
+          </MarketingSection>
 
           <MarketingSection
             heading="Smaller context, with a measurement you can inspect"
@@ -269,17 +324,29 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
           </MarketingSection>
 
           <MarketingSection
+            heading="Built for code, not only for code"
+            headingId="developers-title"
+            id="developers"
+            label=""
+            summary="The same vault grounds a coding agent: scope notes to repository paths, inherit the AGENTS.md rules that govern an edit, and recover the commits behind a decision."
+          >
+            <pre className="install-command" tabIndex={0}><code>{`wordcell context packages/parser/src/index.ts --root kb --repo .
+wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
+            <p className="record-link"><a href="/developers">Wordcell for developers and their agents</a></p>
+          </MarketingSection>
+
+          <MarketingSection
             heading="Choose the workflow you need"
             headingId="compare-title"
             id="compare"
             label=""
-            summary="Local files are a shared strength. Wordcell brings repository context, retrieval, and publishing into one workflow."
+            summary="Local files are a shared strength. Wordcell brings authored structure, retrieval, and publishing into one workflow."
           >
             <div className="wordcell-comparison" role="region" aria-label="Workflow comparison" tabIndex={0}>
               <table>
                 <thead><tr><th scope="col">Start with</th><th scope="col">When it fits</th><th scope="col">What Wordcell adds</th></tr></thead>
                 <tbody>
-                  <tr><th scope="row">Markdown + Git</th><td>A small set of notes you can navigate yourself.</td><td>Backlinks, metadata queries, and code-path context without moving the files.</td></tr>
+                  <tr><th scope="row">Markdown + Git</th><td>A small set of notes you can navigate yourself.</td><td>Backlinks, typed relationships, metadata queries, and code-path context without moving the files.</td></tr>
                   <tr><th scope="row">QMD</th><td>Local document search with CLI, SDK, and agent integrations.</td><td>Current notes joined to authored relationships, AGENTS.md rules, Git evidence, and publishing.</td></tr>
                   <tr><th scope="row">Basic Memory</th><td>A local Markdown knowledge graph for AI conversations.</td><td>A workflow centered on repository paths, explicit edit rules, and code history.</td></tr>
                   <tr><th scope="row">Obsidian or a static publisher</th><td>An interactive notes workspace or a site built from Markdown.</td><td>Headless agent workflows and repeatable selection of notes to publish.</td></tr>
@@ -374,8 +441,8 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
             headingId="questions-title"
             id="questions"
             label=""
-            questions={questions.map(({ answer, question }) => ({
-              answer: <p>{answer}</p>,
+            questions={questions.map(({ after, answer, question }) => ({
+              answer: <p>{answer}{after}</p>,
               question,
             }))}
           />

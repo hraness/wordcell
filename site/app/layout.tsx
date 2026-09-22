@@ -15,7 +15,7 @@ import "./globals.css";
  */
 const initialPalette = getDesignPaletteTheme("paper", "light");
 
-const title = "Wordcell: local knowledge for coding agents";
+const title = "Wordcell: the Markdown knowledge base with superpowers";
 const description = readmeLead;
 
 export const metadata: Metadata = {

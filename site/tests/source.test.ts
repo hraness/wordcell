@@ -80,6 +80,12 @@ describe("Wordcell site source contract", () => {
     const [sitemap, robots] = await Promise.all([read("public/sitemap.xml"), read("public/robots.txt")]);
     expect(sitemap).toContain("<loc>https://wordcell.io/</loc>");
     expect(sitemap).toContain("<loc>https://wordcell.io/docs</loc>");
+    expect(sitemap).toContain("<loc>https://wordcell.io/developers</loc>");
+    expect(sitemap).toContain("<loc>https://wordcell.io/docs/overview</loc>");
+    const { docCatalog } = await import("../app/docs/catalog");
+    for (const entry of docCatalog) {
+      expect(sitemap).toContain(`<loc>https://wordcell.io/docs/${entry.slug}</loc>`);
+    }
     expect(robots).toContain("Sitemap: https://wordcell.io/sitemap.xml");
   });
 });

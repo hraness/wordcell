@@ -382,7 +382,7 @@ describe("npm release workflows", () => {
     };
     expect(manifest).toEqual(expect.objectContaining({
       version: "0.22.0",
-      description: "A local knowledge base for coding agents. Save decisions in Markdown and recover the context behind your code.",
+      description: "A local Markdown knowledge base with superpowers. Save decisions, sources, and plans as files you own, then recover them through exact and semantic search, typed relationships, backlinks, and Git history.",
       keywords: [
         "knowledge-base",
         "coding-agents",

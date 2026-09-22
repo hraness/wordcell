@@ -10,6 +10,7 @@ export function WordcellContentFooter() {
       brandHref="/"
       brandLabel="Wordcell home"
       links={[
+        { href: "/developers", label: "For developers" },
         { href: "/docs", label: "Docs" },
         { href: repository, label: "hraness/wordcell" },
         { href: "https://hraness.com/projects", label: "Hraness projects" },

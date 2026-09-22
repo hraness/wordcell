@@ -2,14 +2,28 @@ import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import Home from "../app/page";
+import Developers from "../app/developers/page";
 import Docs from "../app/docs/page";
+import DocPage, { generateMetadata as docMetadata } from "../app/docs/[slug]/page";
+import { docCatalog, docQuadrants } from "../app/docs/catalog";
+import { docHtml } from "../app/docs/docs.generated";
 import { readmeVersion } from "../app/readme.generated";
 import { publishedRelease } from "../app/publication";
 import RootLayout from "../app/layout";
 
-test("every public route has the in-flow content footer above the network footer", () => {
-  for (const Page of [Home, Docs]) {
-    const html = renderToStaticMarkup(<RootLayout><Page /></RootLayout>);
+async function publicRoutes(): Promise<React.JSX.Element[]> {
+  return [
+    <Home key="home" />,
+    <Docs key="docs" />,
+    <Developers key="developers" />,
+    await DocPage({ params: Promise.resolve({ slug: "reference" }) }),
+    await DocPage({ params: Promise.resolve({ slug: "overview" }) }),
+  ];
+}
+
+test("every public route has the in-flow content footer above the network footer", async () => {
+  for (const Page of await publicRoutes()) {
+    const html = renderToStaticMarkup(<RootLayout>{Page}</RootLayout>);
     expect(html.match(/<footer\b/gu)).toHaveLength(2);
     const contentFooter = html.indexOf('data-hraness-marketing="footer"');
     const networkFooter = html.indexOf('data-slot="hraness-site-footer"');
@@ -18,15 +32,15 @@ test("every public route has the in-flow content footer above the network footer
     expect(html).toContain('<img alt="" height="20" src="/icon.png" width="20"/>');
     expect(html).not.toContain("📝");
     expect(html).toContain("https://account.hraness.com/support?product=kb&amp;source=web#support");
-    expect(html).toContain("Support ongoing development of inspectable Markdown memory for coding agents.");
+    expect(html).toContain("Support ongoing development of inspectable Markdown memory.");
     expect(html).not.toContain('type="email"');
     expect(html).not.toContain('source=web#updates');
   }
 });
 
-test("every public route attributes the site to Hraness through the shared footer only", () => {
-  for (const Page of [Home, Docs]) {
-    const html = renderToStaticMarkup(<RootLayout><Page /></RootLayout>);
+test("every public route attributes the site to Hraness through the shared footer only", async () => {
+  for (const Page of await publicRoutes()) {
+    const html = renderToStaticMarkup(<RootLayout>{Page}</RootLayout>);
     const brandLinks: string[] = [];
     new HTMLRewriter()
       .on('footer[data-slot="hraness-site-footer"] a[aria-label="Hraness home"]', {
@@ -55,7 +69,7 @@ test("the homepage's maker answer attributes Wordcell to Hraness", () => {
 test("the homepage leads with the README identity and the verified install command", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
-  expect(html).toContain("Give coding agents the decisions behind your code");
+  expect(html).toContain("The Markdown knowledge base with superpowers");
   if (publishedRelease === null) {
     expect(html).toContain("First Wordcell release in preparation");
     expect(html).not.toContain(".tgz");
@@ -67,12 +81,43 @@ test("the homepage leads with the README identity and the verified install comma
   expect(html).not.toContain("hraness.com/kb");
 });
 
-test("the docs page renders the README with its installation anchor", () => {
+test("the docs page indexes every catalog entry by Diataxis quadrant", () => {
   const html = renderToStaticMarkup(<Docs />);
+  expect(html).toContain('id="install"');
+  expect(html).toContain("wordcell --help");
+  expect(html).not.toContain("data-hraness-marketing-preset");
+  for (const quadrant of docQuadrants) {
+    expect(html).toContain(`id="docs-${quadrant.id}"`);
+    expect(html).toContain(quadrant.label);
+  }
+  for (const entry of docCatalog) {
+    expect(html).toContain(`href="/docs/${entry.slug}"`);
+    expect(html).toContain(entry.title);
+  }
+  expect(html).toContain('href="/docs/overview"');
+});
+
+test("every documentation page renders its repository Markdown with on-site links", async () => {
+  for (const entry of docCatalog) {
+    const element = await DocPage({ params: Promise.resolve({ slug: entry.slug }) });
+    const html = renderToStaticMarkup(element);
+    expect(html).toContain("<article");
+    expect(html).toContain("<h1");
+    expect(html).toContain(`docs/${entry.slug}.md`);
+    expect(html).not.toContain("data-hraness-marketing-preset");
+    expect(docHtml[entry.slug]).not.toContain('href="../');
+    expect(docHtml[entry.slug]).not.toContain('href="./');
+    const metadata = await docMetadata({ params: Promise.resolve({ slug: entry.slug }) });
+    expect(metadata.title).toBe(`${entry.title} · Wordcell documentation`);
+  }
+});
+
+test("the overview page renders the README with its installation anchor", async () => {
+  const element = await DocPage({ params: Promise.resolve({ slug: "overview" }) });
+  const html = renderToStaticMarkup(element);
   expect(html).toContain('id="install"');
   expect(html).toContain('id="the-kb-vault-format"');
   expect(html).toContain("wordcell --help");
-  expect(html).not.toContain("data-hraness-marketing-preset");
 });
 
 test("scopes the editorial preset to the homepage header and real command example", () => {
