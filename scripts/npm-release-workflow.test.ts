@@ -381,7 +381,7 @@ describe("npm release workflows", () => {
       readonly version?: unknown;
     };
     expect(manifest).toEqual(expect.objectContaining({
-      version: "0.22.0",
+      version: "0.22.1",
       description: "A local knowledge base for coding agents. Save decisions in Markdown and recover the context behind your code.",
       keywords: [
         "knowledge-base",
@@ -644,7 +644,7 @@ describe("npm release workflows", () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
-  });
+  }, 15_000); // Three isolated workflow processes; this checks authorization, not startup speed.
 
   test("canonical GitHub release authority has no npm admission dependency", async () => {
     const workflow = parse(await readFile(releaseWorkflowUrl, "utf8")) as {

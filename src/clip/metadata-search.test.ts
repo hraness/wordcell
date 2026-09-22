@@ -82,7 +82,9 @@ describe("Rust metadata search provider", () => {
     const fixture = executable(SUCCESS_SCRIPT);
     const provider = createRustMetadataSearchProvider({ binaryPath: fixture.path });
 
-    const outcome = await provider({ query: "quoted source", maxResults: 2, timeoutMs: 1_000 });
+    // Result ordering is independent of native process startup latency; deadline
+    // and cancellation behavior are exercised by the next test.
+    const outcome = await provider({ query: "quoted source", maxResults: 2, timeoutMs: 10_000 });
 
     expect(outcome.status).toBe("success");
     if (outcome.status !== "success") return;
