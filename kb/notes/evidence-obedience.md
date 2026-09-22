@@ -23,7 +23,12 @@ permuted whole attribute rows so the table asserted what the domain does not.
 All three scored 44 of 44 for both models tested. In the permuted condition,
 where 37 entries qualified under the table only and a different 37 under real
 domain facts only, both models returned 37 of 37 table-only and 0 of 37
-real-only, flagged none, and cited the false rows confidently.
+real-only, each citing attributes from the row it was asserting.
+
+One limit is worth stating because it is easy to overread: the required output
+format was one row per line and nothing else, so neither model had a channel in
+which to object to a contradiction. That no objection appears is not evidence
+that neither noticed one.
 
 Stripping recognisable names changed nothing, so the models were reading the
 supplied context rather than recalling training data. That is the result
