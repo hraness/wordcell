@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+Adds `updateNoteBody` to the authoring SDK. It replaces an existing note's prose
+at a required content revision while preserving frontmatter bytes, stable
+identity, and typed relations. Concurrent edits fail with the existing conflict
+and recovery results; an unchanged body leaves the file in place.
+
 ## 0.22.0
 
 Publish any selected slice of a Markdown vault as a static website, then preview it with `wordcell serve`. Select notes by ID, directory, glob, metadata, or explicit graph neighborhood. Preview counts, a bounded list of selected IDs, and a Markdown digest before writing; publishing needs no model or hosted service. Pages include navigation, backlinks, browser-local search, and a graph.

@@ -1,12 +1,12 @@
 import type {
   AuthoringOptions, CreateConceptNoteInput, CreateNoteInput, NoteAuthoringResult,
-  NoteRelation, NoteRevision,
+  NoteRelation, NoteRevision, UpdateNoteBodyOptions,
 } from "./authoring-model.js";
 import { canonicalNoteId, frontmatter, relationsFromParts } from "./authoring-model.js";
 import {
   assertNoInterruptedRecovery, nativeAuthoringPlatform, readSnapshot, resolveVault,
 } from "./authoring-platform.js";
-import { createNoteProgram, editNoteRelationProgram } from "./authoring-program.js";
+import { createNoteProgram, editNoteRelationProgram, updateNoteBodyProgram } from "./authoring-program.js";
 import { runAuthoring } from "./authoring-runtime.js";
 
 export {
@@ -15,7 +15,7 @@ export {
 } from "./authoring-model.js";
 export type {
   AuthoringDependencies, AuthoringInstallContext, AuthoringOptions,
-  CreateConceptNoteInput, CreateNoteInput, NoteAuthoringResult, NoteRelation, NoteRevision,
+  CreateConceptNoteInput, CreateNoteInput, NoteAuthoringResult, NoteRelation, NoteRevision, UpdateNoteBodyOptions,
 } from "./authoring-model.js";
 
 /**
@@ -58,6 +58,20 @@ export async function createConceptNote(
   root: string, input: CreateConceptNoteInput, options: AuthoringOptions = {},
 ): Promise<NoteAuthoringResult> {
   return createNote(root, { ...input, type: "concept" }, options);
+}
+
+/**
+ * Replace one existing note's body at an exact revision. Frontmatter bytes,
+ * stable identity and relations remain unchanged. Like createNote, this adds a
+ * final newline and separates frontmatter from the body with one blank line.
+ *
+ * A stale revision fails even if the requested body already matches. Callers
+ * must read back an interrupted operation before deciding whether to retry.
+ */
+export async function updateNoteBody(
+  root: string, id: string, body: string, options: UpdateNoteBodyOptions,
+): Promise<NoteAuthoringResult> {
+  return runAuthoring(updateNoteBodyProgram(nativeAuthoringPlatform, root, id, body, options));
 }
 
 /** Add one exact outbound typed relation, idempotently. */

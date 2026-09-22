@@ -89,6 +89,11 @@ export interface AuthoringOptions {
   readonly dependencies?: Partial<AuthoringDependencies>;
 }
 
+export interface UpdateNoteBodyOptions extends AuthoringOptions {
+  /** Exact revision read before preparing the replacement body. */
+  readonly expectedRevision: NoteRevision;
+}
+
 export class InvalidCanonicalNoteIdError extends TypeError {
   readonly noteId: string;
 
@@ -690,6 +695,30 @@ export function validateTags(tags: readonly string[] | undefined): readonly stri
 
 export function normalizedRequestedBody(body: string): string {
   return body.endsWith("\n") ? body : `${body}\n`;
+}
+
+/** Replace prose without serializing or modifying the authored frontmatter. */
+export function renderUpdatedNoteBody(
+  snapshot: Pick<NoteSnapshot, "content" | "relativePath">,
+  parts: FrontmatterParts,
+  body: string,
+): string {
+  if (typeof body !== "string") throw new TypeError("a note body must be a string");
+  if (Buffer.byteLength(body, "utf8") > MAX_NOTE_BYTES) {
+    throw new RangeError("the note body is too large for bounded authoring");
+  }
+  if (Buffer.from(body, "utf8").toString("utf8") !== body) {
+    throw new TypeError("a note body must contain well-formed Unicode");
+  }
+  const normalized = normalizedRequestedBody(body);
+  if (!parts.hadFrontmatter) {
+    if (frontmatter(normalized, snapshot.relativePath).hadFrontmatter) {
+      throw new TypeError("a body update cannot introduce frontmatter into a note");
+    }
+    return normalized;
+  }
+  const header = snapshot.content.slice(0, snapshot.content.length - parts.bodySuffix.length);
+  return `${header}${parts.newline}${parts.newline}${normalized}`;
 }
 
 export function renderCreatedNote(input: CreateNoteInput, documentId: string): string {

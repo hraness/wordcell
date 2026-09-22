@@ -371,6 +371,48 @@ diffs, and the explicit local job ledger are available from
 `@hraness/wordcell/clip/bundle-reader`, `@hraness/wordcell/clip/refresh`, and
 `@hraness/wordcell/clip/jobs`.
 
+### Update a note body conditionally
+
+`updateNoteBody` replaces the prose in one existing note. Read its revision
+before preparing the replacement:
+
+```ts
+import { noteRevision, updateNoteBody } from "@hraness/wordcell/authoring";
+
+const root = "kb";
+const id = "reports/weekly";
+const expectedRevision = await noteRevision(root, id);
+const body = "# Weekly report\n\nThe current findings cite [[sources/study]].\n";
+const result = await updateNoteBody(root, id, body, { expectedRevision });
+console.log(result.changed, result.revision, result.documentId);
+```
+
+`UpdateNoteBodyOptions` requires `expectedRevision`; it also accepts the same
+local lock options as other authoring operations. The update preserves the
+exact frontmatter bytes, including comments, custom fields, relations, and
+`document_id`. It adds a final newline when missing and uses one blank line
+between frontmatter and the new body, with the existing delimiter newline
+style. A note without frontmatter remains without it and gains no identity.
+The operation refuses to introduce frontmatter through such a note's body.
+Input must be well-formed Unicode, and the complete rendered note must fit the
+16 MiB authoring bound.
+
+An identical result at the expected revision returns `changed: false` without
+replacing the file. A stale revision throws `NoteRevisionConflictError`, even
+if the requested body happens to match the latest body. The operation uses the
+existing same-note lease, replacement checks, and recovery paths; it does not
+create a missing note or update another file.
+
+When a replacement depends on the current prose, pair it with that prose's
+exact revision. An open knowledge-base session retains an older snapshot:
+read the revision before opening a fresh session, or derive the revision from
+the exact complete UTF-8 content you read. Reject a truncated read. Close and
+reopen the session after a successful update. After an interrupted operation,
+read back the document and reconcile its content and revision before retrying;
+do not assume that an error means the replacement did not become visible.
+If a conflict or `NoteRecoveryRequiredError` reports `recoveryPath`, retain
+those displaced bytes until recovery is resolved.
+
 ## Agent skills
 
 The repository ships one reusable `wordcell` Agent Skill under `skills/wordcell/`. Its
