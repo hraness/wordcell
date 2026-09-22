@@ -115,7 +115,9 @@ import {
   validateQueryOptions
 } from "./index-48pz4jpc.js";
 import {
+  MAX_REPOSITORY_MEMORY_DETAIL_LIMIT,
   MAX_REPOSITORY_SCOPES,
+  auditRepositoryMemoryScopes,
   buildRepositoryMemoryContext,
   repositoryMemoryGroupKeys
 } from "./index-06c9ctr6.js";
@@ -1162,7 +1164,7 @@ Usage:
   wordcell inspect <url> [capture options]
   wordcell pdf <file-or-url> [PDF options]
   wordcell refresh [--root <directory>] [--index <path>] [--json]
-  wordcell check [--root <directory>] [--index <path>] [--no-catalog] [--json]
+  wordcell check [--root <directory>] [--index <path>] [--no-catalog] [--repo <repository>] [--json]
   wordcell catalog [--root <directory>] [--index <path>] [--json]
   wordcell graph [--root <directory>] [--index <path>] [--json]
   wordcell graph rebuild [--fresh] [--root <directory>] [--index <path>] [--json]
@@ -1292,6 +1294,7 @@ function parseVaultCommand(command, arguments_) {
   let depth = 1;
   let limit;
   let noCatalog = false;
+  let repository;
   const positional = [];
   for (let cursor = 0;cursor < arguments_.length; cursor += 1) {
     const argument = arguments_[cursor];
@@ -1303,6 +1306,14 @@ function parseVaultCommand(command, arguments_) {
     }
     if (argument === "--no-catalog" && command === "check") {
       noCatalog = true;
+      continue;
+    }
+    if (argument === "--repo" && command === "check") {
+      const value = readValue(arguments_, cursor);
+      if (value === null)
+        return { ok: false, message: "--repo requires a value" };
+      repository = value;
+      cursor += 1;
       continue;
     }
     if (argument === "--root" || argument === "--index") {
@@ -1371,7 +1382,8 @@ function parseVaultCommand(command, arguments_) {
       root,
       options: index === undefined ? {} : { index },
       json,
-      ...command === "check" && noCatalog ? { noCatalog: true } : {}
+      ...command === "check" && noCatalog ? { noCatalog: true } : {},
+      ...command === "check" && repository !== undefined ? { repository } : {}
     }
   };
 }
@@ -3206,7 +3218,8 @@ function summary(snapshot, options = {}) {
         truncated: options.attachments.truncated,
         issues: options.attachments.issues
       }
-    }
+    },
+    ...options.repositoryScopes === undefined ? {} : { repositoryScopes: options.repositoryScopes }
   };
 }
 function renderIssue(issue) {
@@ -3239,6 +3252,38 @@ function renderAdvisories(analysis) {
   }
   return lines;
 }
+function renderRepositoryScopeAuditError(error) {
+  if (error.kind === "invalid-record") {
+    return `${safe(error.path)}: ${error.issues.map(safe).join(" ")}`;
+  }
+  const declared = error.recordPaths.map(safe).join(", ") + (error.recordPathsTruncated ? ", \u2026" : "");
+  return `${safe(error.scope)}: ${safe(error.state.reason)} at ${safe(error.state.path)}` + ` (declared by ${declared})`;
+}
+function renderRepositoryScopeAudit(audit) {
+  const { counts } = audit;
+  const lines = [
+    `Repository scopes: ${counts.authoredRecords} declaring note${counts.authoredRecords === 1 ? "" : "s"}; ` + `${counts.distinctScopes} distinct scope${counts.distinctScopes === 1 ? "" : "s"} ` + `(${counts.presentScopes} present, ${counts.absentScopes} absent, ${counts.invalidScopes} unusable).`
+  ];
+  if (audit.advisories.total > 0) {
+    lines.push(audit.advisories.total === 1 ? "Advisory: 1 current note declares a repository path that no longer exists." : `Advisory: ${audit.advisories.total} current notes declare repository paths that no longer exist.`);
+    for (const advisory of audit.advisories.details) {
+      lines.push(`  ${safe(advisory.path)} declares absent scope ${safe(advisory.scope)}`);
+    }
+    if (audit.advisories.truncated) {
+      lines.push(`  \u2026 ${audit.advisories.total - audit.advisories.returned} more; rerun with --json for the complete audit.`);
+    }
+  }
+  if (audit.errors.total > 0) {
+    lines.push(`Advisory: ${audit.errors.total} repository scope declaration problem${audit.errors.total === 1 ? "" : "s"}.`);
+    for (const error of audit.errors.details) {
+      lines.push(`  ${renderRepositoryScopeAuditError(error)}`);
+    }
+    if (audit.errors.truncated) {
+      lines.push(`  \u2026 ${audit.errors.total - audit.errors.returned} more; rerun with --json for the complete audit.`);
+    }
+  }
+  return lines;
+}
 function checkExitCode(snapshot, noCatalog = false, attachments) {
   return !noCatalog && snapshot.index === "stale" || snapshot.analysis.issues.length > 0 || snapshot.analysis.relationIssues.length > 0 || (attachments?.issues.length ?? 0) > 0 || attachments?.truncated === true ? 3 : 0;
 }
@@ -3246,7 +3291,7 @@ function renderAttachmentIssue(issue) {
   const candidates = issue.candidates === undefined ? "" : ` (${issue.candidates.map(safe).join(", ")})`;
   return `${safe(issue.source)}:${issue.line}: ${safe(issue.kind)} attachment ${safe(issue.target)}: ${safe(issue.message)}${candidates}`;
 }
-function renderSnapshot(command, snapshot, noCatalog = false, attachments) {
+function renderSnapshot(command, snapshot, noCatalog = false, attachments, repositoryScopes) {
   const lines = [
     `${command === "refresh" ? "Refreshed" : "Checked"} ${safe(snapshot.root)}`,
     `Index: ${noCatalog ? `not required (${snapshot.index})` : snapshot.index}; notes: ${snapshot.analysis.noteCount}; contextual links: ${snapshot.analysis.contextualLinks.length}; typed relationships: ${snapshot.analysis.authoredRelations.length}.`
@@ -3266,6 +3311,8 @@ function renderSnapshot(command, snapshot, noCatalog = false, attachments) {
     lines.push("error: attachment validation was truncated by a resource limit");
   }
   lines.push(...renderAdvisories(snapshot.analysis));
+  if (repositoryScopes !== undefined)
+    lines.push(...renderRepositoryScopeAudit(repositoryScopes));
   return `${lines.join(`
 `)}
 `;
@@ -4050,7 +4097,15 @@ async function runVault(command, output, dependencies) {
       root: snapshot.root,
       documents: snapshot.notes.map(({ path, content }) => ({ path, content }))
     }) : undefined;
-    output.stdout(command.json ? terminalSafeJson(summary(snapshot, { noCatalog, ...attachments === undefined ? {} : { attachments } })) : sanitizeTerminalText(renderSnapshot(command.kind, snapshot, noCatalog, attachments)));
+    const repositoryScopes = command.kind === "check" && command.repository !== undefined ? await (dependencies.auditRepositoryMemoryScopes ?? auditRepositoryMemoryScopes)(snapshot.notes, {
+      repositoryRoot: command.repository,
+      detailLimit: MAX_REPOSITORY_MEMORY_DETAIL_LIMIT
+    }) : undefined;
+    output.stdout(command.json ? terminalSafeJson(summary(snapshot, {
+      noCatalog,
+      ...attachments === undefined ? {} : { attachments },
+      ...repositoryScopes === undefined ? {} : { repositoryScopes }
+    })) : sanitizeTerminalText(renderSnapshot(command.kind, snapshot, noCatalog, attachments, repositoryScopes)));
     return checkExitCode(snapshot, noCatalog, attachments);
   }
   if (command.kind === "graph") {

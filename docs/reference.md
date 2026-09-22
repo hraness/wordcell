@@ -181,6 +181,19 @@ wordcell context packages/parser/src/index.ts --root kb --repo .
 wordcell agents check --root kb --repo .
 ```
 
+A note that declares `repository_scopes` asserts something checkable: the
+repository still has that path. `wordcell check --root kb --repo .` compares every
+authored declaration with the working tree and reports each current record whose
+scope is now absent, so a note left behind by a rename or deletion becomes
+visible instead of being read as current fact. The pass is advisory: it never
+changes the exit code, terminal plans stay silent because an absent path is
+valid authored history, and nothing is inferred from prose. Absent-scope
+advisories point at a note to reread, not at a proven error.
+
+```sh
+wordcell check --root kb --repo . --json
+```
+
 `wordcell agents identity` derives a canonical mapping without writing files.
 `wordcell context` lists inherited `AGENTS.md` files from the repository root toward
 the target, verified context hubs from the nearest scope back toward the root,
@@ -200,7 +213,7 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell inspect <url>` | Run acquisition and extraction without writing a bundle. |
 | `wordcell pdf <file-or-url> [--slug <slug>]` | Convert a local or public remote PDF into Markdown while retaining the original bytes, extracted images, OCR-derived text, URL provenance, and page provenance. |
 | `wordcell refresh --root <directory>` | Rebuild a managed catalog atomically and report graph findings. An authored-catalog vault remains unchanged. |
-| `wordcell check --root <directory>` | Verify catalog policy, graph integrity, and confined local image, PDF, and tldraw attachments without changing files. `--no-catalog` gates an edit lane without requiring the shared catalog refresh. |
+| `wordcell check --root <directory>` | Verify catalog policy, graph integrity, and confined local image, PDF, and tldraw attachments without changing files. `--no-catalog` gates an edit lane without requiring the shared catalog refresh. `--repo <repository>` adds an advisory-only pass over authored `repository_scopes` against that working tree. |
 | `wordcell catalog --root <directory>` | Render an exhaustive disposable catalog without modifying an authored or managed front door. |
 | `wordcell graph query --program <name> --root <directory>` | Query a bounded, proof-bearing Oh projection; see [the graph guide](graph-authority.md). |
 | `wordcell graph rebuild\|verify --root <directory>` | Rebuild or verify the disposable local graph cache without editing Markdown. |
