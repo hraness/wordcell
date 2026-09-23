@@ -17,8 +17,9 @@ When to use this site:
 ## Pages
 
 - [Wordcell](https://wordcell.io/): Quick start, how notes, links, and search
-  work, the measured context size, the Oh memory-kernel benchmarks, comparisons,
-  publishing selected notes, what stays local, and the install command.
+  work, the measured context size and the SciFact reranking study, how
+  Wordcell uses Oh, comparisons, publishing selected notes, what stays local,
+  and the install command.
 - [For developers](https://wordcell.io/developers): The coding-agent workflow:
   code-path context, scoped rules, note history, and the Agent Skill.
 - [Documentation](https://wordcell.io/docs): The documentation index, grouped
@@ -43,7 +44,9 @@ When to use this site:
 
 - Repository and packaged Agent Skill: https://github.com/hraness/wordcell
 - README as Markdown: https://github.com/hraness/wordcell/blob/main/README.md
-- Memory-kernel benchmarks: https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md
+- Wordcell retrieval study: https://wordcell.io/docs/reranking#evidence-and-limits
+- Wordcell and Oh integration: https://wordcell.io/docs/graph-authority#how-wordcell-and-oh-fit-together
+- Oh's separate memory framework and benchmark evidence: https://oh.computer/#benchmarks
 - Immutable releases: https://github.com/hraness/wordcell/releases
 - npm mirror: https://www.npmjs.com/package/@hraness/wordcell
 

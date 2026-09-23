@@ -181,6 +181,63 @@ describe("hosted conditional publication", () => {
     expect(await resolution.json()).toMatchObject({ operation: { id: id(1), status: "committed", revision: 1 } });
   }));
 
+  test("transport ETag rewriting preserves exact retries and conditional object identity", async () => {
+    for (const transformation of ["weak", "missing"] as const) await fixture(async (bucket, store) => {
+      expect((await publish(1)).status).toBe(201);
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = Object.assign(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const response = await originalFetch(input, init);
+        const etag = response.headers.get("etag");
+        if (etag === null) return response;
+        const headers = new Headers(response.headers);
+        // Model an edge rewriting the representation validator after Worker execution.
+        if (transformation === "weak") headers.set("etag", `W/${etag}`);
+        else headers.delete("etag");
+        return new Response(response.body, { status: response.status, headers });
+      }, { preconnect: originalFetch.preconnect });
+      const writes = bucket.writes.length;
+      const retry = await publish(1);
+      expect(retry.status).toBe(200);
+      expect(await retry.json()).toMatchObject({ idempotent: true, operation: { id: id(1), revision: 1 } });
+      expect(bucket.writes).toHaveLength(writes);
+      const key = `sites/${token.key8}/test.json`;
+      const before = await readSite(store, token, "test");
+      expect(before.etag).toBe(bucket.objects.get(key)!.etag);
+      expect((await publish(2, 1, "# Updated\n")).status).toBe(200);
+      expect(await store.putConditional(key, before.head, before.etag)).toBe("conflict");
+      expect((await readSite(store, token, "test")).revision).toBe(2);
+      const lookup = await GET(request("GET", undefined, "test", `?operation=${id(1)}`), params());
+      expect(await lookup.json()).toMatchObject({ idempotent: true, operation: { id: id(1), revision: 1 } });
+      const deleted = await DELETE(request("DELETE", { operation: operation(3, 2) }), params());
+      expect(await deleted.json()).toMatchObject({ deleted: "test", revision: 3, operation: { kind: "delete", revision: 3 } });
+      expect((await publicRead(bucket)).status).toBe(404);
+      const tombstone = await readSite(store, token, "test");
+      expect(tombstone.revision).toBe(3);
+      expect(tombstone.etag).toBe(bucket.objects.get(key)!.etag);
+    });
+  });
+
+  test("missing or malformed object identity cannot fall back to the transport ETag", async () => {
+    for (const identity of [null, 'W/"weak"', '"one", "two"', "unquoted"]) await fixture(async (bucket, store) => {
+      expect((await publish(1)).status).toBe(201);
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = Object.assign(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const response = await originalFetch(input, init);
+        const headers = new Headers(response.headers);
+        if (identity === null) headers.delete("x-object-etag");
+        else headers.set("x-object-etag", identity);
+        return new Response(response.body, { status: response.status, headers });
+      }, { preconnect: originalFetch.preconnect });
+      const writes = bucket.writes.length;
+      const previousHead = bucket.objects.get(`sites/${token.key8}/test.json`)!.bytes;
+      await expect(readSite(store, token, "test")).rejects.toMatchObject({ code: "STORAGE_INVALID" });
+      expect((await publish(2, 1, "# Must not replace\n")).status).toBe(502);
+      // An immutable attempt intent may be recorded; no head, capacity or artifact changes.
+      expect(bucket.writes.slice(writes).filter((key) => !key.startsWith("ops/"))).toEqual([]);
+      expect(bucket.objects.get(`sites/${token.key8}/test.json`)!.bytes).toEqual(previousHead);
+    });
+  });
+
   test("prepared crash recovery uses frozen output without a second projection or upload", () => fixture(async (bucket) => {
     bucket.beforePut = async (key) => { if (key.startsWith("sites/")) throw new Error("before_commit"); };
     expect((await publish(1)).status).toBe(502);

@@ -1,10 +1,55 @@
 # Query the derived graph
 
-Wordcell answers named graph queries with the Oh library, pinned to its
-immutable 0.11.0 release. Named graph programs were added in Wordcell 0.21.
+Wordcell's named graph programs use its pinned immutable Oh release.
 Markdown is authoritative. Queries never add links or inferred
 relationships to notes, and the existing `wordcell graph --json` report keeps
 its format.
+
+Wordcell 0.22.2 pins Oh 0.12.0. Earlier Wordcell 0.22.1 used Oh 0.11.0.
+The graph contracts stay compatible and existing vaults need no migration.
+
+## How Wordcell and Oh fit together
+
+Wordcell owns the Markdown knowledge base: authoring, capture, search,
+repository context, and publishing. [Oh](https://oh.computer) is the embedded
+memory framework that evaluates Wordcell's named graph queries and carries
+their source proofs. No Oh account or separate service is required.
+
+| Layer | Role | Authority |
+| --- | --- | --- |
+| Markdown and Git | Note text, frontmatter, authored relationships, and history. | The record you own and edit. |
+| Wordcell | Reads a bounded vault snapshot, resolves links, and prepares named queries. | Current files determine the graph facts. |
+| Oh | Evaluates the derived graph and returns bounded proofs. | A replaceable projection of those facts. |
+
+For example, a backlinks query returns the note that authored a link, the linked
+note, and the source line. Its proof identifies that source note's content
+digest and the exact projection revision. Editing a note changes the snapshot;
+open a new session to query the new record. A query never writes the relationship
+back into a note.
+
+After the [quick start](getting-started.md) has created `notes/parser-contract`,
+save a second note with one authored link and query its backlink:
+
+```sh
+wordcell note create notes/retry-review --title "Retry review" --type concept --body "Use [[notes/parser-contract]] when changing retry behavior." --root kb
+wordcell graph query --program backlinks --note notes/parser-contract --root kb --json
+```
+
+The returned `source` is `notes/retry-review` and the `target` is
+`notes/parser-contract`. Their proof follows the link you wrote. This uses an
+in-memory projection and creates no `.wordcell/oh.sqlite` file.
+
+Wordcell search uses its own exact matching and optional QMD local retrieval.
+Optional Jev reranking reorders a bounded candidate window through a hosted
+provider. These search paths do not invoke Oh's conversation-memory retrieval
+API. Oh's memory benchmarks therefore do not measure Wordcell search or answer
+quality. See Wordcell's [retrieval study](reranking.md#evidence-and-limits) and
+[context-payload measurement](evidence.md) for the paths evaluated here.
+
+The graph engine prefers the bundled Rust implementation automatically when
+available and retains the TypeScript fallback. Choosing an engine requires no
+experimental mode. The source revision, proof limits, and disposable-cache
+boundary are the same in either case.
 
 ## Query without creating a cache
 

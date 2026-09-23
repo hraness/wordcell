@@ -258,7 +258,7 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
               </div>
             </div>
             <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href={`${repository}/blob/main/docs/evidence.md`}>Method and raw report</a>.</p>
-            <p className="install-note">The graph core is Oh, the Hraness memory kernel: 89.8% on LongMemEval-S and 84.4% on LoCoMo in completed studies, in-sample scores with stated limits. <a href="https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md">Results and method</a>.</p>
+            <p className="install-note">Oh backs Wordcell’s graph queries and source proofs. Markdown and Git remain authoritative; Wordcell search has its own retrieval path and evidence. <a href="/docs/graph-authority#how-wordcell-and-oh-fit-together">How the integration works</a> · <a href="/#evidence">Wordcell’s retrieval study</a>.</p>
           </MarketingSection>
 
           <MarketingInterfaceGrid
@@ -323,7 +323,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
                 },
                 {
                   label: "Local retrieval by default",
-                  detail: "Exact search, graph queries, and optional local semantic search run on your machine. Optional hosted reranking is off by default; when you turn it on, it sends the query and the titles, paths, and short snippets of up to 25 candidates to TypeSafe.",
+                  detail: "Exact search, graph queries, and optional local semantic search run on your machine. Optional hosted reranking is off by default. When you turn it on, it sends TypeSafe your query and, for up to 25 candidates, each note's identifier, title, path, and up to 512 bytes of its snippet.",
                 },
                 {
                   label: "The agent keeps its own rules",

@@ -8,7 +8,7 @@
       "name": "@hraness/wordcell",
       "path": ".",
       "visibility": "public",
-      "version": "0.22.1"
+      "version": "0.22.2"
     }
   ],
   "dependencies": [
@@ -22,7 +22,7 @@
     {
       "from": "@hraness/wordcell",
       "scope": "runtime",
-      "specifier": "https://github.com/hraness/oh/releases/download/v0.11.0/hraness-oh-0.11.0.tgz",
+      "specifier": "https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz",
       "to": "@hraness/oh",
       "sourceRepository": "hraness/oh"
     },

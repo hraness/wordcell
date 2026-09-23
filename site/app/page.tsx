@@ -8,7 +8,6 @@ import {
   MarketingRelated,
   MarketingSection,
   MarketingSiteHeader,
-  MarketingStatStrip,
   MarketingTrustBoundary,
   ProductHero,
 } from "@hraness/design-kit/react/server";
@@ -21,11 +20,12 @@ import { WordcellContentFooter } from "./site-footer";
 import { WordcellField } from "../wordcell/field";
 import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { readmeLead, readmeTitle } from "./readme.generated";
+import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
+import { scifactDetails, scifactStudy } from "../wordcell/benchmark-evidence";
 
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
 const repository = "https://github.com/hraness/wordcell";
-const memoryBenchmarks = "https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md";
 const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases/download/v${releaseVersion}/hraness-wordcell-${releaseVersion}.tgz`;
 
 const heading = "The Markdown knowledge base with superpowers";
@@ -166,7 +166,7 @@ const questions: readonly { question: string; answer: string; after?: React.Reac
   },
   {
     question: "Is Wordcell fully local?",
-    answer: "The core is local: your Markdown, exact search, graph queries, and optional QMD semantic search run on your machine. Semantic models download on first use. Web capture contacts the source, opt-in Jev reranking sends your query and each candidate note's title, path, and a short snippet to TypeSafe, and hosted agents follow their own data-handling settings.",
+    answer: "The core is local: your Markdown, exact search, graph queries, and optional QMD semantic search run on your machine. Semantic models download on first use. Web capture contacts the source. Opt-in Jev reranking sends TypeSafe your query and each candidate note's identifier, title, path, and up to 512 bytes of its snippet. Hosted agents follow their own data-handling settings.",
   },
   {
     question: "Do I need an embedding model or an account?",
@@ -179,6 +179,11 @@ const questions: readonly { question: string; answer: string; after?: React.Reac
   {
     question: "Does publishing upload my whole vault?",
     answer: "No. Choose notes, folders, metadata, or linked neighborhoods, inspect a dry run, then build a local static site. You decide where to upload it. Notes marked publish: false stay out, but review selected text and attachments for private content before sharing.",
+  },
+  {
+    question: "How does Wordcell use Oh?",
+    answer: "Wordcell is the Markdown knowledge base. Oh is the embedded memory framework that backs its named graph queries and source proofs. Your files and Git remain authoritative, and graph queries work without an Oh account or separate service. Wordcell search uses its own exact search and optional QMD or Jev integrations; Oh's conversation-memory benchmark scores do not measure that search path.",
+    after: <>{" "}<a href="/docs/graph-authority#how-wordcell-and-oh-fit-together">Read the integration guide</a>.</>,
   },
   {
     question: "How do I connect my coding agent?",
@@ -322,41 +327,22 @@ wordcell note create notes/parser-contract \\
           />
 
           <MarketingSection
-            heading="A memory core with published numbers"
+            heading="More relevant results near the top"
             headingId="memory-title"
-            id="memory"
-            label="Benchmarks"
-            summary="Wordcell derives its graph authority from Oh, the Hraness memory kernel. Its completed retrieval studies measure the engine your vault builds on."
+            id="evidence"
+            summary={`In a public retrieval study, adding hosted Jev reranking put a relevant source first for ${scifactDetails.additionalFirstResults} more queries. Compare the same questions and candidate windows.`}
           >
-            <MarketingStatStrip
-              ariaLabel="Oh memory-kernel benchmark results"
-              columns={3}
-              source={<>Oh full-release studies, September 2026. In-sample scores measure the kernel, not retrieval on your vault. <a href={memoryBenchmarks}>Method, limits, and raw reports</a>.</>}
-              stats={[
-                {
-                  label: "LongMemEval-S",
-                  value: "89.8%",
-                  detail: "500 questions. Identical-budget BM25 reached 85.4%.",
-                },
-                {
-                  label: "LoCoMo",
-                  value: "84.4%",
-                  detail: "1,540 questions at a 24 KB budget. Published peers score 66.9-75.1.",
-                },
-                {
-                  label: "Paired wins vs BM25",
-                  value: "39-17",
-                  detail: "Same reader, same frozen contexts. Sign test p = 0.0023.",
-                },
-              ]}
-            />
+            <span aria-hidden="true" id="memory" style={{ position: "absolute" }} />
+            <BenchmarkComparison study={scifactStudy}>
+              <p>nDCG at five rose from {scifactDetails.baselineNdcg} to {scifactDetails.rerankedNdcg}. It improved for {scifactDetails.improved} queries and regressed for {scifactDetails.regressed}. For {scifactDetails.missing} queries, neither candidate window contained a judged relevant source.</p>
+              <p>Reranking sends bounded query and candidate context to a paid provider. It is optional; the local search path runs without it. QMD, Letta, and Supermemory were not evaluated under this protocol.</p>
+            </BenchmarkComparison>
           </MarketingSection>
 
           <MarketingSection
-            heading="Snippets carry a fifth of the bytes"
+            heading="A smaller first context handoff"
             headingId="evidence-title"
-            id="evidence"
-            label="Measured"
+            id="context"
             summary="Packed snippets carry what matched, not the whole note. Across four queries on a seven-note public vault, snippets used 80% fewer UTF-8 bytes than the same notes in full."
           >
             <div aria-label="Packed snippets: 12,126 bytes. The same notes in full: 60,584 bytes." className="wordcell-bytes" role="group">
@@ -370,7 +356,18 @@ wordcell note create notes/parser-contract \\
               </div>
             </div>
             <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href={`${repository}/blob/main/docs/evidence.md`}>Method, raw results, and reproduction</a>.</p>
-            <p className="install-note">In a separate opt-in study on scientific abstracts, hosted Jev reranking put a relevant result first for 161 of 300 SciFact queries, versus 101 without it. Reranking uses a paid provider. <a href={`${repository}/blob/main/docs/reranking.md#evidence-and-limits`}>Study and limits</a>.</p>
+          </MarketingSection>
+
+          <MarketingSection
+            heading="Your Markdown, backed by Oh"
+            headingId="oh-title"
+            id="oh"
+            summary="Wordcell gives you the vault: notes, capture, search, and publishing. Oh supplies the embedded graph engine that traces a query result back to the authored links and source revision behind it."
+          >
+            <p className="wordcell-seam-copy">Markdown and Git remain authoritative. Graph queries work immediately in memory, with no Oh account or service to set up. An explicit rebuild can save a disposable local cache; nothing in that cache writes back to your notes.</p>
+            <pre className="install-command" tabIndex={0}><code>{`wordcell graph query --program backlinks --note notes/parser-contract --root kb --json`}</code></pre>
+            <p className="wordcell-seam-copy">Oh also provides a memory framework for applications. Its conversation-memory studies evaluate that separate retrieval path. Wordcell’s search results are measured above on their own inputs.</p>
+            <p className="record-link"><a href="/docs/graph-authority#how-wordcell-and-oh-fit-together">Follow a note into its graph proof</a> · <a href="https://oh.computer/#benchmarks">Explore Oh and its benchmark evidence</a></p>
           </MarketingSection>
 
           <MarketingSection
