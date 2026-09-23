@@ -15,7 +15,7 @@ import "./globals.css";
  */
 const initialPalette = getDesignPaletteTheme("paper", "light");
 
-const title = "Wordcell: local knowledge for coding agents";
+const title = "Wordcell: the Markdown knowledge base with superpowers";
 const description = readmeLead;
 
 export const metadata: Metadata = {
@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-hraness-theme="paper"
+      data-hraness-theme="wordcell"
       data-hraness-material="lantern"
       data-palette="paper"
       className={initialPalette.className}

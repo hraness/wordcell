@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { LANDING_END, LANDING_START, readmeLanding, renderReadmeHtml } from "./readme-html.ts";
+import { LANDING_END, LANDING_START, readmeLanding, renderMarkdownHtml, renderReadmeHtml } from "./readme-html.ts";
+import { docsResolver } from "./sync-docs.ts";
+import { docCatalog } from "../app/docs/catalog.ts";
 import { publishedRelease } from "../app/publication.ts";
 import { readmeHtml, readmeLead, readmeTitle, readmeVersion } from "../app/readme.generated.ts";
 import { publishedReadme } from "./published-readme.ts";
@@ -43,7 +45,7 @@ test("extracts the landing block between the shared Hraness markers", async () =
   expect(source.indexOf(LANDING_END)).toBeGreaterThan(source.indexOf(LANDING_START));
   const landing = readmeLanding(source);
   expect(landing.title).toBe("Wordcell");
-  expect(landing.lead).toContain("knowledge base for coding agents");
+  expect(landing.lead).toContain("knowledge base with superpowers");
   expect(landing.markdown).toContain("wordcell init kb");
 });
 
@@ -68,10 +70,10 @@ test("replacing the skill badge preserves the following paragraph boundary", () 
     const html = renderReadmeHtml([
       "[![Agent Skill](https://example.com/badge.svg)](https://example.com/skill) \t",
       "",
-      "A local knowledge base for coding agents.",
+      "A local Markdown knowledge base with superpowers.",
     ].join(newline));
     expect(html).toContain('<p><a href="https://example.com/skill">Install the Agent Skill</a></p>');
-    expect(html).toContain('<p>A local knowledge base for coding agents.</p>');
+    expect(html).toContain('<p>A local Markdown knowledge base with superpowers.</p>');
   }
 });
 
@@ -125,6 +127,30 @@ describe("README HTML boundary", () => {
   });
 });
 
+
+describe("documentation link resolution", () => {
+  const slugs = new Set(docCatalog.map((entry) => entry.slug));
+  const render = (source: string) => renderMarkdownHtml(source, docsResolver(slugs), "docs");
+
+  test("routes repository-relative Markdown to site pages and keeps other files on GitHub", () => {
+    const html = render([
+      "## Heading",
+      "",
+      "[guide](capture.md) [anchored](publish.md#preview-and-publish-a-slice) [readme](../README.md#install)",
+      "[security](../SECURITY.md) [receipt](evaluations/wordcell-scifact-20260919.json)",
+    ].join("\n"));
+    expect(html).toContain('href="/docs/capture"');
+    expect(html).toContain('href="/docs/publish#preview-and-publish-a-slice"');
+    expect(html).toContain('href="/docs/overview#install"');
+    expect(html).toContain('href="https://github.com/hraness/wordcell/blob/main/SECURITY.md"');
+    expect(html).toContain('href="https://github.com/hraness/wordcell/blob/main/docs/evaluations/wordcell-scifact-20260919.json"');
+  });
+
+  test("fails closed on uncataloged documentation and path escapes", () => {
+    expect(() => render("[x](secret.md)")).toThrow("uncataloged");
+    expect(() => render("[x](../../outside.md)")).toThrow("escapes the repository");
+  });
+});
 
 test("the generated docs match the source README and identify its source release", async () => {
   const source = await readFile(join(repository, "README.md"), "utf8");

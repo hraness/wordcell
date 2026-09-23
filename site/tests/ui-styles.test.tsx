@@ -63,12 +63,12 @@ describe("shared Ask AI stylesheet delivery", () => {
     expect(keyboardFocus).toBe(true);
   });
 
-  test("keeps Paper's token bridge after the shared defaults without copying component recipes", async () => {
+  test("keeps the wordcell token bridge after the shared defaults without copying component recipes", async () => {
     const { root } = await compiled;
     const foregrounds: string[] = [];
     const rings: string[] = [];
     root.walkRules(rule => {
-      if (!rule.selector.includes('[data-hraness-theme="paper"]')) return;
+      if (!rule.selector.includes('[data-hraness-theme="wordcell"]')) return;
       rule.walkDecls("--ui-foreground", declaration => { foregrounds.push(declaration.value); });
       rule.walkDecls("--ui-ring", declaration => { rings.push(declaration.value); });
     });

@@ -1142,7 +1142,7 @@ async function loadSearchRulesFile(path) {
   }
   return parseSearchRules(input);
 }
-var usage = `wordcell \u2014 a local knowledge base for coding agents
+var usage = `wordcell \u2014 a local Markdown knowledge base with superpowers
 
 Start here (no account or model needed):
   wordcell init kb

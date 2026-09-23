@@ -5,10 +5,14 @@
 @import "@hraness/design-kit/product-marketing.css";
 @import "@hraness/design-kit/palettes.css";
 
-@import "../vendor/paper-theme/paper-theme.css";
 @import "../vendor/hraness-marketing/product-marketing-preset.css";
 @import "../vendor/hraness-lantern/lantern-material.css";
 @import "@hraness/site-footer/styles.css";
+
+/* The wordcell design layer: product-owned theme + components on the shared
+ * foundations. */
+@import "../wordcell/wordcell-theme.css";
+@import "../wordcell/wordcell.css";
 
 :root {
   --inverse-background: #14202a;
@@ -195,11 +199,15 @@ a { text-underline-offset: 0.2em; }
 .document-page article ol { list-style: decimal; padding-left: 1.5rem; margin: 1rem 0; }
 .document-page article li + li { margin-top: 0.5rem; }
 
-/* The product's command transcript retains its fixed code contrast. */
-.wordcell-marketing-hero .hraness-marketing-proof-frame {
-  --hraness-marketing-inverse: var(--inverse-background);
-  --hraness-marketing-inverse-ink: var(--wordcell-code-foreground);
-}
+/* Documentation index and page chrome. */
+.docs-quadrant-hint { color: var(--muted); margin-top: -0.5rem; }
+.docs-list { list-style: none; padding-left: 0; margin: 1rem 0 0; }
+.docs-list li { padding: 0.9rem 0; border-top: 1px solid var(--line); }
+.docs-list li a { font-weight: 600; font-size: 1.05rem; }
+.docs-list li p { margin: 0.35rem 0 0; color: var(--muted); max-inline-size: 62ch; }
+.docs-install pre { margin: 0.75rem 0; }
+.document-nav-quadrant { color: var(--muted); }
+.document-source { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.92rem; }
 
 /* The existing grammar owns layout and controls. Lantern supplies only material
    paint; these bridges keep old compiled peers and their focus rules intact. */
