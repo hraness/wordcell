@@ -19,7 +19,7 @@
 # Search repository knowledge
 
 Use `bun run kb:search "question" --json` for ordinary questions about this
-repository's `kb/`. It pins Wordcell 0.22.2 and enables hosted TypeSafe
+repository's `kb/`. It pins Wordcell 0.22.3 and enables hosted TypeSafe
 reranking for this public KB. Queries and bounded note identifiers, titles,
 paths, and snippets leave the machine. Keep the API key in the private
 Wordcell credential file or environment, never in this repository.

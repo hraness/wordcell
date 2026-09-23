@@ -133,6 +133,31 @@ describe("contentTypeFor", () => {
 });
 
 describe("projectHostedVault", () => {
+  test("the installed renderer preserves repeated citations and return navigation", async () => {
+    const { root, cleanup } = await materializeVault(new Map([
+      ["index.md", enc("# Index\n\n[[citations]]\n")],
+      ["citations.md", enc("# Evidence note\n\nFirst claim.[^source]\n\nSecond claim.[^source] Missing.[^missing]\n\n[^source]: Retained fixture evidence.\n")],
+    ]));
+    try {
+      const projected = await projectHostedVault(root, {
+        basePath: "/p/abcd1234/citations/", baseUrl: "https://wordcell.io",
+      });
+      const page = projected.files.get("n/citations/index.html");
+      expect(page).toBeDefined();
+      const html = new TextDecoder().decode(page);
+      expect(html.match(/role="doc-noteref"/gu)).toHaveLength(2);
+      expect(html.match(/role="doc-backlink"/gu)).toHaveLength(2);
+      expect(html.match(/id="wordcell:footnote:1"/gu)).toHaveLength(1);
+      for (const occurrence of [1, 2]) {
+        expect(html).toContain(`id="wordcell:footnote-ref:1:${occurrence}"`);
+        expect(html).toContain(`href="#wordcell:footnote-ref:1:${occurrence}"`);
+      }
+      expect(html).toContain('aria-label="Unresolved footnote"');
+      expect(html).toContain("[^missing]");
+      expect(html).toContain("Retained fixture evidence.");
+    } finally { await cleanup(); }
+  });
+
   test("emits the v1 artifact from a materialized request vault", async () => {
     const { root, cleanup } = await materializeVault(
       new Map([
