@@ -2,11 +2,9 @@
  * foundations. Opt in with data-hraness-theme="wordcell". Import after the
  * palette, marketing, and material stylesheets so its tokens resolve last.
  *
- * Wordcell keeps the paper palette's warm paper but moves the geometry softer,
- * the rhythm roomier, and the accent botanical. Colors ride on the palette
- * system: everything below is scoped to the default paper palette (or no
- * palette), so the appearance menu still works — another palette brings its
- * own colors to wordcell shapes. No imports, asset requests, or resets; the
+ * Wordcell uses Gruvbox by default, with soft geometry and a roomy rhythm.
+ * Its colors follow the shared palette system: a saved appearance brings its
+ * own colors to the same Wordcell shapes. No imports, asset requests, or resets; the
  * same file can be lifted into any surface that loads the shared foundations.
  * Requires CSS light-dark() (Chrome 123+, Firefox 120+, Safari 17.5+).
  */
@@ -15,7 +13,7 @@
   --font-text: "Nebula Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-heading: var(--font-text);
   --font-sans: var(--font-text);
-  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
   --ui-font-sans: var(--font-text);
   --ui-font-heading: var(--font-heading);
   --ui-font-mono: var(--font-mono);
@@ -54,11 +52,9 @@
   --hraness-site-accent-ink: var(--primary-foreground, #f6f5ef);
 
   /* Wordcell component tokens. */
-  --wordcell-note-surface: var(--surface-raised);
+  --wordcell-note-surface: var(--hraness-material-plane, var(--surface-raised));
   --wordcell-note-line: color-mix(in oklch, var(--foreground) 10%, transparent);
-  --wordcell-note-shadow:
-    0 1px 2px oklch(0 0 0 / .04),
-    0 10px 30px -18px oklch(0 0 0 / .25);
+  --wordcell-note-shadow: var(--hraness-material-lift);
   --wordcell-edge: color-mix(in oklch, var(--hraness-site-accent) 45%, transparent);
   --wordcell-edge-ink: color-mix(in oklch, var(--muted) 80%, transparent);
   --wordcell-tag: color-mix(in oklch, var(--hraness-site-accent) 12%, transparent);

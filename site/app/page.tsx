@@ -258,6 +258,7 @@ export default function Home() {
           <div className="hraness-material-wall">
           <WordcellField />
           <ProductHero
+            backdrop={false}
             align="start"
             actions={[
               { href: "#install", label: "Install Wordcell" },
