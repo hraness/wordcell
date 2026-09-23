@@ -241,14 +241,24 @@ wordcell --help`}</code></pre>
           />
 
           <MarketingSection
-            heading="Measured context, stated limits"
+            heading="A fifth of the context, measured"
             headingId="evidence-title"
             id="evidence"
             label=""
-            summary="In a four-query example over a seven-note public vault, packed search snippets used 80% fewer UTF-8 bytes than passing the same matching notes in full: 12,126 versus 60,584 bytes."
+            summary="Packed snippets carry what matched, not the whole note. Across four queries on a seven-note public vault, snippets used 80% fewer UTF-8 bytes than the same notes in full."
           >
-            <p className="install-note">This measures context payload size, not tokens, answer quality, or a win over another search tool. <a href={`${repository}/blob/main/docs/evidence.md`}>Method and raw report</a>.</p>
-            <p className="install-note">The graph core is Oh, the Hraness memory kernel. Its completed memory studies reached 89.8% answer accuracy on LongMemEval-S and 84.4% on LoCoMo, descriptive in-sample scores with stated limits. <a href="https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md">Results and method</a>.</p>
+            <div aria-label="Packed snippets: 12,126 bytes. The same notes in full: 60,584 bytes." className="wordcell-bytes" role="group">
+              <div className="wordcell-bytes-row">
+                <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar wordcell-bytes-bar--primary" style={{ inlineSize: "20%" }} /></div>
+                <p className="wordcell-bytes-meta"><strong>12,126 bytes</strong><span>Packed snippets</span></p>
+              </div>
+              <div className="wordcell-bytes-row">
+                <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar" style={{ inlineSize: "100%" }} /></div>
+                <p className="wordcell-bytes-meta"><strong>60,584 bytes</strong><span>The same notes in full</span></p>
+              </div>
+            </div>
+            <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href={`${repository}/blob/main/docs/evidence.md`}>Method and raw report</a>.</p>
+            <p className="install-note">The graph core is Oh, the Hraness memory kernel: 89.8% on LongMemEval-S and 84.4% on LoCoMo in completed studies, in-sample scores with stated limits. <a href="https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md">Results and method</a>.</p>
           </MarketingSection>
 
           <MarketingInterfaceGrid

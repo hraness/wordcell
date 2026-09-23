@@ -218,6 +218,103 @@
   letter-spacing: .02em;
 }
 
+/* Benchmark strip: let the numbers carry it. Display serif on the values,
+ * quiet one-line details, a hairline frame. */
+.hraness-marketing-stats__list > div {
+  padding-block: 1.6rem;
+}
+.hraness-marketing-stats__value {
+  font-family: var(--hraness-marketing-display-font);
+  font-size: clamp(2rem, 4.5vw, 2.9rem);
+  line-height: 1.05;
+  letter-spacing: -.01em;
+}
+.hraness-marketing-stats dt {
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.hraness-marketing-stats dd {
+  font-size: .8rem;
+  line-height: 1.55;
+}
+.hraness-marketing-stats__source {
+  font-size: .8rem;
+}
+
+/* The byte comparison renders as real proportional bars, not two big numbers. */
+.wordcell-bytes {
+  display: grid;
+  gap: 1.1rem;
+  width: 100%;
+}
+
+.wordcell-bytes-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9.5rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wordcell-bytes-track {
+  position: relative;
+  block-size: 2.4rem;
+  border-radius: var(--radius-sm, .5rem);
+  background: color-mix(in oklch, var(--foreground) 6%, transparent);
+  overflow: clip;
+}
+
+.wordcell-bytes-bar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: color-mix(in oklch, var(--foreground) 22%, transparent);
+}
+
+.wordcell-bytes-bar--primary {
+  background: var(--primary);
+}
+
+.wordcell-bytes-meta {
+  margin: 0;
+  line-height: 1.3;
+}
+
+.wordcell-bytes-meta strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: .95rem;
+  font-weight: 600;
+}
+
+.wordcell-bytes-meta span {
+  display: block;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+@media (width < 34rem) {
+  .wordcell-bytes-row {
+    grid-template-columns: 1fr;
+    gap: .4rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .wordcell-bytes-track {
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+  .wordcell-bytes-bar {
+    background: CanvasText;
+  }
+  .wordcell-bytes-bar--primary {
+    background: Highlight;
+  }
+}
+
 @media (width < 45rem) {
   .wordcell-note:nth-of-type(n + 12) {
     display: none;

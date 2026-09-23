@@ -244,16 +244,6 @@ a { text-underline-offset: 0.2em; }
 /* Decorative topic icons (hand-drawn strokes, wordcell/icons.tsx). */
 .wordcell-topic-icon { display: block; width: 44px; height: 44px; margin: 0 0 16px; color: var(--primary); opacity: .88; }
 
-/* Product evidence stays readable in both palettes and at narrow widths. */
-.wordcell-measurement {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem;
-  width: 100%;
-}
-.wordcell-measurement p { margin: 0; }
-.wordcell-measurement strong { display: block; font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 600; line-height: 1.2; }
-.wordcell-measurement span { display: block; margin-top: 0.5rem; color: var(--muted); }
 .wordcell-comparison { width: 100%; overflow-x: auto; }
 .wordcell-comparison:focus-visible { outline: 2px solid var(--hraness-site-accent); outline-offset: 4px; }
 .wordcell-comparison table { border-collapse: collapse; width: 100%; min-width: 35rem; }
