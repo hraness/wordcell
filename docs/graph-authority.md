@@ -5,7 +5,7 @@ Markdown is authoritative. Queries never add links or inferred
 relationships to notes, and the existing `wordcell graph --json` report keeps
 its format.
 
-Wordcell 0.22.2 pins Oh 0.12.0. Earlier Wordcell 0.22.1 used Oh 0.11.0.
+Wordcell 0.22.3 pins Oh 0.12.0. Earlier Wordcell 0.22.1 used Oh 0.11.0.
 The graph contracts stay compatible and existing vaults need no migration.
 
 ## How Wordcell and Oh fit together

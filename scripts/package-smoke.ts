@@ -5,6 +5,7 @@ import { basename, delimiter, isAbsolute, join, resolve } from "node:path";
 
 import {
   inspectPackageArtifact,
+  maximumUnpackedBytes,
   type PackageArtifactInventory,
 } from "./package-artifact.js";
 import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
@@ -12,7 +13,6 @@ import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
 const packageName = "@hraness/wordcell";
 const maximumPackageFiles = 280;
 const maximumPackedBytes = 1_300_000;
-const maximumUnpackedBytes = 5_700_000;
 const importSpecifiers = [
   "@hraness/wordcell",
   "@hraness/wordcell/agent-context",
