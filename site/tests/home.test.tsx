@@ -141,8 +141,8 @@ test("scopes the editorial preset to the homepage header and the living vault fi
 test("keeps decision claims, privacy limits, and evidence visible with the quick start", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html).toContain("80% fewer UTF-8 bytes");
-  expect(html).toContain("not a token, accuracy, latency, or competitor benchmark");
-  expect(html).toContain("opt-in Jev reranking");
+  expect(html).toContain("Payload size, not accuracy");
+  expect(html).toContain("hosted Jev reranking");
   expect(html).toContain("removed in version 0.21.0");
   expect(html).toContain("--skill wordcell");
   expect(html).toContain('id="compare"');
