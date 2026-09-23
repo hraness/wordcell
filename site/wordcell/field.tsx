@@ -9,6 +9,7 @@ interface FieldNote {
   readonly id: string;
   readonly type: "decision" | "source" | "concept" | "plan" | "question";
   readonly title: string;
+  /** May contain `[[wikilinks]]`, rendered as vault links. */
   readonly body: string;
   readonly tags?: readonly string[];
   /** Center position as a percentage of the field; may sit past the edges. */
@@ -106,9 +107,9 @@ const NOTES: readonly FieldNote[] = [
     id: "percolation",
     type: "question",
     title: "Does percolation surface stale links?",
-    body: "If it does, that is a review signal, not a bug.",
+    body: "If it does, that is a review signal, not a bug. See [[graph-authority]].",
     tags: ["maintenance"],
-    x: 48, y: 72, rotate: 0.9, width: 178,
+    x: 48, y: 72, rotate: 0.9, width: 186,
     drift: [12, 9], seconds: 35, delay: -15, bloom: true,
   },
   {
@@ -138,6 +139,33 @@ const NOTES: readonly FieldNote[] = [
     x: 38, y: 96, rotate: -1.1, width: 172,
     drift: [10, 11], seconds: 37, delay: -24,
   },
+  {
+    id: "shannon",
+    type: "source",
+    title: "A Mathematical Theory of Communication",
+    body: "Shannon, 1948: meaning is irrelevant to the engineering problem.",
+    tags: ["information-theory"],
+    x: 34, y: 8, rotate: 1.1, width: 178,
+    drift: [9, 13], seconds: 42, delay: -17,
+  },
+  {
+    id: "dev-journal",
+    type: "decision",
+    title: "Dev journal — context, not memory",
+    body: "Re-deriving what [[parser-contract]] already decided is not search.",
+    tags: ["infrastructure"],
+    x: 66, y: 30, rotate: 1.7, width: 184,
+    drift: [11, 10], seconds: 39, delay: -29,
+  },
+  {
+    id: "lakoff",
+    type: "source",
+    title: "Women, Fire, and Dangerous Things",
+    body: "Lakoff: categories organize around prototypes.",
+    tags: ["cognition"],
+    x: 62, y: 96, rotate: 1.4, width: 166,
+    drift: [12, 9], seconds: 44, delay: -3,
+  },
 ];
 
 const EDGES: readonly FieldEdge[] = [
@@ -163,6 +191,20 @@ function edgeLabelPoint(from: FieldNote, to: FieldNote): readonly [number, numbe
   const lift = Math.min(8, Math.abs(from.y - to.y) * 0.4 + 4);
   const midY = (from.y + to.y) / 2 - lift * 0.5;
   return [midX, midY];
+}
+
+/** Renders `[[wikilink]]` spans inside a note body, mirroring vault syntax. */
+function NoteBody({ body }: Readonly<{ body: string }>) {
+  const parts = body.split(/(\[\[[^\]]+\]\])/u);
+  return (
+    <p className="wordcell-note-body">
+      {parts.map((part, index) => (
+        part.startsWith("[[") && part.endsWith("]]")
+          ? <span className="wordcell-note-link" key={index}>{part}</span>
+          : part
+      ))}
+    </p>
+  );
 }
 
 export function WordcellField({ className }: Readonly<{ className?: string }>) {
@@ -221,7 +263,7 @@ export function WordcellField({ className }: Readonly<{ className?: string }>) {
         >
           <span className="wordcell-note-type">{note.type}</span>
           <h3 className="wordcell-note-title">{note.title}</h3>
-          <p className="wordcell-note-body">{note.body}</p>
+          <NoteBody body={note.body} />
           {note.tags !== undefined && (
             <div className="wordcell-note-tags">
               {note.tags.map((tag) => <span key={tag}>#{tag}</span>)}

@@ -8,6 +8,14 @@
   margin-block-end: clamp(2rem, 5vw, 4rem);
 }
 
+.wordcell-field-caption {
+  margin: .875rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: .8125rem;
+  letter-spacing: .01em;
+}
+
 .wordcell-field {
   position: relative;
   overflow: clip;
@@ -29,7 +37,7 @@
     url("../vendor/hraness-marketing/marketing-assets/cells.svg");
   background-size: 64px 64px, 42rem 42rem;
   background-position: center;
-  opacity: .5;
+  opacity: .35;
   pointer-events: none;
 }
 

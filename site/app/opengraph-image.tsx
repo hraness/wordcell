@@ -26,9 +26,9 @@ export default function OpengraphImage() {
     mark: <WordcellMark />,
     theme: {
       accent: "#356A54",
-      background: "#F8F7F4",
-      foreground: "#1C1A18",
-      muted: "#6A655E",
+      background: "#F7F4EE",
+      foreground: "#26221B",
+      muted: "#6D675B",
     },
     title: "The Markdown knowledge base with superpowers",
   });

@@ -207,7 +207,7 @@ export default function Home() {
             ]}
             boundary={footnote}
             className="wordcell-marketing-hero"
-            eyebrow=""
+            eyebrow="Plain Markdown · typed links · local-first"
             heading={heading}
             headingId="hero-title"
             name=""
@@ -215,6 +215,7 @@ export default function Home() {
           />
           <div className="wordcell-field-band">
             <WordcellField />
+            <p className="wordcell-field-caption">One vault: decisions, sources, plans, and concepts — linked.</p>
           </div>
           </div>
 
