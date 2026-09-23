@@ -5,6 +5,7 @@ import {
   MarketingPage,
   MarketingPrimitives,
   MarketingQuestionList,
+  MarketingRelated,
   MarketingSection,
   MarketingSiteHeader,
   MarketingStatStrip,
@@ -93,6 +94,27 @@ const trust = [
   {
     label: "Sources stay inspectable",
     detail: "Open the note, authored link, or commit behind a result. Saved context can be incomplete or out of date; Wordcell does not prove a note is true or recover unsaved conversations.",
+  },
+] as const;
+
+const relatedProducts = [
+  {
+    name: "PeopleBlade",
+    href: "https://peopleblade.com",
+    role: "A private contact book for you and your agent",
+    relationship: "Wordcell knows what; PeopleBlade knows who — the people behind the notes, in a local graph your agent can query and review.",
+  },
+  {
+    name: "Soulscrape",
+    href: "https://soulscrape.com",
+    role: "A dated, cited dossier on a person",
+    relationship: "A dossier is the kind of bounded, cited source a Wordcell note can point at — and Wordcell is where the reasoning and follow-ups around it live.",
+  },
+  {
+    name: "Textbutler",
+    href: "https://textbutler.app",
+    role: "A personal message butler for Mac",
+    relationship: "Textbutler drafts the reply; Wordcell keeps the durable record of what you decided and why.",
   },
 ] as const;
 
@@ -434,6 +456,14 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
               answer: <p>{answer}{after}</p>,
               question,
             }))}
+          />
+
+          <MarketingRelated
+            heading="From the same workshop."
+            headingId="related-title"
+            items={relatedProducts}
+            label="Related"
+            summary="Each Hraness product owns one private domain and gives your agent the same kind of access: local, bounded, and inspectable."
           />
 
           <MarketingCallToAction
