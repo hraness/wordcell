@@ -358,7 +358,11 @@ acquire a slash. The site proxy preserves `/p/` paths and keeps other site
 pages on their usual slashless URLs.
 
 When introducing this routing policy, deploy the site first and verify that a
-hosted directory URL keeps its slash, then deploy the Worker redirect. Reversing
+hosted directory URL returns its published HTML and keeps its slash, then deploy
+the Worker redirect. The Vercel configuration has a separate trailing-slash
+rewrite before the slashless rule; both must forward the original path form.
+Verify root and nested published pages on the preview deployment before merging.
+The local Next server does not exercise Vercel's external rewrites. Reversing
 that order creates a redirect loop with the older site. Roll back the Worker
 before restoring the older site policy. Existing stored artifacts need no rewrite.
 
