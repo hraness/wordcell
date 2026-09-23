@@ -163,6 +163,7 @@ export default function Developers() {
           <div className="hraness-material-wall">
           <WordcellField edges={DEVELOPER_EDGES} notes={DEVELOPER_NOTES} />
           <ProductHero
+            backdrop={false}
             align="start"
             actions={[
               { href: "#install", label: "Install Wordcell" },
