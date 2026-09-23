@@ -100,6 +100,47 @@ const publicRead = (bucket: Bucket, slug = "test") => worker.fetch(new Request(`
 });
 
 describe("hosted conditional publication", () => {
+  test("directory redirects preserve edition-relative navigation, assets and query strings", () => fixture(async (bucket) => {
+    const result = await PUT(request("PUT", { operation: operation(1), files: {
+      "index.md": "# Index\n\n[[reports/evidence.v2]]\n",
+      "reports/evidence.v2.md": "# Evidence\n\nBack to [[index]].\n",
+    } }), params());
+    expect(result.status).toBe(201);
+    const base = `/p/${token.key8}/test/`;
+    const env: Env = { BUCKET: bucket, OBJECT_PROXY_SECRET: config.objectsSecret };
+    const read = (path: string, method = "GET") => worker.fetch(new Request(`${config.objectsUrl}${path}`, { method }), env);
+    const writes = bucket.writes.length;
+    for (const route of ["", "graph/", "n/reports/evidence.v2/"]) {
+      const directory = `${base}${route}`;
+      for (const method of ["GET", "HEAD"]) {
+        const redirect = await read(`${directory.slice(0, -1)}?q=one%20two`, method);
+        expect(redirect.status).toBe(308);
+        expect(redirect.headers.get("location")).toBe(`${directory}?q=one%20two`);
+        expect(await redirect.text()).toBe("");
+      }
+      const response = await read(directory);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+      const html = await response.text();
+      const publicUrl = `https://wordcell.test${directory}`;
+      for (const match of html.matchAll(/(?:href|src)="([^"<>]+)"/gu)) {
+        if (/^(?:#|https?:)/u.test(match[1]!)) continue;
+        const resolved = new URL(match[1]!, publicUrl);
+        expect(resolved.pathname.startsWith(base)).toBe(true);
+        expect((await read(resolved.pathname)).status).toBe(200);
+      }
+    }
+    for (const file of ["manifest.json", "reader/reader.js", "reader/reader.css", "n/reports/evidence.v2/index.html"]) {
+      const response = await read(`${base}${file}`);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    }
+    expect((await read(`${base}missing`)).status).toBe(404);
+    expect((await read(`${base}n/missing.note`)).status).toBe(404);
+    expect(bucket.writes).toHaveLength(writes);
+    expect(bucket.deletes).toEqual([]);
+  }));
+
   test("minted tokens reserve one namespace and MCP uses the same conditional protocol", () => fixture(async (bucket) => {
     const minted = await mintToken(new Request(`${config.siteOrigin}/api/v1/tokens`, {
       method: "POST", body: JSON.stringify({ label: "fixture" }),
