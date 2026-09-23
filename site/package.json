@@ -27,7 +27,7 @@
     "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
     "@hraness/ui": "github:hraness/ui#v0.5.16",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",
-    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz",
+    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.2/hraness-wordcell-0.22.2.tgz",
     "next": "16.3.3",
     "react": "19.2.6",
     "react-dom": "19.2.6"
