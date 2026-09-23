@@ -1,7 +1,8 @@
 # Query the derived graph
 
-Wordcell 0.21 adds named graph programs backed by the immutable Oh 0.4.3
-library. Markdown is authoritative. Queries never add links or inferred
+Wordcell answers named graph queries with the Oh library, pinned to its
+immutable 0.11.0 release. Named graph programs were added in Wordcell 0.21.
+Markdown is authoritative. Queries never add links or inferred
 relationships to notes, and the existing `wordcell graph --json` report keeps
 its format.
 

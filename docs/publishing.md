@@ -1,4 +1,7 @@
-# Publish Wordcell
+# Release and verify Wordcell
+
+This page covers how maintainers cut a Wordcell release and how you can verify
+a release you downloaded; see [Verify a published release](#verify-a-published-release).
 
 The canonical artifact contract starts at `0.19.4`; that first attempt stopped
 with a retained partial draft. Each successful release contains

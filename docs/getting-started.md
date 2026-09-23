@@ -3,9 +3,9 @@
 [Documentation index](https://wordcell.io/docs) · [Installation reference](reference.md)
 
 This tutorial walks through one complete loop on a fresh vault: create it, save
-a decision, find it, connect a second note, and preview a published page. Every
-step runs locally; no account, model, or network request is involved until the
-optional last step.
+a decision, find it, connect a second note, and preview a published page. After
+installation, every step runs on your machine without an account, a model, or a
+remote service.
 
 ## Install the CLI
 
@@ -13,13 +13,13 @@ Install [Bun 1.3.14 or newer](https://bun.sh/docs/installation) and Git first,
 then install the pinned release archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz
 wordcell --help
 ```
 
 If your shell cannot find `wordcell`, add your package manager's global
 executable directory to `PATH` and reopen the terminal. The npm mirror
-`npm install --global --ignore-scripts @hraness/wordcell@0.22.0` carries the
+`npm install --global --ignore-scripts @hraness/wordcell@0.22.1` carries the
 same bytes.
 
 ## Create the vault

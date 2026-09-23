@@ -4,15 +4,16 @@
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
 A local Markdown knowledge base with superpowers. Save decisions, sources, and
-plans as files you own, then recover them through exact and semantic search,
-typed relationships, backlinks, and Git history. Coding agents get the context
-behind your code, and the same record holds everything else you need to
-remember.
+plans as files you own, then find them by exact words or, with an optional
+local model, by meaning. Links and Git history show how each note connects and
+where it came from. Coding agents can look up the notes tied to the code they
+change, and the same vault holds everything else you want to remember.
 
-Your files stay yours: read them in Obsidian or any editor, review changes in
-Git, and rebuild every index from the Markdown. Exact search and graph queries
-run on your machine with no account or model. Web capture, hosted agents, and
-optional remote reranking have [separate privacy boundaries](#privacy-and-boundaries).
+Read the files in Obsidian or any editor, review changes in Git, and rebuild
+every index from the Markdown. Exact search and graph queries run on your
+machine with no account or model. Web capture, hosted agents, and optional
+remote reranking reach other services;
+[Privacy and boundaries](#privacy-and-boundaries) says what each one sends.
 
 [Documentation](https://wordcell.io/docs) · [Comparisons](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md) · [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md) · [Changelog](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md)
 
@@ -25,11 +26,13 @@ optional remote reranking have [separate privacy boundaries](#privacy-and-bounda
   Optional local semantic search joins each match to current metadata, links,
   and history instead of returning isolated text.
 - **Author the connections.** Wikilinks and typed relationships turn notes into
-  a queryable ontology. Backlinks, bounded graph proofs, and percolation
-  suggestions recover them without injecting edges you did not write.
-- **Ground coding agents in context.** Scope notes to repository paths, recover
-  the commits behind a note, and give the next session only what it needs.
-  Only context you save becomes part of the record.
+  a graph you can query. Backlinks and graph queries use only what you wrote,
+  and `wordcell percolate` suggests missing links for you to review without
+  writing them into your notes.
+- **Give coding agents the reasons behind the code.** Tie notes to repository
+  paths, list the commits behind a note, and let the next session start from
+  the notes for the file it is changing. Only context you save becomes part of
+  the record.
 
 Plain Markdown may be enough for a small set of notes. QMD is a good fit for
 local document retrieval and also supplies Wordcell's optional semantic search.

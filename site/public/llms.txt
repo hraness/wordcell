@@ -1,34 +1,35 @@
-# wordcell
+# Wordcell
 
 > A local Markdown knowledge base with superpowers. Save decisions, sources,
-> and plans as files you own; recover them through exact and semantic search,
-> typed relationships, backlinks, and Git history. Exact search and graph
-> queries run locally without an account or model. Web capture, optional remote
-> reranking, and hosted agents have separate data-handling boundaries.
+> and plans as files you own, then find them by exact words or, with an
+> optional local model, by meaning. Exact search and graph queries run on your
+> machine without an account or model. Web capture, optional hosted reranking,
+> and hosted agents reach other services.
 
 When to use this site:
-- Use wordcell.io to learn what Wordcell is, the boundaries it keeps, and the
-  current verified install command.
-- Use /developers for the coding-agent workflow: repository-path context,
+- Use wordcell.io to learn what Wordcell does, what stays on your machine, and
+  the current install command.
+- Use /developers for the coding-agent workflow: context for a repository path,
   AGENTS.md rules, Git history, and the Agent Skill.
-- Use /docs for the Diataxis-organized documentation: a tutorial, how-to
-  guides, the command reference, and design explanations.
+- Use /docs for the documentation: a tutorial, how-to guides, the command
+  reference, and design explanations.
 
 ## Pages
 
-- [Wordcell](https://wordcell.io/): Quick start, the typed-ontology and
-  retrieval model, measured context and memory-kernel evidence, comparisons,
-  selected-note publishing, local-data boundaries, and the verified install.
+- [Wordcell](https://wordcell.io/): Quick start, how notes, links, and search
+  work, the measured context size, the Oh memory-kernel benchmarks, comparisons,
+  publishing selected notes, what stays local, and the install command.
 - [For developers](https://wordcell.io/developers): The coding-agent workflow:
   code-path context, scoped rules, note history, and the Agent Skill.
-- [Documentation](https://wordcell.io/docs): The documentation index grouped by
-  Diataxis quadrant, with an install panel.
+- [Documentation](https://wordcell.io/docs): The documentation index, grouped
+  into tutorials, how-to guides, reference, and explanation, with the install
+  command.
 - [Get started](https://wordcell.io/docs/getting-started): The first-vault
   tutorial.
 - [Overview](https://wordcell.io/docs/overview): The complete product README
   rendered as one page.
-- [Agent workflow](https://wordcell.io/docs/agent-workflow): Set up, query,
-  maintain, and revise repository memory.
+- [Use Wordcell with a coding agent](https://wordcell.io/docs/agent-workflow):
+  Set up, query, maintain, and revise repository memory.
 - [Reference](https://wordcell.io/docs/reference): Exact commands, formats,
   SDK imports, and optional adapters.
 - [Publish](https://wordcell.io/docs/publish): Select notes and build a static

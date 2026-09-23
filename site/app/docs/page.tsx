@@ -42,15 +42,15 @@ export default function Docs() {
           <a href={`${repository}/releases`}>Releases</a>
         </nav>
         {publishedRelease === null && <p>Release preview: the installation examples below target the forthcoming Wordcell release. <a href={`${repository}/releases`}>Check published releases before installing</a>.</p>}
-        {publishedRelease !== null && publishedRelease.version !== readmeVersion && <p className="release-preview">Documentation preview for v{readmeVersion}. Installation examples use verified v{publishedRelease.version}. Features introduced after that release require the newer version; <a href={`${repository}/blob/main/CHANGELOG.md`}>check the release notes</a>.</p>}
+        {publishedRelease !== null && publishedRelease.version !== readmeVersion && <p className="release-preview">These docs describe v{readmeVersion}. The install commands use v{publishedRelease.version}, the newest release this site has verified. Features added after v{publishedRelease.version} need the newer version; see the <a href={`${repository}/blob/main/CHANGELOG.md`}>release notes</a>.</p>}
 
         <h1>Wordcell documentation</h1>
         <p>
-          The documentation follows the Diataxis split. Tutorials teach the full
-          loop on a small vault. How-to guides finish a specific task. Reference
-          pages state exact commands, formats, and limits. Explanation pages
-          carry the design and its evidence. Prefer one page?{" "}
-          <a href="/docs/overview">Read the complete product overview</a>.
+          Start with the tutorial if you are new to Wordcell. How-to guides each
+          finish one task, the reference lists exact commands, formats, and
+          limits, and the explanation pages cover the design and what was
+          measured. The <a href="/docs/overview">product overview</a> has
+          everything on one page.
         </p>
 
         <section aria-labelledby="install" className="docs-install">
