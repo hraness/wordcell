@@ -8,7 +8,7 @@ import {
   parseSiteTermsV1,
   WORDCELL_SITE_LIMITS_V1,
 } from "./publish-model.js";
-import { publishShardName } from "./publish-search.js";
+import { publishNormalize, publishQuery, publishShardName, scorePublishDocument } from "./publish-search.js";
 import { derivePublishSlugs } from "./publish-select.js";
 
 function note(path: string, content: string): Note {
@@ -26,6 +26,32 @@ function slugs(notes: readonly Note[]): ReadonlyMap<string, string> {
 }
 
 describe("buildSiteIndex", () => {
+  test("previews project full authored prose while indexing and scoring retain the original search basis", () => {
+    const markdown = "# Invented canary\n\nThe **Amberfin** claim.[^A]\n\n[^A]: [Named source](https://example.com/paper).\n";
+    const source = note("canary.md", markdown);
+    const build = buildSiteIndex([source], slugs([source]));
+    const doc = parseSiteDocsV1(build.docs).docs[0]!;
+    expect(doc.p).toBe("The Amberfin claim.");
+    expect(doc.x).toBe(publishNormalize(source.searchableText));
+    expect(doc.x).toContain("[^a]");
+    expect(build.terms.terms).toContain("amberfin");
+    const input = { doc, contentText: doc.x!, contentTerms: new Set(["amberfin"]) };
+    expect(scorePublishDocument(input, publishQuery("amberfin"))).toEqual(scorePublishDocument({
+      ...input, doc: { ...doc, p: source.summary },
+    }, publishQuery("amberfin")));
+    expect(buildSiteIndex([source], slugs([source]), { indexContent: false }).docs.docs[0]?.p).toBe(doc.p);
+    expect(source.content).toBe(markdown);
+  });
+
+  test("authored descriptions resolve citations before preview byte clipping and retain literal markup as text", () => {
+    const label = `sr-${"x".repeat(100)}`;
+    const source = note("canary.md", `---\ndescription: 'Authored **Amberfin**.[^${label}] <img src=x onerror=alert(1)>'\n---\n# Canary\n\nOrdinary body.\n\n[^${label}]: Source.\n`);
+    const doc = buildSiteIndex([source], slugs([source])).docs.docs[0]!;
+    expect(doc.p).toBe("Authored Amberfin. <img src=x onerror=alert(1)>");
+    expect(doc.p).not.toContain(label);
+    expect(Buffer.byteLength(doc.p)).toBeLessThanOrEqual(WORDCELL_SITE_LIMITS_V1.docPreviewBytes);
+  });
+
   test("small corpora use inline content search with parseable artifacts", () => {
     const build = buildSiteIndex(NOTES, slugs(NOTES));
     expect(build.mode).toBe("inline");

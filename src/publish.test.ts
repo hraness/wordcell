@@ -1,8 +1,10 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import { createHash } from "node:crypto";
 import * as publishFs from "node:fs/promises";
 import { mkdtemp, mkdir, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { canonicalSha256 } from "@hraness/oh";
 
 import {
   parseSiteCatalogV1,
@@ -23,6 +25,7 @@ import {
 } from "./publish.js";
 import { analyzeVault, parseNote } from "./graph.js";
 import { scanVault } from "./vault.js";
+import { publishNormalize } from "./publish-search.js";
 
 const READER_STUB = new Map<string, Uint8Array>([
   ["reader.js", new TextEncoder().encode("// reader stub\n")],
@@ -468,6 +471,34 @@ describe("publishVault", () => {
 });
 
 describe("projectVault", () => {
+  test("hydrates normalized readable content without changing source identity or the exact index", async () => {
+    const markdown = [
+      "# Invented canary", "", "Amberfin[^A]. Lower[^a]. Missing[^M]. Escaped\\[^A]. Literal `[^a]`.", "",
+      "[^A]: Upper source.", "[^a]: Lower source.", "[^m]: Unreferenced lower.",
+    ].join("\n");
+    const notes = [parseNote("canary.md", markdown)], original = JSON.stringify(notes);
+    const projection = await projectVault({ root: "/vault", notes, analysis: analyzeVault(notes) }, { root: "/vault", deterministic: true }, {
+      resolveAssetPath: () => undefined, readAsset: async () => undefined, readerFiles: async () => READER_STUB,
+    });
+    const decode = (path: string): unknown => JSON.parse(new TextDecoder().decode(projection.files.get(path)));
+    const payload = parseSiteNoteV1(decode("n/canary.json"));
+    expect(payload.text).toBe("invented canary\n\namberfin. lower. missing[^m]. escaped[^a]. literal [^a].\n\nupper source.\n\nlower source.\n\nunreferenced lower.");
+    expect(payload.text).toBe(publishNormalize(payload.text));
+    expect(payload.textTruncated).toBe(false);
+    const doc = parseSiteDocsV1(decode("index/docs.json")).docs[0]!;
+    expect(doc.x).toBe(publishNormalize(notes[0]!.searchableText));
+    expect(doc.p).toBe("Amberfin. Lower. Missing[^M]. Escaped[^A]. Literal [^a].");
+    expect(JSON.stringify(notes)).toBe(original);
+    expect(projection.manifest.source.digest).toBe(`sha256:${canonicalSha256({
+      format: "hraness.wordcell.site-source.v1",
+      notes: [{ id: "canary", slug: "canary", sha256: createHash("sha256").update(markdown).digest("hex") }],
+    })}`);
+    const html = new TextDecoder().decode(projection.files.get("n/canary/index.html"));
+    expect(html).toContain('href="#wordcell:footnote:1" role="doc-noteref"');
+    expect(html).toContain('href="#wordcell:footnote:2" role="doc-noteref"');
+    expect(html).toContain('class="unresolved footnote-reference" aria-label="Unresolved footnote">[^M]');
+  });
+
   test("publishes native citation anchors, retained source links, and return targets", async () => {
     const notes = [
       parseNote("reports/summary.md", [

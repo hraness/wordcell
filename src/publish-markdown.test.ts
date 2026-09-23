@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import fc from "fast-check";
 
 import {
   escapeAttribute,
   escapeHtml,
+  projectMarkdownText,
   renderMarkdownToHtml,
   type PublishRenderContext,
 } from "./publish-markdown.js";
@@ -22,6 +24,89 @@ function context(overrides: Partial<PublishRenderContext> = {}): PublishRenderCo
     ...overrides,
   };
 }
+
+describe("published display text", () => {
+  test("projects complete Markdown before excerpt clipping without citation identifiers", () => {
+    const label = `sr-${"x".repeat(100)}`;
+    const markdown = `---\ntitle: Private metadata is not prose\n---\n# Invented canary\n\nThe **Amberfin** claim.[^${label}]\n\n[^${label}]: [Named source](https://example.com/paper).\n    Continued *detail*.\n`;
+    const original = markdown;
+    expect(projectMarkdownText(markdown)).toEqual({
+      text: "Invented canary\n\nThe Amberfin claim.\n\nNamed source. Continued detail.",
+      preview: "The Amberfin claim.",
+    });
+    expect(markdown).toBe(original);
+    expect(renderMarkdownToHtml(markdown, context())).toContain('role="doc-noteref"');
+    expect(renderMarkdownToHtml(markdown, context())).toContain('role="doc-backlink"');
+  });
+
+  test("shares case-sensitive, duplicate, missing, escaped, code and nested citation rules", () => {
+    const markdown = [
+      "Case[^A][^a]. Missing[^absent]. Duplicate[^dup]. Escaped\\[^A]. Inline `[^a]`.", "",
+      "[^A]: Upper source with nested[^a].", "[^a]: Lower source.", "",
+      "[^dup]: First duplicate.", "[^dup]: Second duplicate.", "",
+      "```md", "# Literal heading[^A]", "[^a]: Literal definition.", "```", "",
+      "<!-- Hidden[^A]. -->", "%% Hidden too[^a]. %%",
+    ].join("\n");
+    const projection = projectMarkdownText(markdown);
+    expect(projection.preview).toBe("Case. Missing[^absent]. Duplicate[^dup]. Escaped[^A]. Inline [^a].");
+    expect(projection.text).toContain("Upper source with nested[^a].\n\nLower source.");
+    expect(projection.text).toContain("[^dup]: First duplicate.");
+    expect(projection.text).toContain("[^dup]: Second duplicate.");
+    expect(projection.text).toContain("# Literal heading[^A]\n[^a]: Literal definition.");
+    expect(projection.text).not.toContain("Hidden");
+  });
+
+  test("preserves malformed and over-limit definitions and references", () => {
+    for (const definition of ["[^bad label]: Invalid.", `[^${"x".repeat(129)}]: Oversize.`, "[^empty]:"]) {
+      const marker = definition.slice(0, definition.indexOf(":"));
+      const text = projectMarkdownText(`Claim${marker}.\n\n${definition}`).text;
+      expect(text).toContain(marker);
+      expect(text).toContain(definition);
+    }
+    const disabled = `Claim[^a].\n\n${Array.from({ length: 257 }, (_, index) => `[^${index === 0 ? "a" : `n${index}`}]: Source.`).join("\n")}`;
+    expect(projectMarkdownText(disabled).text).toContain("Claim[^a].");
+    expect(projectMarkdownText(disabled).text).toContain("[^a]: Source.");
+    const capped = projectMarkdownText(`${"Claim[^a]. ".repeat(2049)}\n\n[^a]: Source.`);
+    expect(capped.text.match(/\[\^a\]/gu)).toHaveLength(1);
+  });
+
+  test("keeps block boundaries and visible labels without treating literal HTML as tags", () => {
+    const projection = projectMarkdownText([
+      "# Heading", "", "See [[note|Alias]], [link](https://example.com) and ![alt](local.png).", "",
+      "- One", "- Two", "", "> Quote", "", "| Left | Right |", "| --- | --- |", "| A | B |", "",
+      'Literal <img src=x onerror="alert(1)"> &lt; and <script>alert(1)</script>.',
+    ].join("\n"));
+    expect(projection.text).toContain("See Alias, link and alt.");
+    expect(projection.text).toContain("One\nTwo\n\nQuote\n\nLeft Right\nA B");
+    expect(projection.text).toContain('Literal <img src=x onerror="alert(1)"> &lt; and <script>alert(1)</script>.');
+    expect(projection.text).not.toContain("https://example.com");
+  });
+
+  test("honors authored descriptions without consuming source citation admission", () => {
+    const markdown = "# Title\n\nFirst paragraph.[^A]\n\n[^A]: Source.\n";
+    const normal = projectMarkdownText(markdown);
+    const described = projectMarkdownText(markdown, "**Authored** description.[^A] Literal\\[^A].");
+    expect(described.preview).toBe("Authored description. Literal[^A].");
+    expect(described.text).toBe(normal.text);
+    expect(projectMarkdownText(markdown, "").preview).toBe(normal.preview);
+    expect(projectMarkdownText("# Heading only").preview).toBe("Heading only");
+  });
+
+  test("deterministic Unicode citation projection preserves prose and case-distinct definitions", () => {
+    fc.assert(fc.property(
+      fc.array(fc.constantFrom("界", "😀", "é", "é", "İ", "𝄞", "a"), { minLength: 1, maxLength: 40 }),
+      (points) => {
+        const prose = points.join("");
+        const markdown = `# Title\n\n${prose}.[^A][^a]\n\n[^A]: Upper.\n[^a]: Lower.\n`;
+        const first = projectMarkdownText(markdown);
+        expect(projectMarkdownText(markdown)).toEqual(first);
+        expect(first.preview).toBe(`${prose}.`);
+        expect(first.text).toBe(`Title\n\n${prose}.\n\nUpper.\n\nLower.`);
+        expect(first.text).not.toContain("�");
+      },
+    ));
+  });
+});
 
 describe("escaping", () => {
   test("escapeHtml neutralizes markup characters", () => {

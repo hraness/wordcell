@@ -23,7 +23,7 @@ import {
   publishSnippet,
   publishUtf8Bytes,
   scorePublishDocument
-} from "./index-3agn8scn.js";
+} from "./index-23m6bbjt.js";
 import"./index-z1w83f81.js";
 export {
   scorePublishDocument,

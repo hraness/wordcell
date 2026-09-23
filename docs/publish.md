@@ -233,6 +233,18 @@ everything that matches. Unknown or malformed `name:` tokens stay in the
 free-text query. Matched terms render with `<mark>` highlighting built from
 DOM text nodes, never injected HTML.
 
+Search excerpts show readable article text and link labels. Resolved footnote
+markers and Markdown formatting are omitted; code, escaped text, and unresolved
+references remain literal. The full Markdown is interpreted before excerpts are
+clipped, so a definition later in the note still resolves its citation. Snippets
+keep complete Unicode characters within their byte limit.
+
+For custom readers, `docs.json` stores the eager preview in `p` and the inline
+search basis in `x`. Hydrated note `text` holds bounded readable content,
+normalized to NFC and lowercase for snippet matching. Use the document table
+and content postings for ranking; hydration supplies display text. Existing
+published artifacts keep their original excerpts until republished.
+
 ### Safety
 
 Raw HTML never passes through the renderer: every text span and attribute is
