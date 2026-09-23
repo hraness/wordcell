@@ -114,3 +114,19 @@ judgments. A competitive quality claim needs a published corpus, independently
 judged queries, pinned tool versions and settings, the raw rankings, and named
 hardware for any timing claims. No competitive quality or latency result is
 claimed here.
+
+## Distinguish the graph engine from search quality
+
+[Oh](https://oh.computer) backs Wordcell's named graph queries and source proofs.
+Wordcell keeps Markdown and Git authoritative and builds a disposable projection
+for those queries. Its exact search, optional QMD search, and optional hosted
+Jev reranking follow separate retrieval paths.
+
+Oh's conversation-memory benchmarks evaluate its own memory-retrieval API,
+reader models, and evaluation protocols. Those scores do not transfer to a
+Wordcell vault merely because it uses the same library. Wordcell's
+[SciFact study](reranking.md#evidence-and-limits) compares exact search with
+hosted Jev reranking on the same public queries and candidate windows. It
+measures source ranking, without generating answers; this page measures only
+the size of the first context handoff. The [graph guide](graph-authority.md#how-wordcell-and-oh-fit-together)
+explains the integration.

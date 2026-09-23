@@ -123,7 +123,9 @@ export class ObjectStore {
     }
     const contentType = response.headers.get("content-type")
       ?? "application/octet-stream";
-    return { bytes: await responseBytes(response, maximum), contentType, etag: response.headers.get("etag") };
+    // The authenticated proxy preserves R2's strong identity separately from
+    // the HTTP representation ETag, which compression intermediaries may rewrite.
+    return { bytes: await responseBytes(response, maximum), contentType, etag: response.headers.get("x-object-etag") };
   }
 
   /** Atomic R2 conditional PUT. Transport failure is an uncertain outcome. */

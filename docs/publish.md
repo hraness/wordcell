@@ -159,6 +159,29 @@ over the contract's node limit publish the same page with the static note
 index instead of the live canvas, and the prerendered index below the map
 keeps the page useful without JavaScript at any size.
 
+### Footnotes
+
+Use `[^label]` in prose and a top-level `[^label]: Source or explanation`
+definition to publish a numbered footnote. Each citation links to its footnote;
+each footnote links back to every place that cites it. These links work without
+JavaScript. Definitions can contain ordinary links and inline formatting.
+Indent continuation lines by four spaces or one tab. Nested footnote references
+inside definitions remain literal, and supported explicit links take precedence over
+footnote syntax in their labels.
+
+```md
+The measured result is consistent with the earlier study.[^study]
+
+[^study]: [Read the study](https://example.com/study).
+```
+
+Labels allow Unicode letters, marks, and numbers plus `._:-`; they are
+case-sensitive and normalized to Unicode NFC. Keep labels within
+128 UTF-8 bytes and definitions within 32 lines and 8,192 UTF-8 bytes. A page
+supports 256 definitions and 2,048 linked citations. Missing, duplicated,
+invalid, and over-limit references remain visibly unresolved; their authored
+definitions remain visible. Footnote syntax in code or comments stays inert.
+
 ### Appearance
 
 The reader supports the shared Hraness palette contract: the `wordcell`
@@ -327,6 +350,17 @@ a private Cloudflare R2 bucket behind the `wordcell-sites` worker — object
 reads and writes are HMAC-signed, and the public `/p/` path resolves the site
 head to immutable artifact bytes with directory-index and `404.html`
 semantics identical to `wordcell serve`.
+
+Hosted directory pages use a trailing slash so their relative navigation and
+reader assets stay inside the edition. A slashless request redirects only
+after the Worker finds that directory's index; files and missing paths do not
+acquire a slash. The site proxy preserves `/p/` paths and keeps other site
+pages on their usual slashless URLs.
+
+When introducing this routing policy, deploy the site first and verify that a
+hosted directory URL keeps its slash, then deploy the Worker redirect. Reversing
+that order creates a redirect loop with the older site. Roll back the Worker
+before restoring the older site policy. Existing stored artifacts need no rewrite.
 
 ## Programmatic use
 

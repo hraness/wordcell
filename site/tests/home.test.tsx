@@ -10,6 +10,8 @@ import { docHtml } from "../app/docs/docs.generated";
 import { readmeVersion } from "../app/readme.generated";
 import { publishedRelease } from "../app/publication";
 import RootLayout from "../app/layout";
+import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
+import { scifactStudy } from "../wordcell/benchmark-evidence";
 
 async function publicRoutes(): Promise<React.JSX.Element[]> {
   return [
@@ -79,6 +81,50 @@ test("the homepage leads with the README identity and the verified install comma
     expect(html).toContain(publishedRelease.verificationRun);
   }
   expect(html).not.toContain("hraness.com/kb");
+});
+
+test("Wordcell compares its measured retrieval path and keeps the Oh boundary explicit", () => {
+  const html = renderToStaticMarkup(<Home />);
+  const fragments: string[] = [];
+  const legacyTargets: string[] = [];
+  new HTMLRewriter()
+    .on("#memory, #evidence, #oh", {
+      element(element) { fragments.push(element.getAttribute("id") ?? ""); },
+    })
+    .on("section#evidence #memory", {
+      element(element) {
+        legacyTargets.push(element.getAttribute("id") ?? "");
+        expect(element.hasAttribute("href")).toBe(false);
+        expect(element.hasAttribute("tabindex")).toBe(false);
+      },
+    })
+    .transform(html);
+  expect(fragments.toSorted()).toEqual(["evidence", "memory", "oh"]);
+  expect(legacyTargets).toEqual(["memory"]);
+  expect(html).toContain("hraness-design-bar-list-chart");
+  expect(html).toContain("33.7%");
+  expect(html).toContain("53.7%");
+  expect(html).toContain("101 of 300 queries");
+  expect(html).toContain("161 of 300 queries");
+  expect(html).toContain("jev-1.13.0");
+  expect(html).toContain("BEIR SciFact relevance judgments");
+  expect(html).toContain("25-candidate windows");
+  expect(html).toContain("260-query confirmation");
+  expect(html).toContain("optional paid provider");
+  expect(html).toContain('href="/docs/reranking#evidence-and-limits"');
+  expect(html).toContain("Markdown and Git remain authoritative");
+  expect(html).toContain("conversation-memory benchmark scores do not measure that search path");
+  for (const page of [html, renderToStaticMarkup(<Developers />)]) {
+    expect(page).not.toContain("89.8%");
+    expect(page).not.toContain("84.4%");
+    expect(page).not.toContain("for the same answer");
+  }
+});
+
+test("unmatched published protocols cannot be plotted as a shared comparison", () => {
+  expect(() => renderToStaticMarkup(
+    <BenchmarkComparison study={{ ...scifactStudy, comparability: "published-context" }} />,
+  )).toThrow("A comparison chart requires a shared evaluation protocol");
 });
 
 test("the docs page indexes every catalog entry by Diataxis quadrant", () => {

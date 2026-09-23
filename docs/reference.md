@@ -4,14 +4,14 @@
 
 ## Installation reference
 
-[Bun](https://bun.sh/docs/installation) is the required runtime. GitHub Releases are the canonical distribution, and each release publishes the same archive to npm as `@hraness/wordcell`. The examples pin release `0.22.1`. Historical `@hraness/kb` installs remain available under their original package name. For signed artifact verification, see [the release procedure](publishing.md#verify-a-published-release).
+[Bun](https://bun.sh/docs/installation) is the required runtime. GitHub Releases are the canonical distribution, and each release publishes the same archive to npm as `@hraness/wordcell`. The examples pin release `0.22.3`. Historical `@hraness/kb` installs remain available under their original package name. For signed artifact verification, see [the release procedure](publishing.md#verify-a-published-release).
 
 ### Tell your coding agent to install it
 
 Copy this prompt into Codex, Claude Code, or another coding agent:
 
 ```text
-Install the `wordcell` Agent Skill from `hraness/wordcell#v0.22.1` with the standard skills
+Install the `wordcell` Agent Skill from `hraness/wordcell#v0.22.3` with the standard skills
 CLI. Use the skill's runtime instructions to install the exact
 versioned GitHub release archive only when the command is missing. Verify it
 with `wordcell doctor` and `wordcell --help`, but do not initialize or modify a vault until
@@ -21,8 +21,8 @@ I ask.
 Install the single public skill with either runner:
 
 ```sh
-npx skills add hraness/wordcell#v0.22.1
-bunx skills add hraness/wordcell#v0.22.1
+npx skills add hraness/wordcell#v0.22.3
+bunx skills add hraness/wordcell#v0.22.3
 ```
 
 Both commands discover the same `wordcell` skill and install it into the selected
@@ -32,14 +32,14 @@ refresh a catalog, or edit Markdown. When invoked, the skill uses an existing
 CLI from the immutable GitHub release archive.
 
 The public skills CLI reads `skills/wordcell/` from the repository. The immutable
-`0.22.1` packed release includes the same tree under
+`0.22.3` packed release includes the same tree under
 `node_modules/@hraness/wordcell/skills/wordcell/`, and the package check verifies that the
 installed skill is byte-identical to the repository source.
 
 Install the two global commands with Bun:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz
 wordcell --help
 wordcell-evaluation-builder --help
 ```
@@ -47,7 +47,7 @@ wordcell-evaluation-builder --help
 The same GitHub archive can be installed with npm:
 
 ```sh
-npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz
+npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz
 wordcell --help
 ```
 
@@ -60,7 +60,7 @@ reviewed and enabled; run `wordcell doctor` to inspect the resulting capabilitie
 For programmatic use, add the versioned GitHub archive to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz
 ```
 
 The resulting dependency should remain exact:
@@ -68,13 +68,13 @@ The resulting dependency should remain exact:
 ```json
 {
   "dependencies": {
-    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz"
+    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz"
   }
 }
 ```
 
-Version 0.22.1 uses three public GitHub dependencies: `@hraness/oh` at
-immutable release archive `v0.11.0` for graph projection and closure verification and `@tobilu/qmd` at commit
+Version 0.22.3 uses three public GitHub dependencies: `@hraness/oh` at
+immutable release archive `v0.12.0` for graph projection and closure verification and `@tobilu/qmd` at commit
 `aa993dceb3ef8cfb71d470554ca437570f5a2b3c` for store-local model behavior, plus
 `@hraness/support-foundation` at commit
 `b32c1c81bb2444f50509ed54388758ecfab1f1c0` for standalone optional support.
@@ -425,9 +425,9 @@ ritual. The package smoke test keeps future tagged packages byte-identical to
 that source tree.
 
 ```sh
-npx skills add hraness/wordcell#v0.22.1
+npx skills add hraness/wordcell#v0.22.3
 # or
-bunx skills add hraness/wordcell#v0.22.1
+bunx skills add hraness/wordcell#v0.22.3
 ```
 
 The skill invokes the installed `wordcell` command without depending on a repository

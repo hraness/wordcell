@@ -42,14 +42,14 @@ Git evidence, and selective publishing. [Compare the tradeoffs](https://github.c
 The CLI and TypeScript SDK run with Bun. Install the versioned GitHub archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz
 wordcell --help
 ```
 
 Prefer npm? The same release is [mirrored there](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.22.1
+npm install --global --ignore-scripts @hraness/wordcell@0.22.3
 wordcell --help
 ```
 
@@ -91,7 +91,7 @@ After trying the CLI, install the public Agent Skill into a compatible agent,
 such as Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.22.1 --skill wordcell
+bunx skills add hraness/wordcell#v0.22.3 --skill wordcell
 ```
 
 Then ask:
@@ -254,13 +254,25 @@ Markdown, YAML frontmatter, explicit wikilinks, and Git hold the record. Open
 the same files in Obsidian, a text editor, or ordinary file-search tools.
 Application code does not need to import Wordcell or its vault.
 
-QMD supplies optional local search. [Oh](https://oh.computer), the Hraness
-record and memory kernel ([source](https://github.com/hraness/oh)), is embedded
-as a derived graph authority behind an engine-neutral port: only an explicit
+Wordcell is the Markdown knowledge base. [Oh](https://oh.computer) is the
+embedded memory framework that backs its named graph queries and source proofs.
+Markdown and Git remain authoritative. Query the graph immediately without an
+Oh account, service, or persisted database:
+
+```sh
+wordcell graph query --program backlinks --note notes/parser-contract --root kb --json
+```
+
+The result traces each returned link to its source note and revision. Only an explicit
 `wordcell graph rebuild --root kb` writes `.wordcell/oh.sqlite`, the file stays
 ignored and rebuildable, and nothing flows from the projection back into notes.
 Backlinks and typed relationships come from authored links. Percolation
 suggests connections for review and does not add inferred edges to notes.
+
+Wordcell search combines its own exact matching with optional QMD local search
+and optional hosted Jev reranking. Oh also offers memory retrieval for applications;
+its conversation-memory benchmark scores measure that separate path. They do not
+establish Wordcell's retrieval or answer quality. [How the integration works](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md#how-wordcell-and-oh-fit-together).
 
 Graph proofs explain a supported derivation from a specific source revision.
 They do not prove that a note is true or that a missing relationship cannot
@@ -271,7 +283,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph

@@ -1,6 +1,6 @@
 {
   "name": "wordcell-site",
-  "version": "0.22.0",
+  "version": "0.22.3",
   "private": true,
   "packageManager": "bun@1.3.14",
   "engines": {
@@ -27,7 +27,7 @@
     "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
     "@hraness/ui": "github:hraness/ui#v0.5.17",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",
-    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz",
+    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz",
     "next": "16.3.3",
     "react": "19.2.6",
     "react-dom": "19.2.6"

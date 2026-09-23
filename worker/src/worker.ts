@@ -293,7 +293,10 @@ async function signed(request: Request, env: Env, url: URL): Promise<Response> {
   object.writeHttpMetadata(headers)
   headers.set("content-length", String(object.size))
   headers.set("etag", object.httpEtag)
-  headers.set("cache-control", "no-store")
+  // HTTP compression may weaken or remove the representation ETag in transit.
+  // Conditional R2 writes must use the exact object identity, not that validator.
+  headers.set("x-object-etag", object.httpEtag)
+  headers.set("cache-control", "no-store, no-transform")
   for (const [name, value] of Object.entries(object.customMetadata ?? {})) {
     headers.set(`x-meta-${name}`, value)
   }
@@ -306,7 +309,7 @@ async function signed(request: Request, env: Env, url: URL): Promise<Response> {
 function servePath(rest: string): readonly string[] {
   if (rest === "" || rest.endsWith("/")) return [`${rest}index.html`]
   const last = rest.slice(rest.lastIndexOf("/") + 1)
-  if (!last.includes(".")) {
+  if (rest.startsWith("n/") || !last.includes(".")) {
     return [`${rest}/index.html`, rest]
   }
   return [rest]
@@ -372,6 +375,15 @@ async function serve(request: Request, env: Env, url: URL): Promise<Response> {
   for (const candidate of servePath(rest)) {
     const object = await env.BUCKET.get(`s/${key8}/${digest}/${candidate}`)
     if (object === null) continue
+    if (!url.pathname.endsWith("/") && candidate !== rest &&
+        (candidate === "index.html" || candidate.endsWith("/index.html"))) {
+      // Relative Location keeps the public proxy origin. Redirect only after
+      // resolving a real directory index; assets and missing paths stay put.
+      return new Response(null, { status: 308, headers: {
+        location: `${url.pathname}/${url.search}`,
+        "cache-control": "public, max-age=60",
+      } })
+    }
     const headers = new Headers()
     object.writeHttpMetadata(headers)
     headers.set("content-length", String(object.size))
