@@ -22,10 +22,10 @@ export default function OpengraphImage() {
     eyebrow: "Wordcell",
     mark: <WordcellMark />,
     theme: {
-      accent: "#356A54",
-      background: "#F7F4EE",
-      foreground: "#26221B",
-      muted: "#6D675B",
+      accent: "#065968",
+      background: "#FBF1C7",
+      foreground: "#393533",
+      muted: "#584F48",
     },
     title: "The Markdown knowledge base with superpowers",
   });

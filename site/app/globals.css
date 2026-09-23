@@ -43,7 +43,7 @@ code,
 kbd,
 samp,
 pre {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 
 a:focus-visible {
@@ -116,8 +116,14 @@ a:focus-visible {
 }
 
 .install-command {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
   white-space: pre;
 }
+
+.hraness-marketing-install__commands { min-inline-size: 0; }
 
 .install-note {
   margin: 0.25rem 0 0;
@@ -184,10 +190,11 @@ a { text-underline-offset: 0.2em; }
   padding: 3rem 1.25rem 5rem;
 }
 .document-page h1, .document-page h2, .document-page h3 { text-wrap: balance; line-height: 1.2; }
-.document-page h2 { margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+.document-page h2 { margin-top: 3rem; padding-top: 0.5rem; }
 .document-page p, .document-page li { text-wrap: pretty; }
-.document-page pre { overflow-x: auto; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: var(--radius-md, .65rem); background: var(--surface); font-size: .85rem; line-height: 1.6; }
+.document-page pre { max-inline-size: 100%; overflow-x: auto; padding: 1rem 1.15rem; border: 0; box-shadow: var(--hraness-material-inset); border-radius: var(--radius-md, .65rem); background: var(--surface); font-size: .875rem; line-height: 1.6; }
 .document-page code { font-family: var(--font-mono); font-size: 0.92em; }
+.document-page pre code { font-size: inherit; }
 .document-page :not(pre) > code { padding: .14em .38em; border-radius: .32rem; background: color-mix(in oklch, var(--foreground) 6%, transparent); }
 .document-page blockquote { margin: 1.25rem 0; padding: .1rem 0 .1rem 1rem; border-inline-start: 3px solid color-mix(in oklch, var(--primary) 45%, transparent); color: var(--muted); }
 .document-page blockquote p { margin: .5rem 0; }
@@ -208,7 +215,8 @@ a { text-underline-offset: 0.2em; }
 /* Documentation index and page chrome. */
 .docs-quadrant-hint { color: var(--muted); margin-top: -0.5rem; }
 .docs-list { list-style: none; padding-left: 0; margin: 1rem 0 0; }
-.docs-list li { padding: 0.9rem 0; border-top: 1px solid var(--line); }
+.docs-list { display: grid; gap: 0.85rem; }
+.docs-list li { padding: 1.15rem 1.35rem; border-radius: var(--radius-md); background: var(--hraness-material-plane); box-shadow: var(--hraness-material-lift); }
 .docs-list li a { font-weight: 600; font-size: 1.05rem; }
 .docs-list li p { margin: 0.35rem 0 0; color: var(--muted); max-inline-size: 62ch; }
 .docs-install pre { margin: 0.75rem 0; }
@@ -224,9 +232,9 @@ a { text-underline-offset: 0.2em; }
   border-block-end-color: var(--hraness-material-seam);
 }
 @media (max-width: 48rem) {
-  /* Wrapped navigation has a variable height; keep anchor headings unobscured. */
+  /* Keep wrapped navigation in flow and above the hero's readability scrim. */
   [data-hraness-material="lantern"] .hraness-marketing-header.hraness-material-chrome {
-    position: static;
+    position: relative;
   }
 }
 [data-hraness-marketing-preset="editorial"] .hraness-material-wall > .hraness-marketing-hero {
@@ -258,4 +266,8 @@ a { text-underline-offset: 0.2em; }
 .wordcell-comparison tbody th { font-weight: 600; white-space: nowrap; }
 .wordcell-comparison tbody tr { transition: background-color .15s ease; }
 .wordcell-comparison tbody tr:hover { background: color-mix(in oklch, var(--foreground) 3%, transparent); }
-.release-preview { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md, .65rem); background: var(--surface); }
+.release-preview { padding: 1.25rem; border: 0; box-shadow: var(--hraness-material-inset); border-radius: var(--radius-md, .65rem); background: var(--surface); }
+
+@media (forced-colors: active) {
+  .document-page pre, .docs-list li, .release-preview { border: 1px solid CanvasText; box-shadow: none; }
+}
