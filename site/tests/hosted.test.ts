@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import "./hosted-operations.test";
 
 import { isTokenShape, newToken, tokenDigest } from "../lib/hosted/auth";
 import {
@@ -216,7 +217,7 @@ describe("mcp adapter", () => {
     const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list" });
     const { tools } = (await list.json() as { result: { tools: Array<{ name: string }> } }).result;
     expect(tools.map((tool) => tool.name).sort()).toEqual([
-      "create_token", "delete_site", "list_sites", "publish_site",
+      "create_token", "delete_site", "get_site", "list_sites", "publish_site",
     ]);
   });
 

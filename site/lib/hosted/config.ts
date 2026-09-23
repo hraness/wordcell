@@ -46,7 +46,7 @@ export const HOSTED_LIMITS = Object.freeze({
   publishesPerDay: 60,
   /** Emitted artifact bytes per token namespace per day. */
   emittedBytesPerDay: 512 * 1024 * 1024,
-  /** Live sites per token namespace. */
+  /** Reserved slugs per token namespace, including tombstones and interrupted operations. */
   sitesPerNamespace: 50,
   /** Token mints per client IP per day. */
   tokenMintsPerDay: 8,

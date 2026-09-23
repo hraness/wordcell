@@ -267,6 +267,11 @@ curl -s -X POST https://wordcell.io/api/v1/tokens -d '{"label":"my agent"}'
 
 curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
   -H "Authorization: Bearer wc_pub_…" -H "content-type: application/json" -d '{
+    "operation": {
+      "contract": "hraness.wordcell.hosted-operation.v1",
+      "id": "32d708ac-782d-4ca0-8c34-3e89ad0ed02a",
+      "expectedRevision": 0
+    },
     "title": "Team Handbook",
     "files": {
       "index.md": "# Handbook\n\nStart with [[onboarding]].\n",
@@ -284,39 +289,43 @@ curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
   flow at this stage.
 - **Files** map vault-relative paths to a UTF-8 string, `{"base64": "…"}`, or
   `{"upload": "<id>"}`. Uploads come from `POST /api/v1/uploads`, which mints a
-  short-lived presigned PUT (≤32 MiB); unreferenced uploads expire after a day.
+  short-lived, write-once presigned PUT (≤32 MiB); uploads expire after a day.
   Inline bytes are capped at 4 MiB per request, 256 files per request.
 - **Options** (`title`, `description`, `index`, `noindex`, `indexContent`,
   `selection`) mirror the CLI flags; `selection` accepts the same
   includes/excludes/globs/tags/repositoryScopes/filters/from shape. `index`
   selects the vault's index note path when it is not `index.md`.
-- **Idempotent and atomic.** Emitted bytes are stored under a content digest;
-  republishing identical output is a no-op. The public slug pointer moves only
-  after every artifact object is durable, so a failed publish never leaves a
-  half-updated site. `GET` returns the site record; `DELETE` unpublishes it and
-  removes the artifact objects. Public reads are CDN-cached for up to 60
-  seconds, so a republish or delete can take that long to become visible.
+- **Conditional writes and recovery.** Read the current revision with `GET`
+  before a write. PUT and DELETE require a unique operation ID and the revision
+  they expect to replace. Exact retries return the original receipt. Resolve
+  uncertain outcomes with `GET ?operation=<id>`. One conditional site-head
+  write changes the record and public visibility after all artifact bytes are
+  durable. DELETE retains a tombstone and receipts; shared artifact bytes stay
+  stored. See the [hosted operation contract](hosted-publication.md) for request
+  shapes, conflict handling, and recovery. Public reads can remain cached for
+  up to 60 seconds.
 - **Bounds.** Hosted publication accepts ≤256 files per request, applies the
   contract's per-note and per-asset byte caps, and rejects projected output
-  over 3,500 files or 256 MiB. Tokens get 60 publishes and 50 live sites per
-  day-scale quota; addresses get 8 token mints and 120 publishes per day.
+  over 3,500 files or 256 MiB. Tokens get 60 publishes per day and 50 distinct
+  reserved slugs, including deletions and interrupted operations; addresses get 8 token mints and
+  120 publishes per day.
   Public reads carry no quota beyond ordinary CDN caching.
 - **Data.** The request vault is materialized to a temporary directory for the
   projection and deleted when the request ends; only the emitted artifact
   persists. Quota counters expire within two days; token digests, site records,
-  and slug pointers persist until the site is deleted. Published sites are
+  namespace reservations, operation receipts, and tombstones persist. Published sites are
   public by contract — never publish private content.
 
 `GET /api/v1/openapi.json` returns the OpenAPI 3.1 description;
 `GET /api/v1/health` reports service and storage health. MCP clients can use
 the streamable-HTTP endpoint `POST /api/v1/mcp` instead of REST: it exposes
-`create_token`, `publish_site`, `list_sites`, and `delete_site` tools that
+`create_token`, `get_site`, `publish_site`, `list_sites`, and `delete_site` tools that
 dispatch to the identical route logic — send the `wc_pub_` Bearer token as on
 REST, and `create_token` stays unauthenticated so an MCP-only client can
 onboard itself. The storage layer is
 a private Cloudflare R2 bucket behind the `wordcell-sites` worker — object
-reads and writes are HMAC-signed, and the public `/p/` path resolves the slug
-pointer to immutable artifact bytes with directory-index and `404.html`
+reads and writes are HMAC-signed, and the public `/p/` path resolves the site
+head to immutable artifact bytes with directory-index and `404.html`
 semantics identical to `wordcell serve`.
 
 ## Programmatic use
