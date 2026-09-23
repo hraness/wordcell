@@ -10,10 +10,7 @@ export { contentType, size };
 function WordcellMark() {
   return (
     <svg aria-label="Wordcell mark" height="42" role="img" viewBox="0 0 42 42" width="42">
-      <rect fill="none" height="14" stroke="currentColor" strokeWidth="3" width="14" x="5" y="5" />
-      <rect fill="currentColor" height="14" width="14" x="23" y="5" />
-      <rect fill="currentColor" height="14" width="14" x="5" y="23" />
-      <rect fill="none" height="14" stroke="currentColor" strokeWidth="3" width="14" x="23" y="23" />
+      <rect fill="none" height="28" rx="8" stroke="currentColor" strokeWidth="5" width="28" x="7" y="7" />
     </svg>
   );
 }
