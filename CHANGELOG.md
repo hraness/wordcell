@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.22.1
 
 Adds `updateNoteBody` to the authoring SDK. It replaces an existing note's prose
 at a required content revision while preserving frontmatter bytes, stable
 identity, and typed relations. Concurrent edits fail with the existing conflict
 and recovery results; an unchanged body leaves the file in place.
+
+The package also includes the reviewed Oh 0.11.0 dependency update.
 
 ## 0.22.0
 
