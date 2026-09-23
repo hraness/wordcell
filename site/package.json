@@ -23,7 +23,7 @@
     "check": "bun run check:theme && bun run sync:readme && bun run sync:docs && bun run sync:reader && bun run build:theme && bun run test && bun run lint && bun run typecheck && bun run build"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.14.0",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.15.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
     "@hraness/ui": "github:hraness/ui#v0.5.16",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",

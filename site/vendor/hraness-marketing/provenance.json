@@ -3,7 +3,7 @@
   "contractVersion": 1,
   "source": {
     "repository": "https://github.com/hraness/design-kit",
-    "commit": "6bf446b2b5d0858a259ef83e68fa4c75cabfbba2",
+    "commit": "a89034f457cfe2a09297610c74a8ce9d82ae8a5a",
     "export": "@hraness/design-kit/product-marketing-preset.css"
   },
   "files": {

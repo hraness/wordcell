@@ -90,24 +90,61 @@ const trust = [
   },
 ] as const;
 
-const relatedProducts = [
+const relatedGroups = [
   {
-    name: "PeopleBlade",
-    href: "https://peopleblade.com",
-    role: "A private contact book for you and your agent",
-    relationship: "Wordcell knows what; PeopleBlade knows who — the people behind the notes, in a local graph your agent can query and review.",
+    heading: "The personal apps",
+    headingId: "related-apps",
+    items: [
+      {
+        name: "PeopleBlade",
+        href: "https://peopleblade.com",
+        role: "A private contact book for you and your agent",
+        relationship: "Wordcell knows what; PeopleBlade knows who: the people behind the notes, in a local graph your agent can query and review.",
+      },
+      {
+        name: "Soulscrape",
+        href: "https://soulscrape.com",
+        role: "A dated, cited dossier on a person",
+        relationship: "A dossier is the kind of bounded, cited source a Wordcell note can point at, and Wordcell is where the reasoning and follow-ups around it live.",
+      },
+      {
+        name: "Textbutler",
+        href: "https://textbutler.app",
+        role: "A personal message butler for Mac",
+        relationship: "Textbutler drafts the reply; Wordcell keeps the durable record of what you decided and why.",
+      },
+    ],
   },
   {
-    name: "Soulscrape",
-    href: "https://soulscrape.com",
-    role: "A dated, cited dossier on a person",
-    relationship: "A dossier is the kind of bounded, cited source a Wordcell note can point at — and Wordcell is where the reasoning and follow-ups around it live.",
-  },
-  {
-    name: "Textbutler",
-    href: "https://textbutler.app",
-    role: "A personal message butler for Mac",
-    relationship: "Textbutler drafts the reply; Wordcell keeps the durable record of what you decided and why.",
+    heading: "The agent platform",
+    headingId: "related-tools",
+    summary: "The layer your agent runs through: sessions, accounts, web reads, and the models behind them.",
+    items: [
+      {
+        name: "Ghostget",
+        href: "https://ghostget.com",
+        role: "A bounded bridge to provider data",
+        relationship: "Ghostget turns web pages into durable, attested Markdown captures, the same shape Wordcell stores and cites.",
+      },
+      {
+        name: "Gobstopper",
+        href: "https://gobstopper.sh",
+        role: "Automatic context compaction for agent sessions",
+        relationship: "Gobstopper compacts the session so long research threads over your vault stay cheap.",
+      },
+      {
+        name: "xcb",
+        href: "https://xcb.sh",
+        role: "A metaharness for agent subscriptions",
+        relationship: "xcb is the workspace where the agents that query Wordcell run: subscriptions, tokens, and account custody in one place.",
+      },
+      {
+        name: "Aicharts",
+        href: "https://aicharts.io",
+        role: "AI model benchmarks and usage inspection",
+        relationship: "Aicharts benchmarks the models your agent queries with and inspects what a vault session actually used.",
+      },
+    ],
   },
 ] as const;
 
@@ -462,9 +499,9 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
           />
 
           <MarketingRelated
+            groups={relatedGroups}
             heading="From the same workshop."
             headingId="related-title"
-            items={relatedProducts}
             label="Related"
             summary="Each Hraness product owns one private domain and gives your agent the same kind of access: local, bounded, and inspectable."
           />
