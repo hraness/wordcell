@@ -355,6 +355,7 @@ export function WordcellField({
   notes = NOTES,
 }: Readonly<{ className?: string; edges?: readonly FieldEdge[]; notes?: readonly FieldNote[] }>) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLSpanElement>(null);
   const noteById = new Map(notes.map((note) => [note.id, note]));
 
   useEffect(() => {
@@ -374,9 +375,10 @@ export function WordcellField({
     measure();
 
     /* A focus point wanders the field on a slow organic path, waking whatever
-     * it passes over. A real pointer takes precedence and hands control back
-     * a few seconds after it rests. The smoothed focus lerps toward the
-     * active target so mode changes glide instead of jump. */
+     * it passes over. A real pointer takes precedence while it is travelling
+     * or resting on the wall, and a tap holds the focus where it lands for a
+     * few seconds so touch users can read the card they woke. The smoothed
+     * focus lerps toward the active target so handoffs glide. */
     const born = performance.now();
     let raf = 0;
     let running = false;
@@ -385,6 +387,7 @@ export function WordcellField({
     let pointerX = -10000;
     let pointerY = -10000;
     let lastPointerAt = -10000;
+    let holdUntil = -10000;
 
     const wander = (now: number) => {
       const rect = root.getBoundingClientRect();
@@ -399,7 +402,15 @@ export function WordcellField({
 
     const tick = (now: number) => {
       raf = 0;
-      const target = now - lastPointerAt < 3500 ? { x: pointerX, y: pointerY } : wander(now);
+      const rect = root.getBoundingClientRect();
+      const pointerInside =
+        pointerX >= rect.left - 40 && pointerX <= rect.right + 40 &&
+        pointerY >= rect.top - 40 && pointerY <= rect.bottom + 40;
+      const usePointer =
+        now < holdUntil ||
+        (pointerInside && now - lastPointerAt < 10000) ||
+        now - lastPointerAt < 1200;
+      const target = usePointer ? { x: pointerX, y: pointerY } : wander(now);
       if (focusX === null || focusY === null) {
         focusX = target.x;
         focusY = target.y;
@@ -435,8 +446,28 @@ export function WordcellField({
       pointerY = event.clientY;
       lastPointerAt = performance.now();
     };
+    const onDown = (event: PointerEvent) => {
+      const rect = root.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      if (x < -40 || y < -40 || x > rect.width + 40 || y > rect.height + 40) return;
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+      const now = performance.now();
+      lastPointerAt = now;
+      holdUntil = now + 6000;
+      const ring = ringRef.current;
+      if (ring !== null) {
+        ring.style.left = `${x}px`;
+        ring.style.top = `${y}px`;
+        ring.classList.remove("wordcell-tap-ring--active");
+        void ring.offsetWidth;
+        ring.classList.add("wordcell-tap-ring--active");
+      }
+    };
     const onAway = () => {
       lastPointerAt = -10000;
+      holdUntil = -10000;
     };
     const observer = new IntersectionObserver(([entry]) => {
       if (entry === undefined) return;
@@ -446,6 +477,7 @@ export function WordcellField({
     observer.observe(root);
 
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("scroll", measure, { capture: true, passive: true });
     window.addEventListener("resize", measure);
     document.documentElement.addEventListener("pointerleave", onAway);
@@ -453,6 +485,7 @@ export function WordcellField({
     return () => {
       observer.disconnect();
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("scroll", measure, { capture: true });
       window.removeEventListener("resize", measure);
       document.documentElement.removeEventListener("pointerleave", onAway);
@@ -534,6 +567,7 @@ export function WordcellField({
           )}
         </article>
       ))}
+      <span className="wordcell-tap-ring" ref={ringRef} />
     </div>
   );
 }

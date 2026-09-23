@@ -89,6 +89,29 @@
   to { stroke-dashoffset: -240; }
 }
 
+/* A tap/click leaves a soft ring where the focus landed. */
+.wordcell-tap-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  border: 1.5px solid var(--primary);
+  border-radius: 50%;
+  translate: -50% -50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wordcell-tap-ring--active {
+  animation: wordcell-tap-ring 1.05s cubic-bezier(.2, .7, .3, 1) both;
+}
+
+@keyframes wordcell-tap-ring {
+  from { opacity: .5; transform: scale(.5); }
+  to { opacity: 0; transform: scale(9); }
+}
+
 .wordcell-edge-label {
   position: absolute;
   translate: -50% -50%;
@@ -476,6 +499,9 @@
   .wordcell-field::before,
   .wordcell-edge--pulse {
     display: none;
+  }
+  .wordcell-tap-ring {
+    border-color: Highlight;
   }
   .wordcell-note {
     border-color: CanvasText;
