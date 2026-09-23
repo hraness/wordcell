@@ -141,14 +141,12 @@
   }
 
   /* A collection is a readable sequence, never a requirement to fill a grid.
-   * Products own grouping, columns and the meaning of each row. */
+   * Products own grouping, columns and the meaning of each row. Rows stay
+   * unruled: the pane perimeter owns the only seam. */
   :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-rows) {
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-  :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-rows > * + *) {
-    border-block-start: 1px solid var(--hraness-material-seam);
   }
   :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-disclosure > summary) {
     cursor: pointer;

@@ -19,12 +19,13 @@
     --hraness-marketing-display-weight: 400;
     --hraness-marketing-content-measure: 70rem;
     --hraness-marketing-header-measure: 76rem;
-    --hraness-marketing-header-height: 4.5rem;
+    --hraness-marketing-header-height: 3.25rem;
+    --hraness-sticky-offset: calc(var(--hraness-marketing-header-height) + 1px);
     --hraness-marketing-gutter: 2rem;
     --hraness-marketing-hero-space: 3.5rem 4rem;
     --hraness-marketing-story-space: 5rem;
     --hraness-marketing-summary-leading: 1.6;
-    --hraness-marketing-header-action-height: 2.625rem;
+    --hraness-marketing-header-action-height: 2.25rem;
     --hraness-marketing-field-ink: light-dark(#242a2f, #eceee9);
     --hraness-marketing-field-muted: light-dark(#515d68, #c2c9ce);
     --hraness-marketing-link: light-dark(#345474, #c2d3e4);
@@ -51,7 +52,7 @@
     --hraness-marketing-h2-size: clamp(1.25rem, 2.2vw, 1.75rem);
     --hraness-marketing-h2-leading: 1.15;
     --hraness-marketing-h2-tracking: -.02em;
-    --hraness-marketing-header-height: 2.8125rem;
+    --hraness-marketing-header-height: 2.5rem;
     --hraness-marketing-hero-space: 2rem 3rem;
     --hraness-marketing-story-space: 3rem;
     --hraness-marketing-field-images: none;
@@ -65,7 +66,8 @@
     .hraness-marketing-pillars, .hraness-marketing-install, .hraness-marketing-section,
     .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces,
     .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing,
-    .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-cta,
+    .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-related,
+    .hraness-marketing-cta,
     .hraness-marketing-proof-frame
   ) {
     --hraness-marketing-heading-font: var(--hraness-marketing-display-font);
@@ -90,7 +92,8 @@
     .hraness-marketing-pillars, .hraness-marketing-install, .hraness-marketing-section,
     .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces,
     .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing,
-    .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-cta,
+    .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-related,
+    .hraness-marketing-cta,
     .hraness-marketing-proof-frame
   ):not([data-hraness-marketing-preset]) {
     --hraness-marketing-gutter: inherit;
@@ -112,7 +115,7 @@
     letter-spacing: var(--hraness-marketing-h1-tracking);
     line-height: var(--hraness-marketing-h1-leading);
   }
-  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) :where(.hraness-marketing-section__heading, .hraness-marketing-install__heading, .hraness-marketing-primitives__heading, .hraness-marketing-interfaces__heading, .hraness-marketing-trust__heading, .hraness-marketing-quotes__heading, .hraness-marketing-pricing__heading, .hraness-marketing-questions__heading, .hraness-marketing-maker__heading, .hraness-marketing-cta__heading) {
+  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) :where(.hraness-marketing-section__heading, .hraness-marketing-install__heading, .hraness-marketing-primitives__heading, .hraness-marketing-interfaces__heading, .hraness-marketing-trust__heading, .hraness-marketing-quotes__heading, .hraness-marketing-pricing__heading, .hraness-marketing-questions__heading, .hraness-marketing-maker__heading, .hraness-marketing-related__heading, .hraness-marketing-cta__heading) {
     font-family: var(--hraness-marketing-display-font);
     font-size: var(--hraness-marketing-h2-size);
     font-weight: var(--hraness-marketing-display-weight);
@@ -127,6 +130,9 @@
     min-block-size: var(--hraness-marketing-action-height);
     border-radius: var(--hraness-marketing-radius);
   }
+  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) .hraness-marketing-header .hraness-marketing-action {
+    min-block-size: var(--hraness-marketing-header-action-height);
+  }
   @media (pointer: coarse) {
     :where([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) {
       --hraness-marketing-header-action-height: 3rem;
@@ -136,7 +142,7 @@
     }
   }
 
-  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) .hraness-marketing-field > :where(.hraness-marketing-hero, .hraness-marketing-section, .hraness-marketing-pillars, .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces, .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing, .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-cta) {
+  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) .hraness-marketing-field > :where(.hraness-marketing-hero, .hraness-marketing-section, .hraness-marketing-pillars, .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces, .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing, .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-related, .hraness-marketing-cta) {
     padding-inline: var(--hraness-marketing-gutter);
   }
 
@@ -150,8 +156,8 @@
     position: relative;
   }
   :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]).hraness-marketing-field:not([data-tone="accent"]),
-  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) .hraness-marketing-field:where(.hraness-marketing-page, .hraness-marketing-header, .hraness-marketing-hero, .hraness-marketing-pillars, .hraness-marketing-install, .hraness-marketing-section, .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces, .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing, .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-cta, .hraness-marketing-proof-frame):not([data-tone="accent"]),
-  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) .hraness-marketing-field :where(.hraness-marketing-page, .hraness-marketing-header, .hraness-marketing-hero, .hraness-marketing-pillars, .hraness-marketing-install, .hraness-marketing-section, .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces, .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing, .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-cta, .hraness-marketing-proof-frame):not([data-tone="accent"]) {
+  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) .hraness-marketing-field:where(.hraness-marketing-page, .hraness-marketing-header, .hraness-marketing-hero, .hraness-marketing-pillars, .hraness-marketing-install, .hraness-marketing-section, .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces, .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing, .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-related, .hraness-marketing-cta, .hraness-marketing-proof-frame):not([data-tone="accent"]),
+  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) .hraness-marketing-field :where(.hraness-marketing-page, .hraness-marketing-header, .hraness-marketing-hero, .hraness-marketing-pillars, .hraness-marketing-install, .hraness-marketing-section, .hraness-marketing-primitives, .hraness-marketing-stats, .hraness-marketing-interfaces, .hraness-marketing-trust, .hraness-marketing-quotes, .hraness-marketing-pricing, .hraness-marketing-questions, .hraness-marketing-maker, .hraness-marketing-related, .hraness-marketing-cta, .hraness-marketing-proof-frame):not([data-tone="accent"]) {
     --hraness-marketing-ink: var(--hraness-marketing-field-ink);
     --hraness-marketing-muted: var(--hraness-marketing-field-muted);
   }
@@ -165,7 +171,7 @@
 
   /* Legacy releases require string labels. Empty labels may omit the slot;
      nonempty product facts remain visible and are never hidden by a preset. */
-  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) :where(.hraness-marketing-hero__name, .hraness-marketing-hero__eyebrow, .hraness-marketing-section__label, .hraness-marketing-install__eyebrow, .hraness-marketing-questions__label, .hraness-marketing-primitives__label, .hraness-marketing-interfaces__label, .hraness-marketing-trust__label, .hraness-marketing-quotes__label, .hraness-marketing-pricing__label, .hraness-marketing-maker__label):empty {
+  :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) :where(.hraness-marketing-hero__name, .hraness-marketing-hero__eyebrow, .hraness-marketing-section__label, .hraness-marketing-install__eyebrow, .hraness-marketing-questions__label, .hraness-marketing-primitives__label, .hraness-marketing-interfaces__label, .hraness-marketing-trust__label, .hraness-marketing-quotes__label, .hraness-marketing-pricing__label, .hraness-marketing-maker__label, .hraness-marketing-related__label):empty {
     display: none;
   }
 
