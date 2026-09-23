@@ -22,6 +22,13 @@ vaults approved for that external processing. It does not send entire notes,
 Git history, or graph neighborhoods. Provider input-token charges apply.
 Omitting `--rerank` performs no hosted rerank calls or credential lookup.
 
+An approved repository script is the reusable default for that vault: declare
+the provider in `kb:search` once and run the script for subsequent searches.
+Having a provider key alone does not enable external processing of another
+vault. Without a script or explicit rerank request, Wordcell's default search
+combines exact matching with local QMD retrieval; `--mode exact` selects the
+model-free path. These are supported processing choices, not experimental modes.
+
 `--rerank-limit` accepts 2 through 25 and requires `--rerank typesafe`. It bounds
 requests independently of `--limit`, which bounds displayed results. Each
 candidate requires one request. Four requests run concurrently by default;
