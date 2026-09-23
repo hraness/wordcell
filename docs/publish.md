@@ -351,6 +351,17 @@ reads and writes are HMAC-signed, and the public `/p/` path resolves the site
 head to immutable artifact bytes with directory-index and `404.html`
 semantics identical to `wordcell serve`.
 
+Hosted directory pages use a trailing slash so their relative navigation and
+reader assets stay inside the edition. A slashless request redirects only
+after the Worker finds that directory's index; files and missing paths do not
+acquire a slash. The site proxy preserves `/p/` paths and keeps other site
+pages on their usual slashless URLs.
+
+When introducing this routing policy, deploy the site first and verify that a
+hosted directory URL keeps its slash, then deploy the Worker redirect. Reversing
+that order creates a redirect loop with the older site. Roll back the Worker
+before restoring the older site policy. Existing stored artifacts need no rewrite.
+
 ## Programmatic use
 
 `publishVault` drives the filesystem pipeline; `projectVault` projects an
