@@ -8,7 +8,7 @@ import { useEffect, useRef, type CSSProperties } from "react";
  * Everything is decorative: aria-hidden, pointer-transparent, reduced-motion
  * collapses drift to a still collage. */
 
-interface FieldNote {
+export interface FieldNote {
   readonly id: string;
   readonly type: "person" | "book" | "meeting" | "decision" | "plan" | "concept" | "question" | "idea" | "source";
   readonly title: string;
@@ -26,7 +26,7 @@ interface FieldNote {
   readonly bloom?: boolean;
 }
 
-interface FieldEdge {
+export interface FieldEdge {
   readonly from: string;
   readonly to: string;
   readonly label?: string;
@@ -191,7 +191,133 @@ const EDGES: readonly FieldEdge[] = [
   { from: "percolation", to: "selective-publish", label: "feeds" },
 ];
 
-const NOTE_BY_ID = new Map(NOTES.map((note) => [note.id, note]));
+/* The developers variant: same wall, code-flavored vault. Still a working
+ * vault, not a diagram — scopes, rules, evals, and the people behind them. */
+export const DEVELOPER_NOTES: readonly FieldNote[] = [
+  {
+    id: "parser-contract",
+    type: "concept",
+    title: "Parser contract",
+    body: "Retries stop after three attempts. Callers see a typed failure, not a hang.",
+    tags: ["infrastructure"],
+    x: 30, y: 32, rotate: 1.6, width: 192,
+    drift: [12, 10], seconds: 42, delay: -21, bloom: true,
+  },
+  {
+    id: "agents-rules",
+    type: "source",
+    title: "AGENTS.md — edit rules",
+    body: "Never bypass the gate. Serialize merges. Required stays green.",
+    x: 13, y: 52, rotate: -1.8, width: 176,
+    drift: [10, 14], seconds: 38, delay: -8,
+  },
+  {
+    id: "repo-scopes",
+    type: "concept",
+    title: "repository_scopes are exact paths",
+    body: "Match directories lexically to descendants. Never infer a scope from Git history.",
+    x: 46, y: 14, rotate: -1.4, width: 190,
+    drift: [9, 12], seconds: 40, delay: -5,
+  },
+  {
+    id: "eval-rerun",
+    type: "decision",
+    title: "Eval rerun stays frozen",
+    body: "LoCoMo window pinned to the sealed corpus. Rerank evidence lives in a sidecar.",
+    tags: ["evals"],
+    x: 62, y: 46, rotate: -1.2, width: 194,
+    drift: [11, 13], seconds: 45, delay: -14,
+  },
+  {
+    id: "stopped-session",
+    type: "plan",
+    title: "Stopped-session recovery",
+    body: "Resume from the last written note, not the transcript. The vault is the handoff.",
+    x: 80, y: 18, rotate: 1.8, width: 178,
+    drift: [13, 9], seconds: 44, delay: -30,
+  },
+  {
+    id: "provenance",
+    type: "concept",
+    title: "Provenance over recall",
+    body: "A match without its commit or source is a guess. [[half-life]] applies.",
+    x: 56, y: 66, rotate: 0.8, width: 186,
+    drift: [8, 11], seconds: 48, delay: -26,
+  },
+  {
+    id: "field-notes",
+    type: "source",
+    title: "Field notes — search latency",
+    body: "Exact scans stay under 40ms on the public vault. Semantic adds model load.",
+    x: 18, y: 80, rotate: -0.9, width: 182,
+    drift: [9, 12], seconds: 41, delay: -19,
+  },
+  {
+    id: "release-checklist",
+    type: "plan",
+    title: "Release checklist — 0.22.x",
+    body: "Required green, threads resolved, immutable tag, attested assets.",
+    x: 84, y: 70, rotate: -0.6, width: 178,
+    drift: [14, 8], seconds: 39, delay: -2,
+  },
+  {
+    id: "publish-decision",
+    type: "decision",
+    title: "Ship the digest, not the vault",
+    body: "Publication emits selected notes only. The working tree stays private.",
+    tags: ["release"],
+    x: 66, y: 88, rotate: 1.7, width: 186,
+    drift: [11, 10], seconds: 39, delay: -29,
+  },
+  {
+    id: "stale-question",
+    type: "question",
+    title: "Does percolation catch stale links?",
+    body: "If it does, that is a review signal, not a bug. See [[graph-authority]].",
+    x: 38, y: 86, rotate: 0.9, width: 186,
+    drift: [12, 9], seconds: 35, delay: -15,
+  },
+  {
+    id: "ada",
+    type: "person",
+    title: "Ada Mikkelsen",
+    body: "Owns the eval harness. Reviewing the paired-win table before publish.",
+    tags: ["evals"],
+    x: 92, y: 42, rotate: 0.7, width: 168,
+    drift: [8, 13], seconds: 47, delay: -18,
+  },
+  {
+    id: "docs-retro",
+    type: "meeting",
+    title: "Docs retro",
+    body: "Readers found the graph before the commands. Lead with the graph.",
+    x: 8, y: 28, rotate: 1.3, width: 172,
+    drift: [9, 11], seconds: 44, delay: -27,
+  },
+  {
+    id: "qmd-seam",
+    type: "idea",
+    title: "Semantic search is a cache",
+    body: "Delete the index, keep the knowledge. Rebuild from files anytime.",
+    x: 74, y: 62, rotate: -2.2, width: 168,
+    drift: [8, 14], seconds: 40, delay: -11,
+  },
+];
+
+export const DEVELOPER_EDGES: readonly FieldEdge[] = [
+  { from: "agents-rules", to: "repo-scopes", label: "inherits" },
+  { from: "agents-rules", to: "release-checklist", label: "gates", pulse: true },
+  { from: "repo-scopes", to: "parser-contract", label: "scopes" },
+  { from: "ada", to: "eval-rerun", label: "owns" },
+  { from: "eval-rerun", to: "publish-decision", label: "clears" },
+  { from: "stopped-session", to: "parser-contract", label: "recovers" },
+  { from: "stopped-session", to: "provenance", label: "needs", pulse: true },
+  { from: "provenance", to: "stale-question", label: "motivates" },
+  { from: "field-notes", to: "qmd-seam", label: "measures" },
+  { from: "docs-retro", to: "field-notes", label: "informed" },
+  { from: "docs-retro", to: "agents-rules", label: "shaped" },
+  { from: "qmd-seam", to: "eval-rerun", label: "feeds" },
+];
 
 function edgePath(from: FieldNote, to: FieldNote): string {
   const midX = (from.x + to.x) / 2;
@@ -223,8 +349,13 @@ function NoteBody({ body }: Readonly<{ body: string }>) {
 
 const REVEAL_RADIUS = 330;
 
-export function WordcellField({ className }: Readonly<{ className?: string }>) {
+export function WordcellField({
+  className,
+  edges = EDGES,
+  notes = NOTES,
+}: Readonly<{ className?: string; edges?: readonly FieldEdge[]; notes?: readonly FieldNote[] }>) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const noteById = new Map(notes.map((note) => [note.id, note]));
 
   useEffect(() => {
     const root = rootRef.current;
@@ -290,9 +421,9 @@ export function WordcellField({ className }: Readonly<{ className?: string }>) {
       ref={rootRef}
     >
       <svg className="wordcell-edges" preserveAspectRatio="none" viewBox="0 0 100 100">
-        {EDGES.map((edge) => {
-          const from = NOTE_BY_ID.get(edge.from);
-          const to = NOTE_BY_ID.get(edge.to);
+        {edges.map((edge) => {
+          const from = noteById.get(edge.from);
+          const to = noteById.get(edge.to);
           if (from === undefined || to === undefined) return null;
           return (
             <path
@@ -304,10 +435,10 @@ export function WordcellField({ className }: Readonly<{ className?: string }>) {
           );
         })}
       </svg>
-      {EDGES.map((edge) => {
+      {edges.map((edge) => {
         if (edge.label === undefined) return null;
-        const from = NOTE_BY_ID.get(edge.from);
-        const to = NOTE_BY_ID.get(edge.to);
+        const from = noteById.get(edge.from);
+        const to = noteById.get(edge.to);
         if (from === undefined || to === undefined) return null;
         const [labelX, labelY] = edgeLabelPoint(from, to);
         return (
@@ -321,7 +452,7 @@ export function WordcellField({ className }: Readonly<{ className?: string }>) {
           </span>
         );
       })}
-      {NOTES.map((note) => (
+      {notes.map((note) => (
         <article
           className={`wordcell-note${note.bloom === true ? " wordcell-note--bloom" : ""}`}
           data-prox=""
