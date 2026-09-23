@@ -16,6 +16,7 @@ import {
 } from "./graph.js";
 import { buildSiteIndex } from "./publish-index.js";
 import {
+  projectMarkdownText,
   renderMarkdownToHtml,
   type PublishRenderContext,
 } from "./publish-markdown.js";
@@ -307,7 +308,9 @@ export async function projectVault(
   let anyTextTruncated = false;
   for (const note of selection.notes) {
     const slug = slugFor(note.id);
-    const text = boundedNormalized(note.searchableText, WORDCELL_SITE_LIMITS_V1.noteTextBytes);
+    // Display grammar owns citations before normalization can fold distinct
+    // labels together. Ranking continues to use untouched searchableText.
+    const text = boundedNormalized(projectMarkdownText(note.content).text, WORDCELL_SITE_LIMITS_V1.noteTextBytes);
     anyTextTruncated ||= text.truncated;
     const payload: WordcellSiteNoteV1 = {
       format: WORDCELL_SITE_NOTE_FORMAT_V1,

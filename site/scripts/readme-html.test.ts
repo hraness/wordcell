@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { LANDING_END, LANDING_START, readmeLanding, renderMarkdownHtml, renderReadmeHtml } from "./readme-html.ts";
 import { docsResolver } from "./sync-docs.ts";
 import { docCatalog } from "../app/docs/catalog.ts";
+import { docHtml } from "../app/docs/docs.generated.ts";
 import { publishedRelease } from "../app/publication.ts";
 import { readmeHtml, readmeLead, readmeTitle, readmeVersion } from "../app/readme.generated.ts";
 import { publishedReadme } from "./published-readme.ts";
@@ -28,6 +29,36 @@ test("site installation coordinates stay on the admitted release while new sourc
   expect(publishedReadme(source, "0.21.1", "0.21.1")).toBe(source);
   expect(() => publishedReadme(source, "0.21.1", "latest")).toThrow();
   expect(() => publishedReadme(source, "0.21.1", null)).toThrow("without an admitted release");
+});
+
+test("documentation install coordinates follow admission without changing historical references", () => {
+  const source = [
+    "# Installation",
+    "",
+    "```sh",
+    "bun add https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz",
+    "npm install @hraness/wordcell@0.22.4",
+    "bunx skills add hraness/wordcell#v0.22.4 --skill wordcell",
+    "```",
+    "",
+    "Historical [archive](https://github.com/hraness/wordcell/releases/download/v0.20.0/hraness-wordcell-0.20.0.tgz).",
+  ].join("\n");
+  const html = renderMarkdownHtml(publishedReadme(source, "0.22.4", "0.22.3"));
+  expect(html).toContain("/v0.22.3/hraness-wordcell-0.22.3.tgz");
+  expect(html).toContain("npm install @hraness/wordcell@0.22.3");
+  expect(html).toContain("hraness/wordcell#v0.22.3 --skill wordcell");
+  expect(html).toContain("/v0.20.0/hraness-wordcell-0.20.0.tgz");
+  expect(html).not.toContain("0.22.4");
+});
+
+test("every generated documentation page uses the admitted installation coordinates", async () => {
+  const manifest = JSON.parse(await readFile(join(repository, "package.json"), "utf8")) as { version: string };
+  const resolver = docsResolver(new Set(docCatalog.map(entry => entry.slug)));
+  for (const entry of docCatalog) {
+    const source = await readFile(join(repository, "docs", `${entry.slug}.md`), "utf8");
+    const expected = renderMarkdownHtml(publishedReadme(source, manifest.version, publishedRelease?.version ?? null), resolver, "docs");
+    expect(docHtml[entry.slug]).toBe(expected);
+  }
 });
 
 test("renders the repository README with stable heading fragments and repository-rooted relative links", async () => {

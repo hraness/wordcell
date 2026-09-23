@@ -392,8 +392,10 @@ export function comparePublishScores(
 }
 
 /**
- * Bounded context window around the first query match in normalized text.
- * Mirrors `exactSnippet`: collapse whitespace, ellipsize edges.
+ * Bounded display context around the first normalized query match. Match
+ * offsets are mapped back to NFC display text before taking a UTF-8 byte
+ * window, so case expansion and supplementary characters cannot split it.
+ * The fallback retains the separate document-preview byte contract.
  */
 export function publishSnippet(
   text: string,
@@ -401,18 +403,47 @@ export function publishSnippet(
   fallback: string,
   windowBytes = 160,
 ): string {
-  const normalized = publishNormalize(text);
-  let offset = query.normalized === "" ? -1 : normalized.indexOf(query.normalized);
-  if (offset < 0) {
+  if (!Number.isSafeInteger(windowBytes) || windowBytes < 0) throw new RangeError("Snippet window must be a nonnegative safe byte count.");
+  const display = text.normalize("NFC");
+  const normalized = publishNormalize(display);
+  let match = query.normalized === "" ? -1 : normalized.indexOf(query.normalized);
+  if (match < 0) {
     for (const term of query.terms) {
-      offset = normalized.indexOf(term);
-      if (offset >= 0) break;
+      match = normalized.indexOf(term);
+      if (match >= 0) break;
     }
   }
-  if (offset < 0) return fallback;
-  const half = Math.floor(windowBytes / 2);
-  const start = Math.max(0, offset - half);
-  const end = Math.min(text.length, offset + half);
-  const snippet = text.slice(start, end).replace(/\s+/gu, " ").trim();
-  return `${start > 0 ? "…" : ""}${snippet}${end < text.length ? "…" : ""}`;
+  if (match < 0) return fallback;
+  let offset = 0, normalizedOffset = 0;
+  for (const character of display) {
+    const width = character.toLocaleLowerCase("en-US").length;
+    if (normalizedOffset + width > match) break;
+    normalizedOffset += width;
+    offset += character.length;
+  }
+  const edge = windowBytes >= 6 ? "…" : "";
+  const budget = windowBytes - 2 * publishUtf8Bytes(edge);
+  const previous = (end: number): number => {
+    const last = display.charCodeAt(end - 1);
+    return end > 1 && last >= 0xdc00 && last <= 0xdfff && display.charCodeAt(end - 2) >= 0xd800 && display.charCodeAt(end - 2) <= 0xdbff ? end - 2 : end - 1;
+  };
+  let start = offset, end = offset, used = 0;
+  while (start > 0) {
+    const before = previous(start), bytes = publishUtf8Bytes(display.slice(before, start));
+    if (used + bytes > Math.floor(budget / 2)) break;
+    start = before; used += bytes;
+  }
+  while (end < display.length) {
+    const character = String.fromCodePoint(display.codePointAt(end) ?? 0), bytes = publishUtf8Bytes(character);
+    if (used + bytes > budget) break;
+    end += character.length; used += bytes;
+  }
+  // Near the end, spend the remaining budget on earlier whole characters.
+  while (start > 0) {
+    const before = previous(start), bytes = publishUtf8Bytes(display.slice(before, start));
+    if (used + bytes > budget) break;
+    start = before; used += bytes;
+  }
+  const snippet = display.slice(start, end).replace(/\s+/gu, " ").trim();
+  return `${start > 0 ? edge : ""}${snippet}${end < display.length ? edge : ""}`;
 }

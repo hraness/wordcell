@@ -31,7 +31,7 @@ import {
 import {
   publishNormalize,
   publishShardName
-} from "./index-3agn8scn.js";
+} from "./index-23m6bbjt.js";
 import {
   parseLocalAttachmentReferences,
   validateMarkdownAttachments
@@ -49,133 +49,6 @@ import { canonicalJson as canonicalJson2, canonicalSha256 } from "@hraness/oh";
 
 // src/publish-index.ts
 import { canonicalJson } from "@hraness/oh";
-var TERM_PATTERN = /[\p{L}\p{N}][\p{L}\p{N}._/-]*/gu;
-function bounded(value, maximumBytes) {
-  if (Buffer.byteLength(value, "utf8") <= maximumBytes)
-    return { text: value, truncated: false };
-  const bytes = Buffer.from(value, "utf8");
-  let end = maximumBytes;
-  while (end > 0 && ((bytes[end] ?? 0) & 192) === 128)
-    end -= 1;
-  return { text: bytes.subarray(0, end).toString("utf8"), truncated: true };
-}
-function previewText(note) {
-  const basis = note.summary !== "" ? note.summary : note.searchableText;
-  const collapsed = basis.replace(/\s+/gu, " ").trim();
-  return bounded(collapsed, WORDCELL_SITE_LIMITS_V1.docPreviewBytes).text;
-}
-function indexableTerms(text) {
-  const terms = new Set;
-  for (const match of text.matchAll(TERM_PATTERN))
-    terms.add(match[0]);
-  return [...terms];
-}
-function buildSiteIndex(notes, slugById, options = {}) {
-  const indexContent = options.indexContent !== false;
-  const fields = [];
-  const inlineTexts = [];
-  let textTruncated = false;
-  let inlineTotal = 0;
-  for (const note of notes) {
-    const title = bounded(publishNormalize(note.title), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
-    const aliases = bounded(note.aliases.map(publishNormalize).join(`
-`), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
-    const path = bounded(`${publishNormalize(note.path)}
-${publishNormalize(note.id)}`, WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
-    const tags = bounded(note.tags.map(publishNormalize).join(`
-`), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
-    const metadata = bounded(publishNormalize(canonicalJson(note.metadata)), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
-    textTruncated ||= title.truncated || aliases.truncated || path.truncated || tags.truncated || metadata.truncated;
-    fields.push({ t: title.text, a: aliases.text, p: path.text, g: tags.text, m: metadata.text });
-    if (indexContent) {
-      const inline = bounded(publishNormalize(note.searchableText), WORDCELL_SITE_LIMITS_V1.inlineTextBytes);
-      textTruncated ||= inline.truncated;
-      inlineTexts.push(inline.text);
-      inlineTotal += Buffer.byteLength(inline.text, "utf8");
-    }
-  }
-  const mode = !indexContent ? "none" : inlineTotal <= WORDCELL_SITE_LIMITS_V1.inlineTotalBytes ? "inline" : "shards";
-  const allTerms = new Set;
-  const contentPostings = new Map;
-  const docs = [];
-  for (const [index, note] of notes.entries()) {
-    const slug = slugById.get(note.id);
-    if (slug === undefined)
-      throw new Error(`Missing published slug for ${note.id}.`);
-    const field = fields[index];
-    if (field === undefined)
-      throw new Error(`Missing indexed fields for ${note.id}.`);
-    const inline = mode === "inline" ? inlineTexts[index] : undefined;
-    const fieldTerms = indexableTerms(`${field.t}
-${field.a}
-${field.p}
-${field.g}
-${field.m}`);
-    for (const term of fieldTerms)
-      allTerms.add(term);
-    if (mode !== "none") {
-      const content = inlineTexts[index] ?? "";
-      for (const term of indexableTerms(content)) {
-        allTerms.add(term);
-        if (mode === "shards") {
-          const list = contentPostings.get(term) ?? [];
-          list.push(index);
-          contentPostings.set(term, list);
-        }
-      }
-    }
-    docs.push({
-      i: index,
-      s: slug,
-      t: note.title,
-      p: previewText(note),
-      f: field,
-      ...inline === undefined ? {} : { x: inline }
-    });
-  }
-  let termsTruncated = false;
-  let sortedTerms = [...allTerms].toSorted((left, right) => left.localeCompare(right));
-  if (sortedTerms.length > WORDCELL_SITE_LIMITS_V1.indexTerms) {
-    sortedTerms = sortedTerms.slice(0, WORDCELL_SITE_LIMITS_V1.indexTerms);
-    termsTruncated = true;
-  }
-  const admitted = new Set(sortedTerms);
-  const postings = new Map;
-  if (mode === "shards") {
-    const grouped = new Map;
-    for (const [term, docIds] of [...contentPostings.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
-      if (!admitted.has(term))
-        continue;
-      const shard = publishShardName(term);
-      const bucket = grouped.get(shard) ?? Object.create(null);
-      bucket[term] = docIds;
-      grouped.set(shard, bucket);
-    }
-    for (const [shard, bucket] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
-      postings.set(shard, {
-        format: WORDCELL_SITE_POSTINGS_FORMAT_V1,
-        shard,
-        postings: Object.freeze(bucket)
-      });
-    }
-  }
-  return {
-    docs: {
-      format: WORDCELL_SITE_DOCS_FORMAT_V1,
-      content: mode,
-      docs
-    },
-    terms: {
-      format: WORDCELL_SITE_TERMS_FORMAT_V1,
-      terms: sortedTerms
-    },
-    postings,
-    termsCount: sortedTerms.length,
-    termsTruncated,
-    textTruncated,
-    mode
-  };
-}
 
 // src/publish-markdown.ts
 var VOID_SLUG = /[^\p{L}\p{N}._~-]+/gu;
@@ -257,6 +130,8 @@ function renderFootnoteReference(raw, label, footnotes) {
   const id = `wordcell:footnote-ref:${number}:${note.references.length + 1}`;
   note.references.push(id);
   footnotes.references += 1;
+  if (footnotes.plain)
+    return "";
   return `<sup><a id="${id}" href="#wordcell:footnote:${number}" role="doc-noteref" aria-label="Footnote ${number}">${number}</a></sup>`;
 }
 function renderInline(text, ctx, footnotes) {
@@ -904,6 +779,72 @@ function renderMarkdownToHtml(content, ctx) {
 ${notes}
 </ol></section>`;
 }
+function projectMarkdownText(content, description) {
+  const footnotes = { byLabel: new Map, numbered: [], definitions: 0, references: 0, disabled: false, plain: true };
+  const blocks = parseMarkdownBlocks(content, footnotes, true);
+  const context = {
+    source: "",
+    resolveNote: () => {
+      return;
+    },
+    resolveAsset: () => {
+      return;
+    },
+    noteHref: () => ""
+  };
+  const inline = (text2, state) => stripMarkup(renderInline(text2, context, state));
+  const parts = (items, state) => items.map((block) => {
+    switch (block.type) {
+      case "paragraph":
+      case "heading":
+        return inline(block.text, state);
+      case "literal":
+      case "code":
+        return block.text;
+      case "break":
+        return "";
+      case "quote":
+        return parts(block.blocks, state).join(`
+
+`);
+      case "table":
+        return [block.header, ...block.rows].map((row) => row.map((cell) => inline(cell, state)).join(" ")).join(`
+`);
+      case "list":
+        return block.parts.map((part) => part.type === "item" || part.type === "continuation" ? inline(part.text, state) : "").filter(Boolean).join(`
+`);
+      case "footnote":
+        return state.disabled || block.note.invalid ? block.note.authored : "";
+    }
+  });
+  const rendered = parts(blocks, footnotes);
+  if (!footnotes.disabled)
+    for (const note of footnotes.byLabel.values()) {
+      if (note !== null && !note.invalid)
+        footnoteNumber(note, footnotes);
+    }
+  const text = [...rendered, ...footnotes.numbered.map((note) => inline(note.body.replaceAll(`
+`, " ")))].filter(Boolean).join(`
+
+`);
+  let preview = rendered.find((value, index) => blocks[index]?.type === "paragraph" && value.trim() !== "") ?? text;
+  if (description !== undefined && description.trim() !== "") {
+    const state = {
+      byLabel: new Map([...footnotes.byLabel].map(([label, note]) => [label, note === null ? null : { body: note.body, authored: note.authored, invalid: note.invalid, references: [] }])),
+      numbered: [],
+      definitions: footnotes.definitions,
+      references: 0,
+      disabled: footnotes.disabled,
+      plain: true
+    };
+    const authored = parts(parseMarkdownBlocks(description, state, false), state).filter(Boolean).join(`
+
+`);
+    if (authored.trim() !== "")
+      preview = authored;
+  }
+  return { text, preview };
+}
 function stripMarkup(html) {
   let stripped = "";
   let inTag = false;
@@ -916,6 +857,135 @@ function stripMarkup(html) {
       stripped += character;
   }
   return stripped.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", '"').replaceAll("&#39;", "'").replaceAll("&amp;", "&");
+}
+
+// src/publish-index.ts
+var TERM_PATTERN = /[\p{L}\p{N}][\p{L}\p{N}._/-]*/gu;
+function bounded(value, maximumBytes) {
+  if (Buffer.byteLength(value, "utf8") <= maximumBytes)
+    return { text: value, truncated: false };
+  const bytes = Buffer.from(value, "utf8");
+  let end = maximumBytes;
+  while (end > 0 && ((bytes[end] ?? 0) & 192) === 128)
+    end -= 1;
+  return { text: bytes.subarray(0, end).toString("utf8"), truncated: true };
+}
+function previewText(note) {
+  const display = projectMarkdownText(note.content, note.properties["description"]);
+  const collapsed = display.preview.replace(/\s+/gu, " ").trim();
+  return bounded(collapsed, WORDCELL_SITE_LIMITS_V1.docPreviewBytes).text;
+}
+function indexableTerms(text) {
+  const terms = new Set;
+  for (const match of text.matchAll(TERM_PATTERN))
+    terms.add(match[0]);
+  return [...terms];
+}
+function buildSiteIndex(notes, slugById, options = {}) {
+  const indexContent = options.indexContent !== false;
+  const fields = [];
+  const inlineTexts = [];
+  let textTruncated = false;
+  let inlineTotal = 0;
+  for (const note of notes) {
+    const title = bounded(publishNormalize(note.title), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
+    const aliases = bounded(note.aliases.map(publishNormalize).join(`
+`), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
+    const path = bounded(`${publishNormalize(note.path)}
+${publishNormalize(note.id)}`, WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
+    const tags = bounded(note.tags.map(publishNormalize).join(`
+`), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
+    const metadata = bounded(publishNormalize(canonicalJson(note.metadata)), WORDCELL_SITE_LIMITS_V1.fieldTextBytes);
+    textTruncated ||= title.truncated || aliases.truncated || path.truncated || tags.truncated || metadata.truncated;
+    fields.push({ t: title.text, a: aliases.text, p: path.text, g: tags.text, m: metadata.text });
+    if (indexContent) {
+      const inline = bounded(publishNormalize(note.searchableText), WORDCELL_SITE_LIMITS_V1.inlineTextBytes);
+      textTruncated ||= inline.truncated;
+      inlineTexts.push(inline.text);
+      inlineTotal += Buffer.byteLength(inline.text, "utf8");
+    }
+  }
+  const mode = !indexContent ? "none" : inlineTotal <= WORDCELL_SITE_LIMITS_V1.inlineTotalBytes ? "inline" : "shards";
+  const allTerms = new Set;
+  const contentPostings = new Map;
+  const docs = [];
+  for (const [index, note] of notes.entries()) {
+    const slug = slugById.get(note.id);
+    if (slug === undefined)
+      throw new Error(`Missing published slug for ${note.id}.`);
+    const field = fields[index];
+    if (field === undefined)
+      throw new Error(`Missing indexed fields for ${note.id}.`);
+    const inline = mode === "inline" ? inlineTexts[index] : undefined;
+    const fieldTerms = indexableTerms(`${field.t}
+${field.a}
+${field.p}
+${field.g}
+${field.m}`);
+    for (const term of fieldTerms)
+      allTerms.add(term);
+    if (mode !== "none") {
+      const content = inlineTexts[index] ?? "";
+      for (const term of indexableTerms(content)) {
+        allTerms.add(term);
+        if (mode === "shards") {
+          const list = contentPostings.get(term) ?? [];
+          list.push(index);
+          contentPostings.set(term, list);
+        }
+      }
+    }
+    docs.push({
+      i: index,
+      s: slug,
+      t: note.title,
+      p: previewText(note),
+      f: field,
+      ...inline === undefined ? {} : { x: inline }
+    });
+  }
+  let termsTruncated = false;
+  let sortedTerms = [...allTerms].toSorted((left, right) => left.localeCompare(right));
+  if (sortedTerms.length > WORDCELL_SITE_LIMITS_V1.indexTerms) {
+    sortedTerms = sortedTerms.slice(0, WORDCELL_SITE_LIMITS_V1.indexTerms);
+    termsTruncated = true;
+  }
+  const admitted = new Set(sortedTerms);
+  const postings = new Map;
+  if (mode === "shards") {
+    const grouped = new Map;
+    for (const [term, docIds] of [...contentPostings.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
+      if (!admitted.has(term))
+        continue;
+      const shard = publishShardName(term);
+      const bucket = grouped.get(shard) ?? Object.create(null);
+      bucket[term] = docIds;
+      grouped.set(shard, bucket);
+    }
+    for (const [shard, bucket] of [...grouped.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
+      postings.set(shard, {
+        format: WORDCELL_SITE_POSTINGS_FORMAT_V1,
+        shard,
+        postings: Object.freeze(bucket)
+      });
+    }
+  }
+  return {
+    docs: {
+      format: WORDCELL_SITE_DOCS_FORMAT_V1,
+      content: mode,
+      docs
+    },
+    terms: {
+      format: WORDCELL_SITE_TERMS_FORMAT_V1,
+      terms: sortedTerms
+    },
+    postings,
+    termsCount: sortedTerms.length,
+    termsTruncated,
+    textTruncated,
+    mode
+  };
 }
 
 // src/publish-nav.ts
@@ -1709,7 +1779,7 @@ async function projectVault(snapshot, options, io) {
   let anyTextTruncated = false;
   for (const note of selection.notes) {
     const slug = slugFor(note.id);
-    const text = boundedNormalized(note.searchableText, WORDCELL_SITE_LIMITS_V1.noteTextBytes);
+    const text = boundedNormalized(projectMarkdownText(note.content).text, WORDCELL_SITE_LIMITS_V1.noteTextBytes);
     anyTextTruncated ||= text.truncated;
     const payload = {
       format: WORDCELL_SITE_NOTE_FORMAT_V1,

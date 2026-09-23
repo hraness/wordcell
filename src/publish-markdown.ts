@@ -108,6 +108,8 @@ type Footnotes = {
   definitions: number;
   references: number;
   disabled: boolean;
+  /** Plain display projections omit admitted citation navigation only. */
+  readonly plain?: true;
 };
 
 function footnoteLabel(raw: string): string | undefined {
@@ -136,6 +138,7 @@ function renderFootnoteReference(raw: string, label: string, footnotes: Footnote
   const id = `wordcell:footnote-ref:${number}:${note.references.length + 1}`;
   note.references.push(id);
   footnotes.references += 1;
+  if (footnotes.plain) return "";
   return `<sup><a id="${id}" href="#wordcell:footnote:${number}" role="doc-noteref" aria-label="Footnote ${number}">${number}</a></sup>`;
 }
 
@@ -818,6 +821,58 @@ export function renderMarkdownToHtml(content: string, ctx: PublishRenderContext)
     return `<li id="wordcell:footnote:${number}" tabindex="-1">${text}${backlinks === "" ? "" : ` ${backlinks}`}</li>`;
   }).join("\n");
   return `${body}${body === "" ? "" : "\n"}<section class="footnotes" aria-label="Footnotes"><ol>\n${notes}\n</ol></section>`;
+}
+
+export type PublishMarkdownText = {
+  readonly text: string;
+  readonly preview: string;
+};
+
+/**
+ * Readable display text, derived before truncation or case normalization.
+ * Shares the article grammar and footnote admission rules; it is not an index
+ * or a replacement for authored Markdown. Valid citation navigation disappears,
+ * while unresolved definitions/references, escaped text, and code stay literal.
+ */
+export function projectMarkdownText(content: string, description?: string): PublishMarkdownText {
+  const footnotes: Footnotes = { byLabel: new Map(), numbered: [], definitions: 0, references: 0, disabled: false, plain: true };
+  const blocks = parseMarkdownBlocks(content, footnotes, true);
+  // Display labels need no filesystem, URL fetch, or selected-note resolution.
+  // Unresolved local assets retain their authored alt text through renderInline.
+  const context: PublishRenderContext = {
+    source: "", resolveNote: () => undefined, resolveAsset: () => undefined, noteHref: () => "",
+  };
+  const inline = (text: string, state?: Footnotes): string => stripMarkup(renderInline(text, context, state));
+  const parts = (items: readonly MarkdownBlock[], state: Footnotes): string[] => items.map((block): string => {
+    switch (block.type) {
+      case "paragraph": case "heading": return inline(block.text, state);
+      case "literal": case "code": return block.text;
+      case "break": return "";
+      case "quote": return parts(block.blocks, state).join("\n\n");
+      case "table": return [block.header, ...block.rows].map((row) => row.map((cell) => inline(cell, state)).join(" ")).join("\n");
+      case "list": return block.parts.map((part) => part.type === "item" || part.type === "continuation" ? inline(part.text, state) : "").filter(Boolean).join("\n");
+      case "footnote": return state.disabled || block.note.invalid ? block.note.authored : "";
+    }
+  });
+  const rendered = parts(blocks, footnotes);
+  // The article orders valid definitions by first reference, then unreferenced
+  // definitions. Nested references in their bodies deliberately remain literal.
+  if (!footnotes.disabled) for (const note of footnotes.byLabel.values()) {
+    if (note !== null && !note.invalid) footnoteNumber(note, footnotes);
+  }
+  const text = [...rendered, ...footnotes.numbered.map((note) => inline(note.body.replaceAll("\n", " ")))].filter(Boolean).join("\n\n");
+  let preview = rendered.find((value, index) => blocks[index]?.type === "paragraph" && value.trim() !== "") ?? text;
+  if (description !== undefined && description.trim() !== "") {
+    // Resolve description citations against the same authored definitions, but
+    // never let preview rendering consume the article's citation allowance.
+    const state: Footnotes = {
+      byLabel: new Map([...footnotes.byLabel].map(([label, note]) => [label, note === null ? null : { body: note.body, authored: note.authored, invalid: note.invalid, references: [] }])),
+      numbered: [], definitions: footnotes.definitions, references: 0, disabled: footnotes.disabled, plain: true,
+    };
+    const authored = parts(parseMarkdownBlocks(description, state, false), state).filter(Boolean).join("\n\n");
+    if (authored.trim() !== "") preview = authored;
+  }
+  return { text, preview };
 }
 
 export function stripMarkup(html: string): string {
