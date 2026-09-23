@@ -10,16 +10,17 @@
  * enforces the declared caps, and performs the bucket op.
  *
  * Signed ops (`/o/{key}?exp=<unix>&sig=<hex>[&max=<bytes>]`):
- *  - PUT/GET/HEAD/DELETE on keys under s/, up/, m/, tok/, dev/, q/, sites/
+ *  - PUT/GET/HEAD/DELETE on approved prefixes; site heads and operation
+ *    receipts require signed v2 conditional writes and cannot be deleted.
  *  - GET /o-list?prefix=<p>&limit=<n> lists key names (bounded)
  * Canonical string: `${method}\n${key}\n${exp}\n${maxBytes}` where maxBytes is
  * empty for reads and deletes; LIST signs `LIST\n${prefix}\n${exp}\n`.
  *
  * Public reads (`/p/{key8}/{slug}/[{path}]`):
- *  - resolves `m/{key8}/{slug}` to the current artifact digest, then serves
+ *  - resolves `sites/{key8}/{slug}.json` to the current artifact digest, then serves
  *    `s/{key8}/{digest}/{path}` with directory-index and 404.html fallback.
- *    Artifacts are owner-scoped so a delete or republish sweep can never
- *    remove another namespace's identical bytes.
+ *    Legacy pointers are used only when no site head exists. Tombstones block
+ *    fallback. Shared artifact prefixes cannot be deleted through this proxy.
  *  - no signature; published sites are public by contract.
  *
  * Policy beyond the signature (defense in depth):
@@ -29,14 +30,17 @@
  *  - metadata headers are bounded and only `x-meta-*` pass through
  */
 
-interface Env {
+import { parseSiteHead } from "../../site/lib/hosted/records"
+
+export interface Env {
   readonly BUCKET: R2Bucket
   readonly OBJECT_PROXY_SECRET: string
 }
 
 interface R2Object {
-  readonly body: ReadableStream
+  readonly body: ReadableStream<Uint8Array>
   readonly size: number
+  readonly httpEtag: string
   readonly customMetadata?: Record<string, string>
   writeHttpMetadata(headers: Headers): void
 }
@@ -55,13 +59,14 @@ interface R2Bucket {
     options?: {
       httpMetadata?: { contentType?: string }
       customMetadata?: Record<string, string>
+      onlyIf?: Headers
     },
-  ): Promise<unknown>
+  ): Promise<R2Object | null>
   delete(key: string | string[]): Promise<void>
   list(options?: { prefix?: string; limit?: number }): Promise<R2Objects>
 }
 
-const KEY_PREFIXES = ["s/", "up/", "m/", "tok/", "dev/", "q/", "sites/"] as const
+const KEY_PREFIXES = ["s/", "up/", "m/", "tok/", "dev/", "q/", "sites/", "ops/", "ns/", "cap/"] as const
 const MAX_KEY_LENGTH = 512
 const MAX_PUT_BYTES = 64 * 1024 * 1024
 const MAX_EXPIRY_SECONDS = 3600
@@ -196,12 +201,36 @@ async function signed(request: Request, env: Env, url: URL): Promise<Response> {
     }
   }
 
+  const version = url.searchParams.get("v")
+  const condition = url.searchParams.get("condition") ?? ""
+  const etag = url.searchParams.get("etag") ?? ""
+  const digest = url.searchParams.get("sha256") ?? ""
+  if (version !== null && (version !== "2" || method !== "PUT" ||
+      (condition !== "absent" && condition !== "match") ||
+      (condition === "absent" ? etag !== "" : !/^"[a-zA-Z0-9-]{1,128}"$/u.test(etag)) ||
+      (digest !== "" ? !/^[0-9a-f]{64}$/u.test(digest) : !key.startsWith("up/")))) {
+    return text("invalid_condition", 400)
+  }
+
   const expected = await hmacHex(
     env.OBJECT_PROXY_SECRET,
-    `${method}\n${key}\n${String(exp)}\n${method === "PUT" ? maxParam : ""}`,
+    `${method}\n${key}\n${String(exp)}\n${method === "PUT" ? maxParam : ""}` +
+      (version === "2" ? `\n2\n${condition}\n${etag}\n${digest}` : ""),
   )
   if (!constantTimeEqual(url.searchParams.get("sig") ?? "", expected)) {
     return text("forbidden", 403)
+  }
+
+  if ((key.startsWith("sites/") || key.startsWith("ops/") || key.startsWith("ns/") || key.startsWith("cap/")) &&
+      (method === "DELETE" || (method === "PUT" && version !== "2"))) {
+    return text("conditional_write_required", 428)
+  }
+  if (method === "PUT" && (key.startsWith("ops/") || key.startsWith("ns/") || key.startsWith("up/")) &&
+      (version !== "2" || condition !== "absent")) {
+    return text("immutable_write_required", 428)
+  }
+  if (method === "DELETE" && key.startsWith("s/")) {
+    return text("shared_artifact_retained", 409)
   }
 
   if (method === "PUT") {
@@ -229,14 +258,22 @@ async function signed(request: Request, env: Env, url: URL): Promise<Response> {
       body.set(chunk, offset)
       offset += chunk.byteLength
     }
+    if (digest !== "") {
+      const hash = await crypto.subtle.digest("SHA-256", body)
+      const actual = [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, "0")).join("")
+      if (!constantTimeEqual(actual, digest)) return text("digest_mismatch", 400)
+    }
     const contentType = request.headers.get("content-type") ?? undefined
     try {
-      await env.BUCKET.put(key, body.buffer as ArrayBuffer, {
+      const written = await env.BUCKET.put(key, body.buffer as ArrayBuffer, {
         ...(contentType !== undefined && contentType.length <= MAX_CONTENT_TYPE
           ? { httpMetadata: { contentType } }
           : {}),
         customMetadata: metaHeaders(request),
+        ...(version === "2" ? { onlyIf: new Headers(condition === "absent"
+          ? { "if-none-match": "*" } : { "if-match": etag }) } : {}),
       })
+      if (written === null) return text("precondition_failed", 412)
     } catch {
       return text("put_failed", 502)
     }
@@ -255,6 +292,11 @@ async function signed(request: Request, env: Env, url: URL): Promise<Response> {
   const headers = new Headers()
   object.writeHttpMetadata(headers)
   headers.set("content-length", String(object.size))
+  headers.set("etag", object.httpEtag)
+  // HTTP compression may weaken or remove the representation ETag in transit.
+  // Conditional R2 writes must use the exact object identity, not that validator.
+  headers.set("x-object-etag", object.httpEtag)
+  headers.set("cache-control", "no-store, no-transform")
   for (const [name, value] of Object.entries(object.customMetadata ?? {})) {
     headers.set(`x-meta-${name}`, value)
   }
@@ -273,6 +315,26 @@ function servePath(rest: string): readonly string[] {
   return [rest]
 }
 
+async function objectJson(object: R2Object, maximum: number): Promise<unknown> {
+  if (object.size > maximum) throw new Error("metadata_too_large")
+  const reader = object.body.getReader()
+  const chunks: Uint8Array[] = []
+  let length = 0
+  try {
+    for (;;) {
+      const next = await reader.read()
+      if (next.done) break
+      length += next.value.byteLength
+      if (length > maximum) { await reader.cancel(); throw new Error("metadata_too_large") }
+      chunks.push(next.value)
+    }
+  } finally { reader.releaseLock() }
+  const bytes = new Uint8Array(length)
+  let offset = 0
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes))
+}
+
 async function serve(request: Request, env: Env, url: URL): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return text("method_not_allowed", 405)
@@ -286,22 +348,25 @@ async function serve(request: Request, env: Env, url: URL): Promise<Response> {
   if (!KEY8_PATTERN.test(key8) || !SLUG_PATTERN.test(slug)) {
     return text("not_found", 404)
   }
-  const pointer = await env.BUCKET.get(`m/${key8}/${slug}`)
-  if (pointer === null) return text("not_found", 404)
+  const head = await env.BUCKET.get(`sites/${key8}/${slug}.json`)
   let digest = ""
   try {
-    const parsed: unknown = JSON.parse(await new Response(pointer.body).text())
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "digest" in parsed &&
-      typeof parsed.digest === "string" &&
-      /^[0-9a-f]{64}$/u.test(parsed.digest)
-    ) {
-      digest = parsed.digest
+    if (head !== null) {
+      const parsed = parseSiteHead(await objectJson(head, 16 * 1024), key8, slug)
+      if (parsed === undefined) return text("invalid_site_head", 502)
+      if (parsed.v === 2 && parsed.site === null) return text("not_found", 404)
+      digest = parsed.v === 1 ? parsed.digest : parsed.site?.digest ?? ""
+    } else {
+      const pointer = await env.BUCKET.get(`m/${key8}/${slug}`)
+      if (pointer === null) return text("not_found", 404)
+      const parsed = await objectJson(pointer, 1024)
+      if (typeof parsed === "object" && parsed !== null && "digest" in parsed &&
+          typeof parsed.digest === "string" && /^[0-9a-f]{64}$/u.test(parsed.digest)) {
+        digest = parsed.digest
+      }
     }
   } catch {
-    return text("not_found", 404)
+    return text("invalid_site_metadata", 502)
   }
   if (digest === "") return text("not_found", 404)
 

@@ -2803,7 +2803,9 @@ describe("kb vault commands", () => {
     });
   });
 
-  test("keeps process-level JSON parseable while a dependency writes model progress", async () => {
+  // Each fresh CLI process has its own test deadline; unrelated process startup
+  // costs must not consume one shared five-second allowance for five cases.
+  test.each(["progress", "unavailable", "parse", "missing", "runtime"] as const)("keeps process-level JSON parseable for %s", async (mode) => {
     const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-cli-process-"));
     try {
       const cliUrl = pathToFileURL(join(import.meta.dir, "cli.ts")).href;
@@ -2861,44 +2863,27 @@ describe("kb vault commands", () => {
             KB_CLI_TEST_ROOT: vault,
           },
         });
-      const processResult = invoke("progress");
-      expect(processResult.exitCode).toBe(0);
-      const stdout = processResult.stdout.toString();
-      expect(JSON.parse(stdout)).toMatchObject({ model: "local-model" });
-      expect(stdout).not.toContain("Downloading");
-      const stderr = processResult.stderr.toString();
-      expect(stderr).toContain("Downloading local model 40%");
-      expect(stderr).toContain("raw dependency progress");
-
-      const unavailable = invoke("unavailable");
-      expect(unavailable.exitCode).toBe(0);
-      expect(JSON.parse(unavailable.stdout.toString())).toMatchObject({
-        kind: "search",
-        partial: true,
-        history: { status: "unavailable", reason: "Git unavailable" },
-      });
-
-      const parseFailure = invoke("parse");
-      expect(parseFailure.exitCode).toBe(2);
-      expect(JSON.parse(parseFailure.stdout.toString())).toMatchObject({
-        ok: false,
-        error: { kind: "parse" },
-      });
-
-      const missing = invoke("missing");
-      expect(missing.exitCode).toBe(3);
-      expect(JSON.parse(missing.stdout.toString())).toEqual({
-        ok: false,
-        kind: "missing",
-        note: "missing",
-      });
-
-      const runtimeFailure = invoke("runtime");
-      expect(runtimeFailure.exitCode).toBe(1);
-      expect(JSON.parse(runtimeFailure.stdout.toString())).toEqual({
-        ok: false,
-        error: { kind: "runtime", message: "simulated runtime failure" },
-      });
+      const result = invoke(mode);
+      const stdout = result.stdout.toString(), stderr = result.stderr.toString();
+      if (mode === "progress") {
+        expect(result.exitCode).toBe(0);
+        expect(JSON.parse(stdout)).toMatchObject({ model: "local-model" });
+        expect(stdout).not.toContain("Downloading");
+        expect(stderr).toContain("Downloading local model 40%");
+        expect(stderr).toContain("raw dependency progress");
+      } else if (mode === "unavailable") {
+        expect(result.exitCode).toBe(0);
+        expect(JSON.parse(stdout)).toMatchObject({ kind: "search", partial: true, history: { status: "unavailable", reason: "Git unavailable" } });
+      } else if (mode === "parse") {
+        expect(result.exitCode).toBe(2);
+        expect(JSON.parse(stdout)).toMatchObject({ ok: false, error: { kind: "parse" } });
+      } else if (mode === "missing") {
+        expect(result.exitCode).toBe(3);
+        expect(JSON.parse(stdout)).toEqual({ ok: false, kind: "missing", note: "missing" });
+      } else {
+        expect(result.exitCode).toBe(1);
+        expect(JSON.parse(stdout)).toEqual({ ok: false, error: { kind: "runtime", message: "simulated runtime failure" } });
+      }
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }

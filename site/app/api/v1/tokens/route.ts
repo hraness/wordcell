@@ -55,15 +55,26 @@ export async function POST(request: Request): Promise<Response> {
     }, 429);
   }
 
-  const token = newToken();
-  const digest = tokenDigest(token);
-  const stored = await store.putJson(`tok/${digest}`, {
-    v: 1,
-    key8: digest.slice(0, 8),
-    label: label ?? null,
-    createdAt: new Date().toISOString(),
-  });
-  if (!stored) {
+  let token: string | undefined;
+  let digest = "";
+  try {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const candidate = newToken();
+      const candidateDigest = tokenDigest(candidate);
+      const key8 = candidateDigest.slice(0, 8);
+      const legacy = await store.list(`tok/${key8}`, 2);
+      if (legacy.truncated || legacy.keys.length !== 0) continue;
+      if (await store.putConditional(`ns/${key8}`, { v: 1, digest: candidateDigest }, null) === "conflict") continue;
+      const stored = await store.putConditional(`tok/${candidateDigest}`, {
+        v: 1, key8, label: label ?? null, createdAt: new Date().toISOString(),
+      }, null);
+      if (stored !== "written") throw new Error("token_conflict");
+      token = candidate;
+      digest = candidateDigest;
+      break;
+    }
+  } catch { /* No token is disclosed unless its namespace and record are durable. */ }
+  if (token === undefined) {
     return apiError({
       code: "TOKEN_STORE_FAILED",
       message: "could not record the token; try again",

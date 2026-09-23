@@ -44,17 +44,22 @@ test("explicit support precedes vault setup and exposes only the support action"
   expect(JSON.parse(protocol.out).commands.offer).toEqual(["wordcell", "support", "offer", "--json"]);
 });
 
-test("help, probes, failures and explicitly quiet audiences never discover", async () => {
-  const { root, env } = await fixture();
-  for (const args of [["--help"], ["adapters", "--json"], ["agents", "identity", "example", "--json"], ["unknown", "--json"]]) {
+// Separate process scenarios keep startup cost and support-state isolation local
+// to each assertion instead of sharing a single deadline across nine children.
+for (const args of [["--help"], ["adapters", "--json"], ["agents", "identity", "example", "--json"], ["unknown", "--json"]]) {
+  test(`quiet command ${args.join(" ")} never discovers support`, async () => {
+    const { env } = await fixture();
     expect((await run(args, env)).err).not.toContain("hraness-support");
-  }
-  for (const overrides of [{ HRANESS_SUPPORT: "off" }, { HRANESS_SUPPORT_AUDIENCE: "off" }, { HRANESS_SUPPORT_AUDIENCE: "invalid" }, { HRANESS_SUPPORT_AUDIENCE: "human" }, { CI: "1" }]) {
-    const result = await run(["init", join(root, `vault-${crypto.randomUUID()}`), "--json"], { ...env, ...overrides });
+  });
+}
+for (const overrides of [{ HRANESS_SUPPORT: "off" }, { HRANESS_SUPPORT_AUDIENCE: "off" }, { HRANESS_SUPPORT_AUDIENCE: "invalid" }, { HRANESS_SUPPORT_AUDIENCE: "human" }, { CI: "1" }]) {
+  test(`quiet audience ${JSON.stringify(overrides)} never discovers support`, async () => {
+    const { root, env } = await fixture();
+    const result = await run(["init", join(root, "vault"), "--json"], { ...env, ...overrides });
     expect(result.code).toBe(0);
     expect(result.err).toBe("");
-  }
-});
+  });
+}
 
 test("typed classification excludes setup probes and quiet delegated operations", () => {
   for (const args of [["init"], ["list"], ["search", "constraints", "--mode", "exact"], ["capture", "https://example.com"], ["pdf", "example.pdf"]]) expect(isUsefulSupportResult(args, {})).toBe(true);
