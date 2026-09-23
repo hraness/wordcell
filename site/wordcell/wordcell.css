@@ -1,8 +1,9 @@
 /* wordcell component layer — the vault field and note language. Ships with the
  * wordcell theme (or any layer that defines the --wordcell-* tokens).
- * The field sits absolutely behind the hero: notes stay muted until the
- * pointer comes near, when --prox (0..1, set by field.tsx) lifts them into
- * focus. All motion is decorative: pointer-transparent, reduced-motion aware,
+ * The field sits absolutely behind the hero: notes stay muted while a focus
+ * point wanders the wall on its own, or follows the pointer when one is
+ * near — --prox (0..1, set by field.tsx) lifts each card into focus.
+ * All motion is decorative: pointer-transparent, reduced-motion aware,
  * and removable without losing content. */
 
 .hraness-material-wall {
@@ -74,7 +75,7 @@
   stroke-width: 1.1;
   stroke-dasharray: 3 4;
   vector-effect: non-scaling-stroke;
-  opacity: calc(.3 + var(--prox, 0) * .7);
+  opacity: calc(.38 + var(--prox, 0) * .62);
   transition: opacity .45s ease;
 }
 
@@ -100,7 +101,7 @@
   font-style: italic;
   letter-spacing: .02em;
   white-space: nowrap;
-  opacity: calc(.25 + var(--prox, 0) * .75);
+  opacity: calc(.28 + var(--prox, 0) * .72);
   transition: opacity .45s ease;
 }
 
@@ -117,8 +118,8 @@
   translate: -50% -50%;
   rotate: var(--r, 0deg);
   pointer-events: none;
-  opacity: calc(.34 + var(--prox, 0) * .66);
-  filter: blur(calc((1 - var(--prox, 0)) * 2.25px));
+  opacity: calc(.46 + var(--prox, 0) * .54);
+  filter: blur(calc((1 - var(--prox, 0)) * 1.3px));
   transition: opacity .45s ease, filter .45s ease;
   animation: wordcell-note-drift var(--s, 40s) var(--wordcell-drift-ease, ease-in-out) var(--d, 0s) infinite alternate;
 }
