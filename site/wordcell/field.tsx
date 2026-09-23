@@ -1,13 +1,16 @@
-import type { CSSProperties } from "react";
+"use client";
 
-/**
- * A living wall of vault notes — the wordcell hero. Pure DOM + CSS: positions,
- * drift, and edge pulses are deterministic and server-rendered; motion is
- * decorative (pointer-transparent, reduced-motion collapses to a still field).
- */
+import { useEffect, useRef, type CSSProperties } from "react";
+
+/* A muted wall of vault notes behind the hero. The same DOM renders on the
+ * server; after hydration a pointer-proximity pass sets --prox on each card,
+ * edge label, and edge path so the pointer quietly reveals what is near it.
+ * Everything is decorative: aria-hidden, pointer-transparent, reduced-motion
+ * collapses drift to a still collage. */
+
 interface FieldNote {
   readonly id: string;
-  readonly type: "decision" | "source" | "concept" | "plan" | "question";
+  readonly type: "person" | "book" | "meeting" | "decision" | "plan" | "concept" | "question" | "idea" | "source";
   readonly title: string;
   /** May contain `[[wikilinks]]`, rendered as vault links. */
   readonly body: string;
@@ -26,81 +29,85 @@ interface FieldNote {
 interface FieldEdge {
   readonly from: string;
   readonly to: string;
-  readonly label: string;
+  readonly label?: string;
   readonly pulse?: boolean;
 }
 
 const NOTES: readonly FieldNote[] = [
   {
+    id: "mira",
+    type: "person",
+    title: "Mira Chen",
+    body: "Research librarian. Sent the [[hayek]] pointer; prefers calls over email.",
+    tags: ["reading-group"],
+    x: 12, y: 30, rotate: -1.8, width: 176,
+    drift: [10, 14], seconds: 38, delay: -8,
+  },
+  {
     id: "authority",
     type: "decision",
     title: "Markdown stays the only authority",
-    body: "Indexes, embeddings, and graph views rebuild from the files.",
-    tags: ["storage"],
-    x: 47, y: 20, rotate: -1.4, width: 190,
-    drift: [9, 14], seconds: 38, delay: -4,
+    body: "Indexes rebuild; files do not. Whatever ships must read them cold.",
+    tags: ["architecture"],
+    x: 30, y: 34, rotate: 1.6, width: 196,
+    drift: [12, 10], seconds: 42, delay: -21, bloom: true,
   },
   {
-    id: "other-minds",
-    type: "source",
-    title: "Other Minds — Godfrey-Smith",
-    body: "\u201CThe octopus has 350 million neurons in its arms.\u201D",
-    tags: ["distributed-cognition"],
-    x: 12, y: 14, rotate: 1.8, width: 176,
-    drift: [12, 10], seconds: 44, delay: -19,
+    id: "reading-group",
+    type: "meeting",
+    title: "Reading group — February",
+    body: "Pattern Language discussion ran long; Jonas wants the printed edition.",
+    x: 47, y: 14, rotate: -1.4, width: 184,
+    drift: [9, 12], seconds: 40, delay: -5,
+  },
+  {
+    id: "selective-publish",
+    type: "decision",
+    title: "Publish only the selected slice",
+    body: "The site renders the chosen neighborhood. The vault itself stays private.",
+    tags: ["release"],
+    x: 64, y: 44, rotate: -1.2, width: 194,
+    drift: [11, 13], seconds: 45, delay: -14,
   },
   {
     id: "stigmergy",
     type: "concept",
     title: "Stigmergy",
-    body: "Coordination through traces left in the environment, not signals.",
-    tags: ["emergence"],
-    x: 79, y: 9, rotate: 2.1, width: 168,
-    drift: [10, 16], seconds: 41, delay: -8, bloom: true,
-  },
-  {
-    id: "retro",
-    type: "decision",
-    title: "Onboarding retro, Q2",
-    body: "The retention question resurfaced. Nobody connected them then.",
-    tags: ["decisions"],
-    x: 90, y: 34, rotate: -1.9, width: 158,
-    drift: [8, 12], seconds: 36, delay: -27,
+    body: "Coordination through traces in the environment, not meetings.",
+    x: 80, y: 16, rotate: 1.8, width: 164,
+    drift: [13, 9], seconds: 44, delay: -30,
   },
   {
     id: "pattern-language",
-    type: "source",
+    type: "book",
     title: "A Pattern Language — Alexander",
-    body: "\u201CA network of patterns that call upon one another.\u201D",
-    tags: ["design-patterns"],
-    x: 24, y: 38, rotate: 1.2, width: 182,
-    drift: [14, 8], seconds: 47, delay: -13,
+    body: "\u201CEach pattern depends both on the smaller patterns it contains and the larger patterns within which it is contained.\u201D",
+    x: 55, y: 62, rotate: 0.8, width: 200,
+    drift: [8, 11], seconds: 48, delay: -26,
   },
   {
     id: "half-life",
     type: "concept",
     title: "Half-life of facts",
-    body: "Physics: ~13 years. Surgery: closer to 7. Knowledge decays.",
-    tags: ["epistemology"],
-    x: 55, y: 45, rotate: -0.8, width: 176,
-    drift: [11, 13], seconds: 33, delay: -31,
+    body: "Decay rates differ by domain. Stable notes should not imply stable claims.",
+    x: 18, y: 76, rotate: -0.9, width: 180,
+    drift: [9, 12], seconds: 41, delay: -19,
   },
   {
-    id: "site-reframe",
+    id: "garden-office",
     type: "plan",
-    title: "Site reframe",
-    body: "General-purpose vault first; coding workflow is one lane.",
-    tags: ["marketing"],
-    x: 16, y: 64, rotate: -1.6, width: 172,
-    drift: [10, 12], seconds: 39, delay: -6,
+    title: "Garden office — spring",
+    body: "Desk by the north window. Shelves after Jonas sends the wiring quote.",
+    tags: ["home"],
+    x: 80, y: 72, rotate: -0.6, width: 180,
+    drift: [14, 8], seconds: 39, delay: -2,
   },
   {
     id: "prototypes",
-    type: "concept",
+    type: "idea",
     title: "Prototypes over definitions",
-    body: "Lakoff: categories organize around prototypes, not boundaries.",
-    tags: ["cognition"],
-    x: 84, y: 60, rotate: 1.5, width: 180,
+    body: "Categories organize around their best example. Name the prototype.",
+    x: 84, y: 58, rotate: 1.5, width: 172,
     drift: [9, 15], seconds: 43, delay: -22,
   },
   {
@@ -109,44 +116,34 @@ const NOTES: readonly FieldNote[] = [
     title: "Does percolation surface stale links?",
     body: "If it does, that is a review signal, not a bug. See [[graph-authority]].",
     tags: ["maintenance"],
-    x: 48, y: 72, rotate: 0.9, width: 186,
+    x: 44, y: 80, rotate: 0.9, width: 186,
     drift: [12, 9], seconds: 35, delay: -15, bloom: true,
   },
   {
     id: "hayek",
     type: "source",
     title: "Hayek — local knowledge",
-    body: "\u201CNever exists in concentrated or integrated form.\u201D",
-    tags: ["local-knowledge"],
-    x: 8, y: 88, rotate: 1.9, width: 168,
-    drift: [13, 8], seconds: 45, delay: -36,
+    body: "\u201CThe particular circumstances of time and place.\u201D Why context cannot be centralized.",
+    x: 28, y: 92, rotate: -2.4, width: 170,
+    drift: [10, 10], seconds: 36, delay: -33,
   },
   {
-    id: "selective-publish",
-    type: "decision",
-    title: "Publish only the selected slice",
-    body: "The vault stays private; the slice ships as a static site.",
-    tags: ["privacy"],
-    x: 74, y: 84, rotate: -2.2, width: 176,
-    drift: [8, 14], seconds: 40, delay: -11,
+    id: "other-minds",
+    type: "book",
+    title: "Other Minds — Godfrey-Smith",
+    body: "Octopus minds as a second experiment in large nervous systems.",
+    tags: ["reading-group"],
+    x: 66, y: 88, rotate: 2.2, width: 174,
+    drift: [10, 12], seconds: 46, delay: -9,
   },
   {
-    id: "janeway",
-    type: "source",
-    title: "Janeway's Immunobiology",
-    body: "\u201CThe immune system recognizes self. Everything else gets a response.\u201D",
-    tags: ["recognition"],
-    x: 38, y: 96, rotate: -1.1, width: 172,
-    drift: [10, 11], seconds: 37, delay: -24,
-  },
-  {
-    id: "shannon",
-    type: "source",
-    title: "A Mathematical Theory of Communication",
-    body: "Shannon, 1948: meaning is irrelevant to the engineering problem.",
-    tags: ["information-theory"],
-    x: 34, y: 8, rotate: 1.1, width: 178,
-    drift: [9, 13], seconds: 42, delay: -17,
+    id: "jonas",
+    type: "person",
+    title: "Jonas Berg",
+    body: "Printer in Lisbon. Two-week turnaround; always ask for the matte stock.",
+    tags: ["vendor"],
+    x: 92, y: 40, rotate: 0.7, width: 164,
+    drift: [8, 13], seconds: 47, delay: -18,
   },
   {
     id: "dev-journal",
@@ -154,34 +151,51 @@ const NOTES: readonly FieldNote[] = [
     title: "Dev journal — context, not memory",
     body: "Re-deriving what [[parser-contract]] already decided is not search.",
     tags: ["infrastructure"],
-    x: 66, y: 30, rotate: 1.7, width: 184,
+    x: 66, y: 8, rotate: 1.7, width: 184,
     drift: [11, 10], seconds: 39, delay: -29,
   },
   {
-    id: "lakoff",
+    id: "retro",
+    type: "meeting",
+    title: "Onboarding retro, Q2",
+    body: "New readers found the graph before the commands. Keep the docs that way.",
+    x: 8, y: 58, rotate: 1.3, width: 180,
+    drift: [9, 11], seconds: 44, delay: -27,
+  },
+  {
+    id: "janeway",
     type: "source",
-    title: "Women, Fire, and Dangerous Things",
-    body: "Lakoff: categories organize around prototypes.",
-    tags: ["cognition"],
-    x: 62, y: 96, rotate: 1.4, width: 166,
-    drift: [12, 9], seconds: 44, delay: -3,
+    title: "Janeway's Immunobiology",
+    body: "\u201CThe immune system recognizes self. Everything else gets a response.\u201D",
+    tags: ["recognition"],
+    x: 36, y: 52, rotate: -1.1, width: 172,
+    drift: [10, 11], seconds: 37, delay: -24,
   },
 ];
 
 const EDGES: readonly FieldEdge[] = [
   { from: "authority", to: "selective-publish", label: "constrains" },
-  { from: "stigmergy", to: "prototypes", label: "extends", pulse: true },
-  { from: "pattern-language", to: "site-reframe", label: "informs" },
-  { from: "half-life", to: "percolation", label: "motivates", pulse: true },
-  { from: "retro", to: "percolation", label: "answers" },
-  { from: "hayek", to: "authority", label: "supports" },
+  { from: "mira", to: "hayek", label: "recommended" },
+  { from: "mira", to: "reading-group", label: "attends", pulse: true },
+  { from: "reading-group", to: "pattern-language", label: "discussed" },
+  { from: "reading-group", to: "jonas", label: "prints" },
+  { from: "jonas", to: "garden-office", label: "quoted" },
+  { from: "retro", to: "authority", label: "informed" },
+  { from: "retro", to: "dev-journal", label: "produced" },
+  { from: "dev-journal", to: "authority", label: "follows", pulse: true },
+  { from: "stigmergy", to: "prototypes", label: "extends" },
+  { from: "other-minds", to: "stigmergy", label: "relates" },
+  { from: "half-life", to: "percolation", label: "motivates" },
+  { from: "janeway", to: "half-life", label: "informs" },
+  { from: "pattern-language", to: "garden-office", label: "informs" },
+  { from: "percolation", to: "selective-publish", label: "feeds" },
 ];
 
-const centers = new Map(NOTES.map((note) => [note.id, note]));
+const NOTE_BY_ID = new Map(NOTES.map((note) => [note.id, note]));
 
 function edgePath(from: FieldNote, to: FieldNote): string {
   const midX = (from.x + to.x) / 2;
-  const lift = Math.min(8, Math.abs(from.y - to.y) * 0.4 + 4);
+  const lift = Math.min(10, Math.abs(from.y - to.y) * 0.5 + 5);
   const controlY = Math.min(from.y, to.y) - lift;
   return `M ${from.x} ${from.y} Q ${midX} ${controlY} ${to.x} ${to.y}`;
 }
@@ -207,38 +221,100 @@ function NoteBody({ body }: Readonly<{ body: string }>) {
   );
 }
 
+const REVEAL_RADIUS = 330;
+
 export function WordcellField({ className }: Readonly<{ className?: string }>) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (root === null) return;
+    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-prox]"));
+    if (targets.length === 0) return;
+    const centers = new Map<HTMLElement, readonly [number, number]>();
+    const measure = () => {
+      centers.clear();
+      for (const el of targets) {
+        const rect = el.getBoundingClientRect();
+        centers.set(el, [rect.left + rect.width / 2, rect.top + rect.height / 2]);
+      }
+    };
+    measure();
+
+    let raf = 0;
+    let pointerX = -10000;
+    let pointerY = -10000;
+    const apply = () => {
+      raf = 0;
+      for (const el of targets) {
+        const center = centers.get(el);
+        if (center === undefined) continue;
+        const distance = Math.hypot(center[0] - pointerX, center[1] - pointerY);
+        const proximity = Math.max(0, 1 - distance / REVEAL_RADIUS);
+        el.style.setProperty("--prox", proximity.toFixed(3));
+      }
+    };
+    const schedule = () => {
+      if (raf === 0) raf = requestAnimationFrame(apply);
+    };
+    const onMove = (event: PointerEvent) => {
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+      schedule();
+    };
+    const onAway = () => {
+      pointerX = -10000;
+      pointerY = -10000;
+      schedule();
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("scroll", measure, { capture: true, passive: true });
+    window.addEventListener("resize", measure);
+    document.documentElement.addEventListener("pointerleave", onAway);
+    window.addEventListener("blur", onAway);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("scroll", measure, { capture: true });
+      window.removeEventListener("resize", measure);
+      document.documentElement.removeEventListener("pointerleave", onAway);
+      window.removeEventListener("blur", onAway);
+      if (raf !== 0) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <div
       aria-hidden="true"
-      className={["wordcell-field", className].filter(Boolean).join(" ")}
+      className={`wordcell-field${className === undefined ? "" : ` ${className}`}`}
+      ref={rootRef}
     >
       <svg className="wordcell-edges" preserveAspectRatio="none" viewBox="0 0 100 100">
         {EDGES.map((edge) => {
-          const from = centers.get(edge.from)!;
-          const to = centers.get(edge.to)!;
-          const path = edgePath(from, to);
+          const from = NOTE_BY_ID.get(edge.from);
+          const to = NOTE_BY_ID.get(edge.to);
+          if (from === undefined || to === undefined) return null;
           return (
-            <g key={`${edge.from}-${edge.to}`}>
-              <path className="wordcell-edge" d={path} vectorEffect="non-scaling-stroke" />
-              {edge.pulse === true && (
-                <path
-                  className="wordcell-edge--pulse"
-                  d={path}
-                  style={{ animationDelay: `${-edge.from.length * 3}s` }}
-                  vectorEffect="non-scaling-stroke"
-                />
-              )}
-            </g>
+            <path
+              className={edge.pulse === true ? "wordcell-edge wordcell-edge--pulse" : "wordcell-edge"}
+              d={edgePath(from, to)}
+              data-prox=""
+              key={`${edge.from}-${edge.to}`}
+            />
           );
         })}
       </svg>
       {EDGES.map((edge) => {
-        const [labelX, labelY] = edgeLabelPoint(centers.get(edge.from)!, centers.get(edge.to)!);
+        if (edge.label === undefined) return null;
+        const from = NOTE_BY_ID.get(edge.from);
+        const to = NOTE_BY_ID.get(edge.to);
+        if (from === undefined || to === undefined) return null;
+        const [labelX, labelY] = edgeLabelPoint(from, to);
         return (
           <span
             className="wordcell-edge-label"
-            key={`${edge.from}-${edge.to}-label`}
+            data-prox=""
+            key={`label-${edge.from}-${edge.to}`}
             style={{ left: `${labelX}%`, top: `${labelY}%` }}
           >
             {edge.label}
@@ -247,22 +323,31 @@ export function WordcellField({ className }: Readonly<{ className?: string }>) {
       })}
       {NOTES.map((note) => (
         <article
-          className={note.bloom === true ? "wordcell-note wordcell-note--bloom" : "wordcell-note"}
+          className={`wordcell-note${note.bloom === true ? " wordcell-note--bloom" : ""}`}
+          data-prox=""
+          data-type={note.type}
           key={note.id}
           style={{
             "--x": `${note.x}%`,
             "--y": `${note.y}%`,
-            "--r": `${note.rotate}deg`,
             "--w": `${note.width}px`,
+            "--r": `${note.rotate}deg`,
             "--dx": `${note.drift[0]}px`,
             "--dy": `${note.drift[1]}px`,
-            "--t": `${note.seconds}s`,
+            "--s": `${note.seconds}s`,
             "--d": `${note.delay}s`,
             "--bd": `${note.delay * 0.7}s`,
           } as CSSProperties}
         >
           <span className="wordcell-note-type">{note.type}</span>
-          <h3 className="wordcell-note-title">{note.title}</h3>
+          <h3 className="wordcell-note-title">
+            {note.type === "person" && (
+              <span className="wordcell-note-avatar">
+                {note.title.split(/\s+/u).map((word) => word[0]).join("")}
+              </span>
+            )}
+            {note.title}
+          </h3>
           <NoteBody body={note.body} />
           {note.tags !== undefined && (
             <div className="wordcell-note-tags">
