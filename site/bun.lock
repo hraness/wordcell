@@ -9,7 +9,7 @@
         "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
         "@hraness/ui": "github:hraness/ui#v0.5.16",
         "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",
-        "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz",
+        "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.2/hraness-wordcell-0.22.2.tgz",
         "next": "16.3.3",
         "react": "19.2.6",
         "react-dom": "19.2.6",
@@ -91,7 +91,7 @@
 
     "@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#2515455", { "dependencies": { "@hugeicons/core-free-icons": "4.2.3", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.16 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-2515455", "sha512-5SvqngetHiC50MYcEmCpRlf+cOlGQM9Wjv1+My9lvxzK4mnj93PEXkYHeiDkwSZXTjy91rypGkcbf/WJ6cv9zw=="],
 
-    "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.11.0/hraness-oh-0.11.0.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-dCP41GmE80xWFEzpFEjwddBkkTP61GRSm3JRw/UeXrOusHZW0bmiRZHFkSoCoTGogjAA9O3wRiCveztmb/thUQ=="],
+    "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-BHAzZHXAldhDCg/J2OGFjN0VSBzwmfzk6QjOLdh3vamOftvDHZXNtwOkPpKpXOag2hX4fEr0vrenG0bF07YGFA=="],
 
     "@hraness/site-footer": ["@hraness/site-footer@github:hraness/site-footer#8b6336d", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "hraness-site-footer-8b6336d", "sha512-25e+/lUNJB1U3+Yh0DaeBb7NxVS8sEB6lUdmJcY5xEjcn8xeYU3Lvmccpxnfm0wZJAPIrDyOHjDiuGn5gHy81g=="],
 
@@ -101,7 +101,7 @@
 
     "@hraness/web-discovery": ["@hraness/web-discovery@github:hraness/web-discovery#306bb70", { "dependencies": { "@hraness/design-kit": "github:hraness/design-kit#v0.5.0" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.0.0 <20.0.0" } }, "hraness-web-discovery-306bb70", "sha512-ueV+yA5Wk0JOGAcg+6OF/JFVIOhwHYddGfTAitxLEgjb9AyCGitgAJ53dLTETNe2Qs+d4UHoQn/aruX0X8+wFA=="],
 
-    "@hraness/wordcell": ["@hraness/wordcell@https://github.com/hraness/wordcell/releases/download/v0.22.1/hraness-wordcell-0.22.1.tgz", { "dependencies": { "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.11.0/hraness-oh-0.11.0.tgz", "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0", "@steipete/sweet-cookie": "0.4.3", "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c", "agent-browser": "0.32.3", "defuddle": "0.19.1", "effect": "3.22.1", "yaml": "^2.9.0", "zod": "^4.4.3" }, "bin": { "wordcell": "./dist/cli.js", "wordcell-evaluation-builder": "./dist/evaluation-builder.js" } }, "sha512-Lc6zdglQsuUKIwyqO+i+PKv/ZQjqhNuMyup4df0fhRDlrS4m3riHznqM5yY4qRDPEEFoVH5tOpp+WMsiPVfYNw=="],
+    "@hraness/wordcell": ["@hraness/wordcell@https://github.com/hraness/wordcell/releases/download/v0.22.2/hraness-wordcell-0.22.2.tgz", { "dependencies": { "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0", "@steipete/sweet-cookie": "0.4.3", "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c", "agent-browser": "0.32.3", "defuddle": "0.19.1", "effect": "3.22.1", "yaml": "^2.9.0", "zod": "^4.4.3" }, "bin": { "wordcell": "./dist/cli.js", "wordcell-evaluation-builder": "./dist/evaluation-builder.js" } }, "sha512-GBxVob/txN887c/UD4sYef4ig3jVCVKtGidJQ4+s9I2oKVe1pOOkhj4ALppNf+BWJ9UqeIDZbg5oyu8HtS9+HA=="],
 
     "@hugeicons/core-free-icons": ["@hugeicons/core-free-icons@4.2.3", "", {}, "sha512-fpiU0qFZkv4ABi23xJ2m4qNr0BBfuIaYjPboN8WDA6aj9D+OzXa7eykxKOpACZRuGbDz1U9S5DsNx1d5KNnsgA=="],
 
