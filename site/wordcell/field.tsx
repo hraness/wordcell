@@ -360,6 +360,7 @@ export function WordcellField({
   useEffect(() => {
     const root = rootRef.current;
     if (root === null) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-prox]"));
     if (targets.length === 0) return;
     const centers = new Map<HTMLElement, readonly [number, number]>();
@@ -372,32 +373,77 @@ export function WordcellField({
     };
     measure();
 
+    /* A focus point wanders the field on a slow organic path, waking whatever
+     * it passes over. A real pointer takes precedence and hands control back
+     * a few seconds after it rests. The smoothed focus lerps toward the
+     * active target so mode changes glide instead of jump. */
+    const born = performance.now();
     let raf = 0;
+    let running = false;
+    let focusX: number | null = null;
+    let focusY: number | null = null;
     let pointerX = -10000;
     let pointerY = -10000;
-    const apply = () => {
+    let lastPointerAt = -10000;
+
+    const wander = (now: number) => {
+      const rect = root.getBoundingClientRect();
+      const t = (now - born) / 1000;
+      // Incommensurate sine pairs: a non-repeating drift that visits the
+      // whole wall while keeping clear of the outer rim.
+      return {
+        x: rect.left + (0.5 + 0.33 * Math.sin(t * 0.19 + 0.7) + 0.09 * Math.sin(t * 0.47 + 2.1)) * rect.width,
+        y: rect.top + (0.5 + 0.33 * Math.sin(t * 0.141 + 2.9) + 0.09 * Math.cos(t * 0.37)) * rect.height,
+      };
+    };
+
+    const tick = (now: number) => {
       raf = 0;
+      const target = now - lastPointerAt < 3500 ? { x: pointerX, y: pointerY } : wander(now);
+      if (focusX === null || focusY === null) {
+        focusX = target.x;
+        focusY = target.y;
+      }
+      focusX += (target.x - focusX) * 0.055;
+      focusY += (target.y - focusY) * 0.055;
       for (const el of targets) {
         const center = centers.get(el);
         if (center === undefined) continue;
-        const distance = Math.hypot(center[0] - pointerX, center[1] - pointerY);
+        const distance = Math.hypot(center[0] - focusX, center[1] - focusY);
         const proximity = Math.max(0, 1 - distance / REVEAL_RADIUS);
         el.style.setProperty("--prox", proximity.toFixed(3));
       }
+      if (running) raf = requestAnimationFrame(tick);
     };
-    const schedule = () => {
-      if (raf === 0) raf = requestAnimationFrame(apply);
+
+    const startLoop = () => {
+      if (!running) {
+        running = true;
+        raf = requestAnimationFrame(tick);
+      }
     };
+    const stopLoop = () => {
+      running = false;
+      if (raf !== 0) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+
     const onMove = (event: PointerEvent) => {
       pointerX = event.clientX;
       pointerY = event.clientY;
-      schedule();
+      lastPointerAt = performance.now();
     };
     const onAway = () => {
-      pointerX = -10000;
-      pointerY = -10000;
-      schedule();
+      lastPointerAt = -10000;
     };
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry === undefined) return;
+      if (entry.isIntersecting) startLoop();
+      else stopLoop();
+    });
+    observer.observe(root);
 
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("scroll", measure, { capture: true, passive: true });
@@ -405,12 +451,13 @@ export function WordcellField({
     document.documentElement.addEventListener("pointerleave", onAway);
     window.addEventListener("blur", onAway);
     return () => {
+      observer.disconnect();
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("scroll", measure, { capture: true });
       window.removeEventListener("resize", measure);
       document.documentElement.removeEventListener("pointerleave", onAway);
       window.removeEventListener("blur", onAway);
-      if (raf !== 0) cancelAnimationFrame(raf);
+      stopLoop();
     };
   }, []);
 
