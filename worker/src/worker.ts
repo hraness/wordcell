@@ -293,7 +293,10 @@ async function signed(request: Request, env: Env, url: URL): Promise<Response> {
   object.writeHttpMetadata(headers)
   headers.set("content-length", String(object.size))
   headers.set("etag", object.httpEtag)
-  headers.set("cache-control", "no-store")
+  // HTTP compression may weaken or remove the representation ETag in transit.
+  // Conditional R2 writes must use the exact object identity, not that validator.
+  headers.set("x-object-etag", object.httpEtag)
+  headers.set("cache-control", "no-store, no-transform")
   for (const [name, value] of Object.entries(object.customMetadata ?? {})) {
     headers.set(`x-meta-${name}`, value)
   }

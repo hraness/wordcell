@@ -127,6 +127,12 @@ binds the target, expiry, byte cap, condition, and payload digest. [R2 Workers
 API](https://developers.cloudflare.com/r2/api/workers/workers-api-reference/),
 [R2 consistency](https://developers.cloudflare.com/r2/reference/consistency/).
 
+Signed object reads carry R2's exact strong identity in `x-object-etag`.
+Conditional writes use this header, never the ordinary HTTP `ETag`, which an
+intermediary may [weaken or remove when compressing a response](https://developers.cloudflare.com/cache/reference/etag-headers/). Missing or
+malformed object identities fail closed; the API does not strip `W/` or infer an
+identity from response bytes. Deploy this Worker header before its API consumer.
+
 Existing v1 site records remain readable and migrate on their first conditional
 write. The Worker uses an old slug pointer only when no site record exists. A
 v2 tombstone prevents pointer fallback after deletion. Public responses may
