@@ -9,6 +9,7 @@ import { parse } from "yaml";
 
 import {
   inspectPackageArtifact,
+  maximumUnpackedBytes,
   type PackageArtifactInventory,
 } from "./package-artifact.js";
 import {
@@ -381,7 +382,7 @@ describe("npm release workflows", () => {
       readonly version?: unknown;
     };
     expect(manifest).toEqual(expect.objectContaining({
-      version: "0.22.2",
+      version: "0.22.3",
       description: expect.any(String),
       keywords: [
         "knowledge-base",
@@ -690,6 +691,59 @@ describe("npm release workflows", () => {
 });
 
 describe("canonical npm package identity", () => {
+  test("enforces the reviewed unpacked-byte boundary at exact size and plus one", async () => {
+    const work = await mkdtemp(join(tmpdir(), "wordcell-package-size-test-"));
+    try {
+      const sourceArchive = join(work, "source.tgz");
+      await run([
+        process.execPath,
+        "pm",
+        "pack",
+        "--filename",
+        sourceArchive,
+        "--ignore-scripts",
+        "--quiet",
+      ], repository);
+      const sourceInventory = await inspectPackageArtifact(sourceArchive);
+      const originalTar = gunzipSync(await readFile(sourceArchive));
+      const first = firstRegularHeader(originalTar);
+      const bodyStart = first.offset + 512;
+      const oldBodyEnd = bodyStart + Math.ceil(first.size / 512) * 512;
+
+      for (const excess of [0, 1]) {
+        const growth = maximumUnpackedBytes + excess - sourceInventory.unpackedBytes;
+        expect(growth).toBeGreaterThanOrEqual(0);
+        const size = first.size + growth;
+        // Grow one permitted file, preserving the real archive's paths, modes,
+        // record alignment, and trailer. Zero padding keeps transport growth
+        // small so this test reaches the unpacked-byte admission boundary.
+        const body = Buffer.alloc(Math.ceil(size / 512) * 512);
+        originalTar.copy(body, 0, bodyStart, bodyStart + first.size);
+        const tar = Buffer.concat([
+          originalTar.subarray(0, bodyStart),
+          body,
+          originalTar.subarray(oldBodyEnd),
+        ]);
+        tar.write(`${size.toString(8).padStart(11, "0")}\0`, first.offset + 124, 12, "ascii");
+        writeHeaderChecksum(tar, first.offset);
+        const archive = join(work, `boundary-${excess}.tgz`);
+        await writeFile(archive, gzipSync(tar, { level: 9 }));
+        if (excess === 0) {
+          const inventory = await inspectPackageArtifact(archive);
+          expect(inventory.unpackedBytes).toBe(maximumUnpackedBytes);
+          expect(inventory.fileCount).toBe(sourceInventory.fileCount);
+          expect(inventory.files.map((file) => file.path)).toEqual(sourceInventory.files.map((file) => file.path));
+        } else {
+          await expect(inspectPackageArtifact(archive)).rejects.toThrow(
+            `Package unpacked byte count ${maximumUnpackedBytes + 1} is outside the reviewed range 4500000-${maximumUnpackedBytes}`,
+          );
+        }
+      }
+    } finally {
+      await rm(work, { force: true, recursive: true });
+    }
+  }, 120_000);
+
   test("accepts gzip transport drift and rejects content, mode, and link drift", async () => {
     const manifest = JSON.parse(await readFile(manifestUrl, "utf8")) as {
       readonly name: string;

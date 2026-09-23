@@ -147,6 +147,8 @@ await Bun.sleep(10_000);`);
   }, 15_000);
 
   test("categorizes malformed JSON and schema violations as protocol failures", async () => {
+    // Two sequential native fixtures can exceed the runner's 5-second default;
+    // protocol classification must not depend on aggregate-suite startup load.
     const malformed = executable(String.raw`
 await Bun.stdin.text();
 process.stdout.write("{not-json");`);
@@ -168,7 +170,7 @@ process.stdout.write(JSON.stringify({
       query: "unknown field",
     });
     expectFailure(unknownOutcome, "protocol");
-  });
+  }, 15_000);
 
   test("categorizes nonzero exit without exposing the query, URL, or raw stderr", async () => {
     const fixture = executable(String.raw`

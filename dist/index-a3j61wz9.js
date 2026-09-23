@@ -187,9 +187,15 @@ function escapeAttribute(value) {
 }
 function anchorId(text, used) {
   const base = text.normalize("NFC").toLocaleLowerCase("en-US").replace(VOID_SLUG, "-").replace(/^[-._~]+|[-._~]+$/gu, "") || "section";
-  const seen = used.get(base) ?? 0;
+  let seen = used.get(base) ?? 0;
+  let id = seen === 0 ? base : `${base}-${seen + 1}`;
+  while (used.has(id)) {
+    seen += 1;
+    id = `${base}-${seen + 1}`;
+  }
   used.set(base, seen + 1);
-  return seen === 0 ? base : `${base}-${seen + 1}`;
+  used.set(id, 1);
+  return id;
 }
 function isExternalUrl(value) {
   return /^(?:https?|mailto):/iu.test(value);
@@ -221,7 +227,39 @@ function wikiDisplay(raw) {
     label: alias ?? (fragment === "" ? target : `${target} > ${fragment}`)
   };
 }
-function renderInline(text, ctx) {
+var FOOTNOTE_LIMITS = {
+  labelBytes: 128,
+  definitions: 256,
+  bodyBytes: 8192,
+  bodyLines: 32,
+  references: 2048
+};
+function footnoteLabel(raw) {
+  const label = raw.normalize("NFC");
+  if (label.length > FOOTNOTE_LIMITS.labelBytes || !/^[\p{L}\p{M}\p{N}._:-]+$/u.test(label))
+    return;
+  return new TextEncoder().encode(label).byteLength <= FOOTNOTE_LIMITS.labelBytes ? label : undefined;
+}
+function footnoteNumber(note, footnotes) {
+  if (note.number === undefined) {
+    note.number = footnotes.numbered.length + 1;
+    footnotes.numbered.push(note);
+  }
+  return note.number;
+}
+function renderFootnoteReference(raw, label, footnotes) {
+  const key = footnoteLabel(label);
+  const note = key === undefined ? undefined : footnotes.byLabel.get(key);
+  if (footnotes.disabled || note === undefined || note === null || note.invalid || footnotes.references >= FOOTNOTE_LIMITS.references) {
+    return `<span class="unresolved footnote-reference" aria-label="Unresolved footnote">${escapeHtml(raw)}</span>`;
+  }
+  const number = footnoteNumber(note, footnotes);
+  const id = `wordcell:footnote-ref:${number}:${note.references.length + 1}`;
+  note.references.push(id);
+  footnotes.references += 1;
+  return `<sup><a id="${id}" href="#wordcell:footnote:${number}" role="doc-noteref" aria-label="Footnote ${number}">${number}</a></sup>`;
+}
+function renderInline(text, ctx, footnotes) {
   let output = "";
   let cursor = 0;
   const length = text.length;
@@ -236,7 +274,7 @@ function renderInline(text, ctx) {
       if (closing !== -1) {
         const code = rest.slice(ticks.length, closing).replace(/\s+/gu, " ");
         output += `<code>${escapeHtml(code)}</code>`;
-        cursor += ticks.length + closing + ticks.length;
+        cursor += closing + ticks.length;
         continue;
       }
       pushText("`");
@@ -348,6 +386,14 @@ function renderInline(text, ctx) {
           continue;
         }
       }
+      if (footnotes !== undefined && rest.startsWith("[^")) {
+        const end = rest.indexOf("]", 2);
+        if (end !== -1) {
+          output += renderFootnoteReference(rest.slice(0, end + 1), rest.slice(2, end), footnotes);
+          cursor += end + 1;
+          continue;
+        }
+      }
       pushText("[");
       cursor += 1;
       continue;
@@ -373,7 +419,7 @@ function renderInline(text, ctx) {
     if (emphasis !== undefined && emphasis !== "_") {
       const closing = rest.indexOf(emphasis, emphasis.length);
       if (closing > emphasis.length) {
-        const inner = renderInline(rest.slice(emphasis.length, closing), ctx);
+        const inner = renderInline(rest.slice(emphasis.length, closing), ctx, footnotes);
         const tag = emphasis === "**" || emphasis === "__" ? "strong" : emphasis === "~~" ? "del" : emphasis === "==" ? "mark" : "em";
         output += `<${tag}>${inner}</${tag}>`;
         cursor += closing + emphasis.length;
@@ -383,7 +429,7 @@ function renderInline(text, ctx) {
     if (emphasis === "_") {
       const closing = rest.indexOf("_", 1);
       if (closing > 1) {
-        output += `<em>${renderInline(rest.slice(1, closing), ctx)}</em>`;
+        output += `<em>${renderInline(rest.slice(1, closing), ctx, footnotes)}</em>`;
         cursor += closing + 1;
         continue;
       }
@@ -509,44 +555,125 @@ function tableCells(line) {
   cells.push(current);
   return cells.map((cell) => cell.trim());
 }
-function renderMarkdownToHtml(content, ctx) {
+function withoutComments(line, comments, continuesCode) {
+  let text = "";
+  let cursor = 0;
+  while (cursor < line.length) {
+    if (comments.code !== undefined) {
+      const end = line.indexOf(comments.code, cursor);
+      if (end === -1)
+        return text + line.slice(cursor);
+      const next = end + comments.code.length;
+      text += line.slice(cursor, next);
+      cursor = next;
+      delete comments.code;
+      continue;
+    }
+    if (comments.closing !== undefined) {
+      const end = line.indexOf(comments.closing, cursor);
+      if (end === -1)
+        return text;
+      cursor = end + comments.closing.length;
+      delete comments.closing;
+      continue;
+    }
+    const rest = line.slice(cursor);
+    if (rest[0] === "\\" && rest.length > 1) {
+      text += rest.slice(0, 2);
+      cursor += 2;
+      continue;
+    }
+    if (rest[0] === "`") {
+      const ticks = /^`+/u.exec(rest)?.[0] ?? "`";
+      const closing = rest.indexOf(ticks, ticks.length);
+      if (closing !== -1) {
+        const end = closing + ticks.length;
+        text += rest.slice(0, end);
+        cursor += end;
+        continue;
+      }
+      if (continuesCode?.(ticks) === true) {
+        comments.code = ticks;
+        return text + rest;
+      }
+    }
+    if (rest.startsWith("<!--") || rest.startsWith("%%")) {
+      comments.closing = rest.startsWith("<!--") ? "-->" : "%%";
+      cursor += comments.closing === "-->" ? 4 : 2;
+      continue;
+    }
+    text += rest[0] ?? "";
+    cursor += 1;
+  }
+  return text;
+}
+function paragraphBoundary(line, next) {
+  return line.trim() === "" || /^(?: {4}|\t|#{1,6}\s|\s{0,3}>|\s{0,3}(?:`{3,}|~{3,}))/u.test(line) || listMarker(line) !== undefined || line.includes("|") && isTableDivider(next) || /^\s{0,3}(?:(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,})$/u.test(line);
+}
+function hasContinuedInlineCode(lines, start, ticks) {
+  for (let index = start;index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    if (paragraphBoundary(line, lines[index + 1] ?? ""))
+      return false;
+    if (line.includes(ticks))
+      return true;
+  }
+  return false;
+}
+function admitFootnote(rawLabel, body, authored, footnotes) {
+  const text = body.join(`
+`);
+  const label = footnoteLabel(rawLabel);
+  const note = {
+    body: text,
+    authored: authored.join(`
+`),
+    invalid: label === undefined || body.length > FOOTNOTE_LIMITS.bodyLines || text.length > FOOTNOTE_LIMITS.bodyBytes || new TextEncoder().encode(text).byteLength > FOOTNOTE_LIMITS.bodyBytes || text.trim() === "",
+    references: []
+  };
+  footnotes.definitions += 1;
+  if (footnotes.definitions > FOOTNOTE_LIMITS.definitions) {
+    footnotes.disabled = true;
+    footnotes.byLabel.clear();
+  }
+  if (!footnotes.disabled && label !== undefined) {
+    if (footnotes.byLabel.has(label)) {
+      const prior = footnotes.byLabel.get(label);
+      if (prior !== undefined && prior !== null)
+        prior.invalid = true;
+      note.invalid = true;
+      footnotes.byLabel.set(label, null);
+    } else {
+      footnotes.byLabel.set(label, note.invalid ? null : note);
+    }
+  }
+  return note;
+}
+function parseMarkdownBlocks(content, footnotes, topLevel) {
   const lines = content.split(`
 `);
-  let start = 0;
-  if (lines[0]?.trim() === "---") {
-    for (let index2 = 1;index2 < lines.length; index2 += 1) {
-      if (lines[index2]?.trim() === "---" || lines[index2]?.trim() === "...") {
-        start = index2 + 1;
+  let index = 0;
+  if (topLevel && lines[0]?.trim() === "---") {
+    for (let cursor = 1;cursor < lines.length; cursor += 1) {
+      if (lines[cursor]?.trim() === "---" || lines[cursor]?.trim() === "...") {
+        index = cursor + 1;
         break;
       }
     }
   }
-  const anchors = new Map;
-  const html = [];
-  let index = start;
-  let inComment = false;
+  const blocks = [];
+  const comments = {};
   const paragraph = [];
   const flushParagraph = () => {
     if (paragraph.length === 0)
       return;
-    html.push(`<p>${renderInline(paragraph.join(`
-`).replace(/\n/gu, " "), ctx)}</p>`);
+    blocks.push({ type: "paragraph", text: paragraph.join(" ") });
     paragraph.length = 0;
   };
   while (index < lines.length) {
-    const line = lines[index] ?? "";
-    if (inComment) {
-      const close = line.indexOf("-->");
-      index += 1;
-      if (close !== -1)
-        inComment = false;
-      continue;
-    }
-    if (line.trim().startsWith("%%") && line.trim().endsWith("%%") && line.trim().length > 3) {
-      index += 1;
-      continue;
-    }
-    const fence = /^\s{0,3}(`{3,}|~{3,})([^`]*)$/u.exec(line);
+    const raw = lines[index] ?? "";
+    const inCode = comments.code !== undefined;
+    const fence = comments.closing === undefined && !inCode ? /^\s{0,3}(`{3,}|~{3,})([^`]*)$/u.exec(raw) : null;
     if (fence !== null) {
       flushParagraph();
       const marker2 = fence[1] ?? "```";
@@ -556,16 +683,58 @@ function renderMarkdownToHtml(content, ctx) {
       while (index < lines.length) {
         const candidate = lines[index] ?? "";
         const close = /^\s{0,3}(`{3,}|~{3,})\s*$/u.exec(candidate);
-        if (close !== null && (close[1] ?? "")[0] === marker2[0] && (close[1] ?? "").length >= marker2.length) {
+        if (close !== null && (close[1] ?? "")[0] === marker2[0] && (close[1] ?? "").length >= marker2.length)
           break;
-        }
         body.push(candidate);
         index += 1;
       }
       index += 1;
-      const className = language === "" ? "" : ` class="language-${escapeAttribute(language)}"`;
-      html.push(`<pre><code${className}>${escapeHtml(body.join(`
-`))}</code></pre>`);
+      blocks.push({ type: "code", language, text: body.join(`
+`) });
+      continue;
+    }
+    if (comments.closing === undefined && !inCode && /^(?: {4}|\t)/u.test(raw)) {
+      flushParagraph();
+      const body = [];
+      while (index < lines.length && /^(?: {4}|\t| *$)/u.test(lines[index] ?? "")) {
+        body.push((lines[index] ?? "").replace(/^(?: {4}|\t)/u, ""));
+        index += 1;
+      }
+      blocks.push({ type: "code", language: "", text: body.join(`
+`).replace(/\n+$/u, "") });
+      continue;
+    }
+    const rawDefinition = comments.closing === undefined && !inCode ? /^ {0,3}\[\^([^\]\n]*)\]:/u.exec(raw) : null;
+    if (rawDefinition !== null) {
+      flushParagraph();
+      const authored = [raw];
+      index += 1;
+      while (index < lines.length) {
+        const next = lines[index] ?? "";
+        if (/^(?: {4}|\t)/u.test(next) || next.trim() === "" && /^(?: {4}|\t)/u.test(lines[index + 1] ?? "")) {
+          authored.push(next);
+          index += 1;
+        } else {
+          break;
+        }
+      }
+      const clean = withoutComments(authored.join(`
+`), comments).split(`
+`);
+      const definition = /^ {0,3}\[\^([^\]\n]*)\]:[ \t]*(.*)$/u.exec(clean[0] ?? "");
+      if (!topLevel || definition === null) {
+        blocks.push({ type: "literal", text: clean.join(`
+`) });
+      } else {
+        const body = [definition[2] ?? "", ...clean.slice(1).map((line2) => line2.replace(/^(?: {4}|\t)/u, ""))];
+        blocks.push({ type: "footnote", note: admitFootnote(rawDefinition[1] ?? "", body, clean, footnotes) });
+      }
+      continue;
+    }
+    const line = comments.closing === undefined && !inCode && /^\s{0,3}>/u.test(raw) ? raw : withoutComments(raw, comments, paragraphBoundary(raw, lines[index + 1] ?? "") ? undefined : (ticks) => hasContinuedInlineCode(lines, index + 1, ticks));
+    if (inCode) {
+      paragraph.push(line);
+      index += 1;
       continue;
     }
     if (line.trim() === "") {
@@ -576,117 +745,164 @@ function renderMarkdownToHtml(content, ctx) {
     const heading = /^(#{1,6})\s+(.*)$/u.exec(line);
     if (heading !== null) {
       flushParagraph();
-      const level = (heading[1] ?? "#").length;
-      const body = renderInline((heading[2] ?? "").replace(/\s+#+$/u, ""), ctx);
-      const id = anchorId(stripMarkup(body), anchors);
-      html.push(`<h${level} id="${escapeAttribute(id)}">${body}</h${level}>`);
+      blocks.push({ type: "heading", level: (heading[1] ?? "#").length, text: (heading[2] ?? "").replace(/\s+#+$/u, "") });
       index += 1;
       continue;
     }
     if (/^\s{0,3}(?:\*\s*){3,}$/u.test(line) || /^\s{0,3}(?:-\s*){3,}$/u.test(line) || /^\s{0,3}(?:_\s*){3,}$/u.test(line)) {
       flushParagraph();
-      html.push("<hr>");
+      blocks.push({ type: "break" });
       index += 1;
       continue;
     }
     if (/^\s{0,3}>/u.test(line)) {
       flushParagraph();
-      const quote = [];
+      const quote = [line.replace(/^\s{0,3}>\s?/u, "")];
+      index += 1;
       while (index < lines.length && /^\s{0,3}>/u.test(lines[index] ?? "")) {
         quote.push((lines[index] ?? "").replace(/^\s{0,3}>\s?/u, ""));
         index += 1;
       }
-      html.push(`<blockquote>${renderMarkdownToHtml(quote.join(`
-`), ctx)}</blockquote>`);
+      blocks.push({ type: "quote", blocks: parseMarkdownBlocks(quote.join(`
+`), footnotes, false) });
       continue;
     }
     if (line.includes("|") && index + 1 < lines.length && isTableDivider(lines[index + 1] ?? "")) {
       flushParagraph();
       const header = tableCells(line);
-      index += 2;
       const rows = [];
+      index += 2;
       while (index < lines.length && (lines[index] ?? "").includes("|") && (lines[index] ?? "").trim() !== "") {
-        rows.push(lines[index] ?? "");
+        const row = withoutComments(lines[index] ?? "", comments);
+        if (row.trim() !== "")
+          rows.push(tableCells(row));
         index += 1;
       }
-      const head = header.map((cell) => `<th>${renderInline(cell, ctx)}</th>`).join("");
-      const bodyRows = rows.map((row) => `<tr>${tableCells(row).map((cell) => `<td>${renderInline(cell, ctx)}</td>`).join("")}</tr>`).join("");
-      html.push(`<table><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table>`);
+      blocks.push({ type: "table", header, rows });
       continue;
     }
     const marker = listMarker(line);
     if (marker !== undefined) {
       flushParagraph();
-      const items = [];
-      let ordered = marker.ordered;
+      const parts = [];
       const baseIndent = marker.indent;
       const stack = [];
+      let currentLine = line;
       while (index < lines.length) {
-        const current = listMarker(lines[index] ?? "");
-        const raw = lines[index] ?? "";
+        const current = listMarker(currentLine);
         if (current === undefined) {
-          if (raw.trim() === "") {
+          if (currentLine.trim() === "") {
             index += 1;
             break;
           }
-          const continuationIndent = raw.length - raw.trimStart().length;
-          if (items.length > 0 && continuationIndent > baseIndent) {
-            items.push(`
-${renderInline(raw.trim(), ctx)}`);
+          const continuationIndent = currentLine.length - currentLine.trimStart().length;
+          if (parts.length > 0 && continuationIndent > baseIndent) {
+            parts.push({ type: "continuation", text: currentLine.trim() });
             index += 1;
-            continue;
+          } else {
+            break;
           }
+        } else {
+          const body = currentLine.slice(currentLine.search(/\S/u));
+          const itemBody = body.replace(/^(?:[-+*]|\d{1,9}[.)])\s+/u, "");
+          const task = /^\[([ xX])\]\s+/u.exec(itemBody);
+          const text = task === null ? itemBody : itemBody.slice((task[0] ?? "").length);
+          if (current.indent > (stack[stack.length - 1]?.indent ?? baseIndent) && stack.length < 8) {
+            stack.push({ indent: current.indent, ordered: current.ordered });
+            parts.push({ type: "open", ordered: current.ordered });
+          }
+          while (stack.length > 0 && current.indent < (stack[stack.length - 1]?.indent ?? baseIndent)) {
+            parts.push({ type: "close", ordered: stack.pop()?.ordered === true });
+          }
+          parts.push({ type: "item", text, ...task === null ? {} : { checked: (task[1] ?? " ").toLowerCase() === "x" } });
+          index += 1;
+        }
+        const next = lines[index] ?? "";
+        if (listMarker(next) === undefined && next.trim() !== "" && next.length - next.trimStart().length <= baseIndent)
           break;
-        }
-        const body = raw.slice(raw.search(/\S/u));
-        const itemBody = body.replace(/^(?:[-+*]|\d{1,9}[.)])\s+/u, "");
-        const task = /^\[([ xX])\]\s+/u.exec(itemBody);
-        const content2 = task === null ? itemBody : itemBody.slice((task[0] ?? "").length);
-        const checkbox = task === null ? "" : `<input type="checkbox" disabled${(task[1] ?? " ").toLowerCase() === "x" ? " checked" : ""}> `;
-        const top = stack[stack.length - 1];
-        if (current.indent > (top?.indent ?? baseIndent) && stack.length < 8) {
-          stack.push({ indent: current.indent, ordered: current.ordered });
-          items.push(`<${current.ordered ? "ol" : "ul"}>`);
-        }
-        while (stack.length > 0 && current.indent < (stack[stack.length - 1]?.indent ?? baseIndent)) {
-          const popped = stack.pop();
-          items.push(`</${popped?.ordered === true ? "ol" : "ul"}>`);
-        }
-        items.push(`<li>${checkbox}${renderInline(content2, ctx)}</li>`);
-        index += 1;
+        currentLine = withoutComments(next, comments);
       }
-      while (stack.length > 0) {
-        const popped = stack.pop();
-        items.push(`</${popped?.ordered === true ? "ol" : "ul"}>`);
-      }
-      html.push(`<${ordered ? "ol" : "ul"}>${items.join("")}</${ordered ? "ol" : "ul"}>`);
-      continue;
-    }
-    const commentStart = line.indexOf("<!--");
-    if (commentStart !== -1) {
-      const close = line.indexOf("-->", commentStart + 4);
-      if (close === -1)
-        inComment = true;
-      index += 1;
-      continue;
-    }
-    if (/^(?: {4}|\t)/u.test(line)) {
-      flushParagraph();
-      const body = [];
-      while (index < lines.length && /^(?: {4}|\t| *$)/u.test(lines[index] ?? "")) {
-        body.push((lines[index] ?? "").replace(/^(?: {4}|\t)/u, ""));
-        index += 1;
-      }
-      html.push(`<pre><code>${escapeHtml(body.join(`
-`).replace(/\n+$/u, ""))}</code></pre>`);
+      while (stack.length > 0)
+        parts.push({ type: "close", ordered: stack.pop()?.ordered === true });
+      blocks.push({ type: "list", ordered: marker.ordered, parts });
       continue;
     }
     paragraph.push(line);
     index += 1;
   }
   flushParagraph();
-  return html.join(`
+  return blocks;
+}
+function renderBlocks(blocks, ctx, footnotes, anchors) {
+  return blocks.map((block) => {
+    switch (block.type) {
+      case "paragraph":
+        return `<p>${renderInline(block.text, ctx, footnotes)}</p>`;
+      case "literal":
+        return `<p>${escapeHtml(block.text).replaceAll(`
+`, "<br>")}</p>`;
+      case "heading": {
+        const body = renderInline(block.text, ctx, footnotes);
+        return `<h${block.level} id="${escapeAttribute(anchorId(stripMarkup(body), anchors))}">${body}</h${block.level}>`;
+      }
+      case "code":
+        return `<pre><code${block.language === "" ? "" : ` class="language-${escapeAttribute(block.language)}"`}>${escapeHtml(block.text)}</code></pre>`;
+      case "break":
+        return "<hr>";
+      case "quote":
+        return `<blockquote>${renderBlocks(block.blocks, ctx, footnotes, anchors)}</blockquote>`;
+      case "table": {
+        const header = block.header.map((cell) => `<th>${renderInline(cell, ctx, footnotes)}</th>`).join("");
+        const rows = block.rows.map((row) => `<tr>${row.map((cell) => `<td>${renderInline(cell, ctx, footnotes)}</td>`).join("")}</tr>`).join("");
+        return `<table><thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table>`;
+      }
+      case "list": {
+        const parts = block.parts.map((part) => {
+          switch (part.type) {
+            case "open":
+              return `<${part.ordered ? "ol" : "ul"}>`;
+            case "close":
+              return `</${part.ordered ? "ol" : "ul"}>`;
+            case "continuation":
+              return `
+${renderInline(part.text, ctx, footnotes)}`;
+            case "item":
+              return `<li>${part.checked === undefined ? "" : `<input type="checkbox" disabled${part.checked ? " checked" : ""}> `}${renderInline(part.text, ctx, footnotes)}</li>`;
+          }
+        }).join("");
+        return `<${block.ordered ? "ol" : "ul"}>${parts}</${block.ordered ? "ol" : "ul"}>`;
+      }
+      case "footnote":
+        return footnotes.disabled || block.note.invalid ? `<p class="unresolved footnote-definition">${escapeHtml(block.note.authored).replaceAll(`
+`, "<br>")}</p>` : "";
+    }
+  }).filter((html) => html !== "").join(`
 `);
+}
+function renderMarkdownToHtml(content, ctx) {
+  const footnotes = { byLabel: new Map, numbered: [], definitions: 0, references: 0, disabled: false };
+  const blocks = parseMarkdownBlocks(content, footnotes, true);
+  const body = renderBlocks(blocks, ctx, footnotes, new Map);
+  if (footnotes.disabled)
+    return body;
+  for (const note of footnotes.byLabel.values()) {
+    if (note !== null && !note.invalid)
+      footnoteNumber(note, footnotes);
+  }
+  if (footnotes.numbered.length === 0)
+    return body;
+  const notes = footnotes.numbered.map((note) => {
+    const number = note.number;
+    const backlinks = note.references.map((id, index) => `<a href="#${id}" role="doc-backlink" aria-label="Back to reference ${index + 1} for footnote ${number}">\u21A9 ${index + 1}</a>`).join(" ");
+    const text = renderInline(note.body.replaceAll(`
+`, " "), ctx);
+    return `<li id="wordcell:footnote:${number}" tabindex="-1">${text}${backlinks === "" ? "" : ` ${backlinks}`}</li>`;
+  }).join(`
+`);
+  return `${body}${body === "" ? "" : `
+`}<section class="footnotes" aria-label="Footnotes"><ol>
+${notes}
+</ol></section>`;
 }
 function stripMarkup(html) {
   let stripped = "";

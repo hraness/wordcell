@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.22.2",
+  "version": "0.22.3",
   "description": "A local Markdown knowledge base with superpowers. Save decisions, sources, and plans as files you own, then find them by exact words or, with an optional local model, by meaning.",
   "license": "MIT",
   "type": "module",
