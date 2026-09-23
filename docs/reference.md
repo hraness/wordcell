@@ -4,7 +4,7 @@
 
 ## Installation reference
 
-[Bun](https://bun.sh/docs/installation) is the required runtime. GitHub Releases are the canonical distribution, and each release publishes the same archive to npm as `@hraness/wordcell`. The examples pin release `0.22.4`. Historical `@hraness/kb` installs remain available under their original package name. For signed artifact verification, see [the release procedure](publishing.md#verify-a-published-release).
+[Bun](https://bun.sh/docs/installation) is the required runtime. GitHub Releases are the canonical distribution, and each release publishes the same archive to npm as `@hraness/wordcell`. The examples use exact versioned releases. Historical `@hraness/kb` installs remain available under their original package name. For signed artifact verification, see [the release procedure](publishing.md#verify-a-published-release).
 
 ### Tell your coding agent to install it
 
@@ -32,7 +32,7 @@ refresh a catalog, or edit Markdown. When invoked, the skill uses an existing
 CLI from the immutable GitHub release archive.
 
 The public skills CLI reads `skills/wordcell/` from the repository. The immutable
-`0.22.4` packed release includes the same tree under
+packed release includes the same tree under
 `node_modules/@hraness/wordcell/skills/wordcell/`, and the package check verifies that the
 installed skill is byte-identical to the repository source.
 
@@ -73,7 +73,7 @@ The resulting dependency should remain exact:
 }
 ```
 
-Version 0.22.4 uses three public GitHub dependencies: `@hraness/oh` at
+Wordcell uses three public GitHub dependencies: `@hraness/oh` at
 immutable release archive `v0.12.0` for graph projection and closure verification and `@tobilu/qmd` at commit
 `aa993dceb3ef8cfb71d470554ca437570f5a2b3c` for store-local model behavior, plus
 `@hraness/support-foundation` at commit
