@@ -295,6 +295,131 @@
   font-size: .78rem;
 }
 
+.wordcell-bytes-bar {
+  animation: wordcell-bytes-grow .9s cubic-bezier(.22, 1, .36, 1) .1s both;
+  transform-origin: left;
+}
+
+@keyframes wordcell-bytes-grow {
+  from { transform: scaleX(0); }
+}
+
+/* Guided steps and the transcript pane: quiet note-surface cards, the same
+ * paper the vault field is drawn on. */
+.wordcell-step,
+.wordcell-pane {
+  border: 1px solid var(--wordcell-note-line);
+  border-radius: var(--radius-md);
+  background: var(--wordcell-note-surface);
+  box-shadow: var(--wordcell-note-shadow);
+}
+
+.wordcell-step {
+  margin: 0;
+  padding: .85rem 1.1rem 1.1rem;
+}
+
+.wordcell-step + .wordcell-step {
+  margin-block-start: .75rem;
+}
+
+.wordcell-step figcaption {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-block-end: .6rem;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 600;
+}
+
+.wordcell-step figcaption span {
+  display: grid;
+  place-items: center;
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--primary) 13%, transparent);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.wordcell-step .install-command {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  font-size: .82rem;
+}
+
+.wordcell-pane {
+  padding: 1.05rem 1.2rem;
+}
+
+.wordcell-pane .transcript {
+  margin: 0;
+  font-size: .82rem;
+  line-height: 1.7;
+}
+
+.wordcell-pane-note {
+  margin: .75rem 0 0;
+  max-inline-size: 62ch;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1.55;
+}
+
+/* 404: a single note card over the sleeping vault. */
+.wordcell-404 {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-block-size: 100svh;
+  padding: 2rem;
+  overflow: clip;
+}
+
+.wordcell-404-card {
+  position: relative;
+  z-index: 1;
+  inline-size: min(100%, 28rem);
+  padding: 1.9rem 2.1rem;
+  border: 1px solid var(--wordcell-note-line);
+  border-radius: var(--radius-md);
+  background: var(--wordcell-note-surface);
+  box-shadow: var(--wordcell-note-shadow);
+}
+
+.wordcell-404-card h1 {
+  margin: .7rem 0 .6rem;
+  font-family: var(--hraness-marketing-display-font);
+  font-size: clamp(1.9rem, 4vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.wordcell-404-card p {
+  margin: .5rem 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.wordcell-404-card .wordcell-404-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .75rem;
+  margin-block-start: 1rem;
+}
+
+.wordcell-404-links a {
+  color: var(--primary);
+  font-weight: 500;
+}
+
 @media (width < 34rem) {
   .wordcell-bytes-row {
     grid-template-columns: 1fr;
@@ -321,7 +446,17 @@
   }
 }
 
+@media print {
+  .wordcell-field,
+  .wordcell-note {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .wordcell-bytes-bar {
+    animation: none;
+  }
   .wordcell-note,
   .wordcell-edge--pulse {
     animation: none;

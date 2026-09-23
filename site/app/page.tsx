@@ -232,7 +232,7 @@ export default function Home() {
           </div>
 
           <MarketingInstallPanel
-            eyebrow=""
+            eyebrow="Get started"
             heading="Save and find your first decision"
             headingId="install-title"
             id="install"
@@ -240,13 +240,22 @@ export default function Home() {
             <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : `Current verified release · v${releaseVersion}`}</p>
             {publishedRelease !== null && archiveUrl !== null ? (
               <>
-                <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts ${archiveUrl}
+                <figure className="wordcell-step">
+                  <figcaption><span>1</span>Install the CLI</figcaption>
+                  <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts ${archiveUrl}
 wordcell --help`}</code></pre>
-                <pre className="install-command" tabIndex={0}><code>{`wordcell init kb
+                </figure>
+                <figure className="wordcell-step">
+                  <figcaption><span>2</span>Create a vault and save a note</figcaption>
+                  <pre className="install-command" tabIndex={0}><code>{`wordcell init kb
 wordcell note create notes/parser-contract \\
   --title "Parser contract" --type concept \\
-  --body "Parser retries stop after three attempts." --root kb
-wordcell search "parser retries" --root kb --mode exact`}</code></pre>
+  --body "Parser retries stop after three attempts." --root kb`}</code></pre>
+                </figure>
+                <figure className="wordcell-step">
+                  <figcaption><span>3</span>Find it again</figcaption>
+                  <pre className="install-command" tabIndex={0}><code>{`wordcell search "parser retries" --root kb --mode exact`}</code></pre>
+                </figure>
                 <p className="install-note">
                   <a href={publishedRelease.verificationRun}>Public release verification</a>.{" "}
                   Install <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git first.{" "}
@@ -272,7 +281,7 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
               label: primitive.label,
               summary: primitive.summary,
             }))}
-            label=""
+            label="Capabilities"
             summary="A vault is a folder of Markdown. Wordcell layers the structure a database would own over files you can still read anywhere."
           />
 
@@ -280,7 +289,7 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
             heading="A memory core with published numbers"
             headingId="memory-title"
             id="memory"
-            label=""
+            label="Benchmarks"
             summary="Wordcell derives its graph authority from Oh, the Hraness memory kernel. Its completed retrieval studies measure the engine your vault builds on."
           >
             <MarketingStatStrip
@@ -311,7 +320,7 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
             heading="A fifth of the context for the same answer"
             headingId="evidence-title"
             id="evidence"
-            label=""
+            label="Measured"
             summary="Packed snippets carry what matched, not the whole note. Across four queries on a seven-note public vault, snippets used 80% fewer UTF-8 bytes than the same notes in full."
           >
             <div aria-label="Packed snippets: 12,126 bytes. The same notes in full: 60,584 bytes." className="wordcell-bytes" role="group">
@@ -332,7 +341,7 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
             heading="At home beside a repository"
             headingId="developers-title"
             id="developers"
-            label=""
+            label="For agents"
             summary="The same vault grounds a coding agent: scope notes to repository paths, inherit the rules that govern an edit, recover the commits behind a decision."
           >
             <pre className="install-command" tabIndex={0}><code>{`wordcell context packages/parser/src/index.ts --root kb --repo .
@@ -344,7 +353,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
             heading="Where Wordcell fits"
             headingId="compare-title"
             id="compare"
-            label=""
+            label="Compare"
             summary="Local files are a shared strength. Wordcell brings authored structure, retrieval, and publishing into one workflow."
           >
             <div className="wordcell-comparison" role="region" aria-label="Workflow comparison" tabIndex={0}>
@@ -365,7 +374,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
             heading="Publish exactly the slice you choose"
             headingId="publish-title"
             id="publish"
-            label=""
+            label="Publish"
             summary="Select notes, preview the selection, and build a static site with readable pages and browser-local search. No model or hosted service required."
           >
             {releaseSupports0220 ? (
@@ -418,7 +427,7 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
                 ),
               },
             ]}
-            label=""
+            label="Interfaces"
             summary="Start with the CLI. Add the Agent Skill for guided workflows, or use the SDK to build read-only context retrieval into your own tools."
           />
 
@@ -426,7 +435,7 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
             heading="The record stays yours"
             headingId="boundary-title"
             id="boundary"
-            label=""
+            label="Trust"
             summary="The local core runs without a hosted knowledge service. External capabilities have separate, explicit boundaries."
           >
             <MarketingTrustBoundary
@@ -434,7 +443,7 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
               headingId="kernel-title"
               id="kernel"
               items={trust}
-              label=""
+              label="Local by default"
               summary="Know what stays on your machine and what each result can tell you."
             />
           </MarketingSection>
@@ -445,7 +454,7 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
             heading="Before you install"
             headingId="questions-title"
             id="questions"
-            label=""
+            label="FAQ"
             questions={questions.map(({ after, answer, question }) => ({
               answer: <p>{answer}{after}</p>,
               question,

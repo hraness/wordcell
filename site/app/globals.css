@@ -15,8 +15,6 @@
 @import "../wordcell/wordcell.css";
 
 :root {
-  --inverse-background: #14202a;
-  --wordcell-code-foreground: #eef2ea;
   font-synthesis: none;
   line-height: 1.55;
 }
@@ -30,6 +28,8 @@ html {
   color: var(--foreground);
   overflow-x: clip;
   scroll-behavior: smooth;
+  /* Anchor targets land below the sticky marketing chrome. */
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -151,9 +151,11 @@ a:focus-visible {
   top: 1rem;
   z-index: 50;
   padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm, .4rem);
   background: var(--foreground);
   color: var(--background);
   transform: translateY(-180%);
+  transition: transform .18s ease;
 }
 
 .skip-link:focus {
@@ -172,7 +174,7 @@ a:focus-visible {
   html { scroll-behavior: auto; }
 }
 
-::selection { background: var(--hraness-material-warm-plane); color: var(--hraness-material-ink); }
+::selection { background: color-mix(in oklch, var(--primary) 26%, transparent); }
 a { text-underline-offset: 0.2em; }
 
 /* Wordcell document pages render README Markdown. */
@@ -183,8 +185,12 @@ a { text-underline-offset: 0.2em; }
 }
 .document-page h1, .document-page h2, .document-page h3 { text-wrap: balance; line-height: 1.2; }
 .document-page h2 { margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
-.document-page pre { overflow-x: auto; padding: 1rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.document-page p, .document-page li { text-wrap: pretty; }
+.document-page pre { overflow-x: auto; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: var(--radius-md, .65rem); background: var(--surface); font-size: .85rem; line-height: 1.6; }
 .document-page code { font-family: var(--font-mono); font-size: 0.92em; }
+.document-page :not(pre) > code { padding: .14em .38em; border-radius: .32rem; background: color-mix(in oklch, var(--foreground) 6%, transparent); }
+.document-page blockquote { margin: 1.25rem 0; padding: .1rem 0 .1rem 1rem; border-inline-start: 3px solid color-mix(in oklch, var(--primary) 45%, transparent); color: var(--muted); }
+.document-page blockquote p { margin: .5rem 0; }
 .document-page table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
 .document-page th, .document-page td { border-bottom: 1px solid var(--line); padding: 0.5rem 0.6rem; text-align: left; vertical-align: top; }
 .document-nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.95rem; }
@@ -246,8 +252,10 @@ a { text-underline-offset: 0.2em; }
 
 .wordcell-comparison { width: 100%; overflow-x: auto; }
 .wordcell-comparison:focus-visible { outline: 2px solid var(--hraness-site-accent); outline-offset: 4px; }
-.wordcell-comparison table { border-collapse: collapse; width: 100%; min-width: 35rem; }
+.wordcell-comparison table { border-collapse: collapse; width: 100%; min-width: 35rem; font-size: .92rem; line-height: 1.5; }
 .wordcell-comparison th, .wordcell-comparison td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-.wordcell-comparison th { font-weight: 600; }
-.release-preview { padding: 1rem; border: 1px solid var(--line); background: var(--surface); }
-@media (max-width: 30rem) { .wordcell-measurement { grid-template-columns: 1fr; } }
+.wordcell-comparison thead th { color: var(--muted); font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.wordcell-comparison tbody th { font-weight: 600; white-space: nowrap; }
+.wordcell-comparison tbody tr { transition: background-color .15s ease; }
+.wordcell-comparison tbody tr:hover { background: color-mix(in oklch, var(--foreground) 3%, transparent); }
+.release-preview { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md, .65rem); background: var(--surface); }
