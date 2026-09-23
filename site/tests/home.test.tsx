@@ -138,6 +138,18 @@ test("scopes the editorial preset to the homepage header and the living vault fi
 });
 
 
+test("the 404 page renders a note card over the sleeping vault", async () => {
+  const { default: NotFound } = await import("../app/not-found");
+  const html = renderToStaticMarkup(<NotFound />);
+  expect(html).toContain("wordcell-404-card");
+  expect(html).toContain("wordcell-field");
+  expect(html).toContain("missing note");
+  expect(html).toContain("Page not found");
+  expect(html).toContain('href="/docs"');
+  expect(html.match(/<h1\b/gu)).toHaveLength(1);
+});
+
+
 test("keeps decision claims, privacy limits, and evidence visible with the quick start", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html).toContain("80% fewer UTF-8 bytes");

@@ -6,7 +6,6 @@ import {
   MarketingInterfaceGrid,
   MarketingPage,
   MarketingPrimitives,
-  MarketingProofFrame,
   MarketingQuestionList,
   MarketingSection,
   MarketingSiteHeader,
@@ -21,6 +20,7 @@ function TopicIcon({ slug }: Readonly<{ slug: WordcellIconName }>) {
   return <WordcellIcon className="wordcell-topic-icon" name={slug} />;
 }
 
+import { DEVELOPER_EDGES, DEVELOPER_NOTES, WordcellField } from "../../wordcell/field";
 import { WordcellIcon, type WordcellIconName } from "../../wordcell/icons";
 import { publishedRelease } from "../publication";
 import { WordcellContentFooter } from "../site-footer";
@@ -161,6 +161,7 @@ export default function Developers() {
       <main id="main" tabIndex={-1}>
         <MarketingPage>
           <div className="hraness-material-wall">
+          <WordcellField edges={DEVELOPER_EDGES} notes={DEVELOPER_NOTES} />
           <ProductHero
             align="start"
             actions={[
@@ -169,21 +170,7 @@ export default function Developers() {
             ]}
             boundary={footnote}
             className="wordcell-marketing-hero"
-            eyebrow=""
-            frame={(
-              <MarketingProofFrame
-                className="hraness-material-pane"
-                caption="Start from the file you are changing. The scoped notes, plans, and rules come back in one bounded result."
-                credit="From the README"
-                title="Context that starts from the code"
-              >
-                <pre className="transcript" tabIndex={0}><code>{`$ wordcell context packages/parser/src/index.ts \\
-    --root kb --repo .
-$ wordcell backlinks notes/parser-contract --root kb
-$ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
-                <p>Path-scoped notes, their dependents, and their provenance. Nothing else enters the conversation.</p>
-              </MarketingProofFrame>
-            )}
+            eyebrow="For coding agents"
             heading={heading}
             headingId="hero-title"
             name=""
@@ -192,7 +179,7 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
           </div>
 
           <MarketingInstallPanel
-            eyebrow=""
+            eyebrow="Get started"
             heading="Install and connect your agent"
             headingId="install-title"
             id="install"
@@ -200,9 +187,15 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
             <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : `Current verified release · v${releaseVersion}`}</p>
             {publishedRelease !== null && archiveUrl !== null ? (
               <>
-                <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts ${archiveUrl}
+                <figure className="wordcell-step">
+                  <figcaption><span>1</span>Install the CLI</figcaption>
+                  <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts ${archiveUrl}
 wordcell --help`}</code></pre>
-                <pre className="install-command" tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>
+                </figure>
+                <figure className="wordcell-step">
+                  <figcaption><span>2</span>Teach your agent the commands</figcaption>
+                  <pre className="install-command" tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>
+                </figure>
                 <p className="install-note">
                   <a href={publishedRelease.verificationRun}>Public release verification</a>.{" "}
                   The skill installs instructions for a compatible agent, not a service.{" "}
@@ -221,10 +214,17 @@ wordcell --help`}</code></pre>
             heading="The loop, end to end"
             headingId="loop-title"
             id="loop"
-            label=""
+            label="The workflow"
             summary="Every step writes or reads plain Markdown. The agent pulls the record when the task needs it."
           >
             <MarketingFlow ariaLabel="The repository-memory loop" steps={loop} />
+            <div className="wordcell-pane">
+              <pre className="transcript" tabIndex={0}><code>{`$ wordcell context packages/parser/src/index.ts \\
+    --root kb --repo .
+$ wordcell backlinks notes/parser-contract --root kb
+$ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
+              <p className="wordcell-pane-note">Start from the file you are changing. Path-scoped notes, their dependents, and their provenance come back in one bounded result. Nothing else enters the conversation.</p>
+            </div>
           </MarketingSection>
 
           <MarketingPrimitives
@@ -236,7 +236,7 @@ wordcell --help`}</code></pre>
               label: primitive.label,
               summary: primitive.summary,
             }))}
-            label=""
+            label="In the vault"
             summary="Search returns bounded results with sources an agent can open, not a dump of the whole vault."
           />
 
@@ -244,7 +244,7 @@ wordcell --help`}</code></pre>
             heading="A fifth of the context, measured"
             headingId="evidence-title"
             id="evidence"
-            label=""
+            label="Measured"
             summary="Packed snippets carry what matched, not the whole note. Across four queries on a seven-note public vault, snippets used 80% fewer UTF-8 bytes than the same notes in full."
           >
             <div aria-label="Packed snippets: 12,126 bytes. The same notes in full: 60,584 bytes." className="wordcell-bytes" role="group">
@@ -301,7 +301,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
                 ),
               },
             ]}
-            label=""
+            label="Interfaces"
             summary="The CLI is the smallest commitment. The skill teaches an agent the same commands; the SDK embeds them in your tools."
           />
 
@@ -309,7 +309,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
             heading="Boundaries the agent respects"
             headingId="boundary-title"
             id="boundary"
-            label=""
+            label="Trust"
             summary="Only saved context becomes part of the record, and external lanes stay explicit."
           >
             <MarketingTrustBoundary
@@ -330,7 +330,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
                   detail: "A connected agent still follows its provider's data-handling settings. Keep private records out of public repositories and outputs.",
                 },
               ]}
-              label=""
+              label="Data lanes"
               summary="Know what stays on your machine and what a connected agent can see."
             />
           </MarketingSection>
@@ -339,7 +339,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
             heading="Before you connect an agent"
             headingId="questions-title"
             id="questions"
-            label=""
+            label="FAQ"
             questions={questions.map(({ answer, question }) => ({
               answer: <p>{answer}</p>,
               question,
