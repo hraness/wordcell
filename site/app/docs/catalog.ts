@@ -99,6 +99,12 @@ export const docCatalog = [
     quadrant: "reference",
   },
   {
+    slug: "hosted-publication",
+    title: "Hosted publication operations",
+    summary: "Publish against an expected revision and recover the exact result after an interrupted request.",
+    quadrant: "reference",
+  },
+  {
     slug: "design",
     title: "Design",
     summary: "The file contracts, design choices, and the boundary each one protects.",

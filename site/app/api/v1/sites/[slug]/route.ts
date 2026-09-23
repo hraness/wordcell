@@ -21,7 +21,8 @@ import {
   materializeVault,
   projectHostedVault,
 } from "../../../../../lib/hosted/publish";
-import type { SiteRecord } from "../../../../../lib/hosted/records";
+import { exactKeys, liveSite, OPERATION_CONTRACT, OPERATION_ID, parseOperation, type SiteOperation, type SiteRecord } from "../../../../../lib/hosted/records";
+import { beginOperation, commitOperation, OperationError, operationResponse, preparedOperation, prepareOperation, readSite, reserveSiteCapacity, resolveOperation } from "../../../../../lib/hosted/operations";
 import { ObjectStore } from "../../../../../lib/hosted/store";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ async function uploadArtifact(
   }
 }
 
-export async function PUT(request: Request, { params }: Params): Promise<Response> {
+async function publish(request: Request, { params }: Params): Promise<Response> {
   const config = hostedConfig();
   if (config === null) return apiUnavailable();
   const store = new ObjectStore(config);
@@ -81,7 +82,7 @@ export async function PUT(request: Request, { params }: Params): Promise<Respons
       retryable: false,
     }, 413);
   }
-  if (!isRecord(body) || !("files" in body)) {
+  if (!isRecord(body) || !("files" in body) || !exactKeys(body, ["operation", "files", "title", "description", "index", "noindex", "indexContent", "selection"])) {
     return apiError({
       code: "BAD_REQUEST",
       message: "body must be a JSON object with a files map",
@@ -131,38 +132,30 @@ export async function PUT(request: Request, { params }: Params): Promise<Respons
     }, 400);
   }
 
-  // Quota: pay for the projection work before computing.
-  const ipKey = clientIpKey(request);
+  const operation = parseOperation(body.operation);
+  if (operation === undefined) return operationRequired();
+  const state = await beginOperation(store, token, slug, operation, "publish", body);
+  if (state.status === "committed") return apiOk(operationResponse(state.head, config.siteOrigin, true));
+  if (state.status === "unknown") throw new OperationError("OPERATION_UNCERTAIN", "operation intent is unavailable", 502);
+  if (state.status === "conflict") throw new OperationError("REVISION_CONFLICT", `expected revision ${operation.expectedRevision}; current revision is ${state.currentRevision}`);
+  await reserveSiteCapacity(store, token, slug);
+  const prepared = await preparedOperation(store, token, state.intent);
+  if (prepared !== null) {
+    const result = await commitOperation(store, token, state.intent, prepared);
+    return apiOk(operationResponse(result.head, config.siteOrigin, result.idempotent));
+  }
+  const snapshot = await readSite(store, token, slug);
+  const existing = liveSite(snapshot.head);
+  // Exact replays and prepared recovery do not spend another projection quota.
   for (const [scope, limit] of [
     [`key8/${token.key8}`, HOSTED_LIMITS.publishesPerDay],
-    [`ip/${ipKey}`, HOSTED_LIMITS.publishesPerIpPerDay],
+    [`ip/${clientIpKey(request)}`, HOSTED_LIMITS.publishesPerIpPerDay],
   ] as const) {
     const verdict = await spend(store, scope, "publishes", limit);
-    if (!verdict.ok) {
-      return apiError({
-        code: "RATE_LIMITED",
-        message: "daily publish quota reached",
-        retryable: true,
-      }, 429);
-    }
-  }
-
-  const recordKey = `sites/${token.key8}/${slug}.json`;
-  const pointerKey = `m/${token.key8}/${slug}`;
-  const existing = await store.getJson<SiteRecord>(recordKey);
-  if (existing === null || existing.v !== 1) {
-    const { keys } = await store.list(`sites/${token.key8}/`, 256);
-    if (keys.length >= HOSTED_LIMITS.sitesPerNamespace) {
-      return apiError({
-        code: "SITE_LIMIT",
-        message: `a token may keep at most ${HOSTED_LIMITS.sitesPerNamespace} live sites`,
-        retryable: false,
-      }, 409);
-    }
+    if (!verdict.ok) return apiError({ code: "RATE_LIMITED", message: "daily publish quota reached", retryable: true }, 429);
   }
 
   const vault = new Map<string, Uint8Array>();
-  const consumedUploads: string[] = [];
   try {
     for (const [path, entry] of files.entries) {
       if (entry.kind === "inline") {
@@ -178,7 +171,6 @@ export async function PUT(request: Request, { params }: Params): Promise<Respons
           }, 400);
         }
         vault.set(path, object.bytes);
-        consumedUploads.push(key);
       }
     }
 
@@ -218,24 +210,9 @@ export async function PUT(request: Request, { params }: Params): Promise<Respons
         }, 429);
       }
 
-      // Same artifact bytes → same object prefix → no upload, no pointer move.
-      if (existing !== null && existing.digest === digest) {
-        return apiOk({
-          site: {
-            slug, key8: token.key8,
-            url: `${config.siteOrigin}/p/${token.key8}/${slug}/`,
-            digest, revision: existing.revision,
-            notes: projected.notes, files: projected.files.size,
-            bytes: projected.bytes,
-            createdAt: existing.createdAt, updatedAt: existing.updatedAt,
-          },
-          idempotent: true,
-        });
-      }
-
-      if (!(await store.head(`s/${token.key8}/${digest}/manifest.json`))) {
-        await uploadArtifact(store, token.key8, digest, projected.files);
-      }
+      // Re-upload the complete deterministic artifact. A manifest alone is not
+      // a completion marker after an interrupted batch. Shared bytes stay retained.
+      await uploadArtifact(store, token.key8, digest, projected.files);
 
       const now = new Date().toISOString();
       const record: SiteRecord = {
@@ -244,41 +221,19 @@ export async function PUT(request: Request, { params }: Params): Promise<Respons
         key8: token.key8,
         digest,
         sourceDigest: projected.sourceDigest,
-        revision: (existing?.revision ?? 0) + 1,
+        revision: operation.expectedRevision + 1,
         ...(typeof body.title === "string" ? { title: body.title } : {}),
         notes: projected.notes,
         files: projected.files.size,
         bytes: projected.bytes,
+        skippedAssets: projected.skippedAssets,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       };
-      // Record first, pointer last: the site is never half-visible.
-      if (!(await store.putJson(recordKey, record)) ||
-          !(await store.putJson(pointerKey, { digest }))) {
-        throw new HostedPublishError("store_failed", "could not persist site record", 502);
-      }
-      // Best-effort cleanup: consumed uploads and the superseded artifact.
-      for (const key of consumedUploads) void store.del(key);
-      if (existing !== null) {
-        void store.sweep(`s/${token.key8}/${existing.digest}/`);
-      }
-      const revision = record.revision;
-      return apiOk({
-        site: {
-          slug, key8: token.key8,
-          url: `${config.siteOrigin}/p/${token.key8}/${slug}/`,
-          digest,
-          sourceDigest: projected.sourceDigest,
-          revision,
-          notes: projected.notes,
-          files: projected.files.size,
-          bytes: projected.bytes,
-          skippedAssets: projected.skippedAssets,
-          createdAt: record.createdAt,
-          updatedAt: record.updatedAt,
-        },
-        idempotent: false,
-      }, existing === null ? 201 : 200);
+      const prepared = await prepareOperation(store, token, state.intent, record);
+      const result = await commitOperation(store, token, state.intent, prepared);
+      return apiOk(operationResponse(result.head, config.siteOrigin, result.idempotent),
+        snapshot.head === null && !result.idempotent ? 201 : 200);
     } finally {
       await cleanup();
     }
@@ -294,66 +249,65 @@ export async function PUT(request: Request, { params }: Params): Promise<Respons
   }
 }
 
-export async function GET(request: Request, { params }: Params): Promise<Response> {
-  const config = hostedConfig();
-  if (config === null) return apiUnavailable();
-  const store = new ObjectStore(config);
-  const token = await authenticate(store, request);
-  if (token === undefined) {
-    return apiError({
-      code: "UNAUTHORIZED",
-      message: "a Bearer wc_pub_ token is required; mint one with POST /api/v1/tokens",
-      retryable: false,
-    }, 401);
-  }
-  const { slug } = await params;
-  const record = await store.getJson<SiteRecord>(
-    `sites/${token.key8}/${slug}.json`,
-  );
-  if (record === null || record.v !== 1) {
-    return apiError({ code: "NOT_FOUND", message: "no such site", retryable: false }, 404);
-  }
-  return apiOk({
-    site: {
-      slug: record.slug,
-      key8: token.key8,
-      url: `${config.siteOrigin}/p/${token.key8}/${record.slug}/`,
-      digest: record.digest,
-      sourceDigest: record.sourceDigest,
-      revision: record.revision,
-      notes: record.notes,
-      files: record.files,
-      bytes: record.bytes,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    },
-  });
+function operationRequired(): Response {
+  return apiError({ code: "OPERATION_REQUIRED", message: `operation must contain contract ${OPERATION_CONTRACT}, a lowercase UUID id, and expectedRevision (0 for a new slug)`, retryable: false }, 428);
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: Params,
-): Promise<Response> {
-  const config = hostedConfig();
-  if (config === null) return apiUnavailable();
-  const store = new ObjectStore(config);
-  const token = await authenticate(store, request);
-  if (token === undefined) {
-    return apiError({
-      code: "UNAUTHORIZED",
-      message: "a Bearer wc_pub_ token is required; mint one with POST /api/v1/tokens",
-      retryable: false,
-    }, 401);
-  }
-  const { slug } = await params;
-  const record = await store.getJson<SiteRecord>(
-    `sites/${token.key8}/${slug}.json`,
-  );
-  if (record === null || record.v !== 1) {
-    return apiError({ code: "NOT_FOUND", message: "no such site", retryable: false }, 404);
-  }
-  await store.del(`m/${token.key8}/${record.slug}`);
-  await store.del(`sites/${token.key8}/${record.slug}.json`);
-  await store.sweep(`s/${token.key8}/${record.digest}/`);
-  return apiOk({ deleted: record.slug });
+function failure(error: unknown): Response {
+  if (error instanceof OperationError) return apiError({ code: error.code, message: error.message, retryable: false }, error.status);
+  return apiError({ code: "OPERATION_UNCERTAIN", message: "storage could not confirm the result; reconcile the operation ID before retrying", retryable: false }, 502);
+}
+
+export async function PUT(request: Request, context: Params): Promise<Response> {
+  try { return await publish(request, context); } catch (error) { return failure(error); }
+}
+
+export async function GET(request: Request, { params }: Params): Promise<Response> {
+  try {
+    const config = hostedConfig();
+    if (config === null) return apiUnavailable();
+    const store = new ObjectStore(config);
+    const token = await authenticate(store, request);
+    if (token === undefined) return apiError({ code: "UNAUTHORIZED", message: "a valid Bearer wc_pub_ token is required", retryable: false }, 401);
+    const { slug } = await params;
+    if (!isSlug(slug)) return apiError({ code: "BAD_SLUG", message: "invalid site slug", retryable: false }, 400);
+    const id = new URL(request.url).searchParams.get("operation");
+    if (id !== null) {
+      if (!OPERATION_ID.test(id)) return apiError({ code: "BAD_OPERATION", message: "operation must be a lowercase UUID", retryable: false }, 400);
+      const state = await resolveOperation(store, token, slug, id);
+      if (state.status === "committed") return apiOk(operationResponse(state.head, config.siteOrigin, true));
+      return apiOk({ contract: OPERATION_CONTRACT, operation: state.status === "unknown" ? { id, status: "unknown" } :
+        { ...state.intent.operation, kind: state.intent.kind, requestDigest: state.intent.requestDigest, status: state.status },
+        ...(state.status === "unknown" ? {} : { currentRevision: state.currentRevision }) });
+    }
+    const snapshot = await readSite(store, token, slug);
+    const record = liveSite(snapshot.head);
+    if (record === null) return Response.json({ ok: false, contract: OPERATION_CONTRACT, revision: snapshot.revision,
+      deleted: snapshot.head !== null, error: { code: "NOT_FOUND", message: "no live site at this slug", retryable: false } }, { status: 404, headers: { "cache-control": "no-store" } });
+    const site = Object.fromEntries(Object.entries(record).filter(([key]) => key !== "v"));
+    return apiOk({ contract: OPERATION_CONTRACT, site: { ...site, url: `${config.siteOrigin}/p/${token.key8}/${slug}/` } });
+  } catch (error) { return failure(error); }
+}
+
+export async function DELETE(request: Request, { params }: Params): Promise<Response> {
+  try {
+    const config = hostedConfig();
+    if (config === null) return apiUnavailable();
+    const store = new ObjectStore(config);
+    const token = await authenticate(store, request);
+    if (token === undefined) return apiError({ code: "UNAUTHORIZED", message: "a valid Bearer wc_pub_ token is required", retryable: false }, 401);
+    const { slug } = await params;
+    if (!isSlug(slug)) return apiError({ code: "BAD_SLUG", message: "invalid site slug", retryable: false }, 400);
+    const body = await readJsonBody(request, 2048);
+    const operation: SiteOperation | undefined = isRecord(body) && exactKeys(body, ["operation"]) ? parseOperation(body.operation) : undefined;
+    if (operation === undefined) return operationRequired();
+    const state = await beginOperation(store, token, slug, operation, "delete", body);
+    if (state.status === "committed") return apiOk(operationResponse(state.head, config.siteOrigin, true));
+    if (state.status === "unknown") throw new OperationError("OPERATION_UNCERTAIN", "operation intent is unavailable", 502);
+    if (state.status === "conflict") throw new OperationError("REVISION_CONFLICT", `expected revision ${operation.expectedRevision}; current revision is ${state.currentRevision}`);
+    await reserveSiteCapacity(store, token, slug);
+    const prepared = await prepareOperation(store, token, state.intent, null);
+    const result = await commitOperation(store, token, state.intent, prepared);
+    return apiOk(operationResponse(result.head, config.siteOrigin, result.idempotent));
+  } catch (error) { return failure(error); }
 }

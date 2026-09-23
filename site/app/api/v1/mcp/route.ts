@@ -1,9 +1,11 @@
 import { apiError } from "../../../../lib/hosted/errors";
 import { isRecord } from "../../../../lib/hosted/errors";
+import { OPERATION_CONTRACT } from "../../../../lib/hosted/records";
 import { POST as mintToken } from "../tokens/route";
 import { GET as listSites } from "../sites/route";
 import {
   DELETE as deleteSite,
+  GET as getSite,
   PUT as publishSite,
 } from "../sites/[slug]/route";
 
@@ -27,6 +29,15 @@ type Tool = Readonly<{
   inputSchema: Record<string, unknown>;
 }>;
 
+const operationSchema = {
+  type: "object", additionalProperties: false, required: ["contract", "id", "expectedRevision"],
+  properties: {
+    contract: { const: OPERATION_CONTRACT },
+    id: { type: "string", format: "uuid" },
+    expectedRevision: { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER - 1 },
+  },
+};
+
 const TOOLS: readonly Tool[] = [
   {
     name: "create_token",
@@ -46,12 +57,13 @@ const TOOLS: readonly Tool[] = [
     description:
       "Publish a bounded Markdown vault as a public site. files maps vault "
       + "paths (e.g. \"notes/a.md\") to utf8 text, {base64} payloads, or "
-      + "{upload} ids from POST /api/v1/uploads. Identical bytes republish "
-      + "idempotently. Requires Bearer wc_pub_ authorization.",
+      + "{upload} ids from POST /api/v1/uploads. Supply a unique operation ID and "
+      + "the current revision from get_site (0 for a new slug). Exact retries are idempotent. Requires Bearer wc_pub_ authorization.",
     inputSchema: {
       type: "object",
-      required: ["slug", "files"],
+      required: ["slug", "files", "operation"],
       properties: {
+        operation: operationSchema,
         slug: { type: "string", pattern: "^[a-z0-9][a-z0-9-]{0,62}$" },
         files: {
           type: "object",
@@ -81,15 +93,24 @@ const TOOLS: readonly Tool[] = [
     inputSchema: { type: "object", additionalProperties: false },
   },
   {
+    name: "get_site",
+    description: "Read the current site revision, or reconcile an operation ID after an uncertain write. Requires Bearer wc_pub_ authorization.",
+    inputSchema: {
+      type: "object", additionalProperties: false, required: ["slug"],
+      properties: { slug: { type: "string", pattern: "^[a-z0-9][a-z0-9-]{0,62}$" }, operation: { type: "string", format: "uuid" } },
+    },
+  },
+  {
     name: "delete_site",
     description:
-      "Unpublish a site: removes its record, pointer, and artifact objects. "
+      "Unpublish a site conditionally and retain a deletion receipt. Shared artifact bytes remain stored. "
       + "Public reads may keep a cached copy for up to 60 seconds. Requires "
       + "Bearer wc_pub_ authorization.",
     inputSchema: {
       type: "object",
-      required: ["slug"],
+      required: ["slug", "operation"],
       properties: {
+        operation: operationSchema,
         slug: { type: "string", pattern: "^[a-z0-9][a-z0-9-]{0,62}$" },
       },
       additionalProperties: false,
@@ -130,6 +151,16 @@ function forwardedHeaders(request: Request, extra: Record<string, string> = {}):
 
 async function callTool(request: Request, name: string, args: Record<string, unknown>): Promise<Response> {
   switch (name) {
+    case "get_site": {
+      const { slug, operation } = args;
+      if (typeof slug !== "string" || (operation !== undefined && typeof operation !== "string")) {
+        return apiError({ code: "BAD_REQUEST", message: "slug and optional operation ID must be strings", retryable: false }, 400);
+      }
+      const suffix = operation === undefined ? "" : `?operation=${encodeURIComponent(operation)}`;
+      return getSite(new Request(`${ORIGIN}/api/v1/sites/${encodeURIComponent(slug)}${suffix}`, {
+        headers: forwardedHeaders(request),
+      }), { params: Promise.resolve({ slug }) });
+    }
     case "create_token":
       return mintToken(new Request(`${ORIGIN}/api/v1/tokens`, {
         method: "POST",
@@ -152,13 +183,14 @@ async function callTool(request: Request, name: string, args: Record<string, unk
       }), { params: Promise.resolve({ slug }) });
     }
     case "delete_site": {
-      const { slug } = args;
+      const { slug, ...body } = args;
       if (typeof slug !== "string") {
         return apiError({ code: "BAD_REQUEST", message: "slug is required", retryable: false }, 400);
       }
       return deleteSite(new Request(`${ORIGIN}/api/v1/sites/${encodeURIComponent(slug)}`, {
         method: "DELETE",
-        headers: forwardedHeaders(request),
+        headers: forwardedHeaders(request, { "content-type": "application/json" }),
+        body: JSON.stringify(body),
       }), { params: Promise.resolve({ slug }) });
     }
     default:
