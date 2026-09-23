@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.22.2
+
+Published Markdown now renders numbered footnotes with links back to each
+citation. Footnotes work without JavaScript, use accessible link labels, and
+preserve unresolved references visibly. Code, comments, and unsafe HTML or URLs
+keep their existing safety boundaries. Existing vaults need no migration.
+
 ## 0.22.1
 
 Adds `updateNoteBody` to the authoring SDK. It replaces an existing note's prose

@@ -468,6 +468,35 @@ describe("publishVault", () => {
 });
 
 describe("projectVault", () => {
+  test("publishes native citation anchors, retained source links, and return targets", async () => {
+    const notes = [
+      parseNote("reports/summary.md", [
+        "# Research summary", "", "## Finding", "A supported claim.[^source]", "",
+        "## Follow-up", "A repeated citation.[^source]", "", "[^source]: [[sources/paper|Read the source]].",
+      ].join("\n")),
+      parseNote("sources/paper.md", "# Retained paper\n\nEvidence from the selected paper.\n"),
+    ];
+    const projection = await projectVault({ root: "/vault", notes, analysis: analyzeVault(notes) }, {
+      root: "/vault", deterministic: true, basePath: "/notes/",
+    }, {
+      resolveAssetPath: () => undefined,
+      readAsset: async () => undefined,
+      readerFiles: async () => READER_STUB,
+    });
+    const html = new TextDecoder().decode(projection.files.get("n/reports/summary/index.html"));
+    expect(html).toContain('href="#wordcell:footnote:1" role="doc-noteref"');
+    expect(html).toContain('id="wordcell:footnote:1" tabindex="-1"');
+    expect(html).toContain('href="../../../n/sources/paper/">Read the source</a>');
+    expect(new URL("../../../n/sources/paper/", "https://example.com/notes/n/reports/summary/").pathname).toBe("/notes/n/sources/paper/");
+    expect(html).toContain('href="#wordcell:footnote-ref:1:1" role="doc-backlink"');
+    expect(html).toContain('href="#wordcell:footnote-ref:1:2" role="doc-backlink"');
+    expect(html).not.toContain("[^source]");
+    expect(html).toContain('href="#finding"');
+    expect(html).toContain('href="#follow-up"');
+    const payload = parseSiteNoteV1(JSON.parse(new TextDecoder().decode(projection.files.get("n/reports/summary.json"))));
+    expect(payload.links.map(({ s }) => s)).toContain("sources/paper");
+  });
+
   test("projects a scanned vault without touching disk via injected IO", async () => {
     const root = await makeVault();
     try {
