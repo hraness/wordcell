@@ -9,7 +9,7 @@
         "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
         "@hraness/ui": "github:hraness/ui#v0.5.16",
         "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",
-        "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.2/hraness-wordcell-0.22.2.tgz",
+        "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz",
         "next": "16.3.3",
         "react": "19.2.6",
         "react-dom": "19.2.6",
@@ -101,7 +101,7 @@
 
     "@hraness/web-discovery": ["@hraness/web-discovery@github:hraness/web-discovery#306bb70", { "dependencies": { "@hraness/design-kit": "github:hraness/design-kit#v0.5.0" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.0.0 <20.0.0" } }, "hraness-web-discovery-306bb70", "sha512-ueV+yA5Wk0JOGAcg+6OF/JFVIOhwHYddGfTAitxLEgjb9AyCGitgAJ53dLTETNe2Qs+d4UHoQn/aruX0X8+wFA=="],
 
-    "@hraness/wordcell": ["@hraness/wordcell@https://github.com/hraness/wordcell/releases/download/v0.22.2/hraness-wordcell-0.22.2.tgz", { "dependencies": { "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0", "@steipete/sweet-cookie": "0.4.3", "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c", "agent-browser": "0.32.3", "defuddle": "0.19.1", "effect": "3.22.1", "yaml": "^2.9.0", "zod": "^4.4.3" }, "bin": { "wordcell": "./dist/cli.js", "wordcell-evaluation-builder": "./dist/evaluation-builder.js" } }, "sha512-GBxVob/txN887c/UD4sYef4ig3jVCVKtGidJQ4+s9I2oKVe1pOOkhj4ALppNf+BWJ9UqeIDZbg5oyu8HtS9+HA=="],
+    "@hraness/wordcell": ["@hraness/wordcell@https://github.com/hraness/wordcell/releases/download/v0.22.3/hraness-wordcell-0.22.3.tgz", { "dependencies": { "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0", "@steipete/sweet-cookie": "0.4.3", "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c", "agent-browser": "0.32.3", "defuddle": "0.19.1", "effect": "3.22.1", "yaml": "^2.9.0", "zod": "^4.4.3" }, "bin": { "wordcell": "./dist/cli.js", "wordcell-evaluation-builder": "./dist/evaluation-builder.js" } }, "sha512-MES7qfaIGUdGb8amORql1WNRzDv6D2qZeGKotyIPmXmexDRKRdE4aB4oHxRYd+J7jwGUN02x+tq7Nz2Yz8IYjg=="],
 
     "@hugeicons/core-free-icons": ["@hugeicons/core-free-icons@4.2.3", "", {}, "sha512-fpiU0qFZkv4ABi23xJ2m4qNr0BBfuIaYjPboN8WDA6aj9D+OzXa7eykxKOpACZRuGbDz1U9S5DsNx1d5KNnsgA=="],
 
@@ -1443,6 +1443,8 @@
 
     "@eslint/eslintrc/globals": ["globals@14.0.0", "", {}, "sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ=="],
 
+    "@hraness/oh/@tobilu/qmd": ["@tobilu/qmd@github:hraness/qmd#aa993dc", { "dependencies": { "@modelcontextprotocol/sdk": "1.29.0", "better-sqlite3": "12.10.0", "fast-glob": "3.3.3", "node-llama-cpp": "3.18.1", "picomatch": "4.0.4", "sqlite-vec": "0.1.9", "tree-sitter-go": "0.25.0", "tree-sitter-python": "0.25.0", "tree-sitter-rust": "0.24.0", "tree-sitter-typescript": "0.23.2", "web-tree-sitter": "0.26.8", "yaml": "2.9.0", "zod": "4.2.1" }, "optionalDependencies": { "sqlite-vec-darwin-arm64": "0.1.9", "sqlite-vec-darwin-x64": "0.1.9", "sqlite-vec-linux-arm64": "0.1.9", "sqlite-vec-linux-x64": "0.1.9", "sqlite-vec-windows-x64": "0.1.9" }, "peerDependencies": { "typescript": "^5.9.3" }, "bin": { "qmd": "bin/qmd" } }, "hraness-qmd-aa993dc", "sha512-8vwNE/U5SWSscMokgqRHsdDnTT6V5wy7rsrvn3mw5vi5qdXesiIb1fb5qCsjkWSwiZhTbx0d1r+zGfzIO/T2jw=="],
+
     "@hraness/web-discovery/@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#070cdd2", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.2", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.4 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-070cdd2", "sha512-kO4akqptuEsvbtpbdH2JaNZqOr/o9YH+Kj53sgN1EWfYq790lrH2kWySfhElbmS739ALAmivmYGyvqV4AtEZOg=="],
 
     "@img/sharp-wasm32/@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
@@ -1575,6 +1577,12 @@
 
     "yargs/string-width": ["string-width@4.2.3", "", { "dependencies": { "emoji-regex": "^8.0.0", "is-fullwidth-code-point": "^3.0.0", "strip-ansi": "^6.0.1" } }, "sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g=="],
 
+    "@hraness/oh/@tobilu/qmd/fast-glob": ["fast-glob@3.3.3", "", { "dependencies": { "@nodelib/fs.stat": "^2.0.2", "@nodelib/fs.walk": "^1.2.3", "glob-parent": "^5.1.2", "merge2": "^1.3.0", "micromatch": "^4.0.8" } }, "sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg=="],
+
+    "@hraness/oh/@tobilu/qmd/yaml": ["yaml@2.9.0", "", { "bin": { "yaml": "bin.mjs" } }, "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA=="],
+
+    "@hraness/oh/@tobilu/qmd/zod": ["zod@4.2.1", "", {}, "sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw=="],
+
     "@hraness/web-discovery/@hraness/design-kit/@hugeicons/core-free-icons": ["@hugeicons/core-free-icons@4.3.2", "", {}, "sha512-31uDdIq71YcVxeltjcS/tsmYFt4VjmgyNTZfG1bY6mbeFmsYL6Nwz9PdDZetGtGPZOAEVg0bHoQFOoPWDC51bg=="],
 
     "@modelcontextprotocol/sdk/ajv/json-schema-traverse": ["json-schema-traverse@1.0.0", "", {}, "sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug=="],
@@ -1616,6 +1624,8 @@
     "yargs/string-width/is-fullwidth-code-point": ["is-fullwidth-code-point@3.0.0", "", {}, "sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg=="],
 
     "yargs/string-width/strip-ansi": ["strip-ansi@6.0.1", "", { "dependencies": { "ansi-regex": "^5.0.1" } }, "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A=="],
+
+    "@hraness/oh/@tobilu/qmd/fast-glob/glob-parent": ["glob-parent@5.1.2", "", { "dependencies": { "is-glob": "^4.0.1" } }, "sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow=="],
 
     "@typescript-eslint/typescript-estree/minimatch/brace-expansion/balanced-match": ["balanced-match@4.0.4", "", {}, "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="],
 
