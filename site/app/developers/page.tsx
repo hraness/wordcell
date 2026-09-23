@@ -17,14 +17,11 @@ import { ThemeMenuButton } from "@hraness/design-kit/react";
 
 import { AskAiAboutThis } from "@hraness/ui";
 
-function TopicIcon({ slug }: Readonly<{ slug: string }>) {
-  // Decorative local SVG; next/image cannot optimize vector sources.
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img className="wordcell-topic-icon" src={`/icons/${slug}.svg`} alt="" aria-hidden="true" width="88" height="88" loading="lazy" decoding="async" />
-  );
+function TopicIcon({ slug }: Readonly<{ slug: WordcellIconName }>) {
+  return <WordcellIcon className="wordcell-topic-icon" name={slug} />;
 }
 
+import { WordcellIcon, type WordcellIconName } from "../../wordcell/icons";
 import { publishedRelease } from "../publication";
 import { WordcellContentFooter } from "../site-footer";
 
@@ -244,14 +241,24 @@ wordcell --help`}</code></pre>
           />
 
           <MarketingSection
-            heading="Measured context, stated limits"
+            heading="A fifth of the context, measured"
             headingId="evidence-title"
             id="evidence"
             label=""
-            summary="In a four-query example over a seven-note public vault, packed search snippets used 80% fewer UTF-8 bytes than passing the same matching notes in full: 12,126 versus 60,584 bytes."
+            summary="Packed snippets carry what matched, not the whole note. Across four queries on a seven-note public vault, snippets used 80% fewer UTF-8 bytes than the same notes in full."
           >
-            <p className="install-note">This measures context payload size, not tokens, answer quality, or a win over another search tool. <a href={`${repository}/blob/main/docs/evidence.md`}>Method and raw report</a>.</p>
-            <p className="install-note">The graph core is Oh, the Hraness memory kernel. Its completed memory studies reached 89.8% answer accuracy on LongMemEval-S and 84.4% on LoCoMo, descriptive in-sample scores with stated limits. <a href="https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md">Results and method</a>.</p>
+            <div aria-label="Packed snippets: 12,126 bytes. The same notes in full: 60,584 bytes." className="wordcell-bytes" role="group">
+              <div className="wordcell-bytes-row">
+                <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar wordcell-bytes-bar--primary" style={{ inlineSize: "20%" }} /></div>
+                <p className="wordcell-bytes-meta"><strong>12,126 bytes</strong><span>Packed snippets</span></p>
+              </div>
+              <div className="wordcell-bytes-row">
+                <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar" style={{ inlineSize: "100%" }} /></div>
+                <p className="wordcell-bytes-meta"><strong>60,584 bytes</strong><span>The same notes in full</span></p>
+              </div>
+            </div>
+            <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href={`${repository}/blob/main/docs/evidence.md`}>Method and raw report</a>.</p>
+            <p className="install-note">The graph core is Oh, the Hraness memory kernel: 89.8% on LongMemEval-S and 84.4% on LoCoMo in completed studies, in-sample scores with stated limits. <a href="https://github.com/hraness/oh/blob/main/benchmarks/EVOLUTION_RELEASE_RESULTS.md">Results and method</a>.</p>
           </MarketingSection>
 
           <MarketingInterfaceGrid
@@ -264,7 +271,7 @@ wordcell --help`}</code></pre>
                 summary: "Search, context, history, and validation from a terminal or script.",
                 example: (
                   <>
-                    <TopicIcon slug="cli" />
+                    <WordcellIcon className="wordcell-topic-icon" name="cli" />
                     <pre tabIndex={0}><code>{`wordcell context packages/parser/src/index.ts \\
   --root kb --repo .`}</code></pre>
                   </>
@@ -275,7 +282,7 @@ wordcell --help`}</code></pre>
                 summary: "Open a read-only session over one vault scan and compose bounded workflows.",
                 example: (
                   <>
-                    <TopicIcon slug="sdk" />
+                    <WordcellIcon className="wordcell-topic-icon" name="sdk" />
                     <pre tabIndex={0}><code>{`import { openKnowledgeBase } from "@hraness/wordcell/sdk";
 
 const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
@@ -287,7 +294,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
                 summary: "Give your agent instructions for finding and maintaining saved context.",
                 example: (
                   <>
-                    <TopicIcon slug="agent-skill" />
+                    <WordcellIcon className="wordcell-topic-icon" name="agent-skill" />
                     {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <pre tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>}
                     <p className="interface-link"><a href={`${repository}/blob/main/skills/wordcell/SKILL.md`}>Inspect the packaged skill</a></p>
                   </>
