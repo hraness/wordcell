@@ -328,6 +328,126 @@
   from { transform: scaleX(0); }
 }
 
+.wordcell-benchmark {
+  display: grid;
+  gap: 1rem;
+  max-inline-size: 48rem;
+  min-inline-size: 0;
+}
+
+.wordcell-benchmark h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.3vw, 1.75rem);
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+.wordcell-benchmark-caption,
+.wordcell-benchmark-scope,
+.wordcell-seam-copy {
+  margin: 0;
+  max-inline-size: 70ch;
+}
+
+.wordcell-benchmark-caption,
+.wordcell-benchmark-scope {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__label,
+.wordcell-benchmark .hraness-design-chart-row__value {
+  font-size: 1rem;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__value {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__detail {
+  font-family: var(--font-text);
+  font-size: .85rem;
+}
+
+.wordcell-benchmark .hraness-design-bar-list-chart__bar {
+  background: var(--hraness-design-chart-color);
+  box-shadow: none;
+  animation: none;
+}
+
+.wordcell-benchmark-method {
+  border-block: 1px solid var(--wordcell-note-line);
+  padding-block: .4rem;
+}
+
+.wordcell-benchmark-method summary {
+  align-content: center;
+  min-block-size: 2.75rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.wordcell-benchmark-method summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.wordcell-benchmark-method dl {
+  display: grid;
+  gap: .8rem;
+  margin-block: .6rem 1rem;
+}
+
+.wordcell-benchmark-method dl > div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: .3rem 1rem;
+}
+
+.wordcell-benchmark-method dt {
+  font-weight: 500;
+}
+
+.wordcell-benchmark-method dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.wordcell-benchmark-method p {
+  max-inline-size: 70ch;
+}
+
+#oh .install-command {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 30rem) {
+  .wordcell-benchmark .hraness-design-chart-row__heading {
+    flex-wrap: wrap;
+    gap: .3rem .75rem;
+  }
+
+  .wordcell-benchmark .hraness-design-chart-row__label {
+    flex: 1 1 12rem;
+  }
+
+  .wordcell-benchmark .hraness-design-chart-row__value {
+    margin-inline-start: auto;
+  }
+
+  .wordcell-benchmark-method dl > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Guided steps and the transcript pane: quiet note-surface cards, the same
  * paper the vault field is drawn on. */
 .wordcell-step,
