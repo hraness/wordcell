@@ -279,7 +279,7 @@ replace the source authority, destination, rights, review, or conflict policy
 inside a preparation call.
 
 Wordcell delegates contract, binding, head, record, and exact dependency-closure
-verification to the immutable `@hraness/oh` v0.2.0 store API. Wordcell keeps lower
+verification to its pinned immutable `@hraness/oh` store API. Wordcell keeps lower
 local byte, record, root, depth, and node ceilings and rejects accessors,
 symbols, cycles, canonical-authority bindings, tampered or incomplete records,
 over-complete closures, wrong bindings or heads, and derived-only roots. The
