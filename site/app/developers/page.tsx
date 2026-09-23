@@ -17,14 +17,11 @@ import { ThemeMenuButton } from "@hraness/design-kit/react";
 
 import { AskAiAboutThis } from "@hraness/ui";
 
-function TopicIcon({ slug }: Readonly<{ slug: string }>) {
-  // Decorative local SVG; next/image cannot optimize vector sources.
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img className="wordcell-topic-icon" src={`/icons/${slug}.svg`} alt="" aria-hidden="true" width="88" height="88" loading="lazy" decoding="async" />
-  );
+function TopicIcon({ slug }: Readonly<{ slug: WordcellIconName }>) {
+  return <WordcellIcon className="wordcell-topic-icon" name={slug} />;
 }
 
+import { WordcellIcon, type WordcellIconName } from "../../wordcell/icons";
 import { publishedRelease } from "../publication";
 import { WordcellContentFooter } from "../site-footer";
 
@@ -264,7 +261,7 @@ wordcell --help`}</code></pre>
                 summary: "Search, context, history, and validation from a terminal or script.",
                 example: (
                   <>
-                    <TopicIcon slug="cli" />
+                    <WordcellIcon className="wordcell-topic-icon" name="cli" />
                     <pre tabIndex={0}><code>{`wordcell context packages/parser/src/index.ts \\
   --root kb --repo .`}</code></pre>
                   </>
@@ -275,7 +272,7 @@ wordcell --help`}</code></pre>
                 summary: "Open a read-only session over one vault scan and compose bounded workflows.",
                 example: (
                   <>
-                    <TopicIcon slug="sdk" />
+                    <WordcellIcon className="wordcell-topic-icon" name="sdk" />
                     <pre tabIndex={0}><code>{`import { openKnowledgeBase } from "@hraness/wordcell/sdk";
 
 const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
@@ -287,7 +284,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
                 summary: "Give your agent instructions for finding and maintaining saved context.",
                 example: (
                   <>
-                    <TopicIcon slug="agent-skill" />
+                    <WordcellIcon className="wordcell-topic-icon" name="agent-skill" />
                     {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <pre tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>}
                     <p className="interface-link"><a href={`${repository}/blob/main/skills/wordcell/SKILL.md`}>Inspect the packaged skill</a></p>
                   </>

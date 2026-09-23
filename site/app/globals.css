@@ -241,8 +241,8 @@ a { text-underline-offset: 0.2em; }
   color: var(--hraness-material-ink);
 }
 
-/* Decorative topic icons (agent-generated line art, public/icons/). */
-.wordcell-topic-icon { display: block; width: 88px; height: 88px; margin: 0 0 18px; }
+/* Decorative topic icons (hand-drawn strokes, wordcell/icons.tsx). */
+.wordcell-topic-icon { display: block; width: 44px; height: 44px; margin: 0 0 16px; color: var(--primary); opacity: .88; }
 
 /* Product evidence stays readable in both palettes and at narrow widths. */
 .wordcell-measurement {

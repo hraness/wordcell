@@ -15,17 +15,10 @@ import { ThemeMenuButton } from "@hraness/design-kit/react";
 
 import { AskAiAboutThis } from "@hraness/ui";
 
-function TopicIcon({ slug }: Readonly<{ slug: string }>) {
-  // Decorative local SVG; next/image cannot optimize vector sources.
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img className="wordcell-topic-icon" src={`/icons/${slug}.svg`} alt="" aria-hidden="true" width="88" height="88" loading="lazy" decoding="async" />
-  );
-}
-
 import { publishedRelease } from "./publication";
 import { WordcellContentFooter } from "./site-footer";
 import { WordcellField } from "../wordcell/field";
+import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { readmeLead, readmeTitle } from "./readme.generated";
 
 const releaseVersion = publishedRelease?.version;
@@ -199,6 +192,7 @@ export default function Home() {
       <main id="main" tabIndex={-1}>
         <MarketingPage>
           <div className="hraness-material-wall">
+          <WordcellField />
           <ProductHero
             align="start"
             actions={[
@@ -213,10 +207,6 @@ export default function Home() {
             name=""
             summary={readmeLead}
           />
-          <div className="wordcell-field-band">
-            <WordcellField />
-            <p className="wordcell-field-caption">One vault: decisions, sources, plans, and concepts — linked.</p>
-          </div>
           </div>
 
           <MarketingInstallPanel
@@ -256,7 +246,7 @@ wordcell search "parser retries" --root kb --mode exact`}</code></pre>
             headingId="model-title"
             id="model"
             items={primitives.map((primitive) => ({
-              example: <TopicIcon slug={primitive.icon} />,
+              example: <WordcellIcon className="wordcell-topic-icon" name={primitive.icon as WordcellIconName} />,
               label: primitive.label,
               summary: primitive.summary,
             }))}
@@ -371,7 +361,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 summary: "Search, capture, link, and validate from a terminal or a script.",
                 example: (
                   <>
-                    <TopicIcon slug="cli" />
+                    <WordcellIcon className="wordcell-topic-icon" name="cli" />
                     <pre tabIndex={0}><code>{`wordcell search "parser retries" \\
   --root kb --mode exact --history --repo .`}</code></pre>
                   </>
@@ -382,7 +372,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 summary: "Open a read-only session over one vault scan and compose bounded workflows.",
                 example: (
                   <>
-                    <TopicIcon slug="sdk" />
+                    <WordcellIcon className="wordcell-topic-icon" name="sdk" />
                     <pre tabIndex={0}><code>{`import { openKnowledgeBase } from "@hraness/wordcell/sdk";
 
 const session = await openKnowledgeBase({ root: "kb" });
@@ -395,7 +385,7 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
                 summary: "Give your agent instructions for finding and maintaining saved context.",
                 example: (
                   <>
-                    <TopicIcon slug="agent-skill" />
+                    <WordcellIcon className="wordcell-topic-icon" name="agent-skill" />
                     {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <pre tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>}
                     <p className="interface-link"><a href={`${repository}/blob/main/skills/wordcell/SKILL.md`}>Inspect the packaged skill</a></p>
                   </>
