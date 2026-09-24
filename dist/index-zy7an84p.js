@@ -113,6 +113,175 @@ function portfolioDocumentIdentity(vault, path, metadata) {
   });
 }
 
+// src/mention-index.ts
+var MENTION_INDEX_LIMITS = {
+  maxNodes: 262144,
+  maxWork: 64 * 1024 * 1024,
+  maxMatches: 1e6,
+  maxInputCodeUnits: 256 * 1024 * 1024
+};
+
+class MentionIndexBudgetError extends RangeError {
+  kind;
+  limit;
+  constructor(kind, limit) {
+    super(`Vault analysis exceeds the ${limit} ${kind} limit.`);
+    this.kind = kind;
+    this.limit = limit;
+  }
+}
+function checkedLimits(options) {
+  const limits = { ...MENTION_INDEX_LIMITS };
+  for (const name of Object.keys(MENTION_INDEX_LIMITS)) {
+    const value = options[name] ?? MENTION_INDEX_LIMITS[name];
+    if (!Number.isSafeInteger(value) || value < 0 || value > MENTION_INDEX_LIMITS[name]) {
+      throw new RangeError(`${name} must be a safe integer from 0 through ${MENTION_INDEX_LIMITS[name]}.`);
+    }
+    limits[name] = value;
+  }
+  return limits;
+}
+function preflightMentionInput(inputs, options) {
+  const limits = checkedLimits(options);
+  let rawInputCodeUnits = 0, work = 0;
+  for (const input of inputs) {
+    rawInputCodeUnits += input.length;
+    if (rawInputCodeUnits > limits.maxInputCodeUnits)
+      throw new MentionIndexBudgetError("mention-input-code-units", limits.maxInputCodeUnits);
+    work += input.length + 1;
+    if (work > limits.maxWork)
+      throw new MentionIndexBudgetError("mention-index-work", limits.maxWork);
+  }
+  return { rawInputCodeUnits, work };
+}
+function cleanMentionBoundary(text, phrase, offset) {
+  const word = (value) => /[A-Za-z0-9]/.test(value);
+  return (!word(phrase[0] ?? "") || !word(text[offset - 1] ?? "")) && (!word(phrase.at(-1) ?? "") || !word(text[offset + phrase.length] ?? ""));
+}
+
+class MentionMatcher {
+  limits;
+  nodes = [];
+  work = 0;
+  matches = 0;
+  input = 0;
+  constructor(patterns, options = {}, rawInputCodeUnits = 0, preflightWork = 0) {
+    this.limits = checkedLimits(options);
+    if (!Number.isSafeInteger(preflightWork) || preflightWork < 0)
+      throw new RangeError("Invalid mention preflight work.");
+    if (preflightWork > this.limits.maxWork)
+      this.fail("mention-index-work", this.limits.maxWork);
+    this.work = preflightWork;
+    if (!Number.isSafeInteger(rawInputCodeUnits) || rawInputCodeUnits < 0)
+      throw new RangeError("Invalid mention input length.");
+    if (rawInputCodeUnits > this.limits.maxInputCodeUnits)
+      this.fail("mention-input-code-units", this.limits.maxInputCodeUnits);
+    this.node();
+    for (const pattern of patterns) {
+      this.inputUnits(pattern.lowerPhrase.length);
+      let state = 0;
+      for (let index = 0;index < pattern.lowerPhrase.length; index += 1) {
+        this.step();
+        const character = pattern.lowerPhrase.charCodeAt(index);
+        let next = this.nodes[state].next.get(character);
+        if (next === undefined) {
+          next = this.node();
+          this.nodes[state].next.set(character, next);
+        }
+        state = next;
+      }
+      if (pattern.lowerPhrase.length === 0 || this.nodes[state].pattern !== undefined) {
+        throw new TypeError("Mention index requires nonempty, uniquely owned normalized phrases.");
+      }
+      this.nodes[state].pattern = pattern;
+    }
+    const queue = [...this.nodes[0].next.values()];
+    for (let cursor = 0;cursor < queue.length; cursor += 1) {
+      const state = queue[cursor];
+      for (const [character, child] of this.nodes[state].next) {
+        this.step();
+        let fallback = this.nodes[state].failure;
+        while (fallback !== 0 && !this.nodes[fallback].next.has(character)) {
+          this.step();
+          fallback = this.nodes[fallback].failure;
+        }
+        const failure = this.nodes[fallback].next.get(character) ?? 0;
+        this.nodes[child].failure = failure;
+        this.nodes[child].output = this.nodes[failure].pattern === undefined ? this.nodes[failure].output : failure;
+        queue.push(child);
+      }
+    }
+  }
+  fail(kind, limit) {
+    throw new MentionIndexBudgetError(kind, limit);
+  }
+  step() {
+    if (this.work >= this.limits.maxWork)
+      this.fail("mention-index-work", this.limits.maxWork);
+    this.work += 1;
+  }
+  node() {
+    if (this.nodes.length >= this.limits.maxNodes)
+      this.fail("mention-index-nodes", this.limits.maxNodes);
+    this.nodes.push({ next: new Map, failure: 0, output: -1, pattern: undefined });
+    return this.nodes.length - 1;
+  }
+  inputUnits(count) {
+    this.input += count;
+    if (this.input > this.limits.maxInputCodeUnits)
+      this.fail("mention-input-code-units", this.limits.maxInputCodeUnits);
+  }
+  newlineOffsets(originalText) {
+    const offsets = [];
+    for (let index = 0;index < originalText.length; index += 1) {
+      this.step();
+      if (originalText.charCodeAt(index) === 10)
+        offsets.push(index);
+    }
+    return offsets;
+  }
+  lineAt(offsets, offset) {
+    let low = 0, high = offsets.length;
+    while (low < high) {
+      this.step();
+      const middle = low + Math.floor((high - low) / 2);
+      if (offsets[middle] < offset)
+        low = middle + 1;
+      else
+        high = middle;
+    }
+    return low + 1;
+  }
+  scan(lowerText) {
+    this.inputUnits(lowerText.length);
+    const result = new Map;
+    let state = 0;
+    for (let index = 0;index < lowerText.length; index += 1) {
+      this.step();
+      const character = lowerText.charCodeAt(index);
+      while (state !== 0 && !this.nodes[state].next.has(character)) {
+        this.step();
+        state = this.nodes[state].failure;
+      }
+      state = this.nodes[state].next.get(character) ?? 0;
+      let output = this.nodes[state].pattern === undefined ? this.nodes[state].output : state;
+      while (output !== -1) {
+        if (this.matches >= this.limits.maxMatches)
+          this.fail("mention-matches", this.limits.maxMatches);
+        this.matches += 1;
+        const pattern = this.nodes[output].pattern;
+        const offset = index + 1 - pattern.lowerPhrase.length;
+        const existing = result.get(pattern.targetId);
+        if (cleanMentionBoundary(lowerText, pattern.lowerPhrase, offset) && (existing === undefined || pattern.rank < existing.pattern.rank)) {
+          result.set(pattern.targetId, { pattern, offset });
+        }
+        output = this.nodes[output].output;
+      }
+    }
+    return result;
+  }
+}
+
 // src/graph.ts
 var catalogStart = "<!-- kb:catalog:start -->";
 var catalogEnd = "<!-- kb:catalog:end -->";
@@ -722,16 +891,10 @@ function compareRelationIssues(left, right) {
   const targetComparison = (left.target ?? "").localeCompare(right.target ?? "");
   return left.source.localeCompare(right.source) || left.line - right.line || left.kind.localeCompare(right.kind) || predicateComparison || targetComparison;
 }
-var wordCharacter = (value) => /[A-Za-z0-9]/.test(value);
 function phraseOffset(lowerHaystack, lowerPhrase) {
   let offset = lowerHaystack.indexOf(lowerPhrase);
   while (offset !== -1) {
-    const before = offset === 0 ? "" : lowerHaystack[offset - 1] ?? "";
-    const afterIndex = offset + lowerPhrase.length;
-    const after = afterIndex >= lowerHaystack.length ? "" : lowerHaystack[afterIndex] ?? "";
-    const startsClean = !wordCharacter(lowerPhrase[0] ?? "") || !wordCharacter(before);
-    const endsClean = !wordCharacter(lowerPhrase.at(-1) ?? "") || !wordCharacter(after);
-    if (startsClean && endsClean)
+    if (cleanMentionBoundary(lowerHaystack, lowerPhrase, offset))
       return offset;
     offset = lowerHaystack.indexOf(lowerPhrase, offset + 1);
   }
@@ -777,6 +940,19 @@ function checkedAnalysisLimit(value, hardMaximum, option) {
   return limit;
 }
 function analyzeVault(notes, options = {}) {
+  return analyzeVaultInternal(notes, options);
+}
+function analyzeVaultComplete(notes, options = {}) {
+  try {
+    return analyzeVaultInternal(notes, options, options.mentionIndexLimits ?? {});
+  } catch (error) {
+    if (error instanceof MentionIndexBudgetError) {
+      throw new VaultAnalysisBudgetError(error.kind, error.limit, error.message);
+    }
+    throw error;
+  }
+}
+function analyzeVaultInternal(notes, options, mentionIndexLimits) {
   const maxNotes = checkedAnalysisLimit(options.maxNotes, MAX_ANALYZED_NOTES, "maxNotes");
   const maxMentionPairs = checkedAnalysisLimit(options.maxMentionPairs, MAX_MENTION_PAIRS, "maxMentionPairs");
   const maxMentions = checkedAnalysisLimit(options.maxMentions, MAX_MENTIONS, "maxMentions");
@@ -784,6 +960,13 @@ function analyzeVault(notes, options = {}) {
   if (notes.length > maxNotes) {
     throw new VaultAnalysisBudgetError("notes", maxNotes, `Vault analysis exceeds the ${maxNotes} note limit.`);
   }
+  const mentionInput = mentionIndexLimits === undefined ? undefined : preflightMentionInput(function* () {
+    for (const note of notes) {
+      yield note.searchableText;
+      yield note.title;
+      yield* note.aliases;
+    }
+  }(), mentionIndexLimits);
   const catalogNoteId = withoutMarkdownExtension(normalizeVaultPath(options.catalogNoteId ?? "index"));
   const byId = new Map(notes.map((note) => [note.id, note]));
   const byBasename = new Map;
@@ -953,7 +1136,39 @@ function analyzeVault(notes, options = {}) {
   const phrasesByTarget = scopedMentionNotes.length === 0 ? new Map : uniquePhrasesByTarget(suggestionNotes);
   const mentions = [];
   let mentionPairs = 0;
+  const matcher = mentionIndexLimits === undefined ? undefined : new MentionMatcher([...phrasesByTarget].flatMap(([targetId, phrases]) => phrases.map((phrase, rank) => ({ ...phrase, targetId, rank }))), mentionIndexLimits, mentionInput.rawInputCodeUnits, mentionInput.work);
+  const targetsById = new Map;
+  if (matcher !== undefined)
+    suggestionNotes.forEach((note, order) => {
+      const targets = targetsById.get(note.id) ?? [];
+      targets.push({ note, order });
+      targetsById.set(note.id, targets);
+    });
   for (const source of suggestionNotes) {
+    if (matcher !== undefined) {
+      if (scopedMentionNotes.length === 0)
+        continue;
+      const found = matcher.scan(source.searchableText.toLocaleLowerCase("en-US"));
+      const targets2 = [...found].flatMap(([id, match]) => (targetsById.get(id) ?? []).map((target) => ({ ...target, match }))).filter(({ note }) => source.id !== note.id && (options.mentionScope === undefined || scopedMentionIds.has(source.id) || scopedMentionIds.has(note.id))).sort((left, right) => left.order - right.order);
+      let newlineOffsets;
+      for (const { note: target, match } of targets2) {
+        if (mentionPairs >= maxMentionPairs)
+          throw new VaultAnalysisBudgetError("mention-pairs", maxMentionPairs, `Vault analysis exceeds the ${maxMentionPairs} mention-pair limit.`);
+        mentionPairs += 1;
+        if (linkedPairs.has(pairKey(source.id, target.id)))
+          continue;
+        if (mentions.length >= maxMentions)
+          throw new VaultAnalysisBudgetError("mentions", maxMentions, `Vault analysis exceeds the ${maxMentions} mention limit.`);
+        newlineOffsets ??= matcher.newlineOffsets(source.searchableText);
+        mentions.push({
+          source: source.path,
+          target: target.path,
+          phrase: match.pattern.phrase,
+          line: matcher.lineAt(newlineOffsets, match.offset)
+        });
+      }
+      continue;
+    }
     const targets = options.mentionScope === undefined || scopedMentionIds.has(source.id) ? suggestionNotes : scopedMentionNotes;
     let lowerSearchableText;
     for (const target of targets) {
@@ -1066,4 +1281,4 @@ function replaceCatalog(indexContent, catalog) {
   return indexContent.slice(0, start) + catalog + indexContent.slice(end + catalogEnd.length);
 }
 
-export { MAX_PORTFOLIO_NAME_BYTES, MAX_DOCUMENT_ID_BYTES, portfolioVaultIdentity, parseVaultKey, parseDocumentId, documentIdState, formatQualifiedDocumentUri, parseQualifiedDocumentUri, portfolioDocumentIdentity, catalogStart, catalogEnd, MAX_ANALYZED_NOTES, MAX_CONNECTION_OBSERVATIONS, MAX_MENTION_PAIRS, MAX_MENTIONS, VaultAnalysisBudgetError, metadataValueFromUnknown, isCanonicalRelationPredicate, isCanonicalNoteId, normalizeVaultPath, searchableMarkdown, wikiLinks, parseNote, lookupNote, analyzeVault, renderCatalog, replaceCatalog };
+export { MAX_PORTFOLIO_NAME_BYTES, MAX_DOCUMENT_ID_BYTES, portfolioVaultIdentity, parseVaultKey, parseDocumentId, documentIdState, formatQualifiedDocumentUri, parseQualifiedDocumentUri, portfolioDocumentIdentity, catalogStart, catalogEnd, MAX_ANALYZED_NOTES, MAX_CONNECTION_OBSERVATIONS, MAX_MENTION_PAIRS, MAX_MENTIONS, VaultAnalysisBudgetError, metadataValueFromUnknown, isCanonicalRelationPredicate, isCanonicalNoteId, normalizeVaultPath, searchableMarkdown, wikiLinks, parseNote, lookupNote, analyzeVault, analyzeVaultComplete, renderCatalog, replaceCatalog };

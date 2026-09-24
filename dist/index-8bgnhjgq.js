@@ -12,7 +12,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-bqtqeak3.js";
+} from "./index-h2qn3y3f.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -39,7 +39,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-1k595z6v.js";
+} from "./index-1r5rnkfr.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -48,7 +48,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-q7tbg07z.js";
+} from "./index-42tb8qqp.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -59,7 +59,7 @@ import {
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
   sha256EmbeddingModelFile
-} from "./index-rr9kzq4n.js";
+} from "./index-n57tewfr.js";
 import {
   MAX_RERANK_CANDIDATES
 } from "./index-j70m75wd.js";
@@ -72,25 +72,25 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-djrcc1yf.js";
+} from "./index-gtwqye5a.js";
 import {
   MAX_PERCOLATION_MENTIONS,
   MAX_PERCOLATION_MENTION_PAIRS,
   MAX_PERCOLATION_NOTES,
   MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
   percolateVault
-} from "./index-jk1sgx36.js";
+} from "./index-qdb8f8va.js";
 import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-xv80vzfp.js";
+} from "./index-f75zmmdr.js";
 import {
   validateGraphQueryRequest
-} from "./index-tf4wzjew.js";
+} from "./index-pz2b2x0y.js";
 import {
   validateSearchQuery
-} from "./index-vnybgywh.js";
+} from "./index-aer0jdrq.js";
 import {
   sanitizeTerminalLine,
   sanitizeTerminalText
@@ -100,11 +100,12 @@ import {
   MAX_PUBLISH_LIST_LIMIT,
   publishVault,
   renderPublishReportText
-} from "./index-pnt9wr59.js";
+} from "./index-xzvcw9ga.js";
 import {
-  refreshVault,
-  scanVault
-} from "./index-233z9wmn.js";
+  refreshVaultComplete,
+  scanVault,
+  scanVaultComplete
+} from "./index-8v6k9h4r.js";
 import {
   navigateLinks
 } from "./index-d13v9ckt.js";
@@ -143,12 +144,12 @@ import {
   addNoteRelation,
   createNote,
   removeNoteRelation
-} from "./index-ecqpgr5y.js";
+} from "./index-f7fnww7a.js";
 import {
   lookupNote,
   parseVaultKey,
   renderCatalog
-} from "./index-qbssx940.js";
+} from "./index-zy7an84p.js";
 
 // src/clip/url-metadata-cli.ts
 import { resolve as resolve2 } from "path";
@@ -4090,7 +4091,7 @@ async function runAgents(command, output, dependencies) {
   return errors.length === 0 ? 0 : 3;
 }
 async function runVault(command, output, dependencies) {
-  const snapshot = command.kind === "refresh" ? await (dependencies.refreshVault ?? refreshVault)(command.root, command.options) : await (dependencies.scanVault ?? scanVault)(command.root, command.options);
+  const snapshot = command.kind === "refresh" ? await (dependencies.refreshVault ?? refreshVaultComplete)(command.root, command.options) : await (dependencies.scanVault ?? (command.kind === "check" ? scanVaultComplete : scanVault))(command.root, command.options);
   if (command.kind === "refresh" || command.kind === "check") {
     const noCatalog = command.kind === "check" && command.noCatalog === true;
     const attachments = command.kind === "check" ? await (dependencies.validateMarkdownAttachments ?? validateMarkdownAttachments)({

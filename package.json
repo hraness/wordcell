@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.22.4",
+  "version": "0.22.5",
   "description": "A local Markdown knowledge base with superpowers. Save decisions, sources, and plans as files you own, then find them by exact words or, with an optional local model, by meaning.",
   "license": "MIT",
   "type": "module",
@@ -381,6 +381,7 @@
     "src/evaluation-v2.ts",
     "src/evaluation.ts",
     "src/graph.ts",
+    "src/mention-index.ts",
     "src/index.ts",
     "src/init.ts",
     "src/navigation.ts",
@@ -479,8 +480,8 @@
     "check": "bun run check:worker && bun run check:effect && bun run check:workflows && bun run check:portfolio-inventory && bun run check:installed-command-docs && bun run typecheck && bun run build && bun run test:package && bun run test && bun run url-metadata:tool:check",
     "prepack": "bun run check",
     "check:effect": "bun run scripts/check-effect-policy.ts",
-    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz wordcell search --root kb --mode exact --rerank typesafe --rerank-limit 25",
-    "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz wordcell search --root kb --mode exact",
+    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz wordcell search --root kb --mode exact --rerank typesafe --rerank-limit 25",
+    "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz wordcell search --root kb --mode exact",
     "check:worker": "tsc -p worker/tsconfig.json --noEmit"
   },
   "dependencies": {

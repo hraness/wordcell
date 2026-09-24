@@ -13,13 +13,13 @@ Install [Bun 1.3.14 or newer](https://bun.sh/docs/installation) and Git first,
 then install the pinned release archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
 wordcell --help
 ```
 
 If your shell cannot find `wordcell`, add your package manager's global
 executable directory to `PATH` and reopen the terminal. The npm mirror
-`npm install --global --ignore-scripts @hraness/wordcell@0.22.4` carries the
+`npm install --global --ignore-scripts @hraness/wordcell@0.22.5` carries the
 same bytes.
 
 ## Create the vault

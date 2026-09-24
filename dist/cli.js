@@ -5,10 +5,10 @@ import {
   parseArguments,
   runExecutable,
   usage
-} from "./index-9h7zh0wt.js";
+} from "./index-8bgnhjgq.js";
 import"./index-bcknqxrq.js";
 import"./index-054mb7d3.js";
-import"./index-bqtqeak3.js";
+import"./index-h2qn3y3f.js";
 import"./index-j4zgmzjr.js";
 import"./index-de2w8crk.js";
 import"./index-6jcz0m1c.js";
@@ -27,22 +27,22 @@ import"./index-mxxxytys.js";
 import"./index-23z4zxgg.js";
 import"./index-pj501bh1.js";
 import"./index-9rf81m0p.js";
-import"./index-1k595z6v.js";
-import"./index-q7tbg07z.js";
+import"./index-1r5rnkfr.js";
+import"./index-42tb8qqp.js";
 import"./index-adx6khj5.js";
-import"./index-rr9kzq4n.js";
+import"./index-n57tewfr.js";
 import"./index-4j3tt0c3.js";
 import"./index-j70m75wd.js";
 import"./index-b88v3vtm.js";
-import"./index-djrcc1yf.js";
-import"./index-jk1sgx36.js";
-import"./index-xv80vzfp.js";
-import"./index-tf4wzjew.js";
+import"./index-gtwqye5a.js";
+import"./index-qdb8f8va.js";
+import"./index-f75zmmdr.js";
+import"./index-pz2b2x0y.js";
 import"./index-1gwbassd.js";
-import"./index-vnybgywh.js";
+import"./index-aer0jdrq.js";
 import"./index-1xxnjn0d.js";
-import"./index-pnt9wr59.js";
-import"./index-233z9wmn.js";
+import"./index-xzvcw9ga.js";
+import"./index-8v6k9h4r.js";
 import"./index-d13v9ckt.js";
 import"./index-48pz4jpc.js";
 import"./index-06c9ctr6.js";
@@ -52,16 +52,16 @@ import"./index-23m6bbjt.js";
 import"./index-hya40gb2.js";
 import"./index-5vwpzb5a.js";
 import"./index-x3fthpsc.js";
-import"./index-ecqpgr5y.js";
+import"./index-f7fnww7a.js";
 import"./index-3rm7cz6h.js";
-import"./index-qbssx940.js";
+import"./index-zy7an84p.js";
 import {
   __require
 } from "./index-z1w83f81.js";
 
 // src/cli.ts
 if (import.meta.main) {
-  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-m3t917ev.js");
+  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-jf9v10j7.js");
   const env = standaloneSupportEnvironment();
   const args = process.argv.slice(2);
   if (args[0] === "support") {

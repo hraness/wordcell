@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.22.5
+
+`wordcell check` and `wordcell refresh` now find unlinked mentions through a
+phrase index, so sparse vaults can grow beyond the previous all-pairs limit.
+Results retain the same phrase selection, ordering, and line numbers. Complete
+scans enforce explicit input, index, work, and result limits and fail without
+returning partial results. SDK callers can opt in with `analyzeVaultComplete`,
+`scanVaultComplete`, and `refreshVaultComplete`; existing APIs keep their
+current limits.
+
 ## 0.22.4
 
 Published search excerpts show readable article text and link labels, with

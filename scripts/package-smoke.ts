@@ -68,6 +68,8 @@ const importSpecifiers = [
   "@hraness/wordcell/workflows/plan-radar",
 ];
 const baselineRequiredNamedExports = {
+  "@hraness/wordcell": ["analyzeVaultComplete", "scanVaultComplete", "refreshVaultComplete"],
+  "@hraness/wordcell/graph": ["analyzeVaultComplete"],
   "@hraness/wordcell/rerank": ["applyRerank"],
   "@hraness/wordcell/rerank-typesafe": ["createTypeSafeReranker"],
   "@hraness/wordcell/graph-authority": ["openGraphAuthority", "queryGraph", "rebuildGraph", "verifyGraph"],
@@ -693,8 +695,8 @@ try {
   const requiresOhAdoptionPreparer = requiresOhAdoptionPreparerExport(sourceManifest.version);
   const requiredNamedExports = requiresOhAdoptionPreparer
     ? {
-        "@hraness/wordcell": ["createOhAdoptionPreparerV1"],
         ...baselineRequiredNamedExports,
+        "@hraness/wordcell": ["createOhAdoptionPreparerV1", ...baselineRequiredNamedExports["@hraness/wordcell"]],
       }
     : baselineRequiredNamedExports;
   const inventory = await inspectPackageArtifact(archive);

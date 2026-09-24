@@ -56,7 +56,7 @@ missing:
 ```sh
 command -v wordcell >/dev/null 2>&1 || {
   command -v bun >/dev/null 2>&1 || exit 1
-  bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz
+  bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
 }
 wordcell --help
 ```

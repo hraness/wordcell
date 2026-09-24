@@ -6,6 +6,7 @@ import {
   MAX_MENTION_PAIRS,
   VaultAnalysisBudgetError,
   analyzeVault,
+  analyzeVaultComplete,
   catalogEnd,
   catalogStart,
   isCanonicalNoteId,
@@ -18,7 +19,7 @@ import {
   replaceCatalog,
   searchableMarkdown,
   wikiLinks
-} from "./index-qbssx940.js";
+} from "./index-zy7an84p.js";
 import"./index-z1w83f81.js";
 export {
   wikiLinks,
@@ -33,6 +34,7 @@ export {
   isCanonicalNoteId,
   catalogStart,
   catalogEnd,
+  analyzeVaultComplete,
   analyzeVault,
   VaultAnalysisBudgetError,
   MAX_MENTION_PAIRS,
