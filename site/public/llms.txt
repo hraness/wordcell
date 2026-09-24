@@ -13,6 +13,7 @@ When to use this site:
   AGENTS.md rules, Git history, and the Agent Skill.
 - Use /docs for the documentation: a tutorial, how-to guides, the command
   reference, and design explanations.
+- Use /blog for longer posts on why Wordcell works the way it does.
 
 ## Pages
 
@@ -39,6 +40,15 @@ When to use this site:
   Memory, Obsidian, and Wordcell from primary sources.
 - [Evidence](https://wordcell.io/docs/evidence): The reproducible
   context-payload study.
+
+## Blog
+
+- [Wordcell blog](https://wordcell.io/blog): Posts on how Wordcell keeps
+  Markdown as the record and how it works with other Hraness tools. Atom feed:
+  https://wordcell.io/blog/feed.xml
+- [Introducing Wordcell](https://wordcell.io/blog/introducing-wordcell): Who
+  Wordcell suits, one saved rule traced to a cited search and graph answer,
+  and its limits.
 
 ## Source material
 

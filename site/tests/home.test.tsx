@@ -5,6 +5,8 @@ import Home from "../app/page";
 import Developers from "../app/developers/page";
 import Docs from "../app/docs/page";
 import DocPage, { generateMetadata as docMetadata } from "../app/docs/[slug]/page";
+import BlogIndex from "../app/blog/page";
+import BlogPostPage from "../app/blog/[slug]/page";
 import { docCatalog, docQuadrants } from "../app/docs/catalog";
 import { docHtml } from "../app/docs/docs.generated";
 import { readmeVersion } from "../app/readme.generated";
@@ -20,13 +22,16 @@ async function publicRoutes(): Promise<React.JSX.Element[]> {
     <Developers key="developers" />,
     await DocPage({ params: Promise.resolve({ slug: "reference" }) }),
     await DocPage({ params: Promise.resolve({ slug: "overview" }) }),
+    <BlogIndex key="blog" />,
+    await BlogPostPage({ params: Promise.resolve({ slug: "introducing-wordcell" }) }),
   ];
 }
 
 test("every public route has the in-flow content footer above the network footer", async () => {
   for (const Page of await publicRoutes()) {
     const html = renderToStaticMarkup(<RootLayout>{Page}</RootLayout>);
-    expect(html.match(/<footer\b/gu)).toHaveLength(2);
+    // An article's own sources footer is part of the article, not page chrome.
+    expect(html.match(/<footer\b(?![^>]*plain-publication__article-footer)/gu)).toHaveLength(2);
     const contentFooter = html.indexOf('data-hraness-marketing="footer"');
     const networkFooter = html.indexOf('data-slot="hraness-site-footer"');
     expect(contentFooter).toBeGreaterThan(-1);
