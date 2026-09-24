@@ -20,8 +20,13 @@ export type MentionIndexBudgetKind =
   | "mention-input-code-units";
 
 export class MentionIndexBudgetError extends RangeError {
-  constructor(readonly kind: MentionIndexBudgetKind, readonly limit: number) {
+  readonly kind: MentionIndexBudgetKind;
+  readonly limit: number;
+
+  constructor(kind: MentionIndexBudgetKind, limit: number) {
     super(`Vault analysis exceeds the ${limit} ${kind} limit.`);
+    this.kind = kind;
+    this.limit = limit;
   }
 }
 
