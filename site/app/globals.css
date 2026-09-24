@@ -236,6 +236,10 @@ a { text-underline-offset: 0.2em; }
   [data-hraness-material="lantern"] .hraness-marketing-header.hraness-material-chrome {
     position: relative;
   }
+  /* A wrapped install action keeps the appearance menu against the page edge. */
+  .hraness-marketing-header__actions {
+    margin-inline-start: auto;
+  }
 }
 [data-hraness-marketing-preset="editorial"] .hraness-material-wall > .hraness-marketing-hero {
   padding-inline: var(--hraness-marketing-gutter);
