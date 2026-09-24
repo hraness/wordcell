@@ -72,15 +72,15 @@
     --hraness-pattern-size: var(--hraness-pattern-cells-size, 48rem 48rem);
   }
   [data-hraness-pattern="weave"] {
-    --hraness-pattern-image: repeating-conic-gradient(from 45deg, color-mix(in oklch, var(--primary, var(--ui-primary, CanvasText)) 5%, transparent) 0% 25%, transparent 0% 50%);
+    --hraness-pattern-image: repeating-conic-gradient(from 45deg, color-mix(in srgb, var(--primary, var(--ui-primary, CanvasText)) 5%, transparent) 0% 25%, transparent 0% 50%);
     --hraness-pattern-size: 1.5rem 1.5rem;
   }
   [data-hraness-pattern="contour"] {
-    --hraness-pattern-image: repeating-radial-gradient(ellipse at 24% 62%, transparent 0 2.2rem, color-mix(in oklch, var(--primary, var(--ui-primary, CanvasText)) 9%, transparent) 2.25rem 2.3rem, transparent 2.35rem 4.4rem);
+    --hraness-pattern-image: repeating-radial-gradient(ellipse at 24% 62%, transparent 0 2.2rem, color-mix(in srgb, var(--primary, var(--ui-primary, CanvasText)) 9%, transparent) 2.25rem 2.3rem, transparent 2.35rem 4.4rem);
     --hraness-pattern-size: 100% 100%;
   }
   [data-hraness-pattern="mesh"] {
-    --hraness-pattern-image: radial-gradient(circle at center, color-mix(in oklch, var(--primary, var(--ui-primary, CanvasText)) 18%, transparent) 1px, transparent 1.5px);
+    --hraness-pattern-image: radial-gradient(circle at center, color-mix(in srgb, var(--primary, var(--ui-primary, CanvasText)) 18%, transparent) 1px, transparent 1.5px);
     --hraness-pattern-size: 1.5rem 1.5rem;
   }
   [data-hraness-pattern="none"] {
@@ -118,7 +118,7 @@
     --hraness-marketing-frame-radius: 1.125rem;
     --hraness-marketing-section-space: var(--hraness-marketing-story-space);
     --hraness-marketing-action-height: 2.625rem;
-    --hraness-marketing-line: color-mix(in oklch, var(--hraness-marketing-ink) 5%, transparent);
+    --hraness-marketing-line: color-mix(in srgb, var(--hraness-marketing-ink) 5%, transparent);
     --hraness-marketing-chrome-rule: 1px solid transparent;
     --hraness-marketing-shadow: var(--hraness-marketing-terminal-shadow);
     --hraness-marketing-frame-chrome: var(--hraness-marketing-terminal-chrome);
@@ -226,7 +226,7 @@
     .hraness-marketing-header-surface,
     :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]):where(.hraness-marketing-header, .hraness-marketing-header-surface),
     :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) :where(.hraness-marketing-header, .hraness-marketing-header-surface) {
-      --hraness-marketing-header-background: color-mix(in oklch, var(--background, Canvas) 82%, transparent);
+      --hraness-marketing-header-background: color-mix(in srgb, var(--background, Canvas) 82%, transparent);
       --hraness-marketing-header-backdrop: blur(14px) saturate(1.4);
       -webkit-backdrop-filter: var(--hraness-marketing-header-backdrop);
     }
@@ -235,7 +235,7 @@
     .hraness-marketing-header-surface,
     :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]):where(.hraness-marketing-header, .hraness-marketing-header-surface),
     :is([data-hraness-marketing-preset="editorial"], [data-hraness-marketing-preset="minimal"]) :where(.hraness-marketing-header, .hraness-marketing-header-surface) {
-      --hraness-marketing-header-background: color-mix(in oklch, var(--background, Canvas) 82%, transparent);
+      --hraness-marketing-header-background: color-mix(in srgb, var(--background, Canvas) 82%, transparent);
       --hraness-marketing-header-backdrop: blur(14px) saturate(1.4);
       backdrop-filter: var(--hraness-marketing-header-backdrop);
     }

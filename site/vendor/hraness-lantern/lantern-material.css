@@ -1,5 +1,7 @@
 /* Lantern is an opt-in material, independent of palette and typography.
- * All paint is deterministic CSS. No texture is placed over meaningful content. */
+ * All paint is deterministic CSS. No texture is placed over meaningful content.
+ * Opacity-only mixes use sRGB to preserve the source hue. Perceptual blends
+ * between two colored paints continue to use OKLCH. */
 @layer base {
   [data-hraness-material="lantern"] {
     --hraness-material-module: 6rem;
@@ -34,15 +36,15 @@
     --hraness-pattern-size: var(--hraness-pattern-cells-size, 48rem 48rem);
   }
   [data-hraness-pattern="weave"] {
-    --hraness-pattern-image: repeating-conic-gradient(from 45deg, color-mix(in oklch, var(--primary, var(--ui-primary, CanvasText)) 5%, transparent) 0% 25%, transparent 0% 50%);
+    --hraness-pattern-image: repeating-conic-gradient(from 45deg, color-mix(in srgb, var(--primary, var(--ui-primary, CanvasText)) 5%, transparent) 0% 25%, transparent 0% 50%);
     --hraness-pattern-size: 1.5rem 1.5rem;
   }
   [data-hraness-pattern="contour"] {
-    --hraness-pattern-image: repeating-radial-gradient(ellipse at 24% 62%, transparent 0 2.2rem, color-mix(in oklch, var(--primary, var(--ui-primary, CanvasText)) 9%, transparent) 2.25rem 2.3rem, transparent 2.35rem 4.4rem);
+    --hraness-pattern-image: repeating-radial-gradient(ellipse at 24% 62%, transparent 0 2.2rem, color-mix(in srgb, var(--primary, var(--ui-primary, CanvasText)) 9%, transparent) 2.25rem 2.3rem, transparent 2.35rem 4.4rem);
     --hraness-pattern-size: 100% 100%;
   }
   [data-hraness-pattern="mesh"] {
-    --hraness-pattern-image: radial-gradient(circle at center, color-mix(in oklch, var(--primary, var(--ui-primary, CanvasText)) 18%, transparent) 1px, transparent 1.5px);
+    --hraness-pattern-image: radial-gradient(circle at center, color-mix(in srgb, var(--primary, var(--ui-primary, CanvasText)) 18%, transparent) 1px, transparent 1.5px);
     --hraness-pattern-size: 1.5rem 1.5rem;
   }
   [data-hraness-pattern="none"] {
@@ -86,14 +88,14 @@
   }
   @supports (-webkit-backdrop-filter: blur(1px)) {
     :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-chrome) {
-      --hraness-material-chrome-paint: color-mix(in oklch, var(--surface, var(--ui-background, Canvas)) 90%, transparent);
+      --hraness-material-chrome-paint: color-mix(in srgb, var(--surface, var(--ui-background, Canvas)) 90%, transparent);
       --hraness-material-chrome-blur: blur(20px) saturate(1.1);
       -webkit-backdrop-filter: var(--hraness-material-chrome-blur);
     }
   }
   @supports (backdrop-filter: blur(1px)) {
     :where([data-hraness-material="lantern"], [data-hraness-material="lantern"] *):is(.hraness-material-chrome) {
-      --hraness-material-chrome-paint: color-mix(in oklch, var(--surface, var(--ui-background, Canvas)) 90%, transparent);
+      --hraness-material-chrome-paint: color-mix(in srgb, var(--surface, var(--ui-background, Canvas)) 90%, transparent);
       --hraness-material-chrome-blur: blur(20px) saturate(1.1);
       backdrop-filter: var(--hraness-material-chrome-blur);
     }
@@ -107,8 +109,8 @@
     background-image: var(--hraness-material-wall-images,
       var(--hraness-material-wall-grain, none),
       var(--hraness-pattern-image, var(--hraness-material-wall-cells, var(--hraness-pattern-cells))),
-      radial-gradient(ellipse at var(--hraness-hero-light-x, 68%) var(--hraness-hero-light-y, 32%), color-mix(in oklch, var(--hraness-material-warm) 22%, transparent), transparent 68%),
-      linear-gradient(110deg, color-mix(in oklch, var(--hraness-material-cool) 14%, transparent), transparent 38%, rgb(255 255 255 / 0.04) 65%, transparent));
+      radial-gradient(ellipse at var(--hraness-hero-light-x, 68%) var(--hraness-hero-light-y, 32%), color-mix(in srgb, var(--hraness-material-warm) 22%, transparent), transparent 68%),
+      linear-gradient(110deg, color-mix(in srgb, var(--hraness-material-cool) 14%, transparent), transparent 38%, rgb(255 255 255 / 0.04) 65%, transparent));
     background-size: 64px 64px, var(--hraness-pattern-size, var(--hraness-material-wall-cell-size, var(--hraness-material-module)) var(--hraness-material-wall-cell-size, var(--hraness-material-module))), 100% 100%, 100% 100%;
     background-position: 0 0, center top, center top, center top;
     color: var(--hraness-material-ink);
