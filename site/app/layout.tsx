@@ -3,7 +3,7 @@ import { getDesignPaletteTheme } from "@hraness/design-kit";
 import { DesignPaletteProvider, ThemeColorSync } from "@hraness/design-kit/react";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import { supportProfile } from "../../src/support-profile";
-import { readmeLead } from "./readme.generated";
+import { siteDescription } from "./site-description";
 import { FoilController } from "./foil-controller";
 import "./globals.css";
 
@@ -11,7 +11,7 @@ import "./globals.css";
 const initialPalette = getDesignPaletteTheme("gruvbox", "light");
 
 const title = "Wordcell: the Markdown knowledge base with superpowers";
-const description = readmeLead;
+const description = siteDescription;
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wordcell.io"),

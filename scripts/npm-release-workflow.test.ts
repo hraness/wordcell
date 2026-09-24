@@ -383,7 +383,7 @@ describe("npm release workflows", () => {
     };
     expect(manifest).toEqual(expect.objectContaining({
       version: "0.22.4",
-      description: "A local Markdown knowledge base with superpowers. Save decisions, sources, and plans as files you own, then recover them through exact and semantic search, typed relationships, backlinks, and Git history.",
+      description: expect.any(String),
       keywords: [
         "knowledge-base",
         "coding-agents",
@@ -403,6 +403,8 @@ describe("npm release workflows", () => {
         "typescript-sdk",
       ],
     }));
+    // Pin the identity and the README alignment, not the sentence itself.
+    expect(String(manifest.description)).toContain("Markdown knowledge base");
     const opening = readme.slice(0, 1_500).replace(/\s+/gu, " ").toLowerCase();
     expect(opening).toContain(String(manifest.description).toLowerCase());
     for (const link of [

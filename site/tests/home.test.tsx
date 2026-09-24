@@ -71,7 +71,7 @@ test("the homepage's maker answer attributes Wordcell to Hraness", () => {
 test("the homepage leads with the README identity and the verified install command", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
-  expect(html).toContain("The Markdown knowledge base with superpowers");
+  expect(html).toMatch(/<h1\b[^>]*>[^<]*Markdown knowledge base[^<]*<\/h1>/u);
   if (publishedRelease === null) {
     expect(html).toContain("First Wordcell release in preparation");
     expect(html).not.toContain(".tgz");
@@ -213,10 +213,11 @@ test("keeps decision claims, privacy limits, and evidence visible with the quick
 test("unreleased publishing is labeled and source docs do not silently pretend to be an older release", () => {
   const docs = renderToStaticMarkup(<Docs />);
   if (publishedRelease !== null && publishedRelease.version !== readmeVersion) {
-    expect(docs).toContain(`Documentation preview for v${readmeVersion}`);
-    expect(docs).toContain(`Installation examples use verified v${publishedRelease.version}`);
+    expect(docs).toContain('class="release-preview"');
+    expect(docs).toContain(`These docs describe v${readmeVersion}`);
+    expect(docs).toContain(`The install commands use v${publishedRelease.version}`);
   } else {
-    expect(docs).not.toContain("Documentation preview for v");
+    expect(docs).not.toContain('class="release-preview"');
   }
   if (publishedRelease?.version.startsWith("0.21.")) {
     const home = renderToStaticMarkup(<Home />);

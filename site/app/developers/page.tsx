@@ -31,9 +31,9 @@ const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases
 
 const heading = "Give coding agents the decisions behind your code";
 const lead =
-  "A local Markdown knowledge base beside your repository. Save decisions, scope them to code paths, and give the next session only the context it needs.";
+  "Keep a Markdown knowledge base beside your repository. Save decisions, tie them to code paths, and let the next agent look them up from the file it edits.";
 const footnote =
-  `Free and MIT licensed. Local Markdown. No account or model for exact search.${releaseVersion === undefined ? " First Wordcell release in preparation." : ` Current verified release v${releaseVersion}.`}`;
+  `Free under the MIT license. Exact search needs no account or model.${releaseVersion === undefined ? " First Wordcell release in preparation." : ""}`;
 
 const pageTitle = "Wordcell for developers and coding agents";
 const pageDescription = lead;
@@ -60,17 +60,17 @@ const primitives = [
   {
     icon: "scopes",
     label: "Context for a code path",
-    summary: "A note declares the repository paths it is about. Starting from the file you are changing returns its scoped notes, plans, and the AGENTS.md guides that govern the edit.",
+    summary: "A note lists the repository paths it is about. Starting from the file you are changing, one command returns the notes and plans tied to it and the AGENTS.md guides that apply.",
   },
   {
     icon: "markdown",
-    label: "Rules and rationale, separated",
-    summary: "AGENTS.md stays the normative, always-loaded rule file. The vault holds the pull-based history, evidence, and reasoning behind those rules.",
+    label: "Rules in AGENTS.md, reasons in the vault",
+    summary: "AGENTS.md holds the rules an agent loads on every task. The vault holds the history, evidence, and reasoning behind those rules, and the agent reads it when a task calls for it.",
   },
   {
     icon: "git-provenance",
     label: "Commits behind the note",
-    summary: "A vault committed with the repository keeps its history. Inspect the commits behind a decision when provenance matters.",
+    summary: "A vault committed with the repository keeps its history. List the commits behind a decision when you need to know how it changed.",
   },
   {
     icon: "backlinks",
@@ -80,12 +80,12 @@ const primitives = [
   {
     icon: "capture",
     label: "Evidence saved with the work",
-    summary: "Clip the issue, discussion, or PDF that motivated a decision. The capture keeps its provenance receipt beside the note.",
+    summary: "Clip the issue, discussion, or PDF that motivated a decision. The capture keeps a record of where and how it was saved, beside the note.",
   },
   {
     icon: "sdk",
     label: "Sessions for your own tools",
-    summary: "The TypeScript SDK opens a read-only snapshot over one vault scan. Compose bounded workflows for your agent or CI.",
+    summary: "The TypeScript SDK opens a read-only snapshot of a vault. Build agent or CI workflows on top of it.",
   },
 ] as const;
 
@@ -97,13 +97,13 @@ const loop = [
   },
   {
     label: "Save the decision",
-    code: "wordcell note create notes/parser-contract --type concept --root kb",
+    code: "wordcell note create notes/parser-contract --title \"Parser contract\" --type concept --root kb",
     detail: "One file holds the constraint; frontmatter makes it queryable.",
   },
   {
     label: "Scope it to the code",
     code: "repository_scopes: [packages/parser]",
-    detail: "A frontmatter field on the note, not a central database row.",
+    detail: "The scope lives in the note's own frontmatter, so there is no central table to update.",
   },
   {
     label: "Let the agent pull context",
@@ -111,9 +111,9 @@ const loop = [
     detail: "Returns scoped notes, related plans, and inherited AGENTS.md rules.",
   },
   {
-    label: "Recover the history",
+    label: "Look up the history",
     code: "wordcell history notes/parser-contract --root kb --repo .",
-    detail: "The commits behind the note, when provenance matters.",
+    detail: "Lists the commits that changed the note.",
   },
 ] as const;
 
@@ -185,7 +185,7 @@ export default function Developers() {
             headingId="install-title"
             id="install"
           >
-            <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : `Current verified release · v${releaseVersion}`}</p>
+            <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : <>You need <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git. These steps install Wordcell v{releaseVersion}.</>}</p>
             {publishedRelease !== null && archiveUrl !== null ? (
               <>
                 <figure className="wordcell-step">
@@ -198,9 +198,9 @@ wordcell --help`}</code></pre>
                   <pre className="install-command" tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>
                 </figure>
                 <p className="install-note">
-                  <a href={publishedRelease.verificationRun}>Public release verification</a>.{" "}
-                  The skill installs instructions for a compatible agent, not a service.{" "}
-                  <a href="/docs/agent-workflow">Set up repository memory step by step</a>.
+                  The skill gives a compatible agent instructions; it does not run a service.{" "}
+                  <a href="/docs/agent-workflow">Set up repository memory step by step</a>.{" "}
+                  <a href={publishedRelease.verificationRun}>See how this release was built and verified</a>.
                 </p>
               </>
             ) : (
@@ -224,7 +224,7 @@ wordcell --help`}</code></pre>
     --root kb --repo .
 $ wordcell backlinks notes/parser-contract --root kb
 $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
-              <p className="wordcell-pane-note">Start from the file you are changing. Path-scoped notes, their dependents, and their provenance come back in one bounded result. Nothing else enters the conversation.</p>
+              <p className="wordcell-pane-note">Start from the file you are changing. <code>context</code> lists the notes and AGENTS.md guides that apply to it, <code>backlinks</code> shows what links to the note, and <code>history</code> lists the commits that changed it. They print paths and short summaries, and the agent opens a full note when it needs one.</p>
             </div>
           </MarketingSection>
 
@@ -238,7 +238,7 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
               summary: primitive.summary,
             }))}
             label="In the vault"
-            summary="Search returns bounded results with sources an agent can open, not a dump of the whole vault."
+            summary="Search returns a limited set of results, each with a source the agent can open."
           />
 
           <MarketingSection
@@ -280,7 +280,7 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
               },
               {
                 label: "TypeScript SDK",
-                summary: "Open a read-only session over one vault scan and compose bounded workflows.",
+                summary: "Open a read-only snapshot of a vault from TypeScript and run searches and workflows against it.",
                 example: (
                   <>
                     <WordcellIcon className="wordcell-topic-icon" name="sdk" />
@@ -307,11 +307,11 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
           />
 
           <MarketingSection
-            heading="Boundaries the agent respects"
+            heading="What Wordcell shares"
             headingId="boundary-title"
             id="boundary"
             label="Trust"
-            summary="Only saved context becomes part of the record, and external lanes stay explicit."
+            summary="Wordcell records only what you save as notes, and its hosted features stay off until you use them."
           >
             <MarketingTrustBoundary
               heading="What reaches the model"
@@ -324,14 +324,14 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
                 },
                 {
                   label: "Local retrieval by default",
-                  detail: "Exact search, graph queries, and optional local semantic search run on your machine. Optional hosted reranking sends a bounded window and is off by default.",
+                  detail: "Exact search, graph queries, and optional local semantic search run on your machine. Optional hosted reranking is off by default. When you turn it on, it sends TypeSafe your query and, for up to 25 candidates, each note's identifier, title, path, and up to 512 bytes of its snippet.",
                 },
                 {
                   label: "The agent keeps its own rules",
                   detail: "A connected agent still follows its provider's data-handling settings. Keep private records out of public repositories and outputs.",
                 },
               ]}
-              label="Data lanes"
+              label="Data"
               summary="Know what stays on your machine and what a connected agent can see."
             />
           </MarketingSection>

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { WordcellField } from "../wordcell/field";
 
 export const metadata: Metadata = {
-  title: "Page not found",
+  title: "Page not found · Wordcell",
 };
 
 export default function NotFound() {
