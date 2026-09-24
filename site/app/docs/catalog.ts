@@ -23,7 +23,7 @@ export const docQuadrants = [
   {
     id: "how-to",
     label: "How-to guides",
-    hint: "Finish a specific task: capture, publish, rerank, federate.",
+    hint: "Finish one task, such as capturing a web page, publishing a site, or searching several vaults.",
   },
   {
     id: "reference",
@@ -46,14 +46,14 @@ export const docCatalog = [
   },
   {
     slug: "agent-workflow",
-    title: "Working in a hraness/wordcell vault",
+    title: "Use Wordcell with a coding agent",
     summary: "Set up, query, maintain, and revise repository memory with a coding agent.",
     quadrant: "how-to",
   },
   {
     slug: "capture",
     title: "Capture web content",
-    summary: "Save a page, thread, or video as Markdown with localized assets and a provenance receipt.",
+    summary: "Save a page, thread, or video as Markdown with local copies of its assets and a record of how it was captured.",
     quadrant: "how-to",
   },
   {
@@ -77,13 +77,13 @@ export const docCatalog = [
   {
     slug: "reranking",
     title: "Use hosted reranking",
-    summary: "Send a bounded result window to TypeSafe's Jev model; a provider failure keeps the baseline order.",
+    summary: "Reorder up to 25 search results with TypeSafe's Jev model. If the provider fails, you keep the original order.",
     quadrant: "how-to",
   },
   {
     slug: "publishing",
-    title: "Publish Wordcell",
-    summary: "The canonical release procedure and how to verify an installed archive's signatures and provenance.",
+    title: "Release and verify Wordcell",
+    summary: "How maintainers cut a release, and how you can check a downloaded archive's signatures and provenance.",
     quadrant: "how-to",
   },
   {
@@ -107,7 +107,7 @@ export const docCatalog = [
   {
     slug: "design",
     title: "Design",
-    summary: "The file contracts, design choices, and the boundary each one protects.",
+    summary: "Why Wordcell keeps everything in Markdown files, and how its storage, search, graph, and capture fit together.",
     quadrant: "explanation",
   },
   {
@@ -131,7 +131,7 @@ export const docCatalog = [
   {
     slug: "graph-authority",
     title: "Query the derived graph",
-    summary: "Named queries, proofs, revisions, resource limits, and projection cache recovery.",
+    summary: "Run named graph queries, read their proofs and limits, and rebuild the local graph cache.",
     quadrant: "explanation",
   },
 ] as const satisfies readonly DocEntry[];

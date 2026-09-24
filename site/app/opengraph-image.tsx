@@ -4,6 +4,8 @@ import {
   socialImageSize as size,
 } from "@hraness/web-discovery/social-image";
 
+import { siteDescription } from "./site-description";
+
 export const alt = "Wordcell: the Markdown knowledge base with superpowers";
 export { contentType, size };
 
@@ -17,7 +19,7 @@ function WordcellMark() {
 
 export default function OpengraphImage() {
   return createSocialImageResponse({
-    description: "Save decisions, sources, and plans in Markdown you own. Recover them through exact and semantic search, typed relationships, backlinks, and Git history.",
+    description: siteDescription,
     domain: "wordcell.io",
     eyebrow: "Wordcell",
     mark: <WordcellMark />,

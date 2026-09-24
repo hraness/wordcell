@@ -1,16 +1,17 @@
-# Working in a hraness/wordcell vault
+# Use Wordcell with a coding agent
 
-This guide gives coding agents a conservative workflow for reading and
-maintaining a vault. Markdown is the durable record. Tool output, catalogs,
-backlinks, traversed paths, semantic indexes, and percolation candidates are
-views over that record.
+This guide is written for a coding agent that reads and maintains a Wordcell
+vault, and you can give it to an agent as written. The
+[Agent Skill](../skills/wordcell/SKILL.md) teaches the same workflow. Markdown
+is the durable record. Tool output, catalogs, backlinks, traversed paths,
+semantic indexes, and percolation candidates are views over that record.
 
 ## Customize before preparing a runtime
 
-When the request is to set up or evolve a Wordcell, design the boundary before
+When the request is to set up or change a vault, design the boundary before
 discovering or installing the CLI. Inspect the explicitly proposed repository
 and vault location without mutation. A new location does not need an existing
-`index.md`. Interview the user about the recurring questions the Wordcell should
+`index.md`. Interview the user about the recurring questions the vault should
 answer, then present the exact read and write targets in a proposal.
 
 The approved proposal may choose the standard Markdown layout, no change, or

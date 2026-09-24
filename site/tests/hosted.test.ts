@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { parseSiteDocsV1, parseSiteNoteV1 } from "@hraness/wordcell/publish-model";
 import "./hosted-operations.test";
 
 import { isTokenShape, newToken, tokenDigest } from "../lib/hosted/auth";
@@ -133,7 +134,7 @@ describe("contentTypeFor", () => {
 });
 
 describe("projectHostedVault", () => {
-  test("the installed renderer preserves repeated citations and return navigation", async () => {
+  test("the installed renderer keeps citations navigable and search excerpts readable", async () => {
     const { root, cleanup } = await materializeVault(new Map([
       ["index.md", enc("# Index\n\n[[citations]]\n")],
       ["citations.md", enc("# Evidence note\n\nFirst claim.[^source]\n\nSecond claim.[^source] Missing.[^missing]\n\n[^source]: Retained fixture evidence.\n")],
@@ -155,6 +156,11 @@ describe("projectHostedVault", () => {
       expect(html).toContain('aria-label="Unresolved footnote"');
       expect(html).toContain("[^missing]");
       expect(html).toContain("Retained fixture evidence.");
+      const docs = parseSiteDocsV1(JSON.parse(new TextDecoder().decode(projected.files.get("index/docs.json"))));
+      expect(docs.docs.find(doc => doc.s === "citations")?.p).toBe("First claim.");
+      const note = parseSiteNoteV1(JSON.parse(new TextDecoder().decode(projected.files.get("n/citations.json"))));
+      expect(note.text).toContain("second claim. missing.[^missing]");
+      expect(note.text).not.toContain("[^source]");
     } finally { await cleanup(); }
   });
 

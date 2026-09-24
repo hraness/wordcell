@@ -3,9 +3,9 @@
 [Documentation index](https://wordcell.io/docs) · [Installation reference](reference.md)
 
 This tutorial walks through one complete loop on a fresh vault: create it, save
-a decision, find it, connect a second note, and preview a published page. Every
-step runs locally; no account, model, or network request is involved until the
-optional last step.
+a decision, find it, connect a second note, and preview a published page. After
+installation, every step runs on your machine without an account, a model, or a
+remote service.
 
 ## Install the CLI
 

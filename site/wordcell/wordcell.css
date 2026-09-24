@@ -450,6 +450,14 @@
   background: none;
   box-shadow: none;
   font-size: .875rem;
+  overflow-x: auto;
+}
+
+/* A long install command scrolls inside its step. Without this the install
+ * panel's grid column grows to the command's width and clips the notes
+ * beside it on narrow screens. */
+[data-hraness-marketing-preset] .hraness-marketing-install__commands {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .wordcell-pane {

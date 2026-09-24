@@ -19,7 +19,7 @@
 # Search repository knowledge
 
 Use `bun run kb:search "question" --json` for ordinary questions about this
-repository's `kb/`. It pins Wordcell 0.22.3 and enables hosted TypeSafe
+repository's `kb/`. It pins Wordcell 0.22.4 and enables hosted TypeSafe
 reranking for this public KB. Queries and bounded note identifiers, titles,
 paths, and snippets leave the machine. Keep the API key in the private
 Wordcell credential file or environment, never in this repository.
@@ -77,6 +77,13 @@ Existing catalog, context, and maintenance commands retain their own roles.
 - Canonical download admission must prove successful authorization, source verification, attestation, and canonical publication in both the signed original attempt and the latest effective job inventory; only known npm job failures may explain an overall failure. Preserve complete inventory, owner/source/attempt, certificate, immutable release, tag, and digest checks. The input-free `admit-published.yml` recovery may only verify the pinned existing 0.20.0 publication from fresh owner-dispatched `main` with read permissions; it never publishes or substitutes recovery identity for original provenance.
 - Trust only `.github/workflows/release.yml` with `npm publish` permission bound to the exact `npm-release` environment. Keep that environment restricted solely to tag pattern `v*`, administrator bypass disabled, no required deployment reviewers, and no secrets. The `publish_npm` job runs after the immutable GitHub Release with `actions: read`, `contents: read`, and `id-token: write`; it checks out no source, runs no repository code, reauthorizes the current run attempt and both owner actors, downloads the attested artifact by numeric artifact ID, rebinds every verified hash, and proves the immutable Latest Release carries the exact archive digest before requesting OIDC.
 - Keep npm's safe packed-configuration, clean default `latest`, and strictly increasing version guards. Reject top-level `tag` and noncanonical `publishConfig`. Before mutating npm, read the exact registry version: absent means publish, identical `dist.integrity` means an already-published rerun and succeeds without publishing, anything else fails closed. Never pass `--tag`. The dependent `admit_npm` job checks out the exact reviewed verifier closure and proves registry bytes, registry signatures, publish attestation, and SLSA provenance against the canonical asset before the run reports success. Disallow traditional publishing tokens; the one-time bootstrap publication and trusted-publisher configuration are owner-authenticated steps recorded in `docs/publishing.md`.
+
+<!-- hraness-public-copy:start -->
+- Public copy (websites, READMEs, docs, package and GitHub descriptions, CLI help, `llms.txt`, generated pages) follows `STYLE.md`, synced from hraness/.github. Text a model writes for publication also follows `GENERATION_STYLE.md`.
+- The delivery vocabulary in this file (admission, qualification, custody, receipt, bounded, lane, gate, surface, projection) is internal. Translate it into what the reader gets.
+- Take one-line product and sibling descriptions from the portfolio registry and versions from the release record. Tests pin facts, not prose.
+- Run `bun run check:copy` before handoff when the repository has it.
+<!-- hraness-public-copy:end -->
 
 <!-- oompa-local-efficiency:start -->
 - Treat the user's request to change this repository as standing authorization for routine task-owned commits, pushes, pull requests, merges, releases, deployments, and production verification after the gates applicable to that action pass. Do not ask for duplicate confirmation. Build confidence through relevant automated checks, bounded diagnostics, and independent review, not another human approval. Passing checks does not expand task scope or authority.
