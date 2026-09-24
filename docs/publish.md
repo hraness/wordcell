@@ -233,6 +233,18 @@ everything that matches. Unknown or malformed `name:` tokens stay in the
 free-text query. Matched terms render with `<mark>` highlighting built from
 DOM text nodes, never injected HTML.
 
+Search excerpts show readable article text and link labels. Resolved footnote
+markers and Markdown formatting are omitted; code, escaped text, and unresolved
+references remain literal. The full Markdown is interpreted before excerpts are
+clipped, so a definition later in the note still resolves its citation. Snippets
+keep complete Unicode characters within their byte limit.
+
+For custom readers, `docs.json` stores the eager preview in `p` and the inline
+search basis in `x`. Hydrated note `text` holds bounded readable content,
+normalized to NFC and lowercase for snippet matching. Use the document table
+and content postings for ranking; hydration supplies display text. Existing
+published artifacts keep their original excerpts until republished.
+
 ### Safety
 
 Raw HTML never passes through the renderer: every text span and attribute is
@@ -350,6 +362,21 @@ a private Cloudflare R2 bucket behind the `wordcell-sites` worker — object
 reads and writes are HMAC-signed, and the public `/p/` path resolves the site
 head to immutable artifact bytes with directory-index and `404.html`
 semantics identical to `wordcell serve`.
+
+Hosted directory pages use a trailing slash so their relative navigation and
+reader assets stay inside the edition. A slashless request redirects only
+after the Worker finds that directory's index; files and missing paths do not
+acquire a slash. The site proxy preserves `/p/` paths and keeps other site
+pages on their usual slashless URLs.
+
+When introducing this routing policy, deploy the site first and verify that a
+hosted directory URL returns its published HTML and keeps its slash, then deploy
+the Worker redirect. The Vercel configuration has a separate trailing-slash
+rewrite before the slashless rule; both must forward the original path form.
+Verify root and nested published pages on the preview deployment before merging.
+The local Next server does not exercise Vercel's external rewrites. Reversing
+that order creates a redirect loop with the older site. Roll back the Worker
+before restoring the older site policy. Existing stored artifacts need no rewrite.
 
 ## Programmatic use
 

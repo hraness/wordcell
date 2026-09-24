@@ -73,14 +73,15 @@ if (import.meta.main) {
   }
 
   const resolver = docsResolver(cataloged);
+  const manifest = await Bun.file(resolve(repositoryRoot, "package.json")).json() as { version: string };
   const rendered = new Map<string, string>();
   for (const entry of docCatalog) {
     const source = await Bun.file(resolve(docsRoot, `${entry.slug}.md`)).text();
-    rendered.set(entry.slug, renderMarkdownHtml(source, resolver, "docs"));
+    const published = publishedReadme(source, manifest.version, publishedRelease?.version ?? null);
+    rendered.set(entry.slug, renderMarkdownHtml(published, resolver, "docs"));
   }
 
   const readmeSource = await Bun.file(resolve(repositoryRoot, "README.md")).text();
-  const manifest = await Bun.file(resolve(repositoryRoot, "package.json")).json() as { version: string };
   const overviewHtml = renderReadmeHtml(
     publishedReadme(readmeSource, manifest.version, publishedRelease?.version ?? null),
     resolver,

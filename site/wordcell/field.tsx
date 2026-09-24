@@ -1,12 +1,11 @@
 "use client";
 
+import { attachHeroLight } from "@hraness/design-kit/browser";
 import { useEffect, useRef, type CSSProperties } from "react";
 
-/* A muted wall of vault notes behind the hero. The same DOM renders on the
- * server; after hydration a pointer-proximity pass sets --prox on each card,
- * edge label, and edge path so the pointer quietly reveals what is near it.
- * Everything is decorative: aria-hidden, pointer-transparent, reduced-motion
- * collapses drift to a still collage. */
+/* Decorative, server-rendered product cards. Shared pointer lighting reveals
+ * nearby items and owns reduced-motion, visibility and cleanup. The static
+ * composition remains readable without hydration and never receives focus. */
 
 export interface FieldNote {
   readonly id: string;
@@ -347,7 +346,6 @@ function NoteBody({ body }: Readonly<{ body: string }>) {
   );
 }
 
-const REVEAL_RADIUS = 330;
 
 export function WordcellField({
   className,
@@ -355,143 +353,12 @@ export function WordcellField({
   notes = NOTES,
 }: Readonly<{ className?: string; edges?: readonly FieldEdge[]; notes?: readonly FieldNote[] }>) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLSpanElement>(null);
   const noteById = new Map(notes.map((note) => [note.id, note]));
 
   useEffect(() => {
-    const root = rootRef.current;
-    if (root === null) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-prox]"));
-    if (targets.length === 0) return;
-    const centers = new Map<HTMLElement, readonly [number, number]>();
-    const measure = () => {
-      centers.clear();
-      for (const el of targets) {
-        const rect = el.getBoundingClientRect();
-        centers.set(el, [rect.left + rect.width / 2, rect.top + rect.height / 2]);
-      }
-    };
-    measure();
-
-    /* A focus point wanders the field on a slow organic path, waking whatever
-     * it passes over. A real pointer takes precedence while it is travelling
-     * or resting on the wall, and a tap holds the focus where it lands for a
-     * few seconds so touch users can read the card they woke. The smoothed
-     * focus lerps toward the active target so handoffs glide. */
-    const born = performance.now();
-    let raf = 0;
-    let running = false;
-    let focusX: number | null = null;
-    let focusY: number | null = null;
-    let pointerX = -10000;
-    let pointerY = -10000;
-    let lastPointerAt = -10000;
-    let holdUntil = -10000;
-
-    const wander = (now: number) => {
-      const rect = root.getBoundingClientRect();
-      const t = (now - born) / 1000;
-      // Incommensurate sine pairs: a non-repeating drift that visits the
-      // whole wall while keeping clear of the outer rim.
-      return {
-        x: rect.left + (0.5 + 0.33 * Math.sin(t * 0.19 + 0.7) + 0.09 * Math.sin(t * 0.47 + 2.1)) * rect.width,
-        y: rect.top + (0.5 + 0.33 * Math.sin(t * 0.141 + 2.9) + 0.09 * Math.cos(t * 0.37)) * rect.height,
-      };
-    };
-
-    const tick = (now: number) => {
-      raf = 0;
-      const rect = root.getBoundingClientRect();
-      const pointerInside =
-        pointerX >= rect.left - 40 && pointerX <= rect.right + 40 &&
-        pointerY >= rect.top - 40 && pointerY <= rect.bottom + 40;
-      const usePointer =
-        now < holdUntil ||
-        (pointerInside && now - lastPointerAt < 10000) ||
-        now - lastPointerAt < 1200;
-      const target = usePointer ? { x: pointerX, y: pointerY } : wander(now);
-      if (focusX === null || focusY === null) {
-        focusX = target.x;
-        focusY = target.y;
-      }
-      focusX += (target.x - focusX) * 0.055;
-      focusY += (target.y - focusY) * 0.055;
-      for (const el of targets) {
-        const center = centers.get(el);
-        if (center === undefined) continue;
-        const distance = Math.hypot(center[0] - focusX, center[1] - focusY);
-        const proximity = Math.max(0, 1 - distance / REVEAL_RADIUS);
-        el.style.setProperty("--prox", proximity.toFixed(3));
-      }
-      if (running) raf = requestAnimationFrame(tick);
-    };
-
-    const startLoop = () => {
-      if (!running) {
-        running = true;
-        raf = requestAnimationFrame(tick);
-      }
-    };
-    const stopLoop = () => {
-      running = false;
-      if (raf !== 0) {
-        cancelAnimationFrame(raf);
-        raf = 0;
-      }
-    };
-
-    const onMove = (event: PointerEvent) => {
-      pointerX = event.clientX;
-      pointerY = event.clientY;
-      lastPointerAt = performance.now();
-    };
-    const onDown = (event: PointerEvent) => {
-      const rect = root.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      if (x < -40 || y < -40 || x > rect.width + 40 || y > rect.height + 40) return;
-      pointerX = event.clientX;
-      pointerY = event.clientY;
-      const now = performance.now();
-      lastPointerAt = now;
-      holdUntil = now + 6000;
-      const ring = ringRef.current;
-      if (ring !== null) {
-        ring.style.left = `${x}px`;
-        ring.style.top = `${y}px`;
-        ring.classList.remove("wordcell-tap-ring--active");
-        void ring.offsetWidth;
-        ring.classList.add("wordcell-tap-ring--active");
-      }
-    };
-    const onAway = () => {
-      lastPointerAt = -10000;
-      holdUntil = -10000;
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry === undefined) return;
-      if (entry.isIntersecting) startLoop();
-      else stopLoop();
-    });
-    observer.observe(root);
-
-    window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("pointerdown", onDown, { passive: true });
-    window.addEventListener("scroll", measure, { capture: true, passive: true });
-    window.addEventListener("resize", measure);
-    document.documentElement.addEventListener("pointerleave", onAway);
-    window.addEventListener("blur", onAway);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("scroll", measure, { capture: true });
-      window.removeEventListener("resize", measure);
-      document.documentElement.removeEventListener("pointerleave", onAway);
-      window.removeEventListener("blur", onAway);
-      stopLoop();
-    };
+    const wall = rootRef.current?.parentElement;
+    if (wall === undefined || wall === null) return;
+    return attachHeroLight(wall);
   }, []);
 
   return (
@@ -509,7 +376,6 @@ export function WordcellField({
             <path
               className={edge.pulse === true ? "wordcell-edge wordcell-edge--pulse" : "wordcell-edge"}
               d={edgePath(from, to)}
-              data-prox=""
               key={`${edge.from}-${edge.to}`}
             />
           );
@@ -524,7 +390,7 @@ export function WordcellField({
         return (
           <span
             className="wordcell-edge-label"
-            data-prox=""
+            data-hraness-hero-item=""
             key={`label-${edge.from}-${edge.to}`}
             style={{ left: `${labelX}%`, top: `${labelY}%` }}
           >
@@ -535,7 +401,7 @@ export function WordcellField({
       {notes.map((note) => (
         <article
           className={`wordcell-note${note.bloom === true ? " wordcell-note--bloom" : ""}`}
-          data-prox=""
+          data-hraness-hero-item=""
           data-type={note.type}
           key={note.id}
           style={{
@@ -567,7 +433,6 @@ export function WordcellField({
           )}
         </article>
       ))}
-      <span className="wordcell-tap-ring" ref={ringRef} />
     </div>
   );
 }

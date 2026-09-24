@@ -59,8 +59,8 @@ describe("Wordcell site source contract", () => {
       read("app/docs/page.tsx"),
       read("app/readme.generated.ts"),
     ]);
-    expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.16"');
-    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.15.0"');
+    expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.17"');
+    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.16.0"');
     expect(home).toContain('import { AskAiAboutThis } from "@hraness/ui"');
     expect(home).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io" />');
     expect(docs).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />');
@@ -120,7 +120,7 @@ test("registers the footer layer after UI layers in one stylesheet", async () =>
   expect(layout).not.toContain('import "@hraness/site-footer/styles.css"');
 });
 
-test("adopts the shared palette contract with Paper as the default appearance", async () => {
+test("adopts the shared palette contract with Gruvbox as the default appearance", async () => {
   const [layout, home, bootstrap, css, packageJson] = await Promise.all([
     read("app/layout.tsx"),
     read("app/page.tsx"),
@@ -128,16 +128,16 @@ test("adopts the shared palette contract with Paper as the default appearance", 
     read("app/globals.css"),
     read("package.json"),
   ]);
-  expect(layout).toContain('data-palette="paper"');
-  expect(layout).toContain('getDesignPaletteTheme("paper", "light")');
+  expect(layout).toContain('data-palette="gruvbox"');
+  expect(layout).toContain('getDesignPaletteTheme("gruvbox", "light")');
   expect(layout).toContain('src="/theme-bootstrap.js"');
-  expect(layout).toContain('<DesignPaletteProvider defaultPreference={{ palette: "paper", mode: "system" }}>');
+  expect(layout).toContain('<DesignPaletteProvider defaultPreference={{ palette: "gruvbox", mode: "system" }}>');
   expect(layout).toContain("suppressHydrationWarning");
   // The single appearance control sits at the rightmost header action.
   expect(home).toContain('trailing={<ThemeMenuButton aria-label="Appearance" />}');
-  // The blocking bootstrap keeps Paper as the system-following default.
+  // The blocking bootstrap keeps Gruvbox as the system-following default.
   expect(bootstrap).toContain("initDesignPalette");
-  expect(bootstrap).toContain('palette: "paper", mode: "system"');
+  expect(bootstrap).toContain('palette: "gruvbox", mode: "system"');
   // Palette themes and the semantic bridge load before the product theme.
   expect(css).toContain('@import "@hraness/design-kit/palettes.css";');
   expect(css.indexOf('palettes.css')).toBeLessThan(css.indexOf("wordcell/wordcell-theme"));

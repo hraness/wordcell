@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.22.4
+
+Published search excerpts show readable article text and link labels, with
+resolved citation markers and Markdown formatting removed. Eager previews and
+hydrated excerpts share the article's citation rules; unresolved references and
+code remain literal. Unicode excerpts stay within their byte limit without
+splitting characters. Search matching and ranking retain their existing inputs.
+Republish an existing site to update its excerpts.
+
 ## 0.22.3
 
 Published Markdown now renders numbered footnotes with links back to each

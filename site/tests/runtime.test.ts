@@ -131,6 +131,16 @@ describe("built Wordcell site", () => {
       expect(llms).toContain("# Wordcell");
       expect(llms).toContain("https://wordcell.io/docs");
       expect(missingResponse.status).toBe(404);
+      const docsSlash = await fetch(`${server.origin}/docs/?query=preserved`, { redirect: "manual" });
+      expect(docsSlash.status).toBe(308);
+      expect(new URL(docsSlash.headers.get("location")!, server.origin).href).toBe(`${server.origin}/docs?query=preserved`);
+      // The local Next server has no Vercel external rewrite. A 404 here proves
+      // Next passed the hosted directory path through without stripping it.
+      for (const path of ["/p/abcd1234/fixture/", "/p/abcd1234/fixture/n/reports/evidence/"]) {
+        const hosted = await fetch(`${server.origin}${path}`, { redirect: "manual" });
+        expect(hosted.status).toBe(404);
+        expect(hosted.headers.get("location")).toBeNull();
+      }
     } finally {
       await stopBuiltSite(server);
     }

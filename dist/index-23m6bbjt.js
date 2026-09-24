@@ -285,22 +285,58 @@ function comparePublishScores(left, right) {
   return Number(right.identity) - Number(left.identity) || right.score - left.score || left.i - right.i;
 }
 function publishSnippet(text, query, fallback, windowBytes = 160) {
-  const normalized = publishNormalize(text);
-  let offset = query.normalized === "" ? -1 : normalized.indexOf(query.normalized);
-  if (offset < 0) {
+  if (!Number.isSafeInteger(windowBytes) || windowBytes < 0)
+    throw new RangeError("Snippet window must be a nonnegative safe byte count.");
+  const display = text.normalize("NFC");
+  const normalized = publishNormalize(display);
+  let match = query.normalized === "" ? -1 : normalized.indexOf(query.normalized);
+  if (match < 0) {
     for (const term of query.terms) {
-      offset = normalized.indexOf(term);
-      if (offset >= 0)
+      match = normalized.indexOf(term);
+      if (match >= 0)
         break;
     }
   }
-  if (offset < 0)
+  if (match < 0)
     return fallback;
-  const half = Math.floor(windowBytes / 2);
-  const start = Math.max(0, offset - half);
-  const end = Math.min(text.length, offset + half);
-  const snippet = text.slice(start, end).replace(/\s+/gu, " ").trim();
-  return `${start > 0 ? "\u2026" : ""}${snippet}${end < text.length ? "\u2026" : ""}`;
+  let offset = 0, normalizedOffset = 0;
+  for (const character of display) {
+    const width = character.toLocaleLowerCase("en-US").length;
+    if (normalizedOffset + width > match)
+      break;
+    normalizedOffset += width;
+    offset += character.length;
+  }
+  const edge = windowBytes >= 6 ? "\u2026" : "";
+  const budget = windowBytes - 2 * publishUtf8Bytes(edge);
+  const previous = (end2) => {
+    const last = display.charCodeAt(end2 - 1);
+    return end2 > 1 && last >= 56320 && last <= 57343 && display.charCodeAt(end2 - 2) >= 55296 && display.charCodeAt(end2 - 2) <= 56319 ? end2 - 2 : end2 - 1;
+  };
+  let start = offset, end = offset, used = 0;
+  while (start > 0) {
+    const before = previous(start), bytes = publishUtf8Bytes(display.slice(before, start));
+    if (used + bytes > Math.floor(budget / 2))
+      break;
+    start = before;
+    used += bytes;
+  }
+  while (end < display.length) {
+    const character = String.fromCodePoint(display.codePointAt(end) ?? 0), bytes = publishUtf8Bytes(character);
+    if (used + bytes > budget)
+      break;
+    end += character.length;
+    used += bytes;
+  }
+  while (start > 0) {
+    const before = previous(start), bytes = publishUtf8Bytes(display.slice(before, start));
+    if (used + bytes > budget)
+      break;
+    start = before;
+    used += bytes;
+  }
+  const snippet = display.slice(start, end).replace(/\s+/gu, " ").trim();
+  return `${start > 0 ? edge : ""}${snippet}${end < display.length ? edge : ""}`;
 }
 
 export { PUBLISH_FIELD_TITLE, PUBLISH_FIELD_ALIAS, PUBLISH_FIELD_PATH, PUBLISH_FIELD_TAG, PUBLISH_FIELD_METADATA, PUBLISH_FIELD_CONTENT, PUBLISH_SEARCH_WEIGHTS_V1, MAX_PUBLISH_QUERY_BYTES, MAX_PUBLISH_QUERY_TERMS, MAX_PUBLISH_PREFIX_EXPANSIONS, publishUtf8Bytes, publishNormalize, MAX_PUBLISH_QUERY_FILTERS, publishQueryParts, publishDocMatchesFilters, MAX_PUBLISH_MARK_RANGES, publishMarkRanges, publishQuery, publishShardName, publishPrefixTerms, scorePublishDocument, comparePublishScores, publishSnippet };

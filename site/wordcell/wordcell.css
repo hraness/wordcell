@@ -1,8 +1,7 @@
 /* wordcell component layer — the vault field and note language. Ships with the
  * wordcell theme (or any layer that defines the --wordcell-* tokens).
  * The field sits absolutely behind the hero: notes stay muted while a focus
- * point wanders the wall on its own, or follows the pointer when one is
- * near — --prox (0..1, set by field.tsx) lifts each card into focus.
+ * point follows the pointer when one is near — --hraness-hero-proximity (0..1, set by field.tsx) lifts each card into focus.
  * All motion is decorative: pointer-transparent, reduced-motion aware,
  * and removable without losing content. */
 
@@ -24,9 +23,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    url("../vendor/hraness-marketing/marketing-assets/grain.svg"),
-    url("../vendor/hraness-marketing/marketing-assets/cells.svg");
-  background-size: 64px 64px, 42rem 42rem;
+    url("../vendor/hraness-marketing/marketing-assets/grain.svg");
+  background-size: 64px 64px;
   background-position: center;
   opacity: .3;
   pointer-events: none;
@@ -56,8 +54,8 @@
   inset: -2rem -4rem;
   z-index: -1;
   background: radial-gradient(ellipse 72% 68% at 32% 46%,
-    color-mix(in oklch, var(--background) 84%, transparent) 0%,
-    color-mix(in oklch, var(--background) 55%, transparent) 55%,
+    color-mix(in oklch, var(--background) 94%, transparent) 0%,
+    color-mix(in oklch, var(--background) 76%, transparent) 55%,
     transparent 100%);
   pointer-events: none;
 }
@@ -75,42 +73,14 @@
   stroke-width: 1.1;
   stroke-dasharray: 3 4;
   vector-effect: non-scaling-stroke;
-  opacity: calc(.38 + var(--prox, 0) * .62);
+  opacity: calc(.38 + var(--hraness-hero-proximity, 0) * .62);
   transition: opacity .45s ease;
 }
 
 .wordcell-edge--pulse {
   stroke-dasharray: 5 55;
-  animation: wordcell-edge-trace 9s linear infinite;
 }
 
-@keyframes wordcell-edge-trace {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -240; }
-}
-
-/* A tap/click leaves a soft ring where the focus landed. */
-.wordcell-tap-ring {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  inline-size: 1.1rem;
-  block-size: 1.1rem;
-  border: 1.5px solid var(--primary);
-  border-radius: 50%;
-  translate: -50% -50%;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.wordcell-tap-ring--active {
-  animation: wordcell-tap-ring 1.05s cubic-bezier(.2, .7, .3, 1) both;
-}
-
-@keyframes wordcell-tap-ring {
-  from { opacity: .5; transform: scale(.5); }
-  to { opacity: 0; transform: scale(9); }
-}
 
 .wordcell-edge-label {
   position: absolute;
@@ -124,7 +94,7 @@
   font-style: italic;
   letter-spacing: .02em;
   white-space: nowrap;
-  opacity: calc(.28 + var(--prox, 0) * .72);
+  opacity: calc(.28 + var(--hraness-hero-proximity, 0) * .72);
   transition: opacity .45s ease;
 }
 
@@ -134,38 +104,19 @@
   top: var(--y);
   inline-size: var(--w);
   padding: .8rem .95rem .9rem;
-  border: 1px solid var(--wordcell-note-line);
+  border: 0;
   border-radius: var(--wordcell-note-radius, .8rem);
   background: var(--wordcell-note-surface);
   box-shadow: var(--wordcell-note-shadow);
   translate: -50% -50%;
   rotate: var(--r, 0deg);
   pointer-events: none;
-  opacity: calc(.46 + var(--prox, 0) * .54);
-  filter: blur(calc((1 - var(--prox, 0)) * 1.3px));
+  opacity: calc(.46 + var(--hraness-hero-proximity, 0) * .54);
+  filter: blur(calc((1 - var(--hraness-hero-proximity, 0)) * 1.3px));
   transition: opacity .45s ease, filter .45s ease;
-  animation: wordcell-note-drift var(--s, 40s) var(--wordcell-drift-ease, ease-in-out) var(--d, 0s) infinite alternate;
+
 }
 
-@keyframes wordcell-note-drift {
-  from { transform: translate(calc(var(--dx, 0px) * -1), calc(var(--dy, 0px) * -1)); }
-  to { transform: translate(var(--dx, 0px), var(--dy, 0px)); }
-}
-
-.wordcell-note--bloom {
-  animation:
-    wordcell-note-drift var(--s, 40s) var(--wordcell-drift-ease, ease-in-out) var(--d, 0s) infinite alternate,
-    wordcell-note-bloom 11s ease-in-out var(--bd, 0s) infinite;
-}
-
-@keyframes wordcell-note-bloom {
-  0%, 100% { box-shadow: var(--wordcell-note-shadow); }
-  50% {
-    box-shadow: var(--wordcell-note-shadow),
-      0 0 0 1px color-mix(in oklch, var(--primary) 22%, transparent),
-      0 8px 32px -10px color-mix(in oklch, var(--primary) 34%, transparent);
-  }
-}
 
 .wordcell-note-type {
   display: inline-block;
@@ -452,13 +403,15 @@
  * paper the vault field is drawn on. */
 .wordcell-step,
 .wordcell-pane {
-  border: 1px solid var(--wordcell-note-line);
+  border: 0;
   border-radius: var(--radius-md);
   background: var(--wordcell-note-surface);
   box-shadow: var(--wordcell-note-shadow);
 }
 
 .wordcell-step {
+  min-inline-size: 0;
+  max-inline-size: 100%;
   margin: 0;
   padding: .85rem 1.1rem 1.1rem;
 }
@@ -496,7 +449,7 @@
   border: none;
   background: none;
   box-shadow: none;
-  font-size: .82rem;
+  font-size: .875rem;
   overflow-x: auto;
 }
 
@@ -540,7 +493,7 @@
   z-index: 1;
   inline-size: min(100%, 28rem);
   padding: 1.9rem 2.1rem;
-  border: 1px solid var(--wordcell-note-line);
+  border: 0;
   border-radius: var(--radius-md);
   background: var(--wordcell-note-surface);
   box-shadow: var(--wordcell-note-shadow);
@@ -628,9 +581,7 @@
   .wordcell-edge--pulse {
     display: none;
   }
-  .wordcell-tap-ring {
-    border-color: Highlight;
-  }
+
   .wordcell-note {
     border-color: CanvasText;
     box-shadow: none;
@@ -653,3 +604,6 @@
     opacity: 1;
   }
 }
+
+/* Pointer motion is bounded and paused by the shared hero controller. */
+.wordcell-note, .wordcell-note--bloom { animation: none; transform: translate(var(--hraness-hero-drift-x, 0px), var(--hraness-hero-drift-y, 0px)); }

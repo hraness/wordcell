@@ -108,7 +108,7 @@ test("delivers material chrome and reduced-transparency fallback through the exi
   expect(forcedPlane).toBe(true);
 });
 
-test("keeps wrapped phone navigation in flow while preserving desktop sticky chrome", async () => {
+test("keeps wrapped phone navigation in flow above the hero while preserving desktop sticky chrome", async () => {
   const { root } = await compiled;
   let desktopSticky = false;
   const phoneOverrides: Rule[] = [];
@@ -117,7 +117,7 @@ test("keeps wrapped phone navigation in flow while preserving desktop sticky chr
       rule.walkDecls("position", declaration => { if (declaration.value === "sticky") desktopSticky = true; });
     }
     if (rule.selector === '[data-hraness-material="lantern"] .hraness-marketing-header.hraness-material-chrome') {
-      rule.walkDecls("position", declaration => { if (declaration.value === "static") phoneOverrides.push(rule); });
+      rule.walkDecls("position", declaration => { if (declaration.value === "relative") phoneOverrides.push(rule); });
     }
   });
   expect(desktopSticky).toBe(true);
@@ -127,5 +127,5 @@ test("keeps wrapped phone navigation in flow while preserving desktop sticky chr
   if (parent?.type !== "atrule") throw new Error("Phone chrome override must be scoped by a media query");
   expect(parent.name).toBe("media");
   expect(parent.params.replaceAll(/\s/gu, "")).toBe("(max-width:48rem)");
-  expect(phoneOverrides[0]!.nodes.filter(node => node.type === "decl").map(node => [node.prop, node.value])).toEqual([["position", "static"]]);
+  expect(phoneOverrides[0]!.nodes.filter(node => node.type === "decl").map(node => [node.prop, node.value])).toEqual([["position", "relative"]]);
 });
