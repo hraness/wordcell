@@ -39,6 +39,8 @@ local document retrieval and also supplies Wordcell's optional semantic search.
 Wordcell adds a connected workflow for repository context, authored relationships,
 Git evidence, and selective publishing. [Compare the tradeoffs](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md).
 
+Wordcell keeps the record in Markdown files you own, rebuilds every index from those files, and lets the next session start from the notes for the file it is changing: the design every Hraness project shares. [The thread through hraness](https://hraness.com/writing/the-thread-through-hraness) follows that design across the projects, and the [ALGAL vision](https://algal.computer/docs/vision/) states the bet behind it.
+
 ## Install
 
 [Bun 1.3.14 or newer](https://bun.sh/docs/installation) and Git are required.
