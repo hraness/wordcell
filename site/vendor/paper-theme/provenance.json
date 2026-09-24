@@ -3,13 +3,13 @@
   "contractVersion": 1,
   "source": {
     "repository": "https://github.com/hraness/design-kit",
-    "commit": "b0326108cf58268827ee69007414188ee27e2963",
+    "commit": "d38d13c07d7956d02ddfbca8d32aa2066d88fbd3",
     "export": "@hraness/design-kit/paper-theme.css"
   },
   "files": {
     "paper-theme.css": {
       "path": "src/paper-theme.css",
-      "sha256": "ea8fe3bfe833864baf2bb37d8022725b505089788725407e0c81aaf294c609b1"
+      "sha256": "9c2ef8f896b807de825f82c3c0e103a38931b3a94588fc54d3e3d9012a96a523"
     },
     "LICENSE": {
       "path": "LICENSE",

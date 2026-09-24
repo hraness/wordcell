@@ -54,8 +54,8 @@
   inset: -2rem -4rem;
   z-index: -1;
   background: radial-gradient(ellipse 72% 68% at 32% 46%,
-    color-mix(in oklch, var(--background) 94%, transparent) 0%,
-    color-mix(in oklch, var(--background) 76%, transparent) 55%,
+    color-mix(in srgb, var(--background) 94%, transparent) 0%,
+    color-mix(in srgb, var(--background) 76%, transparent) 55%,
     transparent 100%);
   pointer-events: none;
 }
@@ -87,7 +87,7 @@
   translate: -50% -50%;
   padding: .12rem .4rem;
   border-radius: 999px;
-  background: color-mix(in oklch, var(--wordcell-note-surface) 78%, transparent);
+  background: color-mix(in srgb, var(--wordcell-note-surface) 78%, transparent);
   color: var(--wordcell-edge-ink);
   font-family: var(--font-mono);
   font-size: .5625rem;
@@ -123,7 +123,7 @@
   margin-block-end: .45rem;
   padding: .1rem .42rem;
   border-radius: 999px;
-  background: color-mix(in oklch, var(--wordcell-type-accent, var(--primary)) 12%, transparent);
+  background: color-mix(in srgb, var(--wordcell-type-accent, var(--primary)) 12%, transparent);
   color: var(--wordcell-type-accent, var(--primary));
   font-size: .5625rem;
   font-weight: 600;
@@ -159,7 +159,7 @@
   block-size: 1.15rem;
   margin-inline-end: .35rem;
   border-radius: 50%;
-  background: color-mix(in oklch, var(--wordcell-type-person, #8a5a3c) 16%, transparent);
+  background: color-mix(in srgb, var(--wordcell-type-person, #8a5a3c) 16%, transparent);
   color: var(--wordcell-type-person, #8a5a3c);
   font-size: .5rem;
   font-weight: 700;
@@ -236,7 +236,7 @@
   position: relative;
   block-size: 2.4rem;
   border-radius: var(--radius-sm, .5rem);
-  background: color-mix(in oklch, var(--foreground) 6%, transparent);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
   overflow: clip;
 }
 
@@ -245,7 +245,7 @@
   inset-block: 0;
   inset-inline-start: 0;
   border-radius: inherit;
-  background: color-mix(in oklch, var(--foreground) 22%, transparent);
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
 }
 
 .wordcell-bytes-bar--primary {
@@ -436,7 +436,7 @@
   inline-size: 1.4rem;
   block-size: 1.4rem;
   border-radius: 50%;
-  background: color-mix(in oklch, var(--primary) 13%, transparent);
+  background: color-mix(in srgb, var(--primary) 13%, transparent);
   color: var(--primary);
   font-family: var(--font-mono);
   font-size: .68rem;

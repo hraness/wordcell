@@ -3,13 +3,13 @@
   "contractVersion": 1,
   "source": {
     "repository": "https://github.com/hraness/design-kit",
-    "commit": "b0326108cf58268827ee69007414188ee27e2963",
+    "commit": "d38d13c07d7956d02ddfbca8d32aa2066d88fbd3",
     "export": "@hraness/design-kit/product-marketing-preset.css"
   },
   "files": {
     "product-marketing-preset.css": {
       "path": "src/product-marketing-preset.css",
-      "sha256": "4dd3eb9fa525c157727a8bd7618a942fd0834553c5e5bdf9772783ce8c9bf9b1"
+      "sha256": "ab78b17a454385c190e36172ea660aa396cd08e7ef371e249b91342ec411044d"
     },
     "fonts/instrument-serif/instrument-serif-latin-400.woff2": {
       "path": "src/fonts/instrument-serif/instrument-serif-latin-400.woff2",
