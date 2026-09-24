@@ -53,11 +53,11 @@
 
   /* Wordcell component tokens. */
   --wordcell-note-surface: var(--hraness-material-plane, var(--surface-raised));
-  --wordcell-note-line: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --wordcell-note-line: color-mix(in srgb, var(--foreground) 10%, transparent);
   --wordcell-note-shadow: var(--hraness-material-lift);
-  --wordcell-edge: color-mix(in oklch, var(--hraness-site-accent) 45%, transparent);
-  --wordcell-edge-ink: color-mix(in oklch, var(--muted) 80%, transparent);
-  --wordcell-tag: color-mix(in oklch, var(--hraness-site-accent) 12%, transparent);
+  --wordcell-edge: color-mix(in srgb, var(--hraness-site-accent) 45%, transparent);
+  --wordcell-edge-ink: color-mix(in srgb, var(--muted) 80%, transparent);
+  --wordcell-tag: color-mix(in srgb, var(--hraness-site-accent) 12%, transparent);
   --wordcell-tag-ink: color-mix(in oklch, var(--hraness-site-accent) 88%, var(--foreground));
   --wordcell-drift-ease: cubic-bezier(.37, .08, .31, .92);
 
@@ -96,7 +96,7 @@
 
 @supports (-webkit-backdrop-filter: blur(1px)) {
   :where([data-hraness-theme="wordcell"]) .hraness-marketing-header, .hraness-marketing-header:where([data-hraness-theme="wordcell"]) {
-    --hraness-marketing-header-background: color-mix(in oklch, var(--hraness-marketing-background) 82%, transparent);
+    --hraness-marketing-header-background: color-mix(in srgb, var(--hraness-marketing-background) 82%, transparent);
     --hraness-marketing-header-backdrop: blur(14px) saturate(1.4);
     -webkit-backdrop-filter: var(--hraness-marketing-header-backdrop);
   }
@@ -104,7 +104,7 @@
 
 @supports (backdrop-filter: blur(1px)) {
   :where([data-hraness-theme="wordcell"]) .hraness-marketing-header, .hraness-marketing-header:where([data-hraness-theme="wordcell"]) {
-    --hraness-marketing-header-background: color-mix(in oklch, var(--hraness-marketing-background) 82%, transparent);
+    --hraness-marketing-header-background: color-mix(in srgb, var(--hraness-marketing-background) 82%, transparent);
     --hraness-marketing-header-backdrop: blur(14px) saturate(1.4);
     backdrop-filter: var(--hraness-marketing-header-backdrop);
   }
