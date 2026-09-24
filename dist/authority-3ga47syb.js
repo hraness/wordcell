@@ -3,7 +3,7 @@ import {
   GRAPH_LIMITS,
   GraphAuthorityError,
   validateGraphQueryRequest
-} from "./index-tf4wzjew.js";
+} from "./index-pz2b2x0y.js";
 import {
   validateRepositoryScopeSelection
 } from "./index-06c9ctr6.js";
@@ -11,7 +11,7 @@ import"./index-5vwpzb5a.js";
 import {
   isCanonicalNoteId,
   isCanonicalRelationPredicate
-} from "./index-qbssx940.js";
+} from "./index-zy7an84p.js";
 import"./index-z1w83f81.js";
 
 // src/oh/authority.ts

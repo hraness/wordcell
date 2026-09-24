@@ -162,7 +162,9 @@ import { MAX_RERANK_CANDIDATES, type SearchReranker } from "./rerank.js";
 import { createCliTypeSafeReranker } from "./rerank-credentials.js";
 import {
   refreshVault,
+  refreshVaultComplete,
   scanVault,
+  scanVaultComplete,
   type ScanVaultOptions,
   type VaultSnapshot,
 } from "./vault.js";
@@ -3871,8 +3873,8 @@ async function runVault(
   dependencies: CliDependencies,
 ): Promise<number> {
   const snapshot = command.kind === "refresh"
-    ? await (dependencies.refreshVault ?? refreshVault)(command.root, command.options)
-    : await (dependencies.scanVault ?? scanVault)(command.root, command.options);
+    ? await (dependencies.refreshVault ?? refreshVaultComplete)(command.root, command.options)
+    : await (dependencies.scanVault ?? (command.kind === "check" ? scanVaultComplete : scanVault))(command.root, command.options);
 
   if (command.kind === "refresh" || command.kind === "check") {
     const noCatalog = command.kind === "check" && command.noCatalog === true;

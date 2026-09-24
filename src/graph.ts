@@ -9,6 +9,8 @@ import {
   type Node,
 } from "yaml";
 import { parseQualifiedDocumentUri, type QualifiedDocumentUri } from "./portfolio-identity.js";
+import { cleanMentionBoundary, MentionIndexBudgetError, MentionMatcher, preflightMentionInput, type MentionIndexBudgetKind, type MentionIndexLimits } from "./mention-index.js";
+export type { MentionIndexLimits } from "./mention-index.js";
 
 export const catalogStart = "<!-- kb:catalog:start -->";
 export const catalogEnd = "<!-- kb:catalog:end -->";
@@ -22,7 +24,8 @@ export type VaultAnalysisBudgetKind =
   | "notes"
   | "connection-observations"
   | "mention-pairs"
-  | "mentions";
+  | "mentions"
+  | MentionIndexBudgetKind;
 
 /** A stable failure for callers that need to distinguish bounded graph work. */
 export class VaultAnalysisBudgetError extends RangeError {
@@ -212,6 +215,11 @@ export type AnalyzeVaultOptions = {
   maxMentions?: number;
   /** Vault-relative path of the generated navigation catalog. */
   catalogNoteId?: string;
+};
+
+/** Complete discovery indexes phrases instead of enumerating every note pair. */
+export type CompleteAnalyzeVaultOptions = AnalyzeVaultOptions & {
+  readonly mentionIndexLimits?: MentionIndexLimits;
 };
 
 export type VaultAnalysis = {
@@ -1015,17 +1023,10 @@ function compareRelationIssues(left: RelationIssue, right: RelationIssue): numbe
     || targetComparison;
 }
 
-const wordCharacter = (value: string): boolean => /[A-Za-z0-9]/.test(value);
-
 function phraseOffset(lowerHaystack: string, lowerPhrase: string): number {
   let offset = lowerHaystack.indexOf(lowerPhrase);
   while (offset !== -1) {
-    const before = offset === 0 ? "" : lowerHaystack[offset - 1] ?? "";
-    const afterIndex = offset + lowerPhrase.length;
-    const after = afterIndex >= lowerHaystack.length ? "" : lowerHaystack[afterIndex] ?? "";
-    const startsClean = !wordCharacter(lowerPhrase[0] ?? "") || !wordCharacter(before);
-    const endsClean = !wordCharacter(lowerPhrase.at(-1) ?? "") || !wordCharacter(after);
-    if (startsClean && endsClean) return offset;
+    if (cleanMentionBoundary(lowerHaystack, lowerPhrase, offset)) return offset;
     offset = lowerHaystack.indexOf(lowerPhrase, offset + 1);
   }
   return -1;
@@ -1094,6 +1095,33 @@ export function analyzeVault(
   notes: readonly Note[],
   options: AnalyzeVaultOptions = {},
 ): VaultAnalysis {
+  return analyzeVaultInternal(notes, options);
+}
+
+/**
+ * Return the same complete graph using a finite phrase index. maxMentionPairs
+ * counts matching source/target candidates; index work and repeated matches
+ * have separate aggregate limits. Exhaustion always throws, never truncates.
+ */
+export function analyzeVaultComplete(
+  notes: readonly Note[],
+  options: CompleteAnalyzeVaultOptions = {},
+): VaultAnalysis {
+  try {
+    return analyzeVaultInternal(notes, options, options.mentionIndexLimits ?? {});
+  } catch (error: unknown) {
+    if (error instanceof MentionIndexBudgetError) {
+      throw new VaultAnalysisBudgetError(error.kind, error.limit, error.message);
+    }
+    throw error;
+  }
+}
+
+function analyzeVaultInternal(
+  notes: readonly Note[],
+  options: AnalyzeVaultOptions,
+  mentionIndexLimits?: MentionIndexLimits,
+): VaultAnalysis {
   const maxNotes = checkedAnalysisLimit(
     options.maxNotes,
     MAX_ANALYZED_NOTES,
@@ -1121,6 +1149,13 @@ export function analyzeVault(
       `Vault analysis exceeds the ${maxNotes} note limit.`,
     );
   }
+  const mentionInput = mentionIndexLimits === undefined ? undefined : preflightMentionInput((function* () {
+    for (const note of notes) {
+      yield note.searchableText;
+      yield note.title;
+      yield* note.aliases;
+    }
+  })(), mentionIndexLimits);
   const catalogNoteId = withoutMarkdownExtension(
     normalizeVaultPath(options.catalogNoteId ?? "index"),
   );
@@ -1332,7 +1367,42 @@ export function analyzeVault(
     : uniquePhrasesByTarget(suggestionNotes);
   const mentions: MentionCandidate[] = [];
   let mentionPairs = 0;
+  const matcher = mentionIndexLimits === undefined ? undefined : new MentionMatcher(
+    [...phrasesByTarget].flatMap(([targetId, phrases]) => phrases.map((phrase, rank) => ({ ...phrase, targetId, rank }))),
+    mentionIndexLimits,
+    mentionInput!.rawInputCodeUnits,
+    mentionInput!.work,
+  );
+  const targetsById = new Map<string, { readonly note: Note; readonly order: number }[]>();
+  if (matcher !== undefined) suggestionNotes.forEach((note, order) => {
+    const targets = targetsById.get(note.id) ?? [];
+    targets.push({ note, order });
+    targetsById.set(note.id, targets);
+  });
   for (const source of suggestionNotes) {
+    if (matcher !== undefined) {
+      if (scopedMentionNotes.length === 0) continue;
+      const found = matcher.scan(source.searchableText.toLocaleLowerCase("en-US"));
+      const targets = [...found].flatMap(([id, match]) => (targetsById.get(id) ?? []).map((target) => ({ ...target, match })))
+        .filter(({ note }) => source.id !== note.id && (options.mentionScope === undefined
+          || scopedMentionIds.has(source.id) || scopedMentionIds.has(note.id)))
+        .sort((left, right) => left.order - right.order);
+      let newlineOffsets: readonly number[] | undefined;
+      for (const { note: target, match } of targets) {
+        if (mentionPairs >= maxMentionPairs) throw new VaultAnalysisBudgetError(
+          "mention-pairs", maxMentionPairs, `Vault analysis exceeds the ${maxMentionPairs} mention-pair limit.`,
+        );
+        mentionPairs += 1;
+        if (linkedPairs.has(pairKey(source.id, target.id))) continue;
+        if (mentions.length >= maxMentions) throw new VaultAnalysisBudgetError(
+          "mentions", maxMentions, `Vault analysis exceeds the ${maxMentions} mention limit.`,
+        );
+        newlineOffsets ??= matcher.newlineOffsets(source.searchableText);
+        mentions.push({ source: source.path, target: target.path, phrase: match.pattern.phrase,
+          line: matcher.lineAt(newlineOffsets, match.offset) });
+      }
+      continue;
+    }
     const targets = options.mentionScope === undefined
       || scopedMentionIds.has(source.id)
       ? suggestionNotes

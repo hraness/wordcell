@@ -11,7 +11,7 @@
 Copy this prompt into Codex, Claude Code, or another coding agent:
 
 ```text
-Install the `wordcell` Agent Skill from `hraness/wordcell#v0.22.4` with the standard skills
+Install the `wordcell` Agent Skill from `hraness/wordcell#v0.22.5` with the standard skills
 CLI. Use the skill's runtime instructions to install the exact
 versioned GitHub release archive only when the command is missing. Verify it
 with `wordcell doctor` and `wordcell --help`, but do not initialize or modify a vault until
@@ -21,8 +21,8 @@ I ask.
 Install the single public skill with either runner:
 
 ```sh
-npx skills add hraness/wordcell#v0.22.4
-bunx skills add hraness/wordcell#v0.22.4
+npx skills add hraness/wordcell#v0.22.5
+bunx skills add hraness/wordcell#v0.22.5
 ```
 
 Both commands discover the same `wordcell` skill and install it into the selected
@@ -39,7 +39,7 @@ installed skill is byte-identical to the repository source.
 Install the two global commands with Bun:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
 wordcell --help
 wordcell-evaluation-builder --help
 ```
@@ -47,7 +47,7 @@ wordcell-evaluation-builder --help
 The same GitHub archive can be installed with npm:
 
 ```sh
-npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz
+npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
 wordcell --help
 ```
 
@@ -60,7 +60,7 @@ reviewed and enabled; run `wordcell doctor` to inspect the resulting capabilitie
 For programmatic use, add the versioned GitHub archive to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
 ```
 
 The resulting dependency should remain exact:
@@ -68,7 +68,7 @@ The resulting dependency should remain exact:
 ```json
 {
   "dependencies": {
-    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz"
+    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz"
   }
 }
 ```
@@ -246,6 +246,12 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell adapters` | Print the installed platform capability matrix. |
 
 Vault commands default to the current directory and `index.md`; use `--root` and `--index` to select alternatives. Commands that report structured data accept `--json`. Run `wordcell --help` for the complete top-level surface and `wordcell clip --help` for capture, authentication, evidence, and resource-bound options.
+
+`wordcell check` and `wordcell refresh` find unlinked mentions through a phrase index. They retain every admitted note, link, relationship and mention; a resource limit fails the command without returning a partial analysis. This lets larger vaults complete without checking every possible pair of notes.
+
+For programmatic use, `analyzeVaultComplete`, `scanVaultComplete` and `refreshVaultComplete` provide the same complete analysis. The existing `analyzeVault`, `scanVault` and `refreshVault` keep their pair-search behavior and limits. Complete analysis preserves title and alias ownership, phrase precedence, word boundaries, line numbers and result ordering.
+
+Both paths retain the limits of 10,000 notes, 250,000 connection observations and 50,000 returned mentions. In complete analysis, `maxMentionPairs` limits matching source/target candidates. Its phrase index also has aggregate ceilings of 262,144 nodes, 67,108,864 work steps, 1,000,000 pattern occurrences and 268,435,456 UTF-16 input units. Occurrences include repeats and matches rejected by word boundaries. Input is bounded before and after case normalization. Callers can lower those four ceilings with `mentionIndexLimits.maxNodes`, `maxWork`, `maxMatches` and `maxInputCodeUnits`. Exhaustion raises `VaultAnalysisBudgetError` with the resource kind and limit.
 
 ## Capture reference
 
@@ -425,9 +431,9 @@ ritual. The package smoke test keeps future tagged packages byte-identical to
 that source tree.
 
 ```sh
-npx skills add hraness/wordcell#v0.22.4
+npx skills add hraness/wordcell#v0.22.5
 # or
-bunx skills add hraness/wordcell#v0.22.4
+bunx skills add hraness/wordcell#v0.22.5
 ```
 
 The skill invokes the installed `wordcell` command without depending on a repository

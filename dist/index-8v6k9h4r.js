@@ -2,13 +2,14 @@
 import {
   MAX_ANALYZED_NOTES,
   analyzeVault,
+  analyzeVaultComplete,
   isCanonicalNoteId,
   lookupNote,
   normalizeVaultPath,
   parseNote,
   renderCatalog,
   replaceCatalog
-} from "./index-qbssx940.js";
+} from "./index-zy7an84p.js";
 
 // src/vault.ts
 import { randomUUID } from "crypto";
@@ -313,7 +314,7 @@ async function atomicReplace(root, path, content, expected) {
     throw error;
   }
 }
-async function snapshot(rootInput, options, writeIndex) {
+async function snapshot(rootInput, options, writeIndex, completeMentions = false) {
   const requestedRoot = resolve(rootInput);
   const root = await realpath(requestedRoot);
   const rootMetadata = await lstat(root);
@@ -384,14 +385,15 @@ async function snapshot(rootInput, options, writeIndex) {
     catalogMode,
     index,
     notes,
-    analysis: analyzeVault(notes, {
+    analysis: (completeMentions ? analyzeVaultComplete : analyzeVault)(notes, {
       catalogNoteId,
       ...options.includeInSuggestions === undefined ? {} : { includeInSuggestions: options.includeInSuggestions },
       ...mentionScopePredicate === undefined ? {} : { mentionScope: mentionScopePredicate },
       ...options.maxNotes === undefined ? {} : { maxNotes: options.maxNotes },
       ...options.maxConnectionObservations === undefined ? {} : { maxConnectionObservations: options.maxConnectionObservations },
       ...options.maxMentionPairs === undefined ? {} : { maxMentionPairs: options.maxMentionPairs },
-      ...options.maxMentions === undefined ? {} : { maxMentions: options.maxMentions }
+      ...options.maxMentions === undefined ? {} : { maxMentions: options.maxMentions },
+      ...!completeMentions || options.mentionIndexLimits === undefined ? {} : { mentionIndexLimits: options.mentionIndexLimits }
     })
   };
 }
@@ -401,5 +403,11 @@ async function scanVault(root = ".", options = {}) {
 async function refreshVault(root = ".", options = {}) {
   return snapshot(root, options, true);
 }
+async function scanVaultComplete(root = ".", options = {}) {
+  return snapshot(root, options, false, true);
+}
+async function refreshVaultComplete(root = ".", options = {}) {
+  return snapshot(root, options, true, true);
+}
 
-export { MAX_SCANNED_NOTES, MAX_NOTE_UTF8_BYTES, MAX_VAULT_UTF8_BYTES, VaultScanBudgetError, defaultIgnoredDirectories, markdownFiles, readVaultNotes, scanVault, refreshVault };
+export { MAX_SCANNED_NOTES, MAX_NOTE_UTF8_BYTES, MAX_VAULT_UTF8_BYTES, VaultScanBudgetError, defaultIgnoredDirectories, markdownFiles, readVaultNotes, scanVault, refreshVault, scanVaultComplete, refreshVaultComplete };

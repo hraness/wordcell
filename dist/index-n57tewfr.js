@@ -2,14 +2,14 @@
 import {
   fuseRankedCandidates,
   validateSearchQuery
-} from "./index-vnybgywh.js";
+} from "./index-aer0jdrq.js";
 import {
   MAX_NOTE_UTF8_BYTES,
   MAX_SCANNED_NOTES,
   MAX_VAULT_UTF8_BYTES,
   VaultScanBudgetError,
   scanVault
-} from "./index-233z9wmn.js";
+} from "./index-8v6k9h4r.js";
 
 // src/semantic.ts
 import { createHash as createHash2 } from "crypto";
