@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.17.0",
-    "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
+    "@hraness/site-footer": "github:hraness/site-footer#v0.18.0",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.8.0",
     "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz",

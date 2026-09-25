@@ -172,7 +172,7 @@ test("pins the shared footer release and leaves attribution to the package", asy
     read("app/docs/page.tsx"),
     read("app/globals.css"),
   ]);
-  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.15.0"');
+  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.18.0"');
   expect(layout).toContain('import { HranessSiteFooter } from "@hraness/site-footer/react"');
   expect(layout).toMatch(/<HranessSiteFooter\b[^>]*placement="flow"/u);
   for (const source of [home, docs, css]) {
