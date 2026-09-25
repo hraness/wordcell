@@ -1,10 +1,16 @@
 # Wordcell
 
-> A local Markdown knowledge base with superpowers. Save decisions, sources,
-> and plans as files you own, then find them by exact words or, with an
-> optional local model, by meaning. Exact search and graph queries run on your
-> machine without an account or model. Web capture, optional hosted reranking,
-> and hosted agents reach other services.
+> Wordcell keeps decisions, plans, and sources as Markdown beside your code,
+> so coding agents can find them from the file they are about to change.
+
+A new coding-agent session can read your code, but not the decisions that
+stayed in the last session's chat. Wordcell keeps those decisions as Markdown
+files beside the repository, with the plans that depend on them and the web
+pages and PDFs that informed them. Tie a note to the paths it explains, and an
+agent about to change that code runs one command to get the notes and plans
+for that path. Exact search, backlinks, and Git history run on your machine
+with no account or model, and every index rebuilds from files you can read in
+any editor. Wordcell is free and open source.
 
 When to use this site:
 - Use wordcell.io to learn what Wordcell does, what stays on your machine, and

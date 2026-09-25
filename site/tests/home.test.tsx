@@ -39,7 +39,7 @@ test("every public route has the in-flow content footer above the network footer
     expect(html).toContain('<img alt="" height="20" src="/icon.png" width="20"/>');
     expect(html).not.toContain("📝");
     expect(html).toContain("https://account.hraness.com/support?product=kb&amp;source=web#support");
-    expect(html).toContain("Support ongoing development of inspectable Markdown memory.");
+    expect(html).toContain("Support ongoing development of Wordcell.");
     expect(html).not.toContain('type="email"');
     expect(html).not.toContain('source=web#updates');
   }
@@ -76,7 +76,8 @@ test("the homepage's maker answer attributes Wordcell to Hraness", () => {
 test("the homepage leads with the README identity and the verified install command", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
-  expect(html).toMatch(/<h1\b[^>]*>[^<]*Markdown knowledge base[^<]*<\/h1>/u);
+  expect(html).toMatch(/<h1\b[^>]*>Give coding agents the decisions behind your code\.<\/h1>/u);
+  expect(html).toContain("Markdown knowledge base");
   if (publishedRelease === null) {
     expect(html).toContain("First Wordcell release in preparation");
     expect(html).not.toContain(".tgz");

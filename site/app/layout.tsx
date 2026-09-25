@@ -10,7 +10,7 @@ import "./globals.css";
 /** Gruvbox follows the system until a reader chooses a saved appearance. */
 const initialPalette = getDesignPaletteTheme("gruvbox", "light");
 
-const title = "Wordcell: the Markdown knowledge base with superpowers";
+const title = "Wordcell: Give the next session what this one learned";
 const description = siteDescription;
 
 export const metadata: Metadata = {

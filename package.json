@@ -1,7 +1,7 @@
 {
   "name": "@hraness/wordcell",
   "version": "0.22.5",
-  "description": "A local Markdown knowledge base with superpowers. Save decisions, sources, and plans as files you own, then find them by exact words or, with an optional local model, by meaning.",
+  "description": "Wordcell keeps decisions, plans, and sources as Markdown beside your code, so coding agents can find them from the file they are about to change.",
   "license": "MIT",
   "type": "module",
   "sideEffects": [

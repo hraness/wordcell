@@ -809,7 +809,7 @@ function terminalIntro(terminal) {
     return "";
   return ` .----.  /
  | ===| /   wordcell
- | ===|/   Markdown memory for your agents.
+ | ===|/   The decisions behind your code.
  |____/
 
 `;
@@ -1143,7 +1143,7 @@ async function loadSearchRulesFile(path) {
   }
   return parseSearchRules(input);
 }
-var usage = `wordcell \u2014 a local Markdown knowledge base with superpowers
+var usage = `wordcell: Markdown knowledge base that gives agents the decisions behind code
 
 Start here (no account or model needed):
   wordcell init kb

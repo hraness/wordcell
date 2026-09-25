@@ -2,7 +2,7 @@
 import {
   parseArguments as parseArguments2,
   parseUrlMetadataArguments
-} from "./index-8bgnhjgq.js";
+} from "./index-sda8x0ga.js";
 import"./index-bcknqxrq.js";
 import {
   parsePdfArguments
@@ -65,7 +65,7 @@ import { maybeShowSupportInvitation, runSupportCommand } from "@hraness/support-
 var supportProfile = {
   id: "kb",
   name: "Wordcell",
-  valueProposition: "Support ongoing development of inspectable Markdown memory.",
+  valueProposition: "Support ongoing development of Wordcell.",
   updates: false
 };
 

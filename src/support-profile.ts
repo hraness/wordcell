@@ -2,6 +2,6 @@
 export const supportProfile = {
   id: "kb",
   name: "Wordcell",
-  valueProposition: "Support ongoing development of inspectable Markdown memory.",
+  valueProposition: "Support ongoing development of Wordcell.",
   updates: false,
 } as const;

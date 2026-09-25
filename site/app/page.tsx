@@ -19,7 +19,7 @@ import { publishedRelease } from "./publication";
 import { WordcellContentFooter } from "./site-footer";
 import { WordcellField } from "../wordcell/field";
 import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
-import { readmeLead, readmeTitle } from "./readme.generated";
+import { siteDescription } from "./site-description";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactDetails, scifactStudy } from "../wordcell/benchmark-evidence";
 
@@ -28,9 +28,12 @@ const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersi
 const repository = "https://github.com/hraness/wordcell";
 const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases/download/v${releaseVersion}/hraness-wordcell-${releaseVersion}.tgz`;
 
-const heading = "The Markdown knowledge base with superpowers";
-const footnote =
-  `Free under the MIT license. Exact search needs no account or model.${releaseVersion === undefined ? " First Wordcell release in preparation." : ""}`;
+const heading = "Give coding agents the decisions behind your code.";
+const summary =
+  "Decisions, plans, and sources kept as Markdown beside your repository, one command away from the agent about to change a file.";
+const footnote = releaseVersion === undefined
+  ? "Free under the MIT license. Exact search needs no account or model. First Wordcell release in preparation."
+  : `Latest release: v${releaseVersion} · Free under the MIT license · Exact search needs no account or model.`;
 
 const primitives = [
   {
@@ -98,19 +101,19 @@ const relatedGroups = [
       {
         name: "PeopleBlade",
         href: "https://peopleblade.com",
-        role: "A private contact book for you and your agent",
-        relationship: "Wordcell knows what; PeopleBlade knows who: the people behind the notes, in a local graph your agent can query and review.",
+        role: "Local personal CRM for everyone you know, built for your agent",
+        relationship: "Wordcell keeps what; PeopleBlade keeps who: the people behind the notes, in a private book your agent can use.",
       },
       {
         name: "Soulscrape",
         href: "https://soulscrape.com",
-        role: "A dated, cited dossier on a person",
-        relationship: "A dossier is the kind of bounded, cited source a Wordcell note can point at, and Wordcell is where the reasoning and follow-ups around it live.",
+        role: "Free agent skill that writes dated dossiers on people, sources cited",
+        relationship: "A Soulscrape dossier is a dated, cited source a Wordcell note can point at; Wordcell keeps the reasoning and follow-ups around it.",
       },
       {
         name: "Textbutler",
         href: "https://textbutler.app",
-        role: "A personal message butler for Mac",
+        role: "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
         relationship: "Textbutler drafts the reply; Wordcell keeps the durable record of what you decided and why.",
       },
     ],
@@ -123,36 +126,32 @@ const relatedGroups = [
       {
         name: "Ghostget",
         href: "https://ghostget.com",
-        role: "A bounded bridge to provider data",
-        relationship: "Ghostget turns web pages into durable, attested Markdown captures, the same shape Wordcell stores and cites.",
+        role: "Named web actions for AI agents: read pages, save media, use connected accounts",
+        relationship: "Ghostget ships workflows that run over a Wordcell vault; its URL-metadata lookups delegate to the shared implementation.",
       },
       {
         name: "Gobstopper",
         href: "https://gobstopper.sh",
-        role: "Automatic context compaction for agent sessions",
-        relationship: "Gobstopper compacts the session so long research threads over your vault stay cheap.",
+        role: "Compacts long agent sessions into smaller copies, keeping every byte",
+        relationship: "Gobstopper shrinks a long session's context; Wordcell keeps what the session learned.",
       },
       {
         name: "xcb",
         href: "https://xcb.sh",
-        role: "A metaharness for agent subscriptions",
-        relationship: "xcb is the workspace where the agents that query Wordcell run: subscriptions, tokens, and account custody in one place.",
+        role: "Routes coding tasks across the Claude, Codex, and Devin plans you have",
+        relationship: "xcb is the workspace where the agents that query Wordcell run, and its workers can search a vault you explicitly bind.",
       },
       {
-        name: "Aicharts",
+        name: "AI Charts",
         href: "https://aicharts.io",
-        role: "AI model benchmarks and usage inspection",
-        relationship: "Aicharts benchmarks the models your agent queries with and inspects what a vault session actually used.",
+        role: "Model benchmark scores plotted against cost and tokens per task",
+        relationship: "AI Charts measures what your agents' sessions cost; Wordcell keeps what they decided.",
       },
     ],
   },
 ] as const;
 
 const questions: readonly { question: string; answer: string; after?: React.ReactNode }[] = [
-  {
-    question: "What does \"superpowers\" mean here?",
-    answer: "Your Markdown stays the source of truth. Wordcell adds the structure a database usually provides: typed relationships, backlinks, graph proofs, semantic search matched to the current notes, Git history, and selective publishing. Its indexes and caches rebuild from the files.",
-  },
   {
     question: "Is Wordcell only for code?",
     answer: "No. The vault itself is general: notes, captured sources, plans, and research in plain Markdown. The code-related features (repository scopes, AGENTS.md rules, and Git history) apply when the vault sits beside a repository.",
@@ -219,9 +218,9 @@ export default function Home() {
       "@context": "https://schema.org",
       "@type": "SoftwareSourceCode",
       codeRepository: repository,
-      description: readmeLead,
+      description: siteDescription,
       license: "https://opensource.org/license/mit",
-      name: readmeTitle,
+      name: "Wordcell",
       programmingLanguage: "TypeScript",
       runtimePlatform: "Bun",
       url: "https://wordcell.io",
@@ -263,15 +262,15 @@ export default function Home() {
             align="start"
             actions={[
               { href: "#install", label: "Install Wordcell" },
-              { href: "/docs", label: "Read the docs" },
+              { href: "/docs/getting-started", label: "See a note work" },
             ]}
             boundary={footnote}
             className="wordcell-marketing-hero"
-            eyebrow="Open-source CLI, SDK, and Agent Skill"
+            eyebrow="Markdown knowledge base"
             heading={heading}
             headingId="hero-title"
             name=""
-            summary={readmeLead}
+            summary={summary}
           />
           </div>
 
@@ -316,7 +315,7 @@ wordcell note create notes/parser-contract \\
           </MarketingInstallPanel>
 
           <MarketingPrimitives
-            heading="The superpowers, concretely"
+            heading="What a vault gives you"
             headingId="model-title"
             id="model"
             items={primitives.map((primitive) => ({
@@ -507,12 +506,12 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
           <MarketingCallToAction
             actions={[
               { href: "#install", label: "Install Wordcell" },
-              { href: "/docs", label: "Read the docs" },
+              { href: "/docs/getting-started", label: "See a note work" },
             ]}
             footnote={footnote}
-            heading="Start with one decision"
+            heading="Give the next session what this one learned."
             headingId="cta-title"
-            summary="Save a decision now and find it with one search months later. Connect an agent when you're ready."
+            summary="Save one decision beside the code, then let the agent find it."
           />
         </MarketingPage>
       </main>
