@@ -35,11 +35,23 @@ export function assertSiteLinks(slug: string, html: string, posts: ReadonlySet<s
   }
 }
 
+/** The visible text of a heading's inner HTML: every tag dropped, entities decoded with `&amp;` last so nothing is decoded twice. */
+function headingLabel(innerHtml: string): string {
+  let text = "";
+  let inTag = false;
+  for (const character of innerHtml) {
+    if (character === "<") inTag = true;
+    else if (character === ">") inTag = false;
+    else if (!inTag) text += character;
+  }
+  return text.replaceAll("&quot;", '"').replaceAll("&#39;", "'").replaceAll("&amp;", "&").trim();
+}
+
 /** Contents entries for each h2, shown only when a post has four or more sections. */
 export function contentsFor(html: string): readonly { href: `#${string}`; label: string }[] {
   const items = Array.from(html.matchAll(/<h2 id="([^"]+)">([\s\S]*?)<\/h2>/gu), ([, id, body]) => ({
     href: `#${id!}` as const,
-    label: body!.replace(/<[^>]+>/gu, "").replaceAll("&amp;", "&").replaceAll("&quot;", '"').replaceAll("&#39;", "'").trim(),
+    label: headingLabel(body!),
   }));
   return items.length >= 4 ? items.slice(0, 8) : [];
 }

@@ -120,6 +120,12 @@ describe("Wordcell blog", () => {
     expect(() => assertSiteLinks("x", '<a href="/docs/missing">', posts, docs)).toThrow();
   });
 
+  test("the introduction leaves the xcb post unlinked until that post is live", () => {
+    // The draft keeps this link conditional on xcb.sh/blog/how-xcb-uses-wordcell returning 200.
+    expect(blogHtml["introducing-wordcell"]).toContain("How xcb uses Wordcell explains.");
+    expect(blogHtml["introducing-wordcell"]).not.toContain('href="https://xcb.sh/');
+  });
+
   test("contents lists appear only for posts with four or more sections", () => {
     const three = '<h2 id="a">A</h2><h2 id="b">B</h2><h2 id="c">C</h2>';
     expect(contentsFor(three)).toEqual([]);
