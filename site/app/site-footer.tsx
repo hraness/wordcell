@@ -12,6 +12,7 @@ export function WordcellContentFooter() {
       links={[
         { href: "/developers", label: "For developers" },
         { href: "/docs", label: "Docs" },
+        { href: "/blog", label: "Blog" },
         { href: repository, label: "hraness/wordcell" },
         { href: "https://hraness.com/projects", label: "Hraness projects" },
       ]}

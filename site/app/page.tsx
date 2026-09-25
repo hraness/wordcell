@@ -209,6 +209,7 @@ const navigation = [
   { href: "/developers", label: "Developers" },
   { href: "#install", label: "Install" },
   { href: "/docs", label: "Docs" },
+  { href: "/blog", label: "Blog" },
   { href: repository, label: "GitHub" },
 ] as const;
 

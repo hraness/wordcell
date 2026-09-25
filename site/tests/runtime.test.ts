@@ -145,4 +145,34 @@ describe("built Wordcell site", () => {
       await stopBuiltSite(server);
     }
   }, 20_000);
+
+  test("serves the blog, its Atom feed, and noindex for quarantined posts", async () => {
+    const server = await startBuiltSite();
+    try {
+      const [indexResponse, introResponse, heldResponse, feedResponse] = await Promise.all([
+        fetch(`${server.origin}/blog`, { redirect: "manual" }),
+        fetch(`${server.origin}/blog/introducing-wordcell`, { redirect: "manual" }),
+        fetch(`${server.origin}/blog/how-wordcell-uses-oh`, { redirect: "manual" }),
+        fetch(`${server.origin}/blog/feed.xml`, { redirect: "manual" }),
+      ]);
+      const [index, intro, held, feed] = await Promise.all([
+        indexResponse.text(), introResponse.text(), heldResponse.text(), feedResponse.text(),
+      ]);
+      for (const response of [indexResponse, introResponse, heldResponse, feedResponse]) expect(response.status).toBe(200);
+      expect(index).toContain('<link rel="canonical" href="https://wordcell.io/blog"');
+      expect(index).toContain('type="application/atom+xml"');
+      expect(intro).toContain('<link rel="canonical" href="https://wordcell.io/blog/introducing-wordcell"');
+      expect(intro).toContain('<meta property="og:type" content="article"');
+      expect(intro).toContain('"@type":"BlogPosting"');
+      expect(intro).toContain("reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
+      expect(intro).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
+      expect(held).toMatch(/<meta name="robots" content="noindex, nofollow"/u);
+      expect(held).toContain("reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
+      expect(feedResponse.headers.get("content-type")).toContain("application/atom+xml");
+      expect(feed).toContain("<id>https://wordcell.io/blog/introducing-wordcell</id>");
+      expect(feed).not.toContain("<id>https://wordcell.io/blog/how-wordcell-uses-oh</id>");
+    } finally {
+      await stopBuiltSite(server);
+    }
+  }, 20_000);
 });
