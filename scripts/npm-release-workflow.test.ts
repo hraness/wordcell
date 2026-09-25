@@ -404,9 +404,18 @@ describe("npm release workflows", () => {
       ],
     }));
     // Pin the identity and the README alignment, not the sentence itself.
-    expect(String(manifest.description)).toContain("Markdown knowledge base");
+    // The canonical meta line is the package description and the site's own
+    // description; the README opening backs the same claim.
+    expect(String(manifest.description)).toContain("Markdown");
+    expect(String(manifest.description)).toContain("coding agents");
+    const siteDescriptionSource = await readFile(
+      new URL("../site/app/site-description.ts", import.meta.url),
+      "utf8",
+    );
+    expect(siteDescriptionSource).toContain(String(manifest.description));
     const opening = readme.slice(0, 1_500).replace(/\s+/gu, " ").toLowerCase();
-    expect(opening).toContain(String(manifest.description).toLowerCase());
+    expect(opening).toContain("decisions, plans, and sources as markdown");
+    expect(opening).toContain("coding agents");
     for (const link of [
       "[Install Wordcell from GitHub Releases](https://github.com/hraness/wordcell/releases)",
       "[Wordcell source on GitHub](https://github.com/hraness/wordcell)",

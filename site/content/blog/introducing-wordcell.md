@@ -1,4 +1,4 @@
-Wordcell is a local knowledge base built on the Markdown files you already keep. It indexes those files for search, builds a graph from the links you wrote, and gives every result a path back to the note it came from. The files stay where they are, in a format Obsidian, Git, and any text editor can read, and every index can be deleted and rebuilt from them.
+Wordcell keeps decisions, plans, and sources as Markdown files beside your code. Coding agents find them by exact words, by meaning with an optional local model, or from the file they are about to change. Wordcell builds a graph from the links you wrote and gives every result a path back to the note it came from. The files stay where they are, in a format Obsidian, Git, and any text editor can read, and every index can be deleted and rebuilt from them.
 
 A rule like "parser retries stop after three attempts" tends to get decided once and then lost. It lives in a chat that closes, a commit message nobody searches, or a note on someone's laptop. The next coding agent to touch the parser starts from the code and never sees it. With Wordcell, the rule is a note the agent can find and cite.
 
@@ -8,7 +8,7 @@ Wordcell reads a folder of Markdown and never moves your notes into a database o
 
 You can check any Wordcell answer against the file. An exact search result names the note and the line that matched. A graph result names the note that wrote a link, the note it points to, and the line where the link appears, plus a proof that ties the row to the exact version of the file it was read from. When an agent cites a Wordcell result, you open the file and read the sentence yourself.
 
-Wordcell was called KB until version 0.20.0. Releases up to 0.19.6 are still published under the package name `@hraness/kb`, so older install notes and lockfiles may show that name. Newer releases use `@hraness/wordcell`, and the vault format keeps its `kb` names, so an existing vault needs no migration.
+Wordcell was called KB until version 0.20.0. Releases up to 0.19.6 keep the package name `@hraness/kb`: npm carries them through 0.19.2, and the later 0.19.x versions exist as GitHub Release archives, so older install notes and lockfiles may show that name. Newer releases use `@hraness/wordcell`, and the vault format keeps its `kb` names, so an existing vault needs no migration.
 
 ## Who it suits
 

@@ -3,17 +3,22 @@
 
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
-A local Markdown knowledge base with superpowers. Save decisions, sources, and
-plans as files you own, then find them by exact words or, with an optional
-local model, by meaning. Links and Git history show how each note connects and
-where it came from. Coding agents can look up the notes tied to the code they
-change, and the same vault holds everything else you want to remember.
+Wordcell keeps decisions, plans, and sources as Markdown files beside your
+code. Coding agents find them by exact words, by meaning with an optional
+local model, or from the file they are about to change.
 
-Read the files in Obsidian or any editor, review changes in Git, and rebuild
-every index from the Markdown. Exact search and graph queries run on your
-machine with no account or model. Web capture, hosted agents, and optional
-remote reranking reach other services;
-[Privacy and boundaries](#privacy-and-boundaries) says what each one sends.
+A new coding-agent session can read your code, but not the decisions that
+stayed in the last session's chat. Wordcell keeps those decisions as Markdown
+files beside the repository, with the plans that depend on them and the web
+pages and PDFs that informed them. Tie a note to the paths it explains, and an
+agent about to change that code runs one command to get the notes and plans
+for that path. Exact search, backlinks, and Git history run on your machine
+with no account or model, and every index rebuilds from files you can read in
+any editor. Wordcell is free and open source.
+
+Web capture, optional hosted reranking, and your agent's provider reach other
+services; [Privacy and boundaries](#privacy-and-boundaries) says what each one
+sends.
 
 [Documentation](https://wordcell.io/docs) · [Comparisons](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md) · [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md) · [Changelog](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md)
 

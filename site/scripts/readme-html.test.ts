@@ -76,7 +76,7 @@ test("extracts the landing block between the shared Hraness markers", async () =
   expect(source.indexOf(LANDING_END)).toBeGreaterThan(source.indexOf(LANDING_START));
   const landing = readmeLanding(source);
   expect(landing.title).toBe("Wordcell");
-  expect(landing.lead).toContain("Markdown knowledge base");
+  expect(landing.lead).toContain("decisions, plans, and sources as Markdown files beside your code");
   expect(landing.markdown).toContain("wordcell init kb");
 });
 
@@ -101,10 +101,10 @@ test("replacing the skill badge preserves the following paragraph boundary", () 
     const html = renderReadmeHtml([
       "[![Agent Skill](https://example.com/badge.svg)](https://example.com/skill) \t",
       "",
-      "A local Markdown knowledge base with superpowers.",
+      "Markdown knowledge base that gives agents the decisions behind code.",
     ].join(newline));
     expect(html).toContain('<p><a href="https://example.com/skill">Install the Agent Skill</a></p>');
-    expect(html).toContain('<p>A local Markdown knowledge base with superpowers.</p>');
+    expect(html).toContain('<p>Markdown knowledge base that gives agents the decisions behind code.</p>');
   }
 });
 

@@ -232,7 +232,7 @@ async function loadSearchRulesFile(path: string): Promise<SearchRulesV1> {
   return parseSearchRules(input);
 }
 
-export const usage = `wordcell — a local Markdown knowledge base with superpowers
+export const usage = `wordcell: Markdown knowledge base that gives agents the decisions behind code
 
 Start here (no account or model needed):
   wordcell init kb

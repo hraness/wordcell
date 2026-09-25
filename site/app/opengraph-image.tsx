@@ -6,7 +6,7 @@ import {
 
 import { siteDescription } from "./site-description";
 
-export const alt = "Wordcell: the Markdown knowledge base with superpowers";
+export const alt = "Wordcell: Give the next session what this one learned";
 export { contentType, size };
 
 function WordcellMark() {
@@ -29,6 +29,6 @@ export default function OpengraphImage() {
       foreground: "#393533",
       muted: "#584F48",
     },
-    title: "The Markdown knowledge base with superpowers",
+    title: "Give the next session what this one learned",
   });
 }

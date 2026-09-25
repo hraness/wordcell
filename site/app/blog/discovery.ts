@@ -36,7 +36,7 @@ export const hraness = { kind: "Organization", name: "Hraness" } as const satisf
 
 /** The site's social card, reused as each post's representative image. */
 const socialImage = {
-  alt: "Wordcell: the Markdown knowledge base with superpowers",
+  alt: "Wordcell: Give the next session what this one learned",
   contentType: "image/png",
   height: 630,
   path: "/opengraph-image",

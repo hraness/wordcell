@@ -29,11 +29,12 @@ const releaseVersion = publishedRelease?.version;
 const repository = "https://github.com/hraness/wordcell";
 const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases/download/v${releaseVersion}/hraness-wordcell-${releaseVersion}.tgz`;
 
-const heading = "Give coding agents the decisions behind your code";
+const heading = "Keep the rules in AGENTS.md and the reasons in the vault.";
 const lead =
   "Keep a Markdown knowledge base beside your repository. Save decisions, tie them to code paths, and let the next agent look them up from the file it edits.";
-const footnote =
-  `Free under the MIT license. Exact search needs no account or model.${releaseVersion === undefined ? " First Wordcell release in preparation." : ""}`;
+const footnote = releaseVersion === undefined
+  ? "Free under the MIT license. Exact search needs no account or model. First Wordcell release in preparation."
+  : `Latest release: v${releaseVersion} · Free under the MIT license · Exact search needs no account or model.`;
 
 const pageTitle = "Wordcell for developers and coding agents";
 const pageDescription = lead;
@@ -354,7 +355,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
               { href: "/docs/agent-workflow", label: "Read the agent workflow" },
             ]}
             footnote={footnote}
-            heading="Give the next session what this one learned"
+            heading="Give the next session what this one learned."
             headingId="cta-title"
             summary="Save one decision beside the code, then let the agent find it."
           />
