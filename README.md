@@ -244,9 +244,9 @@ does not claim to beat QMD's retrieval quality or every Markdown workflow.
 [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md)
 shows a reproducible public-vault example, with the inputs, output sizes, and
 limits beside each result. [The comparison guide](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md)
-covers Markdown alone, QMD, Basic Memory, Obsidian, and static publishing tools
-using their own documentation. Choose the smallest workflow that meets your
-needs.
+covers Markdown alone, QMD, Basic Memory, Obsidian, static publishing tools,
+Supermemory, Mem0, and Zep using their own documentation. Choose the smallest
+workflow that meets your needs.
 
 ## How the files fit together
 
@@ -332,6 +332,8 @@ the design. Browse it on the [documentation index](https://wordcell.io/docs).
 | [Publish selected notes](https://github.com/hraness/wordcell/blob/main/docs/publish.md) | Preview a slice, build a static site, and choose how to host it. |
 | [Graph guide](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md) | Named queries, proofs, revisions, resource limits, and cache recovery. |
 | [Portfolio federation](https://github.com/hraness/wordcell/blob/main/docs/portfolio.md) | Search only selected, authorized vaults. |
+| [Sync with Git](https://github.com/hraness/wordcell/blob/main/docs/sync.md) | Keep one vault current on several machines with a private repository. |
+| [Migrate from Supermemory](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md) | Export documents and memory entries, import them as notes, and replace connectors. |
 | [Design](https://github.com/hraness/wordcell/blob/main/docs/design.md) and [memory rationale](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md) | File contracts, design choices, and evaluation context. |
 | [Release verification](https://github.com/hraness/wordcell/blob/main/docs/publishing.md#verify-a-published-release) | Verify archive identity, signatures, and provenance. |
 

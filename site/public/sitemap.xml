@@ -61,6 +61,16 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://wordcell.io/docs/migration-from-supermemory</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://wordcell.io/docs/sync</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://wordcell.io/docs/reference</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

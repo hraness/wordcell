@@ -51,6 +51,12 @@ export const docCatalog = [
     quadrant: "how-to",
   },
   {
+    slug: "migration-from-supermemory",
+    title: "Migrate from Supermemory",
+    summary: "Export your Supermemory documents and memory entries, import them as Markdown notes, and see what does not transfer.",
+    quadrant: "how-to",
+  },
+  {
     slug: "capture",
     title: "Capture web content",
     summary: "Save a page, thread, or video as Markdown with local copies of its assets and a record of how it was captured.",
@@ -72,6 +78,12 @@ export const docCatalog = [
     slug: "portfolio",
     title: "Portfolio federation",
     summary: "Search and link across only the vaults you explicitly select and authorize.",
+    quadrant: "how-to",
+  },
+  {
+    slug: "sync",
+    title: "Sync a vault with Git",
+    summary: "Keep one vault current on several machines with a private Git repository and a script that commits and pushes on a schedule.",
     quadrant: "how-to",
   },
   {
@@ -118,8 +130,8 @@ export const docCatalog = [
   },
   {
     slug: "comparisons",
-    title: "Choose a Markdown knowledge workflow",
-    summary: "Markdown, QMD, Basic Memory, Obsidian, and Wordcell compared from primary sources.",
+    title: "Choose a Markdown knowledge or agent memory tool",
+    summary: "Markdown knowledge tools and agent memory services compared with Wordcell, using each project's own primary documentation.",
     quadrant: "explanation",
   },
   {
