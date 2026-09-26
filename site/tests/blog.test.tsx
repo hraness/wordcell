@@ -17,13 +17,27 @@ import { blogAdmissions, blogArticles, indexableArticles } from "../app/blog/art
 import { blogHtml } from "../app/blog/blog.generated";
 import { blogSitemapPaths } from "../app/blog/discovery";
 import { publishedRelease } from "../app/publication";
-import { assertSiteLinks, bindReleaseVersion, contentsFor } from "../scripts/sync-blog";
+import {
+  assertBoundFigures,
+  assertSiteLinks,
+  bindEvidence,
+  bindReleaseVersion,
+  contentsFor,
+  evidenceFigures,
+  figureTokens,
+} from "../scripts/sync-blog";
+import { scifactStudy } from "../wordcell/benchmark-evidence";
 import { launchRoutes } from "../wordcell/launch-routes";
+import { ohAttribution, ohLinks, pilotStudy } from "../wordcell/oh-evidence";
 
 const site = join(import.meta.dir, "..");
 const read = async (path: string): Promise<string> => await readFile(join(site, path), "utf8");
 
 const quarantined = blogArticles.filter((article) => !isArticleIndexable(article.admission));
+const unreviewed = blogArticles.filter((article) => article.admission.review === null);
+const launchSlug = "free-local-agent-memory";
+// The commit that added /benchmarks, /compare/supermemory, and /migrate/supermemory (PR #137); the launch post pins its Wordcell sources there.
+const launchCommit = "d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc";
 
 async function renderPost(slug: string): Promise<string> {
   return renderToStaticMarkup(await BlogPostPage({ params: Promise.resolve({ slug }) }));
@@ -34,9 +48,12 @@ describe("Wordcell blog", () => {
     assertArticleAdmissions(blogAdmissions);
     expect(blogAdmissions.map((admission) => admission.href)).toEqual(blogArticles.map((article) => `/blog/${article.slug}`));
     for (const admission of blogAdmissions) {
-      expect(admission.review?.reviewerType).toBe("ai");
+      // A post without a review stays quarantined; the drafting run never records itself as the reviewer.
+      if (admission.review === null) expect(admission.lifecycle, admission.href).toBe("quarantined");
+      else expect(admission.review.reviewerType).toBe("ai");
       expect(admission.humanReview).toBeNull();
     }
+    expect(unreviewed.map((article) => article.slug)).toEqual([]);
   });
 
   test("the registry, rendered bodies, and static routes cover the same posts", () => {
@@ -44,8 +61,8 @@ describe("Wordcell blog", () => {
     expect(generateStaticParams().map(({ slug }) => slug).sort()).toEqual(blogArticles.map((article) => article.slug).sort());
   });
 
-  test("today's posts are one indexable introduction and one indexable integration post", () => {
-    expect(indexableArticles.map((article) => article.slug)).toEqual(["introducing-wordcell", "how-wordcell-uses-oh"]);
+  test("today's posts are three indexable posts, newest first", () => {
+    expect(indexableArticles.map((article) => article.slug)).toEqual(["free-local-agent-memory", "introducing-wordcell", "how-wordcell-uses-oh"]);
     expect(quarantined.map((article) => article.slug)).toEqual([]);
   });
 
@@ -53,7 +70,11 @@ describe("Wordcell blog", () => {
     for (const article of blogArticles) {
       const html = await renderPost(article.slug);
       const sentence = articleProvenanceSentence(articleProvenanceFromAdmission(article.admission));
-      expect(sentence).toBe("Drafted with AI from the source code and reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
+      expect(sentence, article.slug).toBe(
+        article.admission.review === null
+          ? "Drafted with AI from the source code. It has not been reviewed yet."
+          : "Drafted with AI from the source code and reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.",
+      );
       expect(html).toContain(sentence);
       expect(html).toContain("By");
       expect(html).toContain("Hraness");
@@ -122,6 +143,117 @@ describe("Wordcell blog", () => {
     for (const path of launchRoutes) expect(() => assertSiteLinks("x", `<a href="${path}#top">`, posts, docs), path).not.toThrow();
     expect(() => assertSiteLinks("x", '<a href="/migrate/supermemory#steps">', posts, docs)).not.toThrow();
     expect(() => assertSiteLinks("x", '<a href="/compare/missing">', posts, docs)).toThrow();
+  });
+
+  test("the evidence binder replaces known keys, rejects unknown ones, and leaves other text alone", () => {
+    const bound = bindEvidence("{{evidence.handoff.reduction}} then {{evidence.oh-pilot.estimate}} and {{evidence.handoff.reduction}}");
+    expect(bound.text).toBe(`${evidenceFigures["handoff.reduction"]} then ${evidenceFigures["oh-pilot.estimate"]} and ${evidenceFigures["handoff.reduction"]}`);
+    expect(bound.figures).toEqual([evidenceFigures["handoff.reduction"], evidenceFigures["oh-pilot.estimate"]]);
+    expect(bindEvidence("{{evidence.x}}.", { x: "1.5%" })).toEqual({ text: "1.5%.", figures: ["1.5%"] });
+    expect(() => bindEvidence("{{evidence.missing}}")).toThrow("Unknown evidence figure {{evidence.missing}}.");
+    expect(() => bindEvidence("{{evidence.toString}}")).toThrow("Unknown evidence figure {{evidence.toString}}.");
+    expect(bindEvidence("no figures, {{release.version}}")).toEqual({ text: "no figures, {{release.version}}", figures: [] });
+    expect(evidenceFigures["oh-locomo.attribution"]).toBe(ohAttribution);
+    expect(evidenceFigures["oh-locomo.url"]).toBe(ohLinks.locomoResult);
+    expect(evidenceFigures["oh-pilot.url"]).toBe(ohLinks.pilotResult);
+    for (const [key, value] of Object.entries(evidenceFigures)) {
+      expect(value, key).not.toBe("");
+      expect(value, key).not.toContain("{{");
+      expect(value, key).not.toContain("NaN");
+    }
+  });
+
+  test("the scale, unfinished-question, and interval-level figures match what /benchmarks shows", async () => {
+    expect(scifactStudy.evaluator).toContain(`over ${evidenceFigures["scifact.corpus"]} abstracts`);
+    expect(pilotStudy.evaluator).toContain(`Oh and BM25 each did not finish ${evidenceFigures["oh-pilot.incomplete"]} of the ${evidenceFigures["oh-pilot.questions"]} questions`);
+    expect(await read("app/benchmarks/page.tsx")).toContain(`with a ${evidenceFigures["oh-pilot.level"]} interval from`);
+  });
+
+  test("only bound figures may appear as percentages or decimals", () => {
+    expect(figureTokens("<p>Up 12.5% or 79.98 %, from −13.33 to +6.67.</p>")).toEqual(["12.5%", "79.98%", "−13.33", "+6.67"]);
+    expect(figureTokens('<p>GPT-5 mini, GPT-4o, <a href="/x-1.5">1,540 questions</a> on September 26, 2026, v0.22.5, 0.19.6, 0.19.x.</p>')).toEqual([]);
+    expect(() => assertBoundFigures("x", "<p>12.5% better</p>", ["79.98%"])).toThrow("x shows figures the evidence binder did not produce: 12.5%");
+    expect(() => assertBoundFigures("x", "<p>3.33 points</p>", ["−3.33"])).toThrow();
+    expect(() => assertBoundFigures("x", "<p>From −3.33 (79.98%) in v1.2.3.</p>", ["−3.33", "79.98%", "1.2.3"])).not.toThrow();
+  });
+
+  test("every post shows only the figures its placeholders bind", async () => {
+    for (const article of blogArticles) {
+      const source = bindReleaseVersion(await read(`content/blog/${article.slug}.md`), publishedRelease?.version ?? null);
+      const { figures } = bindEvidence(source);
+      const produced = publishedRelease === null ? figures : [...figures, publishedRelease.version];
+      expect(() => assertBoundFigures(article.slug, blogHtml[article.slug] ?? "", produced), article.slug).not.toThrow();
+    }
+  });
+
+  test("every evidence figure is bound by some post", async () => {
+    const used = new Set<string>();
+    for (const article of blogArticles) {
+      for (const match of (await read(`content/blog/${article.slug}.md`)).matchAll(/\{\{evidence\.([^{}]*)\}\}/gu)) used.add(match[1] ?? "");
+    }
+    expect([...used].sort()).toEqual(Object.keys(evidenceFigures).sort());
+  });
+
+  test("titles, deks, and eyebrows fit the article copy limits", () => {
+    for (const article of blogArticles) {
+      expect(article.title.length, article.slug).toBeLessThanOrEqual(70);
+      expect(article.dek.length, article.slug).toBeLessThanOrEqual(200);
+      expect(article.eyebrow.split(/\s+/u).length, article.slug).toBeLessThanOrEqual(3);
+    }
+    // The dek is also the page description, which STYLE.md keeps between 110 and 160 characters.
+    const launchDek = blogArticles.find((article) => article.slug === launchSlug)?.dek ?? "";
+    expect(launchDek.length).toBeGreaterThanOrEqual(110);
+    expect(launchDek.length).toBeLessThanOrEqual(160);
+  });
+
+  test("the launch post types no figure of its own: digits appear only in names, dates, links, and code", async () => {
+    const source = await read(`content/blog/${launchSlug}.md`);
+    const prose = source
+      .replaceAll(/\{\{[^{}]*\}\}/gu, "")
+      .replaceAll(/\]\([^()]*\)/gu, "]")
+      .replaceAll(/`[^`]*`/gu, "")
+      .replaceAll(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}\b/gu, "")
+      .replaceAll(/\b(?:GPT-5|GPT-4o|BM25|UTF-8)\b/gu, "");
+    expect(prose.match(/\d+/gu) ?? []).toEqual([]);
+    expect(source).not.toContain("%");
+    expect(figureTokens(blogHtml[launchSlug] ?? "").length).toBeGreaterThan(0);
+  });
+
+  test("the launch post keeps Oh's results attributed, states its status once, and makes no ranking claim", async () => {
+    const source = await read(`content/blog/${launchSlug}.md`);
+    expect(blogHtml[launchSlug]).toContain(ohAttribution);
+    expect(source.match(/Latest release: /gu)?.length).toBe(1);
+    expect(source.match(/available from source until the next release/gu)?.length).toBe(1);
+    for (const banned of [/\bSOTA\b/iu, /state of the art/iu, /CLONEMEM/iu, /\bwe\b/iu, /\bour\b/iu, /honest/iu, /\bthe first\b/iu, /\bthe only\b/iu]) {
+      expect(source, String(banned)).not.toMatch(banned);
+    }
+  });
+
+  test("the launch post links the Supermemory launch pages and pins every repository link", () => {
+    const article = blogArticles.find((candidate) => candidate.slug === launchSlug);
+    if (article === undefined) throw new Error(`${launchSlug} is missing from the registry.`);
+    const hrefs = [...(blogHtml[launchSlug] ?? "").matchAll(/href="([^"]*)"/gu)].map((match) => match[1] ?? "");
+    // The post covers these three pages; later launch routes, such as other comparison pages, are not its subject.
+    const supermemoryLaunchPages = ["/benchmarks", "/compare/supermemory", "/migrate/supermemory"] as const;
+    for (const route of supermemoryLaunchPages) {
+      expect(launchRoutes, route).toContain(route);
+      expect(hrefs.some((href) => href === route || href.startsWith(`${route}#`)), route).toBe(true);
+    }
+    const ohHrefs = hrefs.filter((href) => href.startsWith("https://github.com/hraness/oh/"));
+    expect(ohHrefs).toContain(ohLinks.locomoResult);
+    expect(ohHrefs).toContain(ohLinks.pilotResult);
+    const ohValues: string[] = Object.values(ohLinks);
+    for (const href of ohHrefs) expect(ohValues).toContain(href);
+    const sourceHrefs: string[] = article.sources.map((source) => source.href);
+    for (const href of hrefs.filter((candidate) => /^https?:/u.test(candidate))) expect(sourceHrefs, href).toContain(href);
+    for (const source of article.sources) {
+      if (source.href.startsWith("https://github.com/hraness/wordcell/")) expect(source.href).toContain(`/blob/${launchCommit}/`);
+      if (source.href.startsWith("https://github.com/hraness/oh/")) expect(ohValues).toContain(source.href);
+      expect(source.checkedOn).toBe(article.published);
+    }
+    expect(article.admission.sources.map(({ title, url }) => ({ title, href: url }))).toEqual(
+      article.sources.map(({ title, href }) => ({ title, href })),
+    );
   });
 
   test("the introduction links the xcb post now that it is live", () => {

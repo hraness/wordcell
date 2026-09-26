@@ -14,12 +14,18 @@ import {
   type ArticleSourceItem,
 } from "@hraness/design-kit";
 
+import { ohLinks } from "../../wordcell/oh-evidence";
+
 const WORDCELL_COMMIT = "7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10";
 const OH_COMMIT = "73da154e7d16d6d3883b85110eaad30381df7a54";
 const REVIEWER = "Claude Opus 5.5 (claude-opus-5-5) editorial review";
 
+// The commit that added /benchmarks, /compare/supermemory, and /migrate/supermemory (PR #137); the launch post pins its Wordcell sources there.
+const LAUNCH_COMMIT = "d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc";
+
 const wordcellSource = (path: string) => `https://github.com/hraness/wordcell/blob/${WORDCELL_COMMIT}/${path}`;
 const ohSource = (path: string) => `https://github.com/hraness/oh/blob/${OH_COMMIT}/${path}`;
+const launchSource = (path: string) => `https://github.com/hraness/wordcell/blob/${LAUNCH_COMMIT}/${path}`;
 
 export const BLOG_PATH = "/blog";
 export const BLOG_FEED_PATH = "/blog/feed.xml";
@@ -40,6 +46,29 @@ export interface BlogArticle {
 }
 
 const checked = "2026-09-24" as const;
+const launchChecked = "2026-09-26" as const;
+
+/** Every file and page the launch post cites, each opened again on launchChecked. Oh links match ohLinks in wordcell/oh-evidence.ts. */
+const launchSources = [
+  { title: "Local MCP server and Supermemory import reference", href: launchSource("docs/reference.md") },
+  { title: "Migrate from Supermemory", href: launchSource("docs/migration-from-supermemory.md") },
+  { title: "Sync a vault with Git", href: launchSource("docs/sync.md") },
+  { title: "Session-memory workflow in the wordcell skill", href: launchSource("skills/wordcell/references/session-memory.md") },
+  { title: "Unreleased changes", href: launchSource("CHANGELOG.md") },
+  { title: "Published release record", href: launchSource("site/published-release.json") },
+  { title: "MIT license", href: launchSource("LICENSE") },
+  { title: "Evidence and its limits", href: launchSource("docs/evidence.md") },
+  { title: "Handoff payload measurement", href: launchSource("docs/product-evidence.json") },
+  { title: "SciFact reranking study", href: launchSource("docs/evaluations/wordcell-scifact-20260919.json") },
+  { title: "Oh LoCoMo result file, copy in the Wordcell repository", href: launchSource("docs/evaluations/oh/memory-evolution-locomo-sealed-1540-v1.json") },
+  { title: "Oh framework pilot result file, copy in the Wordcell repository", href: launchSource("docs/evaluations/oh/memory-framework-pilot-v1.json") },
+  { title: "Query the derived graph", href: launchSource("docs/graph-authority.md") },
+  { title: "Matched descriptive comparison on LoCoMo", publisher: "Oh", href: ohLinks.locomoResult },
+  { title: "Framework pilot result V1", publisher: "Oh", href: ohLinks.pilotResult },
+  { title: "Self-hosting overview", publisher: "Supermemory", href: "https://supermemory.ai/docs/self-hosting/overview" },
+  { title: "User profiles", publisher: "Supermemory", href: "https://supermemory.ai/docs/concepts/user-profiles" },
+  { title: "Graph memory", publisher: "Supermemory", href: "https://supermemory.ai/docs/concepts/graph-memory" },
+] as const satisfies readonly Omit<ArticleSourceItem, "checkedOn">[];
 
 export const blogArticles = [
   {
@@ -180,6 +209,58 @@ export const blogArticles = [
         "Change to which Wordcell paths use Oh's Rust canonical encoder or Rust query engine",
         "Change to createOhAdoptionPreparerV1 output or behavior in src/oh-adoption.ts",
         "Wordcell or Oh rename, or the oh.computer parity post or built-on-Oh hub goes live",
+      ],
+    },
+  },
+  {
+    slug: "free-local-agent-memory",
+    title: "Agent memory should be free, local, and yours",
+    dek: "A source build of Wordcell serves a Markdown vault to local MCP clients and imports Supermemory exports, so agent memory stays in files you can read and commit.",
+    eyebrow: "Launch",
+    published: launchChecked,
+    tags: ["wordcell", "agent-memory", "mcp", "supermemory", "markdown"],
+    sources: launchSources.map((source) => ({ ...source, checkedOn: launchChecked })),
+    admission: {
+      href: "/blog/free-local-agent-memory",
+      // The drafting run did not review its own post: a separate AI review read it on 2026-09-26, and its findings were fixed before the post was indexed.
+      lifecycle: "indexable",
+      readerJob: "I keep agent memory in Supermemory or a similar service and want to know what Wordcell offers instead, what its numbers show, and what I would give up by switching.",
+      nonObviousAnswer: "The strongest figures are Oh's own results for its API, and the one run that includes Supermemory did not separate the two; the case for Wordcell is memory the agent writes as files you can read, diff, and revert, not a benchmark lead.",
+      originalContribution: "Puts the launch commands next to figures bound at build time from the same study files as /benchmarks, and says which results do not transfer to a Wordcell vault.",
+      hostFit: "The launch post for the local MCP server, the Supermemory importer, and the session-memory workflow, on the Wordcell blog.",
+      nearestUrls: [
+        { url: "https://wordcell.io/benchmarks", distinction: "The benchmarks page lists every study with its setup and limits; the post says what those results mean for someone choosing an agent memory tool." },
+        { url: "https://wordcell.io/compare/supermemory", distinction: "The comparison sets the two products side by side feature by feature; the post argues for memory the agent writes as files and says when Supermemory fits better." },
+        { url: "https://wordcell.io/migrate/supermemory", distinction: "The migration page lists the steps; the post explains what the launch adds and links there as the next action." },
+      ],
+      sources: launchSources.map(({ title, href }) => ({ title, url: href, checkedOn: launchChecked })),
+      observations: [
+        "Supermemory's self-hosted edition is also free and open source, so price alone does not separate it from Wordcell; the post argues from who writes the memory and where it lives.",
+        "Neither the launch commands nor the skill's session-memory workflow is in the published 0.22.5 release, so the post cannot point to an npm install or the release-pinned skill for them and sends readers to the source install and the main-branch skill instead.",
+      ],
+      // The review's accuracy, sourcing, and style reports raised no problem that sets any score to zero, and the
+      // separate verification review on 2026-09-26 scored the fixed post independently and gave these same six scores.
+      scores: {
+        readerUtility: 2,
+        originalEvidence: 1,
+        factualConfidence: 2,
+        hostFit: 2,
+        voiceIntegrity: 2,
+        maintenanceValue: 1,
+      },
+      owner: "Hraness",
+      drafting: "ai-from-source",
+      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: "2026-09-26" },
+      humanReview: null,
+      reassessOn: "2026-11-07",
+      harmIfWrong: "A reader could cite Oh's LoCoMo figures as Wordcell's results, or switch from Supermemory expecting hosted extraction and connectors.",
+      refreshTriggers: [
+        "A release that includes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",
+        "A change to a vendored evidence file under docs/ or to the evidence modules under site/wordcell/",
+        "A matched run of a Wordcell vault against Supermemory",
+        "A change to a cited Supermemory documentation page",
+        "A change to /benchmarks, /compare/supermemory, or /migrate/supermemory",
+        "Wordcell, Oh, or Supermemory rename",
       ],
     },
   },

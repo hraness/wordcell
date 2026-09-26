@@ -77,6 +77,9 @@ When to use this site:
 - [Wordcell blog](https://wordcell.io/blog): Posts on how Wordcell keeps
   Markdown as the record and how it works with other Hraness tools. Atom feed:
   https://wordcell.io/blog/feed.xml
+- [Agent memory should be free, local, and yours](https://wordcell.io/blog/free-local-agent-memory):
+  What the launch adds from source, the measured results with their limits,
+  and how to move from Supermemory.
 - [Introducing Wordcell](https://wordcell.io/blog/introducing-wordcell): Who
   Wordcell suits, one saved rule traced to a cited search and graph answer,
   and its limits.
