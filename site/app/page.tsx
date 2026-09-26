@@ -12,6 +12,7 @@ import {
   ProductHero,
 } from "@hraness/design-kit/react/server";
 import { ThemeMenuButton } from "@hraness/design-kit/react";
+import { product, type PortfolioProductId } from "@hraness/design-kit/portfolio";
 
 import { AskAiAboutThis } from "@hraness/ui";
 
@@ -94,29 +95,20 @@ const trust = [
   },
 ] as const;
 
+// Sibling cards show each product's registry mark, link, and one-line description.
+const related = (id: PortfolioProductId, name: string) => {
+  const { canonicalUrl, mark, oneLiner } = product(id);
+  return { href: canonicalUrl, mark, name, role: oneLiner };
+};
+
 const relatedGroups = [
   {
     heading: "The personal apps",
     headingId: "related-apps",
     items: [
-      {
-        name: "PeopleBlade",
-        href: "https://peopleblade.com",
-        role: "Local personal CRM for everyone you know, built for your agent",
-        relationship: "Wordcell keeps what; PeopleBlade keeps who: the people behind the notes, in a private book your agent can use.",
-      },
-      {
-        name: "Soulscrape",
-        href: "https://soulscrape.com",
-        role: "Free agent skill that writes dated dossiers on people, sources cited",
-        relationship: "A Soulscrape dossier is a dated, cited source a Wordcell note can point at; Wordcell keeps the reasoning and follow-ups around it.",
-      },
-      {
-        name: "Textbutler",
-        href: "https://textbutler.app",
-        role: "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
-        relationship: "Textbutler drafts the reply; Wordcell keeps the durable record of what you decided and why.",
-      },
+      related("peopleblade", "PeopleBlade"),
+      related("soulscrape", "Soulscrape"),
+      related("message-like-me", "Textbutler"),
     ],
   },
   {
@@ -124,33 +116,13 @@ const relatedGroups = [
     headingId: "related-tools",
     summary: "The layer your agent runs through: sessions, accounts, web reads, and the models behind them.",
     items: [
-      {
-        name: "Ghostget",
-        href: "https://ghostget.com",
-        role: "Named web actions for AI agents: read pages, save media, use connected accounts",
-        relationship: "Ghostget ships workflows that run over a Wordcell vault; its URL-metadata lookups delegate to the shared implementation.",
-      },
-      {
-        name: "Gobstopper",
-        href: "https://gobstopper.sh",
-        role: "Compacts long agent sessions into smaller copies, keeping every byte",
-        relationship: "Gobstopper shrinks a long session's context; Wordcell keeps what the session learned.",
-      },
-      {
-        name: "xcb",
-        href: "https://xcb.sh",
-        role: "Routes coding tasks across the Claude, Codex, and Devin plans you have",
-        relationship: "xcb is the workspace where the agents that query Wordcell run, and its workers can search a vault you explicitly bind.",
-      },
-      {
-        name: "AI Charts",
-        href: "https://aicharts.io",
-        role: "Model benchmark scores plotted against cost and tokens per task",
-        relationship: "AI Charts measures what your agents' sessions cost; Wordcell keeps what they decided.",
-      },
+      related("wrench", "Ghostget"),
+      related("gobstopper", "Gobstopper"),
+      related("xcb", "xcb"),
+      related("aicharts", "AI Charts"),
     ],
   },
-] as const;
+];
 
 const questions: readonly { question: string; answer: string; after?: React.ReactNode }[] = [
   {

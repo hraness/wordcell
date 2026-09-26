@@ -288,9 +288,9 @@
 
 .wordcell-benchmark h3 {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.35rem, 2.3vw, 1.75rem);
-  font-weight: 400;
+  font-family: var(--hraness-type-h3-font);
+  font-size: var(--hraness-type-h3-size);
+  font-weight: var(--hraness-type-h3-weight);
   text-wrap: balance;
 }
 

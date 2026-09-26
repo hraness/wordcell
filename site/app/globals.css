@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@hraness/ui/styles.css";
 @import "@hraness/design-kit/fonts.css";
+@import "@hraness/design-kit/typography.css";
 @import "@hraness/design-kit/components.css";
 @import "@hraness/design-kit/product-marketing.css";
 @import "@hraness/design-kit/plain-site.css";
@@ -204,12 +205,15 @@ a { text-underline-offset: 0.2em; }
 .document-page th, .document-page td { border-bottom: 1px solid var(--line); padding: 0.5rem 0.6rem; text-align: left; vertical-align: top; }
 .document-nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.95rem; }
 
-.document-page h1 { margin: 1.75rem 0 1rem; font-size: var(--hraness-paper-heading-size); font-weight: 600; }
-.document-page h2 { font-size: var(--hraness-paper-section-heading-size); font-weight: 600; margin-bottom: 1rem; }
-.document-page h3 { font-size: 1.25rem; font-weight: 600; margin: 1.75rem 0 0.75rem; }
+/* Heading type comes from the shared design-kit foundation (typography.css). */
+.document-page h1 { margin: 1.75rem 0 1rem; font-family: var(--hraness-type-h1-font); font-size: var(--hraness-type-h1-size); font-weight: var(--hraness-type-h1-weight); }
+.document-page h2 { font-family: var(--hraness-type-h2-font); font-size: var(--hraness-type-h2-size); font-weight: var(--hraness-type-h2-weight); margin-bottom: 1rem; }
+.document-page h3 { font-family: var(--hraness-type-h3-font); font-size: var(--hraness-type-h3-size); font-weight: var(--hraness-type-h3-weight); margin: 1.75rem 0 0.75rem; }
 .document-page p { margin: 1rem 0; }
 .document-page pre { margin: 1.25rem 0; }
-.document-page article a { text-decoration: underline; }
+.document-page article a:not([data-hraness-marketing="card"]) { text-decoration: underline; }
+/* Related-product cards keep design-kit's own name spacing. */
+.document-page article a[data-hraness-marketing="card"] :is(h2, h3, h4) { margin: 0; }
 .document-page article ul { list-style: disc; padding-left: 1.5rem; margin: 1rem 0; }
 .document-page article ol { list-style: decimal; padding-left: 1.5rem; margin: 1rem 0; }
 .document-page article li + li { margin-top: 0.5rem; }

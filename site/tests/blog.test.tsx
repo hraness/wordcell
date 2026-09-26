@@ -135,10 +135,16 @@ describe("Wordcell blog", () => {
   });
 
   test("related products come from the pinned portfolio facts", () => {
-    // Design-kit v0.18.3 carries Wordcell's runtime relation to Oh and xcb's
-    // relation to Wordcell, so the related block lists both.
-    expect(portfolioDigest).toBe("sha256:0ab50413f47d7ee98169acc13b3a8d9f29ace2d1827098f202d9d97cbb2e3dc1");
-    expect(relatedFor("kb").map((entry) => entry.productId)).toEqual(["oh-computer", "xcb"]);
+    // Design-kit v0.19.0 carries Wordcell's runtime relation to Oh and xcb's
+    // relation to Wordcell. Posts show one card per relation: the product's
+    // mark, name, and one-line description.
+    expect(portfolioDigest).toBe("sha256:566462ae34618442d01b4be2be73347a0c491e29c1238600ec8d4ffb2b1a62e5");
+    const related = relatedFor("kb");
+    expect(related.map((entry) => entry.productId)).toEqual(["oh-computer", "xcb"]);
+    for (const entry of related) {
+      expect(entry.mark).toStartWith("data:image/svg+xml,");
+      expect(entry.role.length).toBeGreaterThan(0);
+    }
   });
 
   test("the blog is linked from the site header and footer", async () => {

@@ -32,7 +32,6 @@
   --control-radius: .75rem;
 
   --hraness-paper-heading-size: clamp(1.9rem, 3.4vw, 2.625rem);
-  --hraness-paper-section-heading-size: clamp(1.375rem, 2.4vw, 1.875rem);
   --hraness-paper-summary-size: 1.0625rem;
   --hraness-paper-heading-leading: 1.12;
   --hraness-paper-heading-tracking: -.028em;
