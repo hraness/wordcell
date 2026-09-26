@@ -51,7 +51,7 @@ Then an agent about to edit a file in that package can ask for the notes and rep
 wordcell context packages/parser/src/index.ts --root kb --repo .
 ```
 
-The result groups current notes and plans apart from finished or superseded ones, and includes the `AGENTS.md` files that govern the path. A public Agent Skill teaches compatible agents these commands. Installing it adds instructions only; it does not create a vault, change your notes, or give an agent access to other accounts. xcb can bind one vault you choose and give its workers read-only exact search over it with citations, and saving a note back is always a separate step, as How xcb uses Wordcell explains.
+The result groups current notes and plans apart from finished or superseded ones, and includes the `AGENTS.md` files that govern the path. A public Agent Skill teaches compatible agents these commands. Installing it adds instructions only; it does not create a vault, change your notes, or give an agent access to other accounts. xcb can bind one vault you choose and give its workers read-only exact search over it with citations, and saving a note back is always a separate step, as [How xcb uses Wordcell](https://xcb.sh/blog/how-xcb-uses-wordcell) explains.
 
 ### Clipped pages and PDFs land in the same folder
 

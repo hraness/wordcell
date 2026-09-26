@@ -43,9 +43,9 @@ describe("Wordcell blog", () => {
     expect(generateStaticParams().map(({ slug }) => slug).sort()).toEqual(blogArticles.map((article) => article.slug).sort());
   });
 
-  test("today's posts are one indexable introduction and one quarantined integration post", () => {
-    expect(indexableArticles.map((article) => article.slug)).toEqual(["introducing-wordcell"]);
-    expect(quarantined.map((article) => article.slug)).toEqual(["how-wordcell-uses-oh"]);
+  test("today's posts are one indexable introduction and one indexable integration post", () => {
+    expect(indexableArticles.map((article) => article.slug)).toEqual(["introducing-wordcell", "how-wordcell-uses-oh"]);
+    expect(quarantined.map((article) => article.slug)).toEqual([]);
   });
 
   test("every post shows the Hraness byline and the provenance note from its review record", async () => {
@@ -120,10 +120,8 @@ describe("Wordcell blog", () => {
     expect(() => assertSiteLinks("x", '<a href="/docs/missing">', posts, docs)).toThrow();
   });
 
-  test("the introduction leaves the xcb post unlinked until that post is live", () => {
-    // The draft keeps this link conditional on xcb.sh/blog/how-xcb-uses-wordcell returning 200.
-    expect(blogHtml["introducing-wordcell"]).toContain("How xcb uses Wordcell explains.");
-    expect(blogHtml["introducing-wordcell"]).not.toContain('href="https://xcb.sh/');
+  test("the introduction links the xcb post now that it is live", () => {
+    expect(blogHtml["introducing-wordcell"]).toContain('href="https://xcb.sh/blog/how-xcb-uses-wordcell"');
   });
 
   test("contents lists appear only for posts with four or more sections", () => {
@@ -133,10 +131,10 @@ describe("Wordcell blog", () => {
   });
 
   test("related products come from the pinned portfolio facts", () => {
-    // Wordcell has no registered relation with a detail sentence in this
-    // snapshot, so the related block stays empty until one is registered.
-    expect(portfolioDigest).toBe("sha256:87e824bc78a68dd862aeee804443a6120ac91889dbfa890d2d8b5126bb4b7834");
-    expect(relatedFor("kb")).toEqual([]);
+    // Design-kit v0.18.2 carries the xcb uses-Wordcell relation, so the
+    // related block lists xcb; kb->oh is the reverse direction.
+    expect(portfolioDigest).toBe("sha256:fa7bcf019c1f92312e51d6d1bf6bfe75710568b19b687497205d2fe0d0a887bb");
+    expect(relatedFor("kb").map((entry) => entry.productId)).toEqual(["xcb"]);
   });
 
   test("the blog is linked from the site header and footer", async () => {

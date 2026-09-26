@@ -133,11 +133,11 @@ export const blogArticles = [
     ],
     admission: {
       href: "/blog/how-wordcell-uses-oh",
-      lifecycle: "quarantined",
+      lifecycle: "indexable",
       readerJob: "I ask questions over my Markdown notes and want each answer to show which files support it, so I can check it myself.",
       nonObviousAnswer: "Wordcell builds a disposable Oh graph in canonical JSON from the Markdown, so each answer row carries file fingerprints and the rules applied, and any edit to a cited note makes the old proof fail verification.",
       originalContribution: "Traces a backlinks query from note fingerprint to Oh record to answer row, and reports from source which Wordcell paths use Oh's Rust encoder and query engine.",
-      hostFit: "A \"How Wordcell uses Oh\" post needs a registered relation with a detail sentence; runtime:kb:oh:answers-graph-queries-with is not yet in the portfolio registry, so the post stays quarantined until it is.",
+      hostFit: "The registered runtime:kb:oh:answers-graph-queries-with relation carries the detail sentence this post explains, on Wordcell's own host.",
       nearestUrls: [
         { url: "https://wordcell.io/docs/graph-authority", distinction: "The reference lists every flag and limit; the post explains what a proof means to a reader checking an answer." },
         { url: "https://wordcell.io/blog/introducing-wordcell", distinction: "The introduction covers the whole product; this post covers only the graph and its proofs." },
@@ -163,7 +163,7 @@ export const blogArticles = [
         readerUtility: 2,
         originalEvidence: 2,
         factualConfidence: 2,
-        hostFit: 0,
+        hostFit: 2,
         voiceIntegrity: 2,
         maintenanceValue: 1,
       },

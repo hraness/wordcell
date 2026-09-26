@@ -49,6 +49,8 @@ When to use this site:
 - [Introducing Wordcell](https://wordcell.io/blog/introducing-wordcell): Who
   Wordcell suits, one saved rule traced to a cited search and graph answer,
   and its limits.
+- [How Wordcell uses Oh](https://wordcell.io/blog/how-wordcell-uses-oh): How
+  a graph answer carries a proof back to the Markdown files that support it.
 
 ## Source material
 

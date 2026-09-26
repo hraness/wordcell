@@ -149,16 +149,16 @@ describe("built Wordcell site", () => {
   test("serves the blog, its Atom feed, and noindex for quarantined posts", async () => {
     const server = await startBuiltSite();
     try {
-      const [indexResponse, introResponse, heldResponse, feedResponse] = await Promise.all([
+      const [indexResponse, introResponse, ohPostResponse, feedResponse] = await Promise.all([
         fetch(`${server.origin}/blog`, { redirect: "manual" }),
         fetch(`${server.origin}/blog/introducing-wordcell`, { redirect: "manual" }),
         fetch(`${server.origin}/blog/how-wordcell-uses-oh`, { redirect: "manual" }),
         fetch(`${server.origin}/blog/feed.xml`, { redirect: "manual" }),
       ]);
-      const [index, intro, held, feed] = await Promise.all([
-        indexResponse.text(), introResponse.text(), heldResponse.text(), feedResponse.text(),
+      const [index, intro, ohPost, feed] = await Promise.all([
+        indexResponse.text(), introResponse.text(), ohPostResponse.text(), feedResponse.text(),
       ]);
-      for (const response of [indexResponse, introResponse, heldResponse, feedResponse]) expect(response.status).toBe(200);
+      for (const response of [indexResponse, introResponse, ohPostResponse, feedResponse]) expect(response.status).toBe(200);
       expect(index).toContain('<link rel="canonical" href="https://wordcell.io/blog"');
       expect(index).toContain('type="application/atom+xml"');
       expect(intro).toContain('<link rel="canonical" href="https://wordcell.io/blog/introducing-wordcell"');
@@ -166,11 +166,12 @@ describe("built Wordcell site", () => {
       expect(intro).toContain('"@type":"BlogPosting"');
       expect(intro).toContain("reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
       expect(intro).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
-      expect(held).toMatch(/<meta name="robots" content="noindex, nofollow"/u);
-      expect(held).toContain("reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
+      expect(ohPost).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
+      expect(ohPost).toContain('<link rel="canonical" href="https://wordcell.io/blog/how-wordcell-uses-oh"');
+      expect(ohPost).toContain("reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
       expect(feedResponse.headers.get("content-type")).toContain("application/atom+xml");
       expect(feed).toContain("<id>https://wordcell.io/blog/introducing-wordcell</id>");
-      expect(feed).not.toContain("<id>https://wordcell.io/blog/how-wordcell-uses-oh</id>");
+      expect(feed).toContain("<id>https://wordcell.io/blog/how-wordcell-uses-oh</id>");
     } finally {
       await stopBuiltSite(server);
     }
