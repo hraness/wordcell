@@ -25,8 +25,12 @@ import {
   quoteFrom,
 } from "../wordcell/oh-evidence";
 import { publishedClaims, publishedClaimsCheckedOn } from "../wordcell/published-claims";
+import { basicMemoryCheckedOn, basicMemoryPages } from "../wordcell/basic-memory-sources";
+import { mem0CheckedOn, mem0Pages } from "../wordcell/mem0-sources";
 import { formatPlanCredits, formatPlanPrice, formatUsageRate, supermemoryPricing } from "../wordcell/supermemory-pricing";
 import Benchmarks, { metadata as benchmarksMetadata } from "../app/benchmarks/page";
+import CompareBasicMemory, { metadata as compareBasicMemoryMetadata } from "../app/compare/basic-memory/page";
+import CompareMem0, { metadata as compareMem0Metadata } from "../app/compare/mem0/page";
 import CompareSupermemory, { metadata as compareMetadata } from "../app/compare/supermemory/page";
 import MigrateSupermemory, { metadata as migrateMetadata } from "../app/migrate/supermemory/page";
 import {
@@ -525,6 +529,88 @@ describe("/compare/supermemory", () => {
   });
 });
 
+describe("/compare/basic-memory", () => {
+  test("renders the differences, both choices, and the moving-notes limits with cited sources", async () => {
+    const markup = renderToStaticMarkup(<CompareBasicMemory />);
+    const text = pageText(markup);
+    const checkedOn = longDate(basicMemoryCheckedOn);
+    expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
+    for (const topic of ["Where notes live", "How notes form", "Note structure", "Search", "Agent access", "Repository context", "Cost"]) {
+      expect(markup).toContain(`<th scope="row">${topic}</th>`);
+    }
+    expect(markup).toContain('id="choose-basic-memory">Choose Basic Memory when</h3>');
+    expect(markup).toContain('id="choose-wordcell">Choose Wordcell when</h3>');
+    const differences = markup.slice(markup.indexOf('aria-label="Basic Memory and Wordcell differences"'), markup.indexOf("</table>"));
+    const basicMemoryCells = [...differences.matchAll(/<td data-label="Basic Memory">(.*?)<\/td>/gsu)].map((match) => match[1] ?? "");
+    expect(basicMemoryCells.length).toBe(7);
+    for (const cell of basicMemoryCells) expect(cell).toContain('<a href="https://');
+    for (const href of Object.values(basicMemoryPages)) expect(markup).toContain(`href="${href}"`);
+    expect(text).toContain(`Basic Memory’s features and license were checked on ${checkedOn}.`);
+    for (const literal of ["write_note", "edit_note", "search_notes", "read_note", "build_context", "[category]", "relation [[Note]]", "[[note-id]]", "relations:", "wordcell check", "wordcell mcp", "repository_scopes", "wordcell context"]) {
+      expect(markup).toContain(`<code>${literal}</code>`);
+    }
+    expect(text).toContain("available from source until the next release");
+    expect(text).toContain("AGPL-3.0");
+    expect(text).toContain("requires a subscription");
+    expect(text).toContain("Wordcell has published no head-to-head comparison with Basic Memory");
+    expect(markup).toContain('href="/docs/comparisons#consider-basic-memory-for-an-mcp-centered-knowledge-graph"');
+    expect(await expectDocLinksResolve(markup)).toBeGreaterThanOrEqual(6);
+    expect(text).not.toMatch(notSota);
+    expect(text).not.toMatch(/\bfair\b|\bhonest\b|—/i);
+  });
+
+  test("metadata has a canonical path and a description of 110 to 160 characters", () => {
+    expect(compareBasicMemoryMetadata.alternates?.canonical).toBe("/compare/basic-memory");
+    const description = String(compareBasicMemoryMetadata.description);
+    expect(description.length).toBeGreaterThanOrEqual(110);
+    expect(description.length).toBeLessThanOrEqual(160);
+    expect(compareBasicMemoryMetadata.openGraph?.description).toBe(description);
+    expect(`${String(compareBasicMemoryMetadata.title)} ${description}`).not.toMatch(/—|\bSOTA\b/);
+  });
+});
+
+describe("/compare/mem0", () => {
+  test("renders the differences, both choices, and the moving-memories limits with cited sources", async () => {
+    const markup = renderToStaticMarkup(<CompareMem0 />);
+    const text = pageText(markup);
+    const checkedOn = longDate(mem0CheckedOn);
+    expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
+    for (const topic of ["Where memory lives", "How memories form", "Whose memory", "Platform and open source", "Change over time", "Cost", "Agent access"]) {
+      expect(markup).toContain(`<th scope="row">${topic}</th>`);
+    }
+    expect(markup).toContain('id="choose-mem0">Choose Mem0 when</h3>');
+    expect(markup).toContain('id="choose-wordcell">Choose Wordcell when</h3>');
+    const differences = markup.slice(markup.indexOf('aria-label="Mem0 and Wordcell differences"'), markup.indexOf("</table>"));
+    const mem0Cells = [...differences.matchAll(/<td data-label="Mem0">(.*?)<\/td>/gsu)].map((match) => match[1] ?? "");
+    expect(mem0Cells.length).toBe(7);
+    for (const cell of mem0Cells) expect(cell).toContain('<a href="https://docs.mem0.ai/');
+    for (const href of Object.values(mem0Pages)) expect(markup).toContain(`href="${href}"`);
+    expect(text).toContain(`Mem0’s features and license were checked on ${checkedOn}.`);
+    for (const literal of ["add", "user_id", "agent_id", "run_id", "app_id", "get_all", "mcp.mem0.ai", "supersedes", "wordcell mcp", "wordcell import mem0", "/migrate"]) {
+      expect(markup).toContain(`<code>${literal}</code>`);
+    }
+    expect(text).toContain("Platform-only");
+    expect(text).toContain("Apache-2.0");
+    expect(text).toContain("available from source until the next release");
+    expect(text).toContain("Wordcell has published no head-to-head comparison with Mem0");
+    expect(markup).toContain('href="https://mem0.ai/research"');
+    expect(markup).toContain('href="/benchmarks#comparisons"');
+    expect(markup).toContain('href="/docs/comparisons#consider-mem0-for-extracted-memories-in-your-application"');
+    expect(await expectDocLinksResolve(markup)).toBeGreaterThanOrEqual(4);
+    expect(text).not.toMatch(notSota);
+    expect(text).not.toMatch(/\bfair\b|\bhonest\b|—/i);
+  });
+
+  test("metadata has a canonical path and a description of 110 to 160 characters", () => {
+    expect(compareMem0Metadata.alternates?.canonical).toBe("/compare/mem0");
+    const description = String(compareMem0Metadata.description);
+    expect(description.length).toBeGreaterThanOrEqual(110);
+    expect(description.length).toBeLessThanOrEqual(160);
+    expect(compareMem0Metadata.openGraph?.description).toBe(description);
+    expect(`${String(compareMem0Metadata.title)} ${description}`).not.toMatch(/—|\bSOTA\b/);
+  });
+});
+
 describe("/migrate/supermemory", () => {
   test("every step command is one the migration guide documents", async () => {
     const guide = await readFile(join(repository, "docs", "migration-from-supermemory.md"), "utf8");
@@ -619,6 +705,8 @@ describe("discovery files", () => {
 describe("stacked tables", () => {
   const pages = [
     { name: "/benchmarks", markup: () => renderToStaticMarkup(<Benchmarks />), tables: 2 },
+    { name: "/compare/basic-memory", markup: () => renderToStaticMarkup(<CompareBasicMemory />), tables: 1 },
+    { name: "/compare/mem0", markup: () => renderToStaticMarkup(<CompareMem0 />), tables: 1 },
     { name: "/compare/supermemory", markup: () => renderToStaticMarkup(<CompareSupermemory />), tables: 3 },
     { name: "/migrate/supermemory", markup: () => renderToStaticMarkup(<MigrateSupermemory />), tables: 1 },
   ];

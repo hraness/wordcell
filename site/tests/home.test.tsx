@@ -13,6 +13,8 @@ import { readmeVersion } from "../app/readme.generated";
 import { publishedRelease } from "../app/publication";
 import RootLayout from "../app/layout";
 import Benchmarks from "../app/benchmarks/page";
+import CompareBasicMemory from "../app/compare/basic-memory/page";
+import CompareMem0 from "../app/compare/mem0/page";
 import CompareSupermemory from "../app/compare/supermemory/page";
 import MigrateSupermemory from "../app/migrate/supermemory/page";
 import { locomoArms } from "../wordcell/oh-evidence";
@@ -26,6 +28,8 @@ async function publicRoutes(): Promise<React.JSX.Element[]> {
     <Docs key="docs" />,
     <Developers key="developers" />,
     <Benchmarks key="benchmarks" />,
+    <CompareBasicMemory key="compare-basic-memory" />,
+    <CompareMem0 key="compare-mem0" />,
     <CompareSupermemory key="compare-supermemory" />,
     <MigrateSupermemory key="migrate-supermemory" />,
     await DocPage({ params: Promise.resolve({ slug: "reference" }) }),
@@ -82,6 +86,8 @@ test("the homepage connects an agent, links the launch pages, and keeps Oh LoCoM
   expect(evidence).toContain('href="/benchmarks"');
   const compare = html.slice(html.indexOf('id="compare"'), html.indexOf('id="publish"'));
   expect(compare).toContain('href="/compare/supermemory"');
+  expect(compare).toContain('href="/compare/basic-memory"');
+  expect(compare).toContain('href="/compare/mem0"');
   expect(compare).toContain("docs/comparisons.md");
   for (const arm of locomoArms) expect(html).not.toContain(`${arm.percent.replace(/%$/u, "")}%`);
   expect(html).not.toMatch(/\bSOTA\b|state[\s-]+of[\s-]+the[\s-]+art/iu);

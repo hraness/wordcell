@@ -392,7 +392,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 </tbody>
               </table>
             </div>
-            <p className="record-link"><a href={`${repository}/blob/main/docs/comparisons.md`}>Compare capabilities, tradeoffs, and primary sources</a> · <a href="/compare/supermemory">Compare Wordcell and Supermemory</a></p>
+            <p className="record-link"><a href={`${repository}/blob/main/docs/comparisons.md`}>Compare capabilities, tradeoffs, and primary sources</a> · <a href="/compare/supermemory">Compare Wordcell and Supermemory</a> · <a href="/compare/basic-memory">Compare Wordcell and Basic Memory</a> · <a href="/compare/mem0">Compare Wordcell and Mem0</a></p>
           </MarketingSection>
 
           <MarketingSection

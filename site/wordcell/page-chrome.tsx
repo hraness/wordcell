@@ -30,7 +30,7 @@ export function WordcellSiteHeader() {
   );
 }
 
-/* Shared chrome for the launch pages (/benchmarks, /compare/supermemory,
+/* Shared chrome for the launch pages (/benchmarks, the /compare/* pages, and
  * /migrate/supermemory). Home and /developers keep their own chrome. */
 export function WordcellPageChrome({ path, children }: Readonly<{ path: `/${string}`; children: ReactNode }>) {
   return (
