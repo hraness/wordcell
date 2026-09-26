@@ -14,6 +14,8 @@ export const scifactStudy = {
   metric: "Relevant result at rank 1",
   unit: "percent",
   sampleSize: questions,
+  sampleNoun: "queries",
+  scope: "Same corpus and candidate windows. Scientific abstracts; this study does not establish answer quality or results on your vault.",
   measuredAt: report.generatedAt.slice(0, 10),
   model: `${report.provenance.wireModel} reranker; the exact baseline uses no model.`,
   reader: "None. The study measures source ranking, without generating answers.",

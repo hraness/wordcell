@@ -10,7 +10,15 @@ export type BenchmarkStudy = Readonly<{
   metric: string;
   unit: "percent";
   sampleSize: number;
+  /** What one sample is called in the caption, such as "queries" or "questions". */
+  sampleNoun: "queries" | "questions";
+  /** One sentence that bounds what the study shows. */
+  scope: string;
   measuredAt: string;
+  /** Label for measuredAt; defaults to "Recorded". */
+  dateLabel?: string;
+  /** Decimal places for bar values; defaults to 1. */
+  valueDigits?: 1 | 2;
   model: string;
   reader: string;
   evaluator: string;
@@ -32,13 +40,17 @@ export function BenchmarkComparison({
   return (
     <section className="wordcell-benchmark" aria-labelledby={`${study.id}-title`}>
       <h3 id={`${study.id}-title`}>{study.title}</h3>
-      <p className="wordcell-benchmark-caption">{study.dataset} · {study.sampleSize} queries · {study.metric}</p>
-      <BenchmarkBars label={`${study.dataset}: ${study.metric}, out of ${study.sampleSize} queries`} rows={study.rows} />
-      <p className="wordcell-benchmark-scope">Same corpus and candidate windows. Scientific abstracts; this study does not establish answer quality or results on your vault.</p>
+      <p className="wordcell-benchmark-caption">{study.dataset} · {study.sampleSize.toLocaleString("en-US")} {study.sampleNoun} · {study.metric}</p>
+      <BenchmarkBars
+        digits={study.valueDigits ?? 1}
+        label={`${study.dataset}: ${study.metric}, out of ${study.sampleSize.toLocaleString("en-US")} ${study.sampleNoun}`}
+        rows={study.rows}
+      />
+      <p className="wordcell-benchmark-scope">{study.scope}</p>
       <details className="wordcell-benchmark-method">
         <summary>Models, method, and limitations</summary>
         <dl>
-          <div><dt>Recorded</dt><dd><time dateTime={study.measuredAt}>{study.measuredAt}</time></dd></div>
+          <div><dt>{study.dateLabel ?? "Recorded"}</dt><dd><time dateTime={study.measuredAt}>{study.measuredAt}</time></dd></div>
           <div><dt>Model</dt><dd>{study.model}</dd></div>
           <div><dt>Answer reader</dt><dd>{study.reader}</dd></div>
           <div><dt>Evaluation</dt><dd>{study.evaluator}</dd></div>
