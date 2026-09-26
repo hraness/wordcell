@@ -19,7 +19,7 @@ import {
 } from "./index-j4zgmzjr.js";
 import {
   main
-} from "./index-jn3az2g9.js";
+} from "./index-2fmnttca.js";
 import {
   detectAudience,
   renderFailure,
@@ -6343,7 +6343,7 @@ async function runSemantic(command, output, dependencies) {
     return 0;
   }
   const indexExists = dependencies.semanticIndexExists ?? (dependencies.openKnowledgeBase === undefined ? defaultSemanticIndexExists : undefined);
-  const withoutIndex = command.mode === undefined && command.database === undefined && indexExists !== undefined && !await indexExists(command.root);
+  const withoutIndex = command.mode === undefined && command.database === undefined && command.minScore === undefined && command.rerank === undefined && indexExists !== undefined && !await indexExists(command.root);
   const mode = withoutIndex ? "exact" : command.mode;
   const searchRules = command.rulesPath === undefined ? undefined : await loadSearchRulesFile(command.rulesPath);
   const kb = await (dependencies.openKnowledgeBase ?? openKnowledgeBase)({

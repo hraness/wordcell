@@ -103,7 +103,7 @@ function keychainState(detail) {
     return { state: "missing" };
   if (/-25308\b|interaction is not allowed/iu.test(detail))
     return { state: "unknown", locked: true };
-  if (/-128\b|-25293\b|canceled|cancelled|passphrase you entered is not correct|denied/iu.test(detail)) {
+  if (/-128\b|-25293\b|canceled|cancelled|passphrase you entered is not correct/iu.test(detail)) {
     return { state: "denied" };
   }
   return { state: "unknown" };
@@ -192,10 +192,10 @@ ${symbol("next", style)} ${recovery.next}
 `;
 }
 var reporter;
-var noticed = new Set;
+var answers = new Map;
 function setCookiePermissionReporter(next) {
   reporter = next;
-  noticed.clear();
+  answers.clear();
 }
 async function announceCookiePermissions(needs) {
   const current = reporter;
@@ -203,10 +203,12 @@ async function announceCookiePermissions(needs) {
     return true;
   for (const need of needs) {
     const key = `${need.kind}:${need.browser}`;
-    if (noticed.has(key))
-      continue;
-    noticed.add(key);
-    if (await current.notice(need) === "skip")
+    let answer = answers.get(key);
+    if (answer === undefined) {
+      answer = current.notice(need);
+      answers.set(key, answer);
+    }
+    if (await answer === "skip")
       return false;
   }
   return true;

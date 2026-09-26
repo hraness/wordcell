@@ -85,7 +85,9 @@ export function classifyCookieProviderWarnings(warnings: unknown): CookiePermiss
 function keychainState(detail: string): { readonly state: CookiePermissionState; readonly locked?: boolean } {
   if (/-25300\b|could not be found/iu.test(detail)) return { state: "missing" };
   if (/-25308\b|interaction is not allowed/iu.test(detail)) return { state: "unknown", locked: true };
-  if (/-128\b|-25293\b|canceled|cancelled|passphrase you entered is not correct|denied/iu.test(detail)) {
+  // Sweet Cookie's stderr-less fallback ("permission denied / keychain locked /
+  // entry missing.") names three causes, so only a specific status is a denial.
+  if (/-128\b|-25293\b|canceled|cancelled|passphrase you entered is not correct/iu.test(detail)) {
     return { state: "denied" };
   }
   return { state: "unknown" };
@@ -207,22 +209,29 @@ export type CookiePermissionReporter = {
 };
 
 let reporter: CookiePermissionReporter | undefined;
-const noticed = new Set<string>();
+const answers = new Map<string, Promise<"continue" | "skip">>();
 
 export function setCookiePermissionReporter(next: CookiePermissionReporter | undefined): void {
   reporter = next;
-  noticed.clear();
+  answers.clear();
 }
 
-/** Show the pre-prompt for each need once per process. Resolves false when the person skipped. */
+/**
+ * Show the pre-prompt for each need once per run. Capture lanes read cookies
+ * concurrently, so every caller waits on the same answer and a skip stops them
+ * all. Resolves false when the person skipped.
+ */
 export async function announceCookiePermissions(needs: readonly CookiePermissionNeed[]): Promise<boolean> {
   const current = reporter;
   if (current === undefined) return true;
   for (const need of needs) {
     const key = `${need.kind}:${need.browser}`;
-    if (noticed.has(key)) continue;
-    noticed.add(key);
-    if (await current.notice(need) === "skip") return false;
+    let answer = answers.get(key);
+    if (answer === undefined) {
+      answer = current.notice(need);
+      answers.set(key, answer);
+    }
+    if (await answer === "skip") return false;
   }
   return true;
 }

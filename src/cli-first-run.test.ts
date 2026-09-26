@@ -77,6 +77,15 @@ describe("first run", () => {
     expect(JSON.parse(result.stdout)).toMatchObject({ mode: "exact" });
   });
 
+  test("--min-score keeps the default ranked mode instead of falling back", async () => {
+    let asked = false;
+    const result = await run(["search", "decision", "--root", vault, "--min-score", "0.4", "--json"], PIPE, {
+      semanticIndexExists: () => { asked = true; return Promise.resolve(false); },
+    });
+    expect(asked).toBe(false);
+    expect(result.stdout).not.toContain("applies only to hybrid, keyword, or semantic mode");
+  });
+
   test("an explicit mode is never overridden", async () => {
     let asked = false;
     const result = await run(["search", "decision", "--root", vault, "--mode", "exact"], PERSON, {

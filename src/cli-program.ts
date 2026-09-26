@@ -2488,8 +2488,11 @@ async function runSemantic(
   // the real store only; an injected knowledge base keeps its default.
   const indexExists = dependencies.semanticIndexExists
     ?? (dependencies.openKnowledgeBase === undefined ? defaultSemanticIndexExists : undefined);
-  const withoutIndex = command.mode === undefined && command.database === undefined && indexExists !== undefined
-    && !await indexExists(command.root);
+  // Score thresholds and reranking only apply to ranked modes, so a search
+  // that asks for them keeps the default mode and its own error.
+  const withoutIndex = command.mode === undefined && command.database === undefined
+    && command.minScore === undefined && command.rerank === undefined
+    && indexExists !== undefined && !await indexExists(command.root);
   const mode = withoutIndex ? "exact" as const : command.mode;
   const searchRules = command.rulesPath === undefined
     ? undefined

@@ -18,7 +18,7 @@ import {
   inspectClipEnvironment,
   renderAdapterCapabilities,
   renderDoctorReport
-} from "./index-5st9nxwx.js";
+} from "./index-nwrehke7.js";
 import {
   cloneBrowserProfile
 } from "./index-5n05se68.js";
@@ -34,7 +34,7 @@ import {
   renderCookiePermissionNotice,
   renderCookiePermissionRecovery,
   setCookiePermissionReporter
-} from "./index-ehhd5qw7.js";
+} from "./index-xwxy71ew.js";
 import {
   CONTENT_REWRITE_TRUNCATION_WARNING,
   buildClipMarkdown,
@@ -2516,8 +2516,9 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
     }
     return captureExitCode(outcome);
   } catch (error) {
-    if (permissionFailure !== undefined) {
-      const recovery = cookiePermissionRecovery(permissionFailure, environment);
+    const raw = error instanceof Error ? error.message : String(error);
+    const recovery = permissionFailure === undefined ? undefined : cookiePermissionRecovery(permissionFailure, environment);
+    if (recovery !== undefined && raw.includes(recovery.message)) {
       if (arguments_.json) {
         output.stdout(terminalSafeJson({
           ok: false,
@@ -2531,7 +2532,7 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
       }
       return 1;
     }
-    const message = safe(error instanceof Error ? error.message : String(error));
+    const message = safe(raw);
     if (arguments_.json)
       output.stdout(terminalSafeJson({ ok: false, error: message }));
     else

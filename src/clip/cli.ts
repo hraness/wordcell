@@ -226,8 +226,13 @@ export async function main(
     }
     return captureExitCode(outcome);
   } catch (error) {
-    if (permissionFailure !== undefined) {
-      const recovery = cookiePermissionRecovery(permissionFailure, environment);
+    const raw = error instanceof Error ? error.message : String(error);
+    const recovery = permissionFailure === undefined
+      ? undefined
+      : cookiePermissionRecovery(permissionFailure, environment);
+    // Use the permission copy only when the capture failed because of it: the
+    // cookie reader's own message is in the failure. Any other error wins.
+    if (recovery !== undefined && raw.includes(recovery.message)) {
       if (arguments_.json) {
         output.stdout(terminalSafeJson({
           ok: false,
@@ -241,7 +246,7 @@ export async function main(
       }
       return 1;
     }
-    const message = safe(error instanceof Error ? error.message : String(error));
+    const message = safe(raw);
     if (arguments_.json) output.stdout(terminalSafeJson({ ok: false, error: message }));
     else output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;

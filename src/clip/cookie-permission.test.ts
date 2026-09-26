@@ -72,6 +72,9 @@ describe("classification", () => {
     expect(classifyCookieProviderWarnings(keychain("The specified item could not be found in the keychain.")))
       .toEqual({ kind: "keychain", browser: "Chrome", state: "missing" });
     expect(classifyCookieProviderWarnings(keychain("exit 1"))).toEqual({ kind: "keychain", browser: "Chrome", state: "unknown" });
+    // Sweet Cookie's stderr-less fallback names three causes; it is not a firm denial.
+    expect(classifyCookieProviderWarnings(keychain("permission denied / keychain locked / entry missing.")))
+      .toEqual({ kind: "keychain", browser: "Chrome", state: "unknown" });
   });
 
   test("Safari EPERM is a Full Disk Access denial", () => {
@@ -181,6 +184,29 @@ describe("cookie reader", () => {
     expect(notices).toBe(1);
   });
 
+  test("concurrent readers share one answer, so a skip stops both before the keychain", async () => {
+    if (process.platform !== "darwin") return;
+    let notices = 0;
+    let probes = 0;
+    let answer: (value: "continue" | "skip") => void = () => undefined;
+    setCookiePermissionReporter({
+      notice: () => {
+        notices += 1;
+        return new Promise((resolve) => { answer = resolve; });
+      },
+      failure: () => undefined,
+    });
+    const read = createCookieRecordReader(() => { probes += 1; return Promise.resolve({ cookies: [], warnings: [] }); });
+    const first = read(selection, url).then(() => "read", (error: unknown) => String(error));
+    const second = read(selection, url).then(() => "read", (error: unknown) => String(error));
+    await Promise.resolve();
+    answer("skip");
+    expect(await first).toContain("skipped");
+    expect(await second).toContain("skipped");
+    expect(notices).toBe(1);
+    expect(probes).toBe(0);
+  });
+
   test("without a reporter, library reads stay quiet", async () => {
     const read = createCookieRecordReader(() => Promise.resolve({ cookies: [], warnings: [] }));
     await expect(read(selection, url)).rejects.toThrow("no matching cookies");
@@ -238,6 +264,22 @@ describe("clip CLI", () => {
       next: "wordcell clip <url> --cookies-file <path>",
       permission: { kind: "keychain" },
     });
+  });
+
+  test("an unrelated failure after a cookie denial keeps its own message", async () => {
+    const io = capture();
+    const code = await main(args, { ...ENV, HRANESS_AUDIENCE: "human" }, io.output, {
+      runCapture: async () => {
+        await deniedCapture().catch(() => undefined);
+        throw new Error("could not write the clip: disk full");
+      },
+      confirmPermission: () => Promise.resolve("continue"),
+      stderrIsTerminal: true,
+    });
+    expect(code).toBe(1);
+    const stderr = io.stderr.join("");
+    expect(stderr).toContain("✗ could not write the clip: disk full\n");
+    expect(stderr).not.toContain("keychain request was denied");
   });
 
   test("an agent or a pipe gets no notice and no confirm", async () => {

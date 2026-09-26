@@ -22,7 +22,7 @@ import {
   mergeRenderedTextSnapshots,
   readBrowserExpansionTelemetry,
   seedOwnedBrowserCookies
-} from "../index-ehhd5qw7.js";
+} from "../index-xwxy71ew.js";
 import"../index-cd75vky9.js";
 import"../index-2gv8y733.js";
 import"../index-w2zc0vwa.js";
