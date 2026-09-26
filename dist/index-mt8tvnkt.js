@@ -77,9 +77,13 @@ function sentence(message) {
   const capitalized = /^[a-z]/u.test(trimmed) ? `${trimmed[0]?.toUpperCase() ?? ""}${trimmed.slice(1)}` : trimmed;
   return /[.!?]$/u.test(capitalized) ? capitalized : `${capitalized}.`;
 }
-function stderrStyle(env, output, defaultOutput) {
-  const isTerminal = defaultOutput !== undefined && output === defaultOutput && process.stderr.isTTY === true;
-  return terminalStyle(env, isTerminal);
+var terminalOutputs = new WeakSet;
+function terminalOutput(output) {
+  terminalOutputs.add(output);
+  return output;
+}
+function stderrStyle(env, output) {
+  return terminalStyle(env, terminalOutputs.has(output) && process.stderr.isTTY === true);
 }
 
 // src/clip/assets.ts
@@ -994,4 +998,4 @@ function chooseBestExtraction(candidates) {
   return best;
 }
 
-export { sniffImage, localizeAssets, countWords, canonicalizeUrl, extractionShowsAccessControl, scoreExtraction, extractPage, chooseBestExtraction, terminalStyle, renderFailure, sentence, stderrStyle };
+export { sniffImage, localizeAssets, countWords, canonicalizeUrl, extractionShowsAccessControl, scoreExtraction, extractPage, chooseBestExtraction, terminalStyle, renderFailure, sentence, terminalOutput, stderrStyle };

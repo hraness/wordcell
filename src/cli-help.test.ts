@@ -120,6 +120,31 @@ describe("wordcell help", () => {
     expect(parseArguments(["url-metadata", "--help"])).toEqual({ ok: true, value: { kind: "url-metadata", arguments: ["--help"] } });
   });
 
+  test("--json wraps delegated help too", async () => {
+    for (const command of ["pdf", "clip", "url-metadata"]) {
+      const result = await run([command, "--help", "--json"]);
+      expect(result.exitCode).toBe(0);
+      const parsed = JSON.parse(result.stdout) as { kind: string; text: string };
+      expect(parsed.kind).toBe("help");
+      expect(parsed.text.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("capture --help lists the saved-capture actions", async () => {
+    const result = await run(["capture", "--help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toStartWith("Usage: wordcell capture <show|verify|diff> <bundle> [options]\n");
+    expect(result.stdout).toContain("capture verify <bundle>");
+  });
+
+  test("clip-family parse errors point at the command that was run", async () => {
+    const doctor = await run(["doctor", "--bogus"]);
+    expect(doctor.exitCode).toBe(2);
+    expect(lines(doctor.stderr).at(-1)).toBe("→ wordcell doctor --help");
+    const inspect = await run(["inspect", "--bogus"]);
+    expect(lines(inspect.stderr).at(-1)).toBe("→ wordcell inspect --help");
+  });
+
   test("--json help wraps the text", async () => {
     const result = await run(["--help", "--json"]);
     expect(result.exitCode).toBe(0);

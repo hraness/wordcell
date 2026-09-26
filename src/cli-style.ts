@@ -113,10 +113,15 @@ export function sentence(message: string): string {
   return /[.!?]$/u.test(capitalized) ? capitalized : `${capitalized}.`;
 }
 
-type StderrOutput = { readonly stderr: (value: string) => void };
+const terminalOutputs = new WeakSet<object>();
+
+/** Mark an output object as the process's real stdout and stderr. */
+export function terminalOutput<T extends object>(output: T): T {
+  terminalOutputs.add(output);
+  return output;
+}
 
 /** Style for an error written to `output`: color only when it is the real terminal stderr. */
-export function stderrStyle(env: TerminalEnvironment, output: StderrOutput, defaultOutput?: StderrOutput): TerminalStyle {
-  const isTerminal = defaultOutput !== undefined && output === defaultOutput && process.stderr.isTTY === true;
-  return terminalStyle(env, isTerminal);
+export function stderrStyle(env: TerminalEnvironment, output: object): TerminalStyle {
+  return terminalStyle(env, terminalOutputs.has(output) && process.stderr.isTTY === true);
 }

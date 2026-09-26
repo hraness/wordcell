@@ -6,7 +6,7 @@ import {
 } from "./index-0eacgvpv.js";
 import {
   main as main2
-} from "./index-gv978hgk.js";
+} from "./index-vz3znpf4.js";
 import {
   MAX_AUTHORIZED_VAULTS,
   auditKnowledgePortfolio,
@@ -19,13 +19,14 @@ import {
 } from "./index-j4zgmzjr.js";
 import {
   main
-} from "./index-4qyctndn.js";
+} from "./index-39ftk83z.js";
 import {
   renderFailure,
   sentence,
   stderrStyle,
+  terminalOutput,
   terminalStyle
-} from "./index-nk6zw5gx.js";
+} from "./index-mt8tvnkt.js";
 import {
   slugify
 } from "./index-hgve9rh2.js";
@@ -669,10 +670,10 @@ Build or validate the immutable metadata-search-engine-rs helper directly from
 an installed @hraness/wordcell package:
   wordcell url-metadata tool build
 `;
-var defaultOutput = {
+var defaultOutput = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value)
-};
+});
 function integer(value, minimum, maximum) {
   if (!/^(?:0|[1-9]\d*)$/u.test(value))
     return null;
@@ -798,7 +799,7 @@ async function main3(rawArguments = process.argv.slice(2), environment = process
     if (parsed.json)
       output.stdout(terminalJson({ ok: false, error: parsed.message }));
     else
-      output.stderr(renderFailure(sentence(sanitizeTerminalLine(parsed.message)), "wordcell url-metadata --help", stderrStyle(environment, output, defaultOutput)));
+      output.stderr(renderFailure(sentence(sanitizeTerminalLine(parsed.message)), "wordcell url-metadata --help", stderrStyle(environment, output)));
     return 2;
   }
   if (parsed.value.kind === "help") {
@@ -832,7 +833,7 @@ async function main3(rawArguments = process.argv.slice(2), environment = process
     if (parsed.value.kind === "backfill" && parsed.value.json) {
       output.stdout(terminalJson({ ok: false, error: message }));
     } else
-      output.stderr(renderFailure(sanitizeTerminalLine(message), "wordcell url-metadata tool check", stderrStyle(environment, output, defaultOutput)));
+      output.stderr(renderFailure(sanitizeTerminalLine(message), "wordcell url-metadata tool check", stderrStyle(environment, output)));
     return 1;
   }
 }
@@ -4368,10 +4369,10 @@ async function createCliTypeSafeReranker(environment = process.env, homeDirector
 }
 
 // src/cli-program.ts
-var defaultOutput2 = {
+var defaultOutput2 = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value)
-};
+});
 async function readBoundedStdinUtf8(source, maximumBytes, label) {
   if (source.isTTY) {
     throw new Error("--body-file - reads the note body from standard input, but standard input is a terminal; pipe the body in or name a file");
@@ -6127,8 +6128,16 @@ function parsePortfolioCommand(arguments_) {
 function isHelpFlag(argument) {
   return argument === "--help" || argument === "-h";
 }
+function isDelegatedHelp(command) {
+  if (command.kind === "clip")
+    return command.arguments.length === 1 && command.arguments[0] === "help";
+  if (command.kind === "pdf" || command.kind === "url-metadata") {
+    return command.arguments.length === 1 && command.arguments[0] === "--help";
+  }
+  return false;
+}
 function delegatedHelp(first) {
-  if (first === "clip" || first === "inspect" || first === "capture")
+  if (first === "clip" || first === "inspect")
     return { kind: "clip", arguments: ["help"] };
   if (first === "pdf")
     return { kind: "pdf", arguments: ["--help"] };
@@ -6142,9 +6151,7 @@ function parseHelpTopic(words) {
     return { ok: true, value: { kind: "help" } };
   if (topic.length === 1 && topic[0] === "advanced")
     return { ok: true, value: { kind: "help", topic: "advanced" } };
-  const first = topic[0] ?? "";
-  const bundleAction = first === "capture" && ["show", "verify", "diff"].includes(topic[1] ?? "");
-  const delegated = bundleAction ? undefined : delegatedHelp(first);
+  const delegated = delegatedHelp(topic[0] ?? "");
   if (delegated !== undefined)
     return { ok: true, value: delegated };
   const id = resolveCommandId(topic);
@@ -6158,9 +6165,7 @@ function embeddedHelp(arguments_) {
   const index = arguments_.slice(0, end).findIndex(isHelpFlag);
   if (index <= 0)
     return;
-  const first = arguments_[0] ?? "";
-  const bundleAction = first === "capture" && ["show", "verify", "diff"].includes(arguments_[1] ?? "");
-  const delegated = bundleAction ? undefined : delegatedHelp(first);
+  const delegated = delegatedHelp(arguments_[0] ?? "");
   if (delegated !== undefined) {
     return index === 1 || index === end - 1 ? { ok: true, value: delegated } : undefined;
   }
@@ -7768,6 +7773,15 @@ async function main4(rawArguments = process.argv.slice(2), output = defaultOutpu
       return 0;
     }
     return renderHelp(command, output, terminal, readVersion, output === defaultOutput2);
+  }
+  if (jsonRequested && isDelegatedHelp(command)) {
+    const text = [];
+    const code = await main4([command.kind === "clip" ? "clip" : command.kind, "--help"], {
+      stdout: (value) => text.push(value),
+      stderr: output.stderr
+    }, dependencies);
+    output.stdout(terminalSafeJson({ kind: "help", text: text.join("") }));
+    return code;
   }
   try {
     if (command.kind === "clip") {

@@ -24,8 +24,8 @@ import {
   resolvePdfTools,
   runPdfCapture,
   runPdfToolCommand
-} from "./index-gv978hgk.js";
-import"./index-nk6zw5gx.js";
+} from "./index-vz3znpf4.js";
+import"./index-mt8tvnkt.js";
 import"./index-hgve9rh2.js";
 import"./index-e5fbsywq.js";
 import"./index-gh719d91.js";

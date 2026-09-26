@@ -14,8 +14,9 @@ import {
   scoreExtraction,
   sentence,
   sniffImage,
-  stderrStyle
-} from "./index-nk6zw5gx.js";
+  stderrStyle,
+  terminalOutput
+} from "./index-mt8tvnkt.js";
 import {
   adapterCapabilities,
   inspectClipEnvironment,
@@ -2362,10 +2363,10 @@ async function runCapture(rawOptions, dependencies = {}) {
 }
 
 // src/clip/cli.ts
-var defaultOutput = {
+var defaultOutput = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value)
-};
+});
 function line(value) {
   return value.endsWith(`
 `) ? value : `${value}
@@ -2418,7 +2419,9 @@ async function diagnosticCommand(arguments_, output, inspectEnvironment) {
 async function main(rawArguments = process.argv.slice(2), environment = process.env, output = defaultOutput, dependencies = {}, runtimeOptions = {}) {
   const parsed = parseArguments(rawArguments, environment);
   if (!parsed.ok) {
-    output.stderr(renderFailure(sentence(safe(parsed.message)), "wordcell clip --help", stderrStyle(environment, output, defaultOutput)));
+    const first = rawArguments[0];
+    const next = first === "doctor" || first === "adapters" || first === "inspect" ? `wordcell ${first} --help` : "wordcell clip --help";
+    output.stderr(renderFailure(sentence(safe(parsed.message)), next, stderrStyle(environment, output)));
     return 2;
   }
   const arguments_ = parsed.value;
@@ -2471,7 +2474,7 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
     if (arguments_.json)
       output.stdout(terminalSafeJson({ ok: false, error: message }));
     else
-      output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output, defaultOutput)));
+      output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
   }
 }

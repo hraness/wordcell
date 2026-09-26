@@ -9,7 +9,7 @@ import {
   renderDoctorReport,
 } from "./doctor.js";
 import { redactSensitiveText } from "./persist.js";
-import { renderFailure, sentence, stderrStyle } from "../cli-style.js";
+import { renderFailure, sentence, stderrStyle, terminalOutput } from "../cli-style.js";
 import { sanitizeTerminalLine, sanitizeTerminalText } from "./terminal.js";
 
 type Output = {
@@ -17,10 +17,10 @@ type Output = {
   readonly stderr: (value: string) => void;
 };
 
-const defaultOutput: Output = {
+const defaultOutput: Output = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value),
-};
+});
 
 function line(value: string): string {
   return value.endsWith("\n") ? value : `${value}\n`;
@@ -112,7 +112,9 @@ export async function main(
 ): Promise<number> {
   const parsed = parseArguments(rawArguments, environment);
   if (!parsed.ok) {
-    output.stderr(renderFailure(sentence(safe(parsed.message)), "wordcell clip --help", stderrStyle(environment, output, defaultOutput)));
+    const first = rawArguments[0];
+    const next = first === "doctor" || first === "adapters" || first === "inspect" ? `wordcell ${first} --help` : "wordcell clip --help";
+    output.stderr(renderFailure(sentence(safe(parsed.message)), next, stderrStyle(environment, output)));
     return 2;
   }
   const arguments_ = parsed.value;
@@ -174,7 +176,7 @@ export async function main(
   } catch (error) {
     const message = safe(error instanceof Error ? error.message : String(error));
     if (arguments_.json) output.stdout(terminalSafeJson({ ok: false, error: message }));
-    else output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output, defaultOutput)));
+    else output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
   }
 }

@@ -4,8 +4,9 @@ import {
   renderFailure,
   sentence,
   sniffImage,
-  stderrStyle
-} from "./index-nk6zw5gx.js";
+  stderrStyle,
+  terminalOutput
+} from "./index-mt8tvnkt.js";
 import {
   slugify,
   yamlString
@@ -1861,10 +1862,10 @@ async function preparePdfSource(input, options = {}, dependencies = {}) {
 }
 
 // src/pdf/cli.ts
-var defaultOutput = {
+var defaultOutput = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value)
-};
+});
 function safe(value) {
   return sanitizeTerminalLine(redactSensitiveText(value));
 }
@@ -1908,7 +1909,7 @@ function pdfCaptureSummary(outcome) {
 async function main(rawArguments = process.argv.slice(2), environment = process.env, output = defaultOutput, dependencies = {}) {
   const parsed = parsePdfArguments(rawArguments, environment);
   if (!parsed.ok) {
-    output.stderr(renderFailure(sentence(safe(parsed.message)), "wordcell pdf --help", stderrStyle(environment, output, defaultOutput)));
+    output.stderr(renderFailure(sentence(safe(parsed.message)), "wordcell pdf --help", stderrStyle(environment, output)));
     return 2;
   }
   const arguments_ = parsed.value;
@@ -1962,7 +1963,7 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
     if (arguments_.json)
       output.stdout(terminalSafeJson({ ok: false, error: message }));
     else
-      output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output, defaultOutput)));
+      output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
   } finally {
     preparedSource?.dispose();

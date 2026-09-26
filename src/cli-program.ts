@@ -11,7 +11,7 @@ import {
   startHelp,
   valueOptions,
 } from "./cli-help.js";
-import { renderFailure, sentence, terminalStyle, type TerminalEnvironment } from "./cli-style.js";
+import { renderFailure, sentence, terminalOutput, terminalStyle, type TerminalEnvironment } from "./cli-style.js";
 import { open, realpath, stat } from "node:fs/promises";
 import { cpus, release, totalmem } from "node:os";
 import { relative, resolve } from "node:path";
@@ -197,10 +197,10 @@ type Output = {
   readonly stderr: (value: string) => void;
 };
 
-const defaultOutput: Output = {
+const defaultOutput: Output = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value),
-};
+});
 
 /** Read standard input as fatal UTF-8, stopping as soon as it passes `maximumBytes`. */
 async function readBoundedStdinUtf8(
@@ -2274,9 +2274,18 @@ function isHelpFlag(argument: string | undefined): boolean {
   return argument === "--help" || argument === "-h";
 }
 
+/** True for the help request a delegated parser answers itself. */
+function isDelegatedHelp(command: ParsedCommand): boolean {
+  if (command.kind === "clip") return command.arguments.length === 1 && command.arguments[0] === "help";
+  if (command.kind === "pdf" || command.kind === "url-metadata") {
+    return command.arguments.length === 1 && command.arguments[0] === "--help";
+  }
+  return false;
+}
+
 /** Help for delegated commands comes from their own parsers. */
 function delegatedHelp(first: string): ParsedCommand | undefined {
-  if (first === "clip" || first === "inspect" || first === "capture") return { kind: "clip", arguments: ["help"] };
+  if (first === "clip" || first === "inspect") return { kind: "clip", arguments: ["help"] };
   if (first === "pdf") return { kind: "pdf", arguments: ["--help"] };
   if (first === "url-metadata") return { kind: "url-metadata", arguments: ["--help"] };
   return undefined;
@@ -2287,9 +2296,7 @@ function parseHelpTopic(words: readonly string[]): ParseResult {
   const topic = words.filter((word) => !isHelpFlag(word) && word !== "--json");
   if (topic.length === 0) return { ok: true, value: { kind: "help" } };
   if (topic.length === 1 && topic[0] === "advanced") return { ok: true, value: { kind: "help", topic: "advanced" } };
-  const first = topic[0] ?? "";
-  const bundleAction = first === "capture" && ["show", "verify", "diff"].includes(topic[1] ?? "");
-  const delegated = bundleAction ? undefined : delegatedHelp(first);
+  const delegated = delegatedHelp(topic[0] ?? "");
   if (delegated !== undefined) return { ok: true, value: delegated };
   const id = resolveCommandId(topic);
   if (id === undefined) return { ok: false, message: "unknown help topic" };
@@ -2305,9 +2312,7 @@ function embeddedHelp(arguments_: readonly string[]): ParseResult | undefined {
   const end = separator === -1 ? arguments_.length : separator;
   const index = arguments_.slice(0, end).findIndex(isHelpFlag);
   if (index <= 0) return undefined;
-  const first = arguments_[0] ?? "";
-  const bundleAction = first === "capture" && ["show", "verify", "diff"].includes(arguments_[1] ?? "");
-  const delegated = bundleAction ? undefined : delegatedHelp(first);
+  const delegated = delegatedHelp(arguments_[0] ?? "");
   if (delegated !== undefined) {
     return index === 1 || index === end - 1 ? { ok: true, value: delegated } : undefined;
   }
@@ -4402,6 +4407,15 @@ export async function main(
       return 0;
     }
     return renderHelp(command, output, terminal, readVersion, output === defaultOutput);
+  }
+  if (jsonRequested && isDelegatedHelp(command)) {
+    const text: string[] = [];
+    const code = await main([command.kind === "clip" ? "clip" : command.kind, "--help"], {
+      stdout: (value) => text.push(value),
+      stderr: output.stderr,
+    }, dependencies);
+    output.stdout(terminalSafeJson({ kind: "help", text: text.join("") }));
+    return code;
   }
   try {
     if (command.kind === "clip") {
