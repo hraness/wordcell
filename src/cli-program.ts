@@ -11,7 +11,7 @@ import {
   startHelp,
   valueOptions,
 } from "./cli-help.js";
-import { renderFailure, sentence, terminalOutput, terminalStyle, type TerminalEnvironment } from "./cli-style.js";
+import { detectAudience, renderFailure, sentence, symbol, terminalOutput, terminalStyle, type TerminalEnvironment } from "./cli-style.js";
 import { open, realpath, stat } from "node:fs/promises";
 import { cpus, release, totalmem } from "node:os";
 import { relative, resolve } from "node:path";
@@ -159,6 +159,7 @@ import {
   qmdIndexerVersion,
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
+  semanticDatabasePath,
   sha256EmbeddingModelFile,
   type SemanticIndexResult,
 } from "./semantic.js";
@@ -519,7 +520,7 @@ type ParseResult =
   | { readonly ok: true; readonly value: ParsedCommand }
   | { readonly ok: false; readonly message: string };
 
-type CliDependencies = GraphCliDependencies & {
+export type CliDependencies = GraphCliDependencies & {
   readonly runClipCommand?: typeof runClipCommand;
   readonly readCaptureBundle?: typeof readCaptureBundle;
   readonly verifyCaptureBundle?: typeof verifyCaptureBundle;
@@ -534,6 +535,8 @@ type CliDependencies = GraphCliDependencies & {
   readonly refreshVault?: typeof refreshVault;
   readonly indexSemanticVault?: typeof indexSemanticVault;
   readonly openKnowledgeBase?: typeof openKnowledgeBase;
+  /** Whether a local search index exists for a vault root; injected in tests. */
+  readonly semanticIndexExists?: (root: string) => Promise<boolean>;
   readonly openKnowledgeBaseEvaluation?: typeof openKnowledgeBaseEvaluation;
   /** Test seam; production wiring builds the TypeSafe reranker lazily per flag. */
   readonly rerankers?: readonly SearchReranker[];
@@ -2464,7 +2467,14 @@ async function runSemantic(
   output: Output,
   dependencies: CliDependencies,
 ): Promise<number> {
+  const terminal = dependencies.terminal ?? processTerminal();
+  const person = !command.json && speaksToPerson(terminal);
   if (command.kind === "index") {
+    if (person) {
+      const style = terminalStyle(terminal.env, terminal.stderrIsTTY);
+      output.stderr(`${symbol("progress", style)} Indexing ${safe(command.root)}. `
+        + "The first run downloads a search model of about 300 MB and can take a few minutes.\n");
+    }
     const result = await (dependencies.indexSemanticVault ?? indexSemanticVault)({
       root: command.root,
       ...(command.database === undefined ? {} : { database: command.database }),
@@ -2473,6 +2483,14 @@ async function runSemantic(
     output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderSemanticIndex(result)));
     return 0;
   }
+  // With no mode and no index, meaning-based search has nothing to rank, so
+  // search the words instead and say how to turn on the rest. This applies to
+  // the real store only; an injected knowledge base keeps its default.
+  const indexExists = dependencies.semanticIndexExists
+    ?? (dependencies.openKnowledgeBase === undefined ? defaultSemanticIndexExists : undefined);
+  const withoutIndex = command.mode === undefined && command.database === undefined && indexExists !== undefined
+    && !await indexExists(command.root);
+  const mode = withoutIndex ? "exact" as const : command.mode;
   const searchRules = command.rulesPath === undefined
     ? undefined
     : await loadSearchRulesFile(command.rulesPath);
@@ -2490,7 +2508,7 @@ async function runSemantic(
   try {
     const result = await kb.search({
       query: command.query,
-      ...(command.mode === undefined ? {} : { mode: command.mode }),
+      ...(mode === undefined ? {} : { mode }),
       ordering: command.ordering,
       filters: command.filters,
       tags: command.tags,
@@ -2512,6 +2530,11 @@ async function runSemantic(
     output.stdout(command.json
       ? terminalSafeJson(result)
       : sanitizeTerminalText(renderKnowledgeBaseSearch(result)));
+    if (withoutIndex && person) {
+      output.stderr("Searched without an index, so only exact words matched. "
+        + `For meaning-based search, run wordcell index --root ${safe(shellWord(command.root))} `
+        + "(downloads about 300 MB once).\n");
+    }
     return 0;
   } finally {
     await kb.close();
@@ -3595,18 +3618,35 @@ async function runInbox(
   return 0;
 }
 
+function speaksToPerson(terminal: CliTerminal): boolean {
+  return detectAudience(terminal.env, terminal.stderrIsTTY) === "human";
+}
+
 async function runInit(
   command: Extract<ParsedCommand, { readonly kind: "init" }>,
   output: Output,
   initialize: typeof initVault,
+  terminal: CliTerminal,
 ): Promise<number> {
   const result: InitVaultResult = await initialize(command.directory);
   if (command.json) output.stdout(terminalSafeJson(result));
   else {
     const relativeRoot = relative(process.cwd(), result.root) || ".";
     output.stdout(`Initialized ${safe(relativeRoot)} with ${result.files.length} files.\n`);
+    if (speaksToPerson(terminal)) {
+      output.stderr(`Next: wordcell search "your question" --root ${safe(shellWord(relativeRoot))}\n`);
+    }
   }
   return 0;
+}
+
+async function defaultSemanticIndexExists(root: string): Promise<boolean> {
+  try {
+    await stat(semanticDatabasePath(await realpath(root)));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function runCaptureBundle(
@@ -4432,7 +4472,7 @@ export async function main(
       return await (dependencies.runPdfCommand ?? runPdfCommand)(command.arguments, process.env, output);
     }
     if (command.kind === "init") {
-      return await runInit(command, output, dependencies.initVault ?? initVault);
+      return await runInit(command, output, dependencies.initVault ?? initVault, dependencies.terminal ?? processTerminal());
     }
     if (command.kind === "index" || command.kind === "search") {
       return await runSemantic(command, output, dependencies);

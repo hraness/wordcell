@@ -123,7 +123,9 @@ need no service, model, or graph database. Wordcell pins
 [QMD](https://github.com/tobi/qmd) 2.5.3 for local keyword and vector search.
 `--mode keyword` uses its full-text index without an embedding model. Hybrid
 and semantic search use a revision-pinned compact local EmbeddingGemma model;
-the first index or vector query downloads about 300 MB. On macOS with Bun,
+the first index or vector query downloads about 300 MB. Until a vault has an
+index, `wordcell search` without `--mode` matches exact words and says how to
+build the index. On macOS with Bun,
 install extension-capable Homebrew SQLite with `brew install sqlite` before
 using vector retrieval.
 

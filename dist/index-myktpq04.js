@@ -10,41 +10,48 @@ import {
   extractPage,
   extractionShowsAccessControl,
   localizeAssets,
-  renderFailure,
   scoreExtraction,
-  sentence,
-  sniffImage,
-  stderrStyle,
-  terminalOutput
-} from "./index-mt8tvnkt.js";
+  sniffImage
+} from "./index-k86wepd8.js";
 import {
   adapterCapabilities,
   inspectClipEnvironment,
   renderAdapterCapabilities,
   renderDoctorReport
-} from "./index-fc4dr114.js";
+} from "./index-5st9nxwx.js";
 import {
   cloneBrowserProfile
 } from "./index-5n05se68.js";
 import {
+  CONFIRM_LINE,
   acquireBrowser,
   acquireCookieHttp,
   acquireCookieRecords,
   acquireFile,
   acquireHttp,
-  assertSafePersistentProfile
-} from "./index-g5vsqmdy.js";
+  assertSafePersistentProfile,
+  cookiePermissionRecovery,
+  renderCookiePermissionNotice,
+  renderCookiePermissionRecovery,
+  setCookiePermissionReporter
+} from "./index-ehhd5qw7.js";
 import {
   CONTENT_REWRITE_TRUNCATION_WARNING,
   buildClipMarkdown,
   classifyPlatformUrl,
+  detectAudience,
   parseBlueskyCapture,
   parseHackerNewsCapture,
   parseRedditCapture,
   renderCapturedDocument,
+  renderFailure,
   rewriteContentWithStatus,
-  slugify
-} from "./index-hgve9rh2.js";
+  sentence,
+  slugify,
+  stderrStyle,
+  terminalOutput,
+  writesToTerminal
+} from "./index-cd75vky9.js";
 import {
   MAX_COOKIE_BYTES,
   filterCookieProviderResult,
@@ -65,7 +72,7 @@ import {
   captureUrl,
   parseArguments,
   usage
-} from "./index-dfag79p7.js";
+} from "./index-byz4kzww.js";
 import {
   BoundedByteBuffer
 } from "./index-gh719d91.js";
@@ -2382,6 +2389,25 @@ function terminalSafeJson(value) {
   return `${JSON.stringify(value, (_key, candidate) => typeof candidate === "string" ? sanitizeTerminalText(candidate) : candidate, 2)}
 `;
 }
+var CONFIRM_TIMEOUT_MS = 120000;
+async function confirmFromTerminal() {
+  const reader = Bun.stdin.stream().getReader();
+  let timer;
+  try {
+    const timeout = new Promise((resolve2) => {
+      timer = setTimeout(() => resolve2("skip"), CONFIRM_TIMEOUT_MS);
+    });
+    const answer = reader.read().then(({ value }) => {
+      const text = value === undefined ? "" : new TextDecoder().decode(value).trim().toLowerCase();
+      return text === "s" || text === "skip" ? "skip" : "continue";
+    });
+    return await Promise.race([answer, timeout]);
+  } finally {
+    if (timer !== undefined)
+      clearTimeout(timer);
+    reader.releaseLock();
+  }
+}
 function captureSummary(outcome) {
   return {
     ok: captureSucceeded(outcome),
@@ -2436,6 +2462,24 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
     output.stdout(arguments_.json ? terminalSafeJson({ schemaVersion: 1, adapters: adapterCapabilities }) : sanitizeTerminalText(renderAdapterCapabilities()));
     return 0;
   }
+  const onTerminal = dependencies.stderrIsTerminal ?? writesToTerminal(output);
+  const human = !arguments_.json && detectAudience(environment, onTerminal) === "human";
+  let permissionFailure;
+  setCookiePermissionReporter({
+    notice: async (need) => {
+      if (!human || arguments_.quiet)
+        return "continue";
+      output.stderr(renderCookiePermissionNotice(need, environment, stderrStyle(environment, output)));
+      const confirm = dependencies.confirmPermission ?? (onTerminal && process.stdin.isTTY === true ? confirmFromTerminal : undefined);
+      if (confirm === undefined)
+        return "continue";
+      output.stderr(CONFIRM_LINE);
+      return await confirm();
+    },
+    failure: (failure) => {
+      permissionFailure ??= failure;
+    }
+  });
   if (!arguments_.quiet && !arguments_.json) {
     const target = arguments_.currentTab ? "the current browser tab" : safe(arguments_.url?.href ?? "current");
     output.stderr(`Capturing ${target} (${arguments_.mode}, ${arguments_.scope}) ...
@@ -2470,12 +2514,29 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
     }
     return captureExitCode(outcome);
   } catch (error) {
+    if (permissionFailure !== undefined) {
+      const recovery = cookiePermissionRecovery(permissionFailure, environment);
+      if (arguments_.json) {
+        output.stdout(terminalSafeJson({
+          ok: false,
+          error: recovery.message,
+          code: recovery.code,
+          next: recovery.next,
+          permission: recovery.permission
+        }));
+      } else {
+        output.stderr(renderCookiePermissionRecovery(recovery, stderrStyle(environment, output)));
+      }
+      return 1;
+    }
     const message = safe(error instanceof Error ? error.message : String(error));
     if (arguments_.json)
       output.stdout(terminalSafeJson({ ok: false, error: message }));
     else
       output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
+  } finally {
+    setCookiePermissionReporter(undefined);
   }
 }
 if (import.meta.main)

@@ -6,7 +6,7 @@ import {
 } from "./index-0eacgvpv.js";
 import {
   main as main2
-} from "./index-vz3znpf4.js";
+} from "./index-qfqjfxaa.js";
 import {
   MAX_AUTHORIZED_VAULTS,
   auditKnowledgePortfolio,
@@ -19,17 +19,17 @@ import {
 } from "./index-j4zgmzjr.js";
 import {
   main
-} from "./index-39ftk83z.js";
+} from "./index-myktpq04.js";
 import {
+  detectAudience,
   renderFailure,
   sentence,
+  slugify,
   stderrStyle,
+  symbol,
   terminalOutput,
   terminalStyle
-} from "./index-mt8tvnkt.js";
-import {
-  slugify
-} from "./index-hgve9rh2.js";
+} from "./index-cd75vky9.js";
 import {
   verifyCaptureBundle
 } from "./index-npg9z1a4.js";
@@ -70,6 +70,7 @@ import {
   qmdIndexerVersion,
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
+  semanticDatabasePath,
   sha256EmbeddingModelFile
 } from "./index-fp732bgg.js";
 import {
@@ -6325,7 +6326,14 @@ function renderKnowledgeBaseSearch(result) {
 `;
 }
 async function runSemantic(command, output, dependencies) {
+  const terminal = dependencies.terminal ?? processTerminal();
+  const person = !command.json && speaksToPerson(terminal);
   if (command.kind === "index") {
+    if (person) {
+      const style = terminalStyle(terminal.env, terminal.stderrIsTTY);
+      output.stderr(`${symbol("progress", style)} Indexing ${safe(command.root)}. ` + `The first run downloads a search model of about 300 MB and can take a few minutes.
+`);
+    }
     const result = await (dependencies.indexSemanticVault ?? indexSemanticVault)({
       root: command.root,
       ...command.database === undefined ? {} : { database: command.database },
@@ -6334,6 +6342,9 @@ async function runSemantic(command, output, dependencies) {
     output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderSemanticIndex(result)));
     return 0;
   }
+  const indexExists = dependencies.semanticIndexExists ?? (dependencies.openKnowledgeBase === undefined ? defaultSemanticIndexExists : undefined);
+  const withoutIndex = command.mode === undefined && command.database === undefined && indexExists !== undefined && !await indexExists(command.root);
+  const mode = withoutIndex ? "exact" : command.mode;
   const searchRules = command.rulesPath === undefined ? undefined : await loadSearchRulesFile(command.rulesPath);
   const kb = await (dependencies.openKnowledgeBase ?? openKnowledgeBase)({
     root: command.root,
@@ -6344,7 +6355,7 @@ async function runSemantic(command, output, dependencies) {
   try {
     const result = await kb.search({
       query: command.query,
-      ...command.mode === undefined ? {} : { mode: command.mode },
+      ...mode === undefined ? {} : { mode },
       ordering: command.ordering,
       filters: command.filters,
       tags: command.tags,
@@ -6362,6 +6373,10 @@ async function runSemantic(command, output, dependencies) {
       }
     });
     output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderKnowledgeBaseSearch(result)));
+    if (withoutIndex && person) {
+      output.stderr("Searched without an index, so only exact words matched. " + `For meaning-based search, run wordcell index --root ${safe(shellWord(command.root))} ` + `(downloads about 300 MB once).
+`);
+    }
     return 0;
   } finally {
     await kb.close();
@@ -7172,7 +7187,10 @@ async function runInbox(command, output, dependencies) {
   output.stdout(command.json ? terminalSafeJson({ root: snapshot.root, ...report }) : sanitizeTerminalText(renderSourceInbox(report)));
   return 0;
 }
-async function runInit(command, output, initialize) {
+function speaksToPerson(terminal) {
+  return detectAudience(terminal.env, terminal.stderrIsTTY) === "human";
+}
+async function runInit(command, output, initialize, terminal) {
   const result = await initialize(command.directory);
   if (command.json)
     output.stdout(terminalSafeJson(result));
@@ -7180,8 +7198,20 @@ async function runInit(command, output, initialize) {
     const relativeRoot = relative(process.cwd(), result.root) || ".";
     output.stdout(`Initialized ${safe(relativeRoot)} with ${result.files.length} files.
 `);
+    if (speaksToPerson(terminal)) {
+      output.stderr(`Next: wordcell search "your question" --root ${safe(shellWord(relativeRoot))}
+`);
+    }
   }
   return 0;
+}
+async function defaultSemanticIndexExists(root) {
+  try {
+    await stat2(semanticDatabasePath(await realpath2(root)));
+    return true;
+  } catch {
+    return false;
+  }
 }
 async function runCaptureBundle(command, output, dependencies) {
   const verification = await (dependencies.verifyCaptureBundle ?? verifyCaptureBundle)(command.path, command.options);
@@ -7802,7 +7832,7 @@ async function main4(rawArguments = process.argv.slice(2), output = defaultOutpu
       return await (dependencies.runPdfCommand ?? main2)(command.arguments, process.env, output);
     }
     if (command.kind === "init") {
-      return await runInit(command, output, dependencies.initVault ?? initVault);
+      return await runInit(command, output, dependencies.initVault ?? initVault, dependencies.terminal ?? processTerminal());
     }
     if (command.kind === "index" || command.kind === "search") {
       return await runSemantic(command, output, dependencies);

@@ -1,7 +1,8 @@
 // @bun
 import {
-  classifyPlatformUrl
-} from "./index-hgve9rh2.js";
+  classifyPlatformUrl,
+  symbol
+} from "./index-cd75vky9.js";
 import {
   filterCookieProviderResult,
   readCookieFile,
@@ -17,7 +18,7 @@ import {
 } from "./index-e5fbsywq.js";
 import {
   captureUrl
-} from "./index-dfag79p7.js";
+} from "./index-byz4kzww.js";
 import {
   readBoundedByteStream
 } from "./index-gh719d91.js";
@@ -44,6 +45,177 @@ import {
 import { homedir, tmpdir } from "os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "path";
 import { getCookies } from "@steipete/sweet-cookie";
+
+// src/clip/cookie-permission.ts
+var PRODUCT = "Wordcell";
+var KEYCHAIN_REQUESTER = "security";
+var FULL_DISK_ACCESS_PATH = "System Settings \u203A Privacy & Security \u203A Full Disk Access";
+var FULL_DISK_ACCESS_URL = "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles";
+var KEYCHAIN_BROWSERS = ["Chrome", "Brave", "Arc", "Chromium", "Dia", "Microsoft Edge"];
+function keychainBrowserFor(source) {
+  switch (source) {
+    case "chrome":
+      return "Chrome";
+    case "brave":
+      return "Brave";
+    case "arc":
+      return "Arc";
+    case "chromium":
+      return "Chromium";
+    case "edge":
+      return "Microsoft Edge";
+    default:
+      return;
+  }
+}
+function cookiePermissionNeed(source, platform = process.platform) {
+  if (platform !== "darwin")
+    return;
+  if (source === "safari")
+    return { kind: "full-disk-access", browser: "Safari" };
+  const browser = keychainBrowserFor(source);
+  return browser === undefined ? undefined : { kind: "keychain", browser };
+}
+var KEYCHAIN_WARNING = /^Failed to read macOS Keychain \(([A-Za-z ]{1,40}) Safe Storage\): ([\s\S]{0,2000})$/u;
+var SAFARI_WARNING = /^Failed to read Safari cookies: ([\s\S]{0,2000})$/u;
+function classifyCookieProviderWarnings(warnings) {
+  if (!Array.isArray(warnings))
+    return;
+  for (const warning of warnings.slice(0, 64)) {
+    if (typeof warning !== "string")
+      continue;
+    const keychain = KEYCHAIN_WARNING.exec(warning);
+    if (keychain !== null) {
+      const browser = KEYCHAIN_BROWSERS.find((name) => name === keychain[1]);
+      if (browser === undefined)
+        continue;
+      return { kind: "keychain", browser, ...keychainState(keychain[2] ?? "") };
+    }
+    const safari = SAFARI_WARNING.exec(warning);
+    if (safari !== null && /\b(?:EPERM|EACCES)\b|operation not permitted|permission denied/iu.test(safari[1] ?? "")) {
+      return { kind: "full-disk-access", browser: "Safari", state: "denied" };
+    }
+  }
+  return;
+}
+function keychainState(detail) {
+  if (/-25300\b|could not be found/iu.test(detail))
+    return { state: "missing" };
+  if (/-25308\b|interaction is not allowed/iu.test(detail))
+    return { state: "unknown", locked: true };
+  if (/-128\b|-25293\b|canceled|cancelled|passphrase you entered is not correct|denied/iu.test(detail)) {
+    return { state: "denied" };
+  }
+  return { state: "unknown" };
+}
+function terminalAppName(env) {
+  switch (env.TERM_PROGRAM) {
+    case "Apple_Terminal":
+      return "Terminal";
+    case "iTerm.app":
+      return "iTerm";
+    case "vscode":
+      return "Visual Studio Code";
+    case "WezTerm":
+      return "WezTerm";
+    case "ghostty":
+      return "Ghostty";
+    case "WarpTerminal":
+      return "Warp";
+    case "zed":
+      return "Zed";
+    default:
+      return "your terminal app";
+  }
+}
+function keychainAsk(browser) {
+  return `use "${browser} Safe Storage" from your keychain`;
+}
+function renderCookiePermissionNotice(need, env, style) {
+  const icon = symbol("notice", style);
+  if (need.kind === "keychain") {
+    return `${icon} macOS will ask to let ${KEYCHAIN_REQUESTER} ${keychainAsk(need.browser)} for ${PRODUCT}.
+` + `   ${PRODUCT} uses it to read the ${need.browser} sign-in you already have and never stores it. ` + `Enter your Mac password if asked, then choose Always Allow so macOS doesn't ask again.
+`;
+  }
+  const requester = terminalAppName(env);
+  return `${icon} ${PRODUCT} needs Full Disk Access to read your Safari cookies.
+` + `   macOS doesn't ask for this. Turn on ${requester} in ${FULL_DISK_ACCESS_PATH}. ` + `${PRODUCT} reads only the cookies for the page you capture and never stores them.
+`;
+}
+var CONFIRM_LINE = `   Press Enter to continue \xB7 s to skip
+`;
+var COOKIES_FILE_NEXT = "wordcell clip <url> --cookies-file <path>";
+function cookiePermissionRecovery(failure, env) {
+  if (failure.kind === "full-disk-access") {
+    const requester = terminalAppName(env);
+    return {
+      message: `${PRODUCT} can't read your Safari cookies: macOS access is off for ${requester}.`,
+      detail: `Turn on ${requester} in ${FULL_DISK_ACCESS_PATH}, then run it again.`,
+      next: `open "${FULL_DISK_ACCESS_URL}"`,
+      code: "permission-denied",
+      permission: { kind: "full-disk-access", settingsUrl: FULL_DISK_ACCESS_URL }
+    };
+  }
+  const ask = keychainAsk(failure.browser);
+  switch (failure.state) {
+    case "denied":
+      return {
+        message: `${PRODUCT} can't ${ask}: the keychain request was denied.`,
+        detail: "Run it again and choose Always Allow when macOS asks, or pass a cookie file exported from the browser.",
+        next: COOKIES_FILE_NEXT,
+        code: "permission-denied",
+        permission: { kind: "keychain" }
+      };
+    case "missing":
+      return {
+        message: `${PRODUCT} can't find "${failure.browser} Safe Storage" in your keychain.`,
+        detail: `Open ${failure.browser} and sign in to the site once, or pass a cookie file exported from the browser.`,
+        next: COOKIES_FILE_NEXT,
+        code: "permission-missing",
+        permission: { kind: "keychain" }
+      };
+    case "unknown":
+      return {
+        message: `${PRODUCT} couldn't ${ask}. macOS may be blocking ${KEYCHAIN_REQUESTER}.`,
+        detail: failure.locked === true ? "Unlock your login keychain, then run it again." : "Check the key in Keychain Access, then run it again.",
+        next: COOKIES_FILE_NEXT,
+        code: "permission-unknown",
+        permission: { kind: "keychain" }
+      };
+  }
+}
+function renderCookiePermissionRecovery(recovery, style) {
+  return `${symbol("fail", style)} ${recovery.message}
+  ${recovery.detail}
+${symbol("next", style)} ${recovery.next}
+`;
+}
+var reporter;
+var noticed = new Set;
+function setCookiePermissionReporter(next) {
+  reporter = next;
+  noticed.clear();
+}
+async function announceCookiePermissions(needs) {
+  const current = reporter;
+  if (current === undefined)
+    return true;
+  for (const need of needs) {
+    const key = `${need.kind}:${need.browser}`;
+    if (noticed.has(key))
+      continue;
+    noticed.add(key);
+    if (await current.notice(need) === "skip")
+      return false;
+  }
+  return true;
+}
+function reportCookiePermissionFailure(failure) {
+  reporter?.failure(failure);
+}
+
+// src/clip/acquire.ts
 var agentBrowserBinDirectory = join(resolvePackageDirectory("agent-browser"), "bin");
 function agentBrowserCommand() {
   return [process.execPath, join(agentBrowserBinDirectory, "agent-browser.js")];
@@ -951,6 +1123,13 @@ function createCookieRecordReader(reader) {
         ...options.cookieSources.includes("safari") ? { safariCookiesFile: options.cookieProfile } : {}
       }
     };
+    const needs = options.cookieSources.flatMap((source) => {
+      const need = cookiePermissionNeed(source);
+      return need === undefined ? [] : [need];
+    });
+    if (!await announceCookiePermissions(needs)) {
+      throw new Error("reading browser cookies was skipped; pass --cookies-file <path> to use exported cookies instead");
+    }
     let provided;
     try {
       provided = await reader(cookieOptions);
@@ -961,6 +1140,11 @@ function createCookieRecordReader(reader) {
     if (!filtered.validShape)
       throw new Error("the selected browser cookie provider returned malformed data");
     if (filtered.cookies.length === 0) {
+      const permission = classifyCookieProviderWarnings(provided.warnings);
+      if (permission !== undefined) {
+        reportCookiePermissionFailure(permission);
+        throw new Error(cookiePermissionRecovery(permission, process.env).message);
+      }
       throw new Error(filtered.rejected === 0 ? "no matching cookies were found in the explicitly selected browser" : `no usable origin-scoped cookies were found; rejected ${filtered.rejected} malformed, expired, or out-of-scope record(s)`);
     }
     const warnings = [];
@@ -1009,4 +1193,4 @@ async function acquireFile(options) {
   };
 }
 
-export { agentBrowserCommand, isolatedAgentBrowserEnvironment, discoverChromeProfiles, mergeRenderedTextSnapshots, browserExpansionLimits, browserExpansionScript, readBrowserExpansionTelemetry, browserExpansionWarnings, browserExpansionStayedOnPage, browserNavigationReachedTarget, assertSafePersistentProfile, browserCookieCommands, seedOwnedBrowserCookies, browserProxyArguments, acquireBrowser, acquireHttp, acquireCookieHttp, createCookieRecordReader, createCookieHeaderReader, acquireCookieRecords, acquireCookieHeader, acquireFile };
+export { renderCookiePermissionNotice, CONFIRM_LINE, cookiePermissionRecovery, renderCookiePermissionRecovery, setCookiePermissionReporter, agentBrowserCommand, isolatedAgentBrowserEnvironment, discoverChromeProfiles, mergeRenderedTextSnapshots, browserExpansionLimits, browserExpansionScript, readBrowserExpansionTelemetry, browserExpansionWarnings, browserExpansionStayedOnPage, browserNavigationReachedTarget, assertSafePersistentProfile, browserCookieCommands, seedOwnedBrowserCookies, browserProxyArguments, acquireBrowser, acquireHttp, acquireCookieHttp, createCookieRecordReader, createCookieHeaderReader, acquireCookieRecords, acquireCookieHeader, acquireFile };

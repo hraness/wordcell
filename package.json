@@ -344,6 +344,7 @@
     "src/clip/bundle-reader.ts",
     "src/clip/capture.ts",
     "src/clip/cli.ts",
+    "src/clip/cookie-permission.ts",
     "src/clip/cookies.ts",
     "src/clip/doctor.ts",
     "src/clip/jobs.ts",

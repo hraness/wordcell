@@ -345,9 +345,12 @@ Capture options:
   --scope auto|page|thread|comments Content scope (default: platform-aware)
   --html <path|->                  Parse saved/rendered HTML; - reads stdin
   --browser-profile <name|path>    Use a signed-in or persistent Chrome profile
+                                   (downloads read its cookies from the keychain)
   --browser-live                   Attach to a live Chrome session
   --cdp <loopback-port>            Attach to a local CDP-capable browser
   --cookie-source <browser>        chrome|arc|brave|chromium|edge|firefox|safari
+                                   On a Mac, Chromium browsers ask for keychain
+                                   access; Safari needs Full Disk Access
   --cookie-profile <name|path>     Browser profile; Safari expects a Cookies.binarycookies path
   --cookies-file <path>            Cookie-Editor JSON/base64, Netscape, Cookie header, or cURL input
   --media none|images|all          Localize images or all supported media

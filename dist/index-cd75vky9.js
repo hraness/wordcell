@@ -3,6 +3,101 @@ import {
   sanitizeTerminalText
 } from "./index-1xxnjn0d.js";
 
+// src/cli-style.ts
+var UNICODE_SYMBOLS = {
+  ok: "\u2713",
+  fail: "\u2717",
+  warn: "\u26A0",
+  next: "\u2192",
+  on: "\u25CF",
+  off: "\u25CB",
+  skip: "\u2013",
+  progress: "\u21BB",
+  notice: "\uD83D\uDD10"
+};
+var ASCII_SYMBOLS = {
+  ok: "OK",
+  fail: "FAIL",
+  warn: "WARN",
+  next: "->",
+  on: "*",
+  off: "o",
+  skip: "-",
+  progress: "...",
+  notice: "NOTE"
+};
+var SYMBOL_COLORS = {
+  ok: "32",
+  fail: "31",
+  warn: "33",
+  next: "2",
+  on: "32",
+  skip: "2"
+};
+function nonEmpty(value) {
+  return value !== undefined && value !== "";
+}
+function prefersAscii(env) {
+  if (env.TERM === "dumb" || env.HRANESS_ASCII === "1")
+    return true;
+  const locale = [env.LC_ALL, env.LC_CTYPE, env.LANG].find(nonEmpty);
+  return locale === undefined || !/utf-?8/iu.test(locale);
+}
+function prefersColor(env, isTTY) {
+  if (env.FORCE_COLOR === "1")
+    return true;
+  if (nonEmpty(env.NO_COLOR))
+    return false;
+  return isTTY && env.TERM !== "dumb";
+}
+function terminalStyle(env, isTTY) {
+  return { ascii: prefersAscii(env), color: prefersColor(env, isTTY) };
+}
+function symbol(name, style) {
+  const glyph = style.ascii ? ASCII_SYMBOLS[name] : UNICODE_SYMBOLS[name];
+  const color = SYMBOL_COLORS[name];
+  return style.color && color !== undefined ? `\x1B[${color}m${glyph}\x1B[0m` : glyph;
+}
+var AGENT_MARKERS = [
+  "AI_AGENT",
+  "CLAUDECODE",
+  "CODEX_SANDBOX",
+  "CODEX_SANDBOX_NETWORK_DISABLED",
+  "CURSOR_AGENT",
+  "GEMINI_CLI"
+];
+function detectAudience(env, stderrIsTTY) {
+  const explicit = env.HRANESS_AUDIENCE;
+  if (explicit === "human" || explicit === "agent" || explicit === "quiet")
+    return explicit;
+  if (explicit === "off")
+    return "quiet";
+  if (AGENT_MARKERS.some((marker) => nonEmpty(env[marker])))
+    return "agent";
+  return stderrIsTTY ? "human" : "quiet";
+}
+function renderFailure(text, next, style) {
+  return `${symbol("fail", style)} ${text}
+${symbol("next", style)} ${next}
+`;
+}
+function sentence(message) {
+  const trimmed = message.trim();
+  const capitalized = /^[a-z]/u.test(trimmed) ? `${trimmed[0]?.toUpperCase() ?? ""}${trimmed.slice(1)}` : trimmed;
+  return /[.!?]$/u.test(capitalized) ? capitalized : `${capitalized}.`;
+}
+var terminalOutputs = new WeakSet;
+function terminalOutput(output) {
+  terminalOutputs.add(output);
+  return output;
+}
+function stderrStyle(env, output) {
+  return terminalStyle(env, terminalOutputs.has(output) && process.stderr.isTTY === true);
+}
+function writesToTerminal(output) {
+  return terminalOutputs.has(output) && process.stderr.isTTY === true;
+}
+
 // src/clip/lib.ts
 var articleMetadataLimits = {
   title: 2048,
@@ -2043,4 +2138,4 @@ function renderCapturedDocument(document) {
   return rewriteContent(markdown, new URL(document.sourceUrl), new Map, { remoteImages: "embed" });
 }
 
-export { articleMetadataLimits, slugify, yamlString, resolveRemote, scanImageSources, CONTENT_REWRITE_TRUNCATION_WARNING, rewriteContentWithStatus, buildClipMarkdown, classifyPlatformUrl, parseHackerNewsCapture, parseRedditCapture, parseBlueskyCapture, renderCapturedDocument };
+export { terminalStyle, symbol, detectAudience, renderFailure, sentence, terminalOutput, stderrStyle, writesToTerminal, articleMetadataLimits, slugify, yamlString, resolveRemote, scanImageSources, CONTENT_REWRITE_TRUNCATION_WARNING, rewriteContentWithStatus, buildClipMarkdown, classifyPlatformUrl, parseHackerNewsCapture, parseRedditCapture, parseBlueskyCapture, renderCapturedDocument };

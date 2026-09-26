@@ -9,7 +9,15 @@ import {
   renderDoctorReport,
 } from "./doctor.js";
 import { redactSensitiveText } from "./persist.js";
-import { renderFailure, sentence, stderrStyle, terminalOutput } from "../cli-style.js";
+import { detectAudience, renderFailure, sentence, stderrStyle, terminalOutput, writesToTerminal } from "../cli-style.js";
+import {
+  CONFIRM_LINE,
+  cookiePermissionRecovery,
+  renderCookiePermissionNotice,
+  renderCookiePermissionRecovery,
+  setCookiePermissionReporter,
+  type CookiePermissionFailure,
+} from "./cookie-permission.js";
 import { sanitizeTerminalLine, sanitizeTerminalText } from "./terminal.js";
 
 type Output = {
@@ -45,7 +53,32 @@ function terminalSafeJson(value: unknown): string {
 type CliDependencies = {
   readonly runCapture?: typeof runCapture;
   readonly inspectClipEnvironment?: typeof inspectClipEnvironment;
+  /** Ask whether to continue past a permission notice; present only when stdin and stderr are terminals. */
+  readonly confirmPermission?: () => Promise<"continue" | "skip">;
+  /** Whether the person is at a terminal on stderr; defaults to the real stderr. */
+  readonly stderrIsTerminal?: boolean;
 };
+
+const CONFIRM_TIMEOUT_MS = 120_000;
+
+/** Read one line from a terminal: Enter continues, `s` skips, and silence skips after two minutes. */
+async function confirmFromTerminal(): Promise<"continue" | "skip"> {
+  const reader = Bun.stdin.stream().getReader();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const timeout = new Promise<"skip">((resolve) => {
+      timer = setTimeout(() => resolve("skip"), CONFIRM_TIMEOUT_MS);
+    });
+    const answer = reader.read().then(({ value }) => {
+      const text = value === undefined ? "" : new TextDecoder().decode(value).trim().toLowerCase();
+      return text === "s" || text === "skip" ? "skip" as const : "continue" as const;
+    });
+    return await Promise.race([answer, timeout]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+    reader.releaseLock();
+  }
+}
 
 export type ClipRuntimeOptions = {
   /** Trusted embedding hint; never parsed from public CLI arguments. */
@@ -132,6 +165,24 @@ export async function main(
     return 0;
   }
 
+  const onTerminal = dependencies.stderrIsTerminal ?? writesToTerminal(output);
+  const human = !arguments_.json && detectAudience(environment, onTerminal) === "human";
+  let permissionFailure: CookiePermissionFailure | undefined;
+  setCookiePermissionReporter({
+    notice: async (need) => {
+      if (!human || arguments_.quiet) return "continue";
+      output.stderr(renderCookiePermissionNotice(need, environment, stderrStyle(environment, output)));
+      const confirm = dependencies.confirmPermission
+        ?? (onTerminal && process.stdin.isTTY === true ? confirmFromTerminal : undefined);
+      if (confirm === undefined) return "continue";
+      output.stderr(CONFIRM_LINE);
+      return await confirm();
+    },
+    failure: (failure) => {
+      permissionFailure ??= failure;
+    },
+  });
+
   if (!arguments_.quiet && !arguments_.json) {
     const target = arguments_.currentTab ? "the current browser tab" : safe(arguments_.url?.href ?? "current");
     output.stderr(`Capturing ${target} (${arguments_.mode}, ${arguments_.scope}) ...\n`);
@@ -174,10 +225,27 @@ export async function main(
     }
     return captureExitCode(outcome);
   } catch (error) {
+    if (permissionFailure !== undefined) {
+      const recovery = cookiePermissionRecovery(permissionFailure, environment);
+      if (arguments_.json) {
+        output.stdout(terminalSafeJson({
+          ok: false,
+          error: recovery.message,
+          code: recovery.code,
+          next: recovery.next,
+          permission: recovery.permission,
+        }));
+      } else {
+        output.stderr(renderCookiePermissionRecovery(recovery, stderrStyle(environment, output)));
+      }
+      return 1;
+    }
     const message = safe(error instanceof Error ? error.message : String(error));
     if (arguments_.json) output.stdout(terminalSafeJson({ ok: false, error: message }));
     else output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
+  } finally {
+    setCookiePermissionReporter(undefined);
   }
 }
 

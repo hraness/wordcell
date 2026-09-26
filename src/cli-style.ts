@@ -125,3 +125,8 @@ export function terminalOutput<T extends object>(output: T): T {
 export function stderrStyle(env: TerminalEnvironment, output: object): TerminalStyle {
   return terminalStyle(env, terminalOutputs.has(output) && process.stderr.isTTY === true);
 }
+
+/** True when `output` writes to the process's real stderr and that stderr is a terminal. */
+export function writesToTerminal(output: object): boolean {
+  return terminalOutputs.has(output) && process.stderr.isTTY === true;
+}

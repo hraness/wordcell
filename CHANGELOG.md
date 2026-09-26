@@ -28,6 +28,15 @@ notes exported from Supermemory.
   `--help`, `-h`, and `wordcell help <command>` with its own page and an
   example.
 - `wordcell --version` (also `-V`, `-v`, and `version`) prints the version.
+- Before reading Chrome, Arc, Brave, Chromium, or Edge cookies on a Mac,
+  `wordcell clip --cookie-source` explains the keychain dialog that names
+  `security`. A denied request, a locked keychain, or Safari cookies without
+  Full Disk Access now say what happened and how to fix it, instead of "no
+  matching cookies".
+- `wordcell init` names the next command. Until a vault has an index,
+  `wordcell search` without `--mode` matches exact words and says how to build
+  the index, instead of returning no results. `wordcell index` says when it
+  will download the search model.
 - Mistakes print one line saying what was wrong, with a suggestion for a
   likely typo, and one command to run next, instead of the full usage.
 

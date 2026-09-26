@@ -17,6 +17,13 @@ import { getCookies, type BrowserName, type GetCookiesOptions } from "@steipete/
 import { captureUrl, type CaptureArguments } from "./args.js";
 import { readBoundedByteStream } from "./bounded-byte-buffer.js";
 import {
+  announceCookiePermissions,
+  classifyCookieProviderWarnings,
+  cookiePermissionNeed,
+  cookiePermissionRecovery,
+  reportCookiePermissionFailure,
+} from "./cookie-permission.js";
+import {
   filterCookieProviderResult,
   readCookieFile,
   renderCookieHeader,
@@ -1210,6 +1217,13 @@ export function createCookieRecordReader(reader: CookieStoreReader): CookieRecor
             ...(options.cookieSources.includes("safari") ? { safariCookiesFile: options.cookieProfile } : {}),
           }),
     };
+    const needs = options.cookieSources.flatMap((source) => {
+      const need = cookiePermissionNeed(source);
+      return need === undefined ? [] : [need];
+    });
+    if (!await announceCookiePermissions(needs)) {
+      throw new Error("reading browser cookies was skipped; pass --cookies-file <path> to use exported cookies instead");
+    }
     let provided: unknown;
     try {
       provided = await reader(cookieOptions);
@@ -1219,6 +1233,12 @@ export function createCookieRecordReader(reader: CookieStoreReader): CookieRecor
     const filtered = filterCookieProviderResult(provided, url);
     if (!filtered.validShape) throw new Error("the selected browser cookie provider returned malformed data");
     if (filtered.cookies.length === 0) {
+      // A keychain denial or missing Full Disk Access is never "no matching cookies".
+      const permission = classifyCookieProviderWarnings((provided as { readonly warnings?: unknown }).warnings);
+      if (permission !== undefined) {
+        reportCookiePermissionFailure(permission);
+        throw new Error(cookiePermissionRecovery(permission, process.env).message);
+      }
       throw new Error(filtered.rejected === 0
         ? "no matching cookies were found in the explicitly selected browser"
         : `no usable origin-scoped cookies were found; rejected ${filtered.rejected} malformed, expired, or out-of-scope record(s)`);
