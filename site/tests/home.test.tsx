@@ -12,6 +12,11 @@ import { docHtml } from "../app/docs/docs.generated";
 import { readmeVersion } from "../app/readme.generated";
 import { publishedRelease } from "../app/publication";
 import RootLayout from "../app/layout";
+import Benchmarks from "../app/benchmarks/page";
+import CompareSupermemory from "../app/compare/supermemory/page";
+import MigrateSupermemory from "../app/migrate/supermemory/page";
+import { locomoArms } from "../wordcell/oh-evidence";
+import { SETUP_PROMPT } from "../wordcell/setup-prompt";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactStudy } from "../wordcell/benchmark-evidence";
 
@@ -20,6 +25,9 @@ async function publicRoutes(): Promise<React.JSX.Element[]> {
     <Home key="home" />,
     <Docs key="docs" />,
     <Developers key="developers" />,
+    <Benchmarks key="benchmarks" />,
+    <CompareSupermemory key="compare-supermemory" />,
+    <MigrateSupermemory key="migrate-supermemory" />,
     await DocPage({ params: Promise.resolve({ slug: "reference" }) }),
     await DocPage({ params: Promise.resolve({ slug: "overview" }) }),
     <BlogIndex key="blog" />,
@@ -43,6 +51,40 @@ test("every public route has the in-flow content footer above the network footer
     expect(html).not.toContain('type="email"');
     expect(html).not.toContain('source=web#updates');
   }
+});
+
+test("every public route links the benchmarks page from the content footer", async () => {
+  for (const Page of await publicRoutes()) {
+    const html = renderToStaticMarkup(Page);
+    const footer = html.slice(html.indexOf('data-hraness-marketing="footer"'));
+    expect(footer).toContain('href="/benchmarks"');
+  }
+});
+
+test("the homepage connects an agent, links the launch pages, and keeps Oh LoCoMo figures off the page", () => {
+  const html = renderToStaticMarkup(<Home />);
+  const install = html.indexOf('id="install"');
+  const agentMemory = html.indexOf('id="agent-memory"');
+  const model = html.indexOf('id="model"');
+  expect(install).toBeGreaterThan(-1);
+  expect(agentMemory).toBeGreaterThan(install);
+  expect(model).toBeGreaterThan(agentMemory);
+  const section = html.slice(agentMemory, model);
+  expect(section).toContain("available from source until the next release");
+  expect(section).toContain("<code>wordcell mcp</code>");
+  expect(section).toContain("<code>wordcell import supermemory</code>");
+  expect(section).toContain("Wordcell’s local MCP server serves a vault");
+  expect(section).not.toMatch(/<p[^>]*>wordcell (mcp|import)/u);
+  expect(section).toContain(SETUP_PROMPT.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#x27;"));
+  expect(section).toContain("Copy prompt");
+  expect(section).toContain('href="/migrate/supermemory"');
+  const evidence = html.slice(html.indexOf('id="evidence"'), html.indexOf('id="context"'));
+  expect(evidence).toContain('href="/benchmarks"');
+  const compare = html.slice(html.indexOf('id="compare"'), html.indexOf('id="publish"'));
+  expect(compare).toContain('href="/compare/supermemory"');
+  expect(compare).toContain("docs/comparisons.md");
+  for (const arm of locomoArms) expect(html).not.toContain(`${arm.percent.replace(/%$/u, "")}%`);
+  expect(html).not.toMatch(/\bSOTA\b|state[\s-]+of[\s-]+the[\s-]+art/iu);
 });
 
 test("every public route attributes the site to Hraness through the shared footer only", async () => {

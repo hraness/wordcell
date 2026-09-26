@@ -19,7 +19,7 @@
     "postbuild": "bun test ./tests/runtime.test.ts",
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
-    "test": "bun test ./tests/source.test.ts ./tests/home.test.tsx ./scripts/readme-html.test.ts ./tests/ui-styles.test.tsx ./tests/hosted.test.ts ./tests/blog.test.tsx",
+    "test": "bun test ./tests/source.test.ts ./tests/home.test.tsx ./scripts/readme-html.test.ts ./tests/ui-styles.test.tsx ./tests/hosted.test.ts ./tests/blog.test.tsx ./tests/launch-pages.test.tsx",
     "typecheck": "tsc --noEmit",
     "check": "bun run check:theme && bun run sync:readme && bun run sync:docs && bun run sync:blog && bun run sync:reader && bun run build:theme && bun run test && bun run lint && bun run typecheck && bun run build"
   },

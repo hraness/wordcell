@@ -22,6 +22,7 @@ import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { siteDescription } from "./site-description";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactDetails, scifactStudy } from "../wordcell/benchmark-evidence";
+import { SetupLinks } from "../wordcell/setup-links";
 
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
@@ -314,6 +315,23 @@ wordcell note create notes/parser-contract \\
             )}
           </MarketingInstallPanel>
 
+          <MarketingSection
+            heading="Let your agent search and add notes"
+            headingId="agent-memory-title"
+            id="agent-memory"
+            label="Agent memory"
+            summary="Wordcell’s local MCP server serves a vault to an agent such as Claude Code, Codex, or Cursor over standard input and output. Each note the agent adds or edits is a Markdown file you review in Git."
+          >
+            <p className="install-note">
+              <code>wordcell mcp</code> and <code>wordcell import supermemory</code> are available from source until the next release. The prompt below installs Wordcell from a checkout.
+            </p>
+            <SetupLinks />
+            <p className="install-note">
+              <code>wordcell import supermemory</code> turns documents and memory entries exported from the Supermemory API into notes, and a later import updates the notes you have not edited.
+            </p>
+            <p className="record-link"><a href="/migrate/supermemory">Move your Supermemory documents and memories into Markdown notes</a></p>
+          </MarketingSection>
+
           <MarketingPrimitives
             heading="What a vault gives you"
             headingId="model-title"
@@ -338,6 +356,7 @@ wordcell note create notes/parser-contract \\
               <p>nDCG at five rose from {scifactDetails.baselineNdcg} to {scifactDetails.rerankedNdcg}. It improved for {scifactDetails.improved} queries and regressed for {scifactDetails.regressed}. For {scifactDetails.missing} queries, neither candidate window contained a judged relevant source.</p>
               <p>Reranking sends bounded query and candidate context to a paid provider. It is optional; the local search path runs without it. QMD, Letta, and Supermemory were not evaluated under this protocol.</p>
             </BenchmarkComparison>
+            <p className="record-link"><a href="/benchmarks">See Wordcell and Oh benchmark results with their sources and limits</a></p>
           </MarketingSection>
 
           <MarketingSection
@@ -401,7 +420,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 </tbody>
               </table>
             </div>
-            <p className="record-link"><a href={`${repository}/blob/main/docs/comparisons.md`}>Compare capabilities, tradeoffs, and primary sources</a></p>
+            <p className="record-link"><a href={`${repository}/blob/main/docs/comparisons.md`}>Compare capabilities, tradeoffs, and primary sources</a> · <a href="/compare/supermemory">Compare Wordcell and Supermemory</a></p>
           </MarketingSection>
 
           <MarketingSection

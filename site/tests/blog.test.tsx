@@ -18,6 +18,7 @@ import { blogHtml } from "../app/blog/blog.generated";
 import { blogSitemapPaths } from "../app/blog/discovery";
 import { publishedRelease } from "../app/publication";
 import { assertSiteLinks, bindReleaseVersion, contentsFor } from "../scripts/sync-blog";
+import { launchRoutes } from "../wordcell/launch-routes";
 
 const site = join(import.meta.dir, "..");
 const read = async (path: string): Promise<string> => await readFile(join(site, path), "utf8");
@@ -118,6 +119,9 @@ describe("Wordcell blog", () => {
     expect(() => assertSiteLinks("x", '<a href="/docs/reference#install">', posts, docs)).not.toThrow();
     expect(() => assertSiteLinks("x", '<a href="/blog/missing">', posts, docs)).toThrow();
     expect(() => assertSiteLinks("x", '<a href="/docs/missing">', posts, docs)).toThrow();
+    for (const path of launchRoutes) expect(() => assertSiteLinks("x", `<a href="${path}#top">`, posts, docs), path).not.toThrow();
+    expect(() => assertSiteLinks("x", '<a href="/migrate/supermemory#steps">', posts, docs)).not.toThrow();
+    expect(() => assertSiteLinks("x", '<a href="/compare/missing">', posts, docs)).toThrow();
   });
 
   test("the introduction leaves the xcb post unlinked until that post is live", () => {

@@ -4,6 +4,7 @@ import { basename, resolve } from "node:path";
 import { blogArticles } from "../app/blog/articles.ts";
 import { docCatalog } from "../app/docs/catalog.ts";
 import { publishedRelease } from "../app/publication.ts";
+import { isLaunchRoute } from "../wordcell/launch-routes.ts";
 import { renderMarkdownHtml, type RelativeTargetResolver } from "./readme-html.ts";
 
 const siteRoot = resolve(import.meta.dir, "..");
@@ -26,7 +27,7 @@ export function bindReleaseVersion(source: string, version: string | null): stri
 /** Every on-site link from a post must reach a rendered page. */
 export function assertSiteLinks(slug: string, html: string, posts: ReadonlySet<string>, docs: ReadonlySet<string>): void {
   for (const [, path] of html.matchAll(/\shref="(\/[^"#?]*)[^"]*"/gu)) {
-    if (path === undefined || path === "/" || path === "/docs" || path === "/developers" || path === "/blog") continue;
+    if (path === undefined || path === "/" || path === "/docs" || path === "/developers" || path === "/blog" || isLaunchRoute(path)) continue;
     const blog = /^\/blog\/([a-z0-9-]+)$/u.exec(path);
     if (blog !== null && posts.has(blog[1]!)) continue;
     const doc = /^\/docs\/([a-z0-9-]+)$/u.exec(path);

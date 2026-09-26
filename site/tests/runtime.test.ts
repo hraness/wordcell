@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
 import { publishedRelease } from "../app/publication";
+import { launchRoutes } from "../wordcell/launch-routes";
 
 const site = join(import.meta.dir, "..");
 
@@ -171,6 +172,32 @@ describe("built Wordcell site", () => {
       expect(feedResponse.headers.get("content-type")).toContain("application/atom+xml");
       expect(feed).toContain("<id>https://wordcell.io/blog/introducing-wordcell</id>");
       expect(feed).not.toContain("<id>https://wordcell.io/blog/how-wordcell-uses-oh</id>");
+    } finally {
+      await stopBuiltSite(server);
+    }
+  }, 20_000);
+
+  test("serves the benchmarks, comparison, and migration pages with share images", async () => {
+    const server = await startBuiltSite();
+    try {
+      for (const path of launchRoutes) {
+        const response = await fetch(`${server.origin}${path}`, { redirect: "manual" });
+        expect(response.status).toBe(200);
+        const page = await response.text();
+        expect(page).toContain(`<link rel="canonical" href="https://wordcell.io${path}"`);
+        expect(page).toContain(`<meta property="og:url" content="https://wordcell.io${path}"`);
+        expect(page).toContain('<meta property="og:site_name" content="Wordcell"');
+        expect(page).toContain('<meta name="twitter:card" content="summary_large_image"');
+        expect(page).toContain('<meta name="twitter:image"');
+        const image = /<meta property="og:image" content="([^"]+)"/u.exec(page)?.[1];
+        expect(image).toBeDefined();
+        const imageUrl = new URL(image!.replaceAll("&amp;", "&"));
+        expect(imageUrl.pathname).toBe(`${path}/opengraph-image`);
+        const imageResponse = await fetch(`${server.origin}${imageUrl.pathname}${imageUrl.search}`, { redirect: "manual" });
+        expect(imageResponse.status).toBe(200);
+        expect(imageResponse.headers.get("content-type")).toBe("image/png");
+        await imageResponse.arrayBuffer();
+      }
     } finally {
       await stopBuiltSite(server);
     }

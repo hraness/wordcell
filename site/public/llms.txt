@@ -23,12 +23,23 @@ When to use this site:
 
 ## Pages
 
-- [Wordcell](https://wordcell.io/): Quick start, how notes, links, and search
-  work, the measured context size and the SciFact reranking study, how
-  Wordcell uses Oh, comparisons, publishing selected notes, what stays local,
-  and the install command.
+- [Wordcell](https://wordcell.io/): Quick start, connecting a local agent, how
+  notes, links, and search work, the measured context size and the SciFact
+  reranking study, how Wordcell uses Oh, comparisons, publishing selected
+  notes, what stays local, and the install command.
 - [For developers](https://wordcell.io/developers): The coding-agent workflow:
   code-path context, scoped rules, note history, and the Agent Skill.
+- [Benchmarks](https://wordcell.io/benchmarks): Wordcell's context-size and
+  SciFact reranking measurements with their limits, the Oh kernel's LoCoMo run
+  and its 60-question pilot with Supermemory and BM25, and figures that other
+  memory systems publish, each with its source.
+- [Wordcell and Supermemory compared](https://wordcell.io/compare/supermemory):
+  Where memory lives, how memories form, cost with Supermemory's pricing
+  checked on September 26, 2026, connectors, compliance, agent access, and
+  when to choose each.
+- [Migrate from Supermemory to Wordcell](https://wordcell.io/migrate/supermemory):
+  The install, export, import, and verify steps from the migration guide, with
+  a prompt that connects a local agent.
 - [Documentation](https://wordcell.io/docs): The documentation index, grouped
   into tutorials, how-to guides, reference, and explanation, with the install
   command.

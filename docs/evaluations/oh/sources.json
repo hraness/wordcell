@@ -1,0 +1,25 @@
+{
+  "schema": "wordcell.vendored-sources.v1",
+  "artifacts": [
+    {
+      "file": "memory-evolution-locomo-sealed-1540-v1.json",
+      "repository": "hraness/oh",
+      "commit": "3add170ca8d931603e68dee07f3cbdcf9c08c706",
+      "path": "benchmarks/results/memory-evolution-locomo-sealed-1540-v1.json",
+      "bytes": 67362,
+      "gitBlobSha1": "e335423e310a59a993ec3babadfa62292c80e0aa",
+      "sha256": "0c8955db95468f3738f7c1f3c5fc58c12da3508e60325add4db3c20b0833ca00",
+      "fetchedOn": "2026-09-26"
+    },
+    {
+      "file": "memory-framework-pilot-v1.json",
+      "repository": "hraness/oh",
+      "commit": "9edd9f1bc18d0f4c15b040add10caad26e782275",
+      "path": "benchmarks/results/memory-framework-pilot-v1.json",
+      "bytes": 29285,
+      "gitBlobSha1": "49ca4a9a97125e824b66d524f757aa931bc65483",
+      "sha256": "87cc50aa692e5a97bd949d8bf9d6c2c058eca0fbaa486726c98f64c8e32a0a97",
+      "fetchedOn": "2026-09-26"
+    }
+  ]
+}
