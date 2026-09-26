@@ -14,9 +14,40 @@ authority; search scores, metadata rows, and graph results are derived views.
 - Pass the resolved path to every `--root`; do not scan a repository root merely
   because that is where the agent session started.
 
+## Read the profile first
+
+When the user asks what you remember about them, asks about their preferences,
+or resumes earlier work, read the profile and the latest session notes before
+searching:
+
+```sh
+wordcell list --root "$KB_ROOT" --where type=profile --json
+wordcell list --root "$KB_ROOT" --where type=session --sort date \
+  --order desc --limit 5 --json
+wordcell list --root "$KB_ROOT" --where type=session \
+  --scope packages/parser/src/index.ts --json
+```
+
+Read `$KB_ROOT/notes/profile.md` for the vault owner. Treat its Stable section
+as standing context and its Recent section as dated context to confirm.
+`--scope` matches the exact path a session note declares, not a parent
+directory. `--sort date` lists a session note without a `date` field, such as
+one saved over MCP alone, after every dated session, so a `--limit` can hide
+it. When the vault may hold such notes, list sessions again without `--sort`
+or `--limit`.
+
+The local MCP server that `wordcell mcp --root "$KB_ROOT"` starts is available
+from source until the next release. Over it, call `list_notes` with
+`"where": [{"path": "type", "value": "profile"}]`, then `get_note`. For recent
+sessions, pass `"where": [{"path": "type", "value": "session"}]`,
+`"sort": "metadata.date"`, and `"order": "desc"`.
+[The session-memory guide](session-memory.md) describes how these notes are
+written.
+
 ## Recover a stopped session
 
-When the user asks to resume earlier work, begin with the path being changed.
+When the user asks to resume earlier work, read the profile and recent
+sessions as described above, then continue with the path being changed.
 Keep each retrieval signal separate so the agent can inspect why a record was
 returned:
 
@@ -34,6 +65,9 @@ Read the inherited guides and authoritative Markdown returned by these views.
 Use the backlink to inspect related plans and use Git history as provenance,
 not as proof that the note remains correct. This workflow recovers only context
 that was persisted in files or Git; it does not reconstruct private chat.
+`wordcell context` does not list `type: session` or `type: profile` notes, so
+read them with the commands under
+[Read the profile first](#read-the-profile-first).
 
 ## Choose the retrieval lane
 

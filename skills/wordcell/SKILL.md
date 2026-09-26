@@ -7,7 +7,8 @@ description: >-
   repository context, plans, decisions, concepts, backlinks, semantic search,
   or Git provenance from an earlier coding session; save, clip, scrape, or
   archive a URL, article, social thread, signed-in browser page, or PDF as
-  auditable Markdown; create or update a durable plan in the vault; or refresh,
+  auditable Markdown; create or update a durable plan in the vault; save or
+  remember a conversation as a session note or keep a profile note; or refresh,
   check, percolate, and maintain its knowledge graph. Do not use for generic
   web research, generic PDF reading, or ordinary planning that will not use a
   hraness/wordcell vault.
@@ -29,7 +30,8 @@ selected.
 | User intent | Read |
 | --- | --- |
 | Design, set up, or evolve a Wordcell; choose its boundaries and conventions; or define a recurring Wordcell ritual | [Customize a Wordcell setup](references/customize.md); add [Companion skill contracts](references/companion-skills.md) only when the proposal includes a new or revised skill |
-| Recover work from an earlier session, find notes, search one vault or an authorized portfolio, load repository-path context, inspect plans or decisions, follow backlinks or relationships, audit vault organization, or retrieve Git provenance | [Query the knowledge base](references/query.md) |
+| Recover work from an earlier session, read a profile or recall what you remember about the user, find notes, search one vault or an authorized portfolio, load repository-path context, inspect plans or decisions, follow backlinks or relationships, audit vault organization, or retrieve Git provenance | [Query the knowledge base](references/query.md) |
+| Save or remember this conversation, record a session summary at session end, or create or update a profile of the user or another person, team, or project | [Save session memory and profiles](references/session-memory.md) |
 | Save, clip, scrape, or archive a URL, article, social post or thread, GitHub or Discourse discussion, signed-in page, feed, inbox, private document, WhatsApp conversation, or YouTube page | [Capture web content](references/save-url.md); add [browser authentication](references/url-authentication.md) for signed-in sources and [platform routing](references/url-platforms.md) when route choice or completeness matters |
 | Import, extract, archive, OCR, or convert a local or public PDF into Markdown | [Save a PDF](references/save-pdf.md); add [PDF image review](references/pdf-review.md) for scans, screenshots, conversations, charts, or mixed media |
 | Create or update an implementation plan, proposal, RFC, migration plan, execution audit, or phased checklist in the vault | [Write a durable plan](references/plan.md) and [use its structure](references/plan-structure.md) |

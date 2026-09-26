@@ -187,6 +187,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "references/refresh.md",
     "references/save-pdf.md",
     "references/save-url.md",
+    "references/session-memory.md",
     "references/url-authentication.md",
     "references/url-platforms.md",
     "templates/companion-skill.template.md",
