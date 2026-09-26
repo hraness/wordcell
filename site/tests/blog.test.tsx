@@ -135,10 +135,10 @@ describe("Wordcell blog", () => {
   });
 
   test("related products come from the pinned portfolio facts", () => {
-    // Design-kit v0.18.2 carries the xcb uses-Wordcell relation, so the
-    // related block lists xcb; kb->oh is the reverse direction.
-    expect(portfolioDigest).toBe("sha256:fa7bcf019c1f92312e51d6d1bf6bfe75710568b19b687497205d2fe0d0a887bb");
-    expect(relatedFor("kb").map((entry) => entry.productId)).toEqual(["xcb"]);
+    // Design-kit v0.18.3 carries Wordcell's runtime relation to Oh and xcb's
+    // relation to Wordcell, so the related block lists both.
+    expect(portfolioDigest).toBe("sha256:0ab50413f47d7ee98169acc13b3a8d9f29ace2d1827098f202d9d97cbb2e3dc1");
+    expect(relatedFor("kb").map((entry) => entry.productId)).toEqual(["oh-computer", "xcb"]);
   });
 
   test("the blog is linked from the site header and footer", async () => {

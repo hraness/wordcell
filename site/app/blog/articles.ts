@@ -105,7 +105,7 @@ export const blogArticles = [
         "Change to graph query programs, the 4,000-note limit, truncation marking, or proof contents (docs/graph-authority.md)",
         "Change to wordcell clip signed-in capture options, profile copying, or the Archive.today fallback (docs/capture.md, src/clip)",
         "Change to the Oh adoption preparer or its review-candidate output (src/oh-adoption.ts)",
-        "Change to the runtime:kb:oh or runtime:xcb:kb relation detail, or a product rename",
+        "Change to the runtime:kb:oh-computer or runtime:xcb:kb relation detail, or a product rename",
         "Publication of how-wordcell-uses-oh or xcb's how-xcb-uses-wordcell",
         "Change to install prerequisites (Bun version, Git) or the package name",
       ],
@@ -137,7 +137,7 @@ export const blogArticles = [
       readerJob: "I ask questions over my Markdown notes and want each answer to show which files support it, so I can check it myself.",
       nonObviousAnswer: "Wordcell builds a disposable Oh graph in canonical JSON from the Markdown, so each answer row carries file fingerprints and the rules applied, and any edit to a cited note makes the old proof fail verification.",
       originalContribution: "Traces a backlinks query from note fingerprint to Oh record to answer row, and reports from source which Wordcell paths use Oh's Rust encoder and query engine.",
-      hostFit: "The registered runtime:kb:oh:answers-graph-queries-with relation carries the detail sentence this post explains, on Wordcell's own host.",
+      hostFit: "The registered runtime:kb:oh-computer:answers-graph-queries-with relation carries the detail sentence this post explains, on Wordcell's own host.",
       nearestUrls: [
         { url: "https://wordcell.io/docs/graph-authority", distinction: "The reference lists every flag and limit; the post explains what a proof means to a reader checking an answer." },
         { url: "https://wordcell.io/blog/introducing-wordcell", distinction: "The introduction covers the whole product; this post covers only the graph and its proofs." },
@@ -174,7 +174,7 @@ export const blogArticles = [
       reassessOn: "2026-11-05",
       harmIfWrong: "A reader could treat a graph proof as proof that a note is correct, or believe Wordcell keeps agent memory in Oh.",
       refreshTriggers: [
-        "runtime:kb:oh:answers-graph-queries-with is registered, changes its detail sentence, or is removed",
+        "runtime:kb:oh-computer:answers-graph-queries-with is registered, changes its detail sentence, or is removed",
         "Wordcell changes its pinned Oh release in package.json",
         "Change to the named graph programs, graph limits (depth, notes, facts, MiB), truncation exit code, or graphVerifyResult behavior",
         "Change to which Wordcell paths use Oh's Rust canonical encoder or Rust query engine",
