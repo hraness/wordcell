@@ -1,0 +1,18 @@
+Wordcell keeps decisions, plans, and sources as Markdown beside your code,
+so coding agents can find them from the file they are about to change.
+
+Start here (no account or model needed)
+  wordcell init kb                        Create a knowledge base in ./kb
+  wordcell note create notes/first --title "First note" --root kb
+                                          Write your first note
+  wordcell search "first" --root kb       Search your notes
+  wordcell check --root kb                Check links and metadata
+
+Everyday
+  wordcell clip <url> --output kb/articles
+                                          Save a web page as Markdown
+  wordcell context <path> --root kb       Find notes about a code path
+  wordcell index --root kb                Turn on meaning-based search
+
+All commands: wordcell --help · Command help: wordcell help <command>
+wordcell 9.8.7

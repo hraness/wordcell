@@ -22,6 +22,14 @@ notes exported from Supermemory.
   locally edited notes as conflicts without changing them. `--dry-run` writes
   nothing, and `--json` prints one report object.
 - `wordcell note create --body-file -` reads the note body from standard input.
+- Help is shorter and easier to scan. Bare `wordcell` shows what it is and the
+  first four commands. `wordcell --help` groups everyday commands, and
+  maintainer commands move to `wordcell help advanced`. Every command answers
+  `--help`, `-h`, and `wordcell help <command>` with its own page and an
+  example.
+- `wordcell --version` (also `-V`, `-v`, and `version`) prints the version.
+- Mistakes print one line saying what was wrong, with a suggestion for a
+  likely typo, and one command to run next, instead of the full usage.
 
 ## 0.22.5
 

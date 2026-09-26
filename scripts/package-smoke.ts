@@ -12,7 +12,7 @@ import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
 
 const packageName = "@hraness/wordcell";
 const maximumPackageFiles = 280;
-const maximumPackedBytes = 1_350_000;
+const maximumPackedBytes = 1_450_000;
 const importSpecifiers = [
   "@hraness/wordcell",
   "@hraness/wordcell/agent-context",
@@ -741,7 +741,7 @@ try {
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], consumer);
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], npmConsumer);
   for (const installed of [consumer, npmConsumer]) {
-    await verifyInstalledHelp("wordcell", installed, "wordcell init [directory]");
+    await verifyInstalledHelp("wordcell", installed, "Usage: wordcell <command> [options]");
     await verifyInstalledFirstUse(installed);
     await verifyInstalledSupport(installed);
     await run([join(installed, "node_modules", ".bin", "wordcell-evaluation-builder"), "--help"], installed);

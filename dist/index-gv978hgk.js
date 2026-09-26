@@ -1,8 +1,11 @@
 // @bun
 import {
   countWords,
-  sniffImage
-} from "./index-f984hw45.js";
+  renderFailure,
+  sentence,
+  sniffImage,
+  stderrStyle
+} from "./index-nk6zw5gx.js";
 import {
   slugify,
   yamlString
@@ -1905,9 +1908,7 @@ function pdfCaptureSummary(outcome) {
 async function main(rawArguments = process.argv.slice(2), environment = process.env, output = defaultOutput, dependencies = {}) {
   const parsed = parsePdfArguments(rawArguments, environment);
   if (!parsed.ok) {
-    output.stderr(`error: ${safe(parsed.message)}
-
-${sanitizeTerminalText(pdfUsage)}`);
+    output.stderr(renderFailure(sentence(safe(parsed.message)), "wordcell pdf --help", stderrStyle(environment, output, defaultOutput)));
     return 2;
   }
   const arguments_ = parsed.value;
@@ -1961,8 +1962,7 @@ ${sanitizeTerminalText(pdfUsage)}`);
     if (arguments_.json)
       output.stdout(terminalSafeJson({ ok: false, error: message }));
     else
-      output.stderr(`error: ${message}
-`);
+      output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output, defaultOutput)));
     return 1;
   } finally {
     preparedSource?.dispose();

@@ -619,7 +619,7 @@ describe("wordcell mcp subprocess", () => {
     }
   }, 60_000);
 
-  test("a missing root exits 2 with one stderr line and an empty stdout, without waiting for input", async () => {
+  test("a missing root exits 2 with a two-line error and an empty stdout, without waiting for input", async () => {
     const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-mcp-"));
     try {
       const child = Bun.spawn(
@@ -632,9 +632,7 @@ describe("wordcell mcp subprocess", () => {
         new Response(child.stderr).text(),
       ]);
       expect({ code, stdout }).toEqual({ code: 2, stdout: "" });
-      expect(stderr).toStartWith("error: ");
-      expect(stderr.endsWith("\n")).toBe(true);
-      expect(stderr.split("\n")).toHaveLength(2);
+      expect(stderr).toMatch(/^(?:✗|FAIL) .+\n(?:→|->) wordcell mcp --help\n$/u);
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }
@@ -654,7 +652,7 @@ describe("wordcell mcp subprocess", () => {
           new Response(child.stderr).text(),
         ]);
         expect({ arguments_, code, stdout }).toEqual({ arguments_, code: 2, stdout: "" });
-        expect(stderr).toStartWith("error: ");
+        expect(stderr).toMatch(/^(?:✗|FAIL) /u);
       }
     } finally {
       await rm(temporary, { recursive: true, force: true });

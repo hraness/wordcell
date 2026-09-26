@@ -1308,7 +1308,7 @@ describe("kb vault commands", () => {
     for (const arguments_ of invalid) {
       const output = captureOutput();
       expect(await main(arguments_, output.output, { openKnowledgeBase })).toBe(2);
-      expect(output.stderr()).toStartWith("error:");
+      expect(output.stderr()).toMatch(/^(?:✗|FAIL) .+\n(?:→|->) wordcell search --help\n$/u);
     }
     expect(opens).toBe(0);
   });
@@ -2788,7 +2788,9 @@ describe("kb vault commands", () => {
       ok: false,
       error: {
         kind: "parse",
+        code: "usage",
         message: "--limit must be an integer from 1 through 50",
+        next: "wordcell history --help",
       },
     });
     expect(parseOutput.stderr()).toBe("");
@@ -2799,7 +2801,7 @@ describe("kb vault commands", () => {
     })).toBe(1);
     expect(parseJsonObject(runtimeOutput.stdout())).toEqual({
       ok: false,
-      error: { kind: "runtime", message: "model failed" },
+      error: { kind: "runtime", message: "model failed", next: "wordcell index --help" },
     });
   });
 
@@ -2882,7 +2884,10 @@ describe("kb vault commands", () => {
         expect(JSON.parse(stdout)).toEqual({ ok: false, kind: "missing", note: "missing" });
       } else {
         expect(result.exitCode).toBe(1);
-        expect(JSON.parse(stdout)).toEqual({ ok: false, error: { kind: "runtime", message: "simulated runtime failure" } });
+        expect(JSON.parse(stdout)).toEqual({
+          ok: false,
+          error: { kind: "runtime", message: "simulated runtime failure", next: "wordcell index --help" },
+        });
       }
     } finally {
       await rm(temporary, { recursive: true, force: true });
@@ -2917,7 +2922,7 @@ describe("kb vault commands", () => {
       expect(await main(["check"], failed.output, {
         scanVault: () => Promise.reject(new Error("bad\u001b]8;;https://evil.example\u0007path\u001b]8;;\u0007")),
       })).toBe(1);
-      expect(failed.stderr()).toBe("error: badpath\n");
+      expect(failed.stderr()).toMatch(/^(?:✗|FAIL) badpath\n(?:→|->) wordcell check --help\n$/u);
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }
@@ -3352,7 +3357,7 @@ describe("kb check repository scope advisories", () => {
         "--repo",
         join(temporary, "absent-repository"),
       ], missing.output)).toBe(1);
-      expect(missing.stderr()).toStartWith("error:");
+      expect(missing.stderr()).toMatch(/^(?:✗|FAIL) /u);
       expect(missing.stdout()).toBe("");
     } finally {
       await rm(temporary, { recursive: true, force: true });
@@ -3395,11 +3400,11 @@ describe("mcp command", () => {
       const captured = captureOutput();
       expect(await main(arguments_, captured.output)).toBe(2);
       expect(captured.stdout()).toBe("");
-      expect(captured.stderr()).toStartWith("error: ");
+      expect(captured.stderr()).toMatch(/^(?:✗|FAIL) .+\n(?:→|->) wordcell mcp --help\n$/u);
     }
   });
 
-  test("a missing vault or repository exits 2 with one stderr line before reading input", async () => {
+  test("a missing vault or repository exits 2 with a two-line error before reading input", async () => {
     const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-cli-mcp-"));
     try {
       let reads = 0;
@@ -3417,8 +3422,8 @@ describe("mcp command", () => {
         missingRoot.output,
         { mcp: { input, writeFrame } },
       )).toBe(2);
-      expect(missingRoot.stderr()).toStartWith("error: ");
-      expect(missingRoot.stderr().split("\n")).toHaveLength(2);
+      expect(missingRoot.stderr()).toMatch(/^(?:✗|FAIL) .+\n(?:→|->) wordcell mcp --help\n$/u);
+      expect(missingRoot.stderr().split("\n")).toHaveLength(3);
       expect(missingRoot.stdout()).toBe("");
 
       const vault = join(temporary, "kb");
@@ -3429,8 +3434,8 @@ describe("mcp command", () => {
         missingRepository.output,
         { mcp: { input, writeFrame } },
       )).toBe(2);
-      expect(missingRepository.stderr()).toStartWith("error: ");
-      expect(missingRepository.stderr().split("\n")).toHaveLength(2);
+      expect(missingRepository.stderr()).toMatch(/^(?:✗|FAIL) .+\n(?:→|->) wordcell mcp --help\n$/u);
+      expect(missingRepository.stderr().split("\n")).toHaveLength(3);
       expect(missingRepository.stdout()).toBe("");
       expect(reads).toBe(0);
       expect(frames).toEqual([]);
@@ -3684,14 +3689,19 @@ describe("import supermemory command", () => {
       const captured = captureOutput();
       expect(await main(arguments_, captured.output)).toBe(2);
       expect(captured.stdout()).toBe("");
-      expect(captured.stderr()).toStartWith(`error: ${message}\n`);
-      expect(captured.stderr()).toContain("wordcell import supermemory <export.json>... [--root <directory>] [--prefix <directory>] [--dry-run] [--json]");
+      expect(captured.stderr()).toMatch(/^(?:✗|FAIL) .+\n(?:→|->) wordcell import supermemory --help\n$/u);
+      expect(captured.stderr()).toContain(message.startsWith("unknown") ? '"--bogus"' : message.slice(1));
     }
     const captured = captureOutput();
     expect(await main(["import", "supermemory", "--json"], captured.output)).toBe(2);
     expect(JSON.parse(captured.stdout())).toEqual({
       ok: false,
-      error: { kind: "parse", message: "import supermemory requires at least one export file" },
+      error: {
+        kind: "parse",
+        code: "usage",
+        message: "import supermemory requires at least one export file",
+        next: "wordcell import supermemory --help",
+      },
     });
   });
 
@@ -3753,7 +3763,8 @@ describe("import supermemory command", () => {
       const text = captureOutput();
       expect(await main(["import", "supermemory", fixture("single-page.json"), broken, "--root", vault], text.output, { importNow })).toBe(1);
       expect(text.stdout()).toBe("");
-      expect(text.stderr()).toStartWith(`error: ${broken}`);
+      expect(text.stderr()).toMatch(/^(?:✗|FAIL) /u);
+      expect(text.stderr()).toContain(broken);
 
       const json = captureOutput();
       expect(await main(["import", "supermemory", fixture("single-page.json"), broken, "--root", vault, "--json"], json.output, { importNow })).toBe(1);

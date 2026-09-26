@@ -9,6 +9,7 @@ import {
   renderDoctorReport,
 } from "./doctor.js";
 import { redactSensitiveText } from "./persist.js";
+import { renderFailure, sentence, stderrStyle } from "../cli-style.js";
 import { sanitizeTerminalLine, sanitizeTerminalText } from "./terminal.js";
 
 type Output = {
@@ -111,7 +112,7 @@ export async function main(
 ): Promise<number> {
   const parsed = parseArguments(rawArguments, environment);
   if (!parsed.ok) {
-    output.stderr(`error: ${safe(parsed.message)}\n\n${sanitizeTerminalText(usage)}`);
+    output.stderr(renderFailure(sentence(safe(parsed.message)), "wordcell clip --help", stderrStyle(environment, output, defaultOutput)));
     return 2;
   }
   const arguments_ = parsed.value;
@@ -173,7 +174,7 @@ export async function main(
   } catch (error) {
     const message = safe(error instanceof Error ? error.message : String(error));
     if (arguments_.json) output.stdout(terminalSafeJson({ ok: false, error: message }));
-    else output.stderr(`error: ${message}\n`);
+    else output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output, defaultOutput)));
     return 1;
   }
 }

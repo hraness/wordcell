@@ -1,4 +1,17 @@
 import { terminalIntro } from "./cli-intro.js";
+import {
+  advancedHelp,
+  closestMatch,
+  commandHelpText,
+  commandWordCount,
+  knownCommandWords,
+  optionNames,
+  resolveCommandId,
+  rootHelp,
+  startHelp,
+  valueOptions,
+} from "./cli-help.js";
+import { renderFailure, sentence, terminalStyle, type TerminalEnvironment } from "./cli-style.js";
 import { open, realpath, stat } from "node:fs/promises";
 import { cpus, release, totalmem } from "node:os";
 import { relative, resolve } from "node:path";
@@ -272,75 +285,15 @@ async function loadSearchRulesFile(path: string): Promise<SearchRulesV1> {
   return parseSearchRules(input);
 }
 
-export const usage = `wordcell: Markdown knowledge base that gives agents the decisions behind code
-
-Start here (no account or model needed):
-  wordcell init kb
-  wordcell note create notes/decision --title "A decision" --body "Keep retries bounded." --root kb
-  wordcell search "retries" --root kb --mode exact
-
-Already have Markdown? Search it with --root <your-notes-directory>.
-Use --mode exact for model-free search; optional hybrid search needs a local index.
-Quick start and examples: https://wordcell.io/docs
-
-Usage:
-  wordcell init [directory] [--json]
-  wordcell clip <url|current> [capture options]
-  wordcell capture show <bundle> [--verify-assets] [--include-source-html] [--json]
-  wordcell capture verify <bundle> [--verify-assets] [--json]
-  wordcell capture diff <bundle> [--repo <repository>] [--ref <ref>] [--json]
-  wordcell url-metadata tool <build|check>
-  wordcell url-metadata backfill [metadata options]
-  wordcell inspect <url> [capture options]
-  wordcell pdf <file-or-url> [PDF options]
-  wordcell refresh [--root <directory>] [--index <path>] [--json]
-  wordcell check [--root <directory>] [--index <path>] [--no-catalog] [--repo <repository>] [--json]
-  wordcell catalog [--root <directory>] [--index <path>] [--json]
-  wordcell graph [--root <directory>] [--index <path>] [--json]
-  wordcell graph rebuild [--fresh] [--root <directory>] [--index <path>] [--json]
-  wordcell graph verify [--root <directory>] [--index <path>] [--json]
-  wordcell graph query --program <backlinks|reachability|scope-route|relation-closure|shared-tags|shared-concepts> [--note <id> | --scope <path>] [--predicate <predicate>] [--depth <count>] [--limit <count>] [--persisted] [--root <directory>] [--index <path>] [--json]
-  wordcell backlinks <note> [--root <directory>] [--index <path>] [--json]
-  wordcell links <note> [--root <directory>] [--direction <in|out|both>] [--depth <count>] [--limit <count>] [--json]
-  wordcell note create <id> --title <title> [--type <type>] [--tag <tag>] [--body <markdown> | --body-file <path|->] [--root <directory>] [--json]
-  wordcell import supermemory <export.json>... [--root <directory>] [--prefix <directory>] [--dry-run] [--json]
-  wordcell relation add <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
-  wordcell relation remove <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
-  wordcell relation list <note> [--root <directory>] [--json]
-  wordcell percolate [note] [--proofs] [--root <directory>] [--min-support <count>] [--limit <count>] [--json]
-  wordcell list [--root <directory>] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--sort <field>] [--order <asc|desc>] [--limit <count>] [--json]
-  wordcell index [--root <directory>] [--database <path>] [--force] [--json]
-  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--rerank-limit <2..25>] [--json]
-  wordcell history <note> [--root <directory>] [--repo <repository>] [--limit <count>] [--cochanged-limit <count>] [--json]
-  wordcell history search <query-or-path> [--root <directory>] [--repo <repository>] [--limit <count>] [--commit-limit <count>] [--cochanged-limit <count>] [--json]
-  wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
-  wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
-  wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
-  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--include-glob <pattern>]... [--exclude-glob <pattern>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--list-limit <0-1000>] [--force] [--json]
-  wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
-  wordcell mcp --root <vault> [--repo <repository>] [--read-only]
-  wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
-  wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
-  wordcell agents identity <repository-scope> [--json]
-  wordcell agents check [--root <vault>] [--repo <repository>] [--json]
-  wordcell agents audit [--root <vault>] [--repo <repository>] [--json]
-  wordcell doctor [--json]
-  wordcell adapters [--json]
-  wordcell support [--json | protocol --json | offer --json | shown <id> | release <id> | dismiss | snooze | enable | status --json]
-
-Optional support uses separate local preferences. HRANESS_SUPPORT=off or
-HRANESS_SUPPORT_AUDIENCE=off keeps invitations quiet; explicit support remains available.
-Agents receive discovery on stderr after useful standalone work. Human mode requires
-HRANESS_SUPPORT_AUDIENCE=human and an interactive stderr. No command signs up or pays.
-
-Run \`wordcell clip --help\` for web capture options or \`wordcell pdf --help\` for PDF conversion options.
-`;
+/** Grouped root help printed by `wordcell --help`. */
+export const usage = rootHelp();
 
 type VaultCommand = "refresh" | "check" | "graph" | "backlinks" | "links";
 
 type ParsedCommand =
   | GraphCliCommand
-  | { readonly kind: "help" }
+  | { readonly kind: "help"; readonly topic?: string }
+  | { readonly kind: "version"; readonly json: boolean }
   | { readonly kind: "clip"; readonly arguments: readonly string[] }
   | {
       readonly kind: "capture-bundle";
@@ -605,6 +558,10 @@ type CliDependencies = GraphCliDependencies & {
   readonly importSupermemory?: typeof importSupermemory;
   /** Test seam: the clock for the provenance line of `import supermemory`. */
   readonly importNow?: () => Date;
+  /** Test seam: terminal facts for symbols, color, and the help intro. */
+  readonly terminal?: CliTerminal;
+  /** Test seam: the version `--version` and bare invocation print. */
+  readonly packageVersion?: () => Promise<string>;
 };
 
 export type StdinSource = {
@@ -2313,11 +2270,67 @@ function parsePortfolioCommand(arguments_: readonly string[]): ParseResult {
   };
 }
 
+function isHelpFlag(argument: string | undefined): boolean {
+  return argument === "--help" || argument === "-h";
+}
+
+/** Help for delegated commands comes from their own parsers. */
+function delegatedHelp(first: string): ParsedCommand | undefined {
+  if (first === "clip" || first === "inspect" || first === "capture") return { kind: "clip", arguments: ["help"] };
+  if (first === "pdf") return { kind: "pdf", arguments: ["--help"] };
+  if (first === "url-metadata") return { kind: "url-metadata", arguments: ["--help"] };
+  return undefined;
+}
+
+/** `help`, `help advanced`, and `help <command...>`. */
+function parseHelpTopic(words: readonly string[]): ParseResult {
+  const topic = words.filter((word) => !isHelpFlag(word) && word !== "--json");
+  if (topic.length === 0) return { ok: true, value: { kind: "help" } };
+  if (topic.length === 1 && topic[0] === "advanced") return { ok: true, value: { kind: "help", topic: "advanced" } };
+  const first = topic[0] ?? "";
+  const bundleAction = first === "capture" && ["show", "verify", "diff"].includes(topic[1] ?? "");
+  const delegated = bundleAction ? undefined : delegatedHelp(first);
+  if (delegated !== undefined) return { ok: true, value: delegated };
+  const id = resolveCommandId(topic);
+  if (id === undefined) return { ok: false, message: "unknown help topic" };
+  return { ok: true, value: { kind: "help", topic: id } };
+}
+
+/**
+ * `<command> --help` anywhere a person would type it: right after the command
+ * words, or as the last argument when it is not the value of an option.
+ */
+function embeddedHelp(arguments_: readonly string[]): ParseResult | undefined {
+  const separator = arguments_.indexOf("--");
+  const end = separator === -1 ? arguments_.length : separator;
+  const index = arguments_.slice(0, end).findIndex(isHelpFlag);
+  if (index <= 0) return undefined;
+  const first = arguments_[0] ?? "";
+  const bundleAction = first === "capture" && ["show", "verify", "diff"].includes(arguments_[1] ?? "");
+  const delegated = bundleAction ? undefined : delegatedHelp(first);
+  if (delegated !== undefined) {
+    return index === 1 || index === end - 1 ? { ok: true, value: delegated } : undefined;
+  }
+  const id = resolveCommandId(arguments_.slice(0, index).filter((word) => !word.startsWith("-")));
+  if (id === undefined) return undefined;
+  const words = commandWordCount(id);
+  const previous = arguments_[index - 1] ?? "";
+  // `--help` is never an option value; `-h` could be one, as in `--body -h`.
+  const flag = arguments_[index];
+  const lastArgument = index === end - 1 && (flag === "--help" || !valueOptions(id).has(previous));
+  if (index !== words && !lastArgument) return undefined;
+  return { ok: true, value: { kind: "help", topic: id } };
+}
+
 export function parseArguments(arguments_: readonly string[]): ParseResult {
   const command = arguments_[0];
-  if (command === undefined || command === "help" || command === "--help" || command === "-h") {
-    return { ok: true, value: { kind: "help" } };
+  if (command === undefined) return { ok: true, value: { kind: "help", topic: "start" } };
+  if (command === "help" || isHelpFlag(command)) return parseHelpTopic(arguments_.slice(1));
+  if (command === "--version" || command === "-V" || command === "-v" || command === "version") {
+    return { ok: true, value: { kind: "version", json: arguments_.includes("--json") } };
   }
+  const help = embeddedHelp(arguments_);
+  if (help !== undefined) return help;
   if (command === "capture" && arguments_[1] === "diff") {
     return parseCaptureDiffCommand(arguments_.slice(2));
   }
@@ -3503,7 +3516,8 @@ async function runMcp(
     directories = await resolveMcpDirectories(command);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    output.stderr(`error: ${safe(message)}\n`);
+    const terminal = dependencies.terminal ?? processTerminal();
+    output.stderr(renderFailure(safe(message), "wordcell mcp --help", terminalStyle(terminal.env, terminal.stderrIsTTY)));
     return 2;
   }
   const version = await serverVersion();
@@ -4243,6 +4257,112 @@ function machineJsonRequested(rawArguments: readonly string[]): boolean {
   return rawArguments[0] !== "mcp" && rawArguments.includes("--json");
 }
 
+/** Terminal facts the human renderer needs; injectable for golden tests. */
+export type CliTerminal = {
+  readonly env: TerminalEnvironment;
+  readonly stdoutIsTTY: boolean;
+  readonly stderrIsTTY: boolean;
+  readonly columns: number | undefined;
+};
+
+function processTerminal(): CliTerminal {
+  return {
+    env: process.env,
+    stdoutIsTTY: process.stdout.isTTY === true,
+    stderrIsTTY: process.stderr.isTTY === true,
+    columns: process.stdout.columns,
+  };
+}
+
+const SAFE_WORD = /^[A-Za-z][A-Za-z0-9-]{0,39}$/u;
+const SAFE_OPTION = /^--?[A-Za-z][A-Za-z0-9-]{0,39}$/u;
+
+/**
+ * The first option the parser rejected, found by parsing growing prefixes of
+ * the arguments. Only the option name is returned, never an `=value` part.
+ */
+function rejectedOption(rawArguments: readonly string[], message: string): string | undefined {
+  for (let index = 1; index < rawArguments.length; index += 1) {
+    const token = rawArguments[index] ?? "";
+    if (token === "--") return undefined;
+    if (!token.startsWith("-")) continue;
+    const through = parseArguments(rawArguments.slice(0, index + 1));
+    if (through.ok || through.message !== message) continue;
+    const before = parseArguments(rawArguments.slice(0, index));
+    if (!before.ok && before.message === message) return undefined;
+    const name = token.split("=")[0] ?? "";
+    return SAFE_OPTION.test(name) ? name : undefined;
+  }
+  return undefined;
+}
+
+type UsageFailure = { readonly text: string; readonly next: string };
+
+/** One sentence saying what was wrong with the command line, and one next command. */
+export function describeUsageError(rawArguments: readonly string[], message: string): UsageFailure {
+  const first = rawArguments[0] ?? "";
+  if (message === "unknown command") {
+    const known = knownCommandWords();
+    const suggestion = SAFE_WORD.test(first) ? closestMatch(first, known) : undefined;
+    const text = SAFE_WORD.test(first)
+      ? `Unknown command "${first}".${suggestion === undefined ? "" : ` Did you mean "${suggestion}"?`}`
+      : "Unknown command.";
+    return { text, next: "wordcell --help" };
+  }
+  if (message === "unknown help topic") {
+    const suggestion = SAFE_WORD.test(rawArguments[1] ?? "") ? closestMatch(rawArguments[1] ?? "", knownCommandWords()) : undefined;
+    return {
+      text: `There is no help for that command.${suggestion === undefined ? "" : ` Did you mean "${suggestion}"?`}`,
+      next: "wordcell --help",
+    };
+  }
+  const id = resolveCommandId(rawArguments.filter((word) => !word.startsWith("-")));
+  const next = id === undefined ? "wordcell --help" : `wordcell ${id} --help`;
+  if (/^unknown .*option/u.test(message) && id !== undefined) {
+    const option = rejectedOption(rawArguments, message);
+    if (option !== undefined) {
+      const suggestion = closestMatch(option, optionNames(id));
+      return {
+        text: `Unknown option "${option}" for ${id}.${suggestion === undefined ? "" : ` Did you mean "${suggestion}"?`}`,
+        next,
+      };
+    }
+  }
+  return { text: sentence(safe(message)), next };
+}
+
+function runtimeNext(rawArguments: readonly string[]): string {
+  const id = resolveCommandId(rawArguments.filter((word) => !word.startsWith("-")));
+  return id === undefined ? "wordcell --help" : `wordcell ${id} --help`;
+}
+
+async function renderHelp(
+  command: Extract<ParsedCommand, { readonly kind: "help" }>,
+  output: Output,
+  terminal: CliTerminal,
+  readVersion: () => Promise<string>,
+  showIntro: boolean,
+): Promise<number> {
+  const intro = showIntro
+    ? terminalIntro({ isTTY: terminal.stdoutIsTTY, columns: terminal.columns, term: terminal.env.TERM })
+    : "";
+  if (command.topic === undefined) {
+    output.stdout(intro + sanitizeTerminalText(usage));
+    return 0;
+  }
+  if (command.topic === "start") {
+    const version = await readVersion().catch(() => undefined);
+    output.stdout(intro + sanitizeTerminalText(startHelp(version)));
+    return 0;
+  }
+  if (command.topic === "advanced") {
+    output.stdout(sanitizeTerminalText(advancedHelp()));
+    return 0;
+  }
+  output.stdout(sanitizeTerminalText(commandHelpText(command.topic) ?? usage));
+  return 0;
+}
+
 /** Stable CLI entry point with injectable filesystem and capture boundaries. */
 export async function main(
   rawArguments: readonly string[] = process.argv.slice(2),
@@ -4250,23 +4370,38 @@ export async function main(
   dependencies: CliDependencies = {},
 ): Promise<number> {
   const jsonRequested = machineJsonRequested(rawArguments);
+  const terminal = dependencies.terminal ?? processTerminal();
+  const errorStyle = terminalStyle(terminal.env, terminal.stderrIsTTY);
+  const readVersion = dependencies.packageVersion ?? (() => serverVersion());
   const parsed = parseArguments(rawArguments);
   if (!parsed.ok) {
+    const failure = describeUsageError(rawArguments, parsed.message);
     if (jsonRequested) {
       output.stdout(terminalSafeJson({
         ok: false,
-        error: { kind: "parse", message: parsed.message },
+        error: { kind: "parse", code: "usage", message: parsed.message, next: failure.next },
       }));
     } else {
-      output.stderr(`error: ${safe(parsed.message)}\n\n${sanitizeTerminalText(usage)}`);
+      output.stderr(renderFailure(failure.text, failure.next, errorStyle));
     }
     return 2;
   }
   const command = parsed.value;
-  if (command.kind === "help") {
-    if (output === defaultOutput && !jsonRequested) output.stdout(terminalIntro({ isTTY: process.stdout.isTTY, columns: process.stdout.columns, term: process.env.TERM }));
-    output.stdout(sanitizeTerminalText(usage));
+  if (command.kind === "version") {
+    const version = await readVersion();
+    output.stdout(command.json || jsonRequested
+      ? terminalSafeJson({ name: "wordcell", version })
+      : `wordcell ${version}\n`);
     return 0;
+  }
+  if (command.kind === "help") {
+    if (jsonRequested) {
+      const text: string[] = [];
+      await renderHelp(command, { stdout: (value) => text.push(value), stderr: output.stderr }, terminal, readVersion, false);
+      output.stdout(terminalSafeJson({ kind: "help", text: text.join("") }));
+      return 0;
+    }
+    return renderHelp(command, output, terminal, readVersion, output === defaultOutput);
   }
   try {
     if (command.kind === "clip") {
@@ -4311,13 +4446,17 @@ export async function main(
     return await runVault(command, output, dependencies);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const next = runtimeNext(rawArguments);
     if (jsonRequested) {
       output.stdout(terminalSafeJson({
         ok: false,
-        error: { kind: "runtime", message },
+        error: { kind: "runtime", message, next },
       }));
     } else {
-      output.stderr(`error: ${safe(message)}\n`);
+      output.stderr(renderFailure(safe(message), next, errorStyle));
+      if (terminal.env.HRANESS_DEBUG === "1" && error instanceof Error && error.stack !== undefined) {
+        output.stderr(`${sanitizeTerminalText(redactSensitiveText(error.stack))}\n`);
+      }
     }
     return 1;
   }

@@ -12,6 +12,76 @@ import {
   safeFetch
 } from "./index-e5fbsywq.js";
 
+// src/cli-style.ts
+var UNICODE_SYMBOLS = {
+  ok: "\u2713",
+  fail: "\u2717",
+  warn: "\u26A0",
+  next: "\u2192",
+  on: "\u25CF",
+  off: "\u25CB",
+  skip: "\u2013",
+  progress: "\u21BB",
+  notice: "\uD83D\uDD10"
+};
+var ASCII_SYMBOLS = {
+  ok: "OK",
+  fail: "FAIL",
+  warn: "WARN",
+  next: "->",
+  on: "*",
+  off: "o",
+  skip: "-",
+  progress: "...",
+  notice: "NOTE"
+};
+var SYMBOL_COLORS = {
+  ok: "32",
+  fail: "31",
+  warn: "33",
+  next: "2",
+  on: "32",
+  skip: "2"
+};
+function nonEmpty(value) {
+  return value !== undefined && value !== "";
+}
+function prefersAscii(env) {
+  if (env.TERM === "dumb" || env.HRANESS_ASCII === "1")
+    return true;
+  const locale = [env.LC_ALL, env.LC_CTYPE, env.LANG].find(nonEmpty);
+  return locale === undefined || !/utf-?8/iu.test(locale);
+}
+function prefersColor(env, isTTY) {
+  if (env.FORCE_COLOR === "1")
+    return true;
+  if (nonEmpty(env.NO_COLOR))
+    return false;
+  return isTTY && env.TERM !== "dumb";
+}
+function terminalStyle(env, isTTY) {
+  return { ascii: prefersAscii(env), color: prefersColor(env, isTTY) };
+}
+function symbol(name, style) {
+  const glyph = style.ascii ? ASCII_SYMBOLS[name] : UNICODE_SYMBOLS[name];
+  const color = SYMBOL_COLORS[name];
+  return style.color && color !== undefined ? `\x1B[${color}m${glyph}\x1B[0m` : glyph;
+}
+function renderFailure(text, next, style) {
+  return `${symbol("fail", style)} ${text}
+${symbol("next", style)} ${next}
+`;
+}
+function sentence(message) {
+  const trimmed = message.trim();
+  const capitalized = /^[a-z]/u.test(trimmed) ? `${trimmed[0]?.toUpperCase() ?? ""}${trimmed.slice(1)}` : trimmed;
+  return /[.!?]$/u.test(capitalized) ? capitalized : `${capitalized}.`;
+}
+function stderrStyle(env, output, defaultOutput) {
+  const isTerminal = defaultOutput !== undefined && output === defaultOutput && process.stderr.isTTY === true;
+  return terminalStyle(env, isTerminal);
+}
+
 // src/clip/assets.ts
 import { createHash } from "crypto";
 import { mkdirSync, writeFileSync } from "fs";
@@ -226,7 +296,7 @@ async function localizeAssets(content, options) {
 }
 
 // src/clip/extract.ts
-var nonEmpty = (value) => typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+var nonEmpty2 = (value) => typeof value === "string" && value.trim() !== "" ? value.trim() : null;
 var isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
 var MAX_RENDERED_PAGE_FALLBACK_BYTES = 256 * 1024;
 var renderedPageTruncationMarker = "[Rendered page text truncated at the bounded fallback limit.]";
@@ -528,8 +598,8 @@ function schemaCommentCount(value) {
   return null;
 }
 function countDefuddleConversationItems(response, platform) {
-  const html = nonEmpty(response.content);
-  const extractorType = nonEmpty(response.extractorType);
+  const html = nonEmpty2(response.content);
+  const extractorType = nonEmpty2(response.extractorType);
   if (html === null || extractorType === null)
     return null;
   const supported = new Set(["twitter", "reddit", "hackernews", "github", "discourse", "linkedin"]);
@@ -564,7 +634,7 @@ function restoreXPostLineBreaks(content, description) {
   return `${content.slice(0, offset)}${literal}${content.slice(offset + flattened.length)}`;
 }
 function normalizedDefuddleMediaUrl(value, baseUrl) {
-  const candidate = nonEmpty(value);
+  const candidate = nonEmpty2(value);
   if (candidate === null || candidate.length > 8192)
     return null;
   const resolved = resolveRemote(candidate, baseUrl);
@@ -805,7 +875,7 @@ async function extractPage(acquisition, scope, timeoutMs = 30000) {
     try {
       const response = await runDefuddleWorker(acquisition, scope, timeoutMs);
       platform = detectedExtractorPlatform(response.extractorType, platform);
-      const content = nonEmpty(response.contentMarkdown) ?? nonEmpty(response.content);
+      const content = nonEmpty2(response.contentMarkdown) ?? nonEmpty2(response.content);
       if (content !== null) {
         const description = boundedMetadata(response.description, articleMetadataLimits.description);
         const restoredContent = platform === "x" ? restoreXPostLineBreaks(content, description) : content;
@@ -861,7 +931,7 @@ async function extractPage(acquisition, scope, timeoutMs = 30000) {
   }
   if (article === null)
     return null;
-  const renderedConversation = scope !== "page" && structurallyCapturedItems === null ? nonEmpty(acquisition.renderedText) : null;
+  const renderedConversation = scope !== "page" && structurallyCapturedItems === null ? nonEmpty2(acquisition.renderedText) : null;
   if (renderedConversation !== null && renderedConversation !== article.content.trim()) {
     if (isRenderedConversationAccessGate(renderedConversation, platform)) {
       warnings.push("Skipped the separately rendered conversation context because it exposed an access gate rather than a trustworthy reply or comment tree.");
@@ -924,4 +994,4 @@ function chooseBestExtraction(candidates) {
   return best;
 }
 
-export { sniffImage, localizeAssets, countWords, canonicalizeUrl, extractionShowsAccessControl, scoreExtraction, extractPage, chooseBestExtraction };
+export { sniffImage, localizeAssets, countWords, canonicalizeUrl, extractionShowsAccessControl, scoreExtraction, extractPage, chooseBestExtraction, terminalStyle, renderFailure, sentence, stderrStyle };

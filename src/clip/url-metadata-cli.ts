@@ -11,7 +11,8 @@ import {
   runMetadataSearchTool,
   type MetadataSearchToolAction,
 } from "./metadata-search-tool/runner.js";
-import { sanitizeTerminalText } from "./terminal.js";
+import { renderFailure, sentence, stderrStyle } from "../cli-style.js";
+import { sanitizeTerminalLine, sanitizeTerminalText } from "./terminal.js";
 
 export const urlMetadataUsage = `wordcell url-metadata — backfill bounded metadata for saved URLs
 
@@ -203,7 +204,7 @@ export async function main(
   const parsed = parseUrlMetadataArguments(rawArguments, environment);
   if (!parsed.ok) {
     if (parsed.json) output.stdout(terminalJson({ ok: false, error: parsed.message }));
-    else output.stderr(`error: ${sanitizeTerminalText(parsed.message)}\n\n${urlMetadataUsage}`);
+    else output.stderr(renderFailure(sentence(sanitizeTerminalLine(parsed.message)), "wordcell url-metadata --help", stderrStyle(environment, output, defaultOutput)));
     return 2;
   }
   if (parsed.value.kind === "help") {
@@ -243,7 +244,7 @@ export async function main(
     if (parsed.value.kind === "backfill" && parsed.value.json) {
       output.stdout(terminalJson({ ok: false, error: message }));
     }
-    else output.stderr(`error: ${sanitizeTerminalText(message)}\n`);
+    else output.stderr(renderFailure(sanitizeTerminalLine(message), "wordcell url-metadata tool check", stderrStyle(environment, output, defaultOutput)));
     return 1;
   }
 }

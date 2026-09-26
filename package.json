@@ -332,6 +332,8 @@
     "src/url-intelligence.ts",
     "src/cli.ts",
     "src/cli-intro.ts",
+    "src/cli-help.ts",
+    "src/cli-style.ts",
     "src/cli-program.ts",
     "src/clip/acquire.ts",
     "src/clip/archive-today.ts",

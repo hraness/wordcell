@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { commandIds } from "../src/cli-help.ts";
 import {
   customizationProposalDigest,
   executeCustomizationContract,
@@ -278,19 +279,9 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     'export * from "./graph-authority.js";',
     'export * from "./graph-percolation.js";',
   ]);
-  const usage = /export const usage = `([\s\S]*?)`;/u.exec(cli)?.[1] ?? "";
-  expect(usage).toContain("Start here (no account or model needed):");
-  // Examples may repeat commands. Check the public reference identities only.
-  const commandIdentities = (usage.split("\nUsage:\n")[1] ?? "")
-    .split("\n")
-    .filter((line) => line.startsWith("  wordcell "))
-    .map((line) => {
-      const tokens = line.trim().split(/\s+/u);
-      const command = tokens[1] ?? "";
-      const action = tokens[2] ?? "";
-      return /^[a-z][a-z-]*$/u.test(action) ? `${command} ${action}` : command;
-    })
-    .toSorted();
+  // Root help and `help advanced` together list every public command.
+  expect(cli).toContain('from "./cli-help.js"');
+  const commandIdentities = commandIds();
   expect(commandIdentities).toEqual([
     "adapters",
     "agents audit",
