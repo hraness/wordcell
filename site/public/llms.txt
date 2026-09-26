@@ -42,8 +42,15 @@ When to use this site:
   SDK imports, and optional adapters.
 - [Publish](https://wordcell.io/docs/publish): Select notes and build a static
   site.
-- [Comparisons](https://wordcell.io/docs/comparisons): Markdown, QMD, Basic
-  Memory, Obsidian, and Wordcell from primary sources.
+- [Migrate from Supermemory](https://wordcell.io/docs/migration-from-supermemory):
+  Export Supermemory documents and memory entries, import them as Markdown
+  notes, and see what does not transfer.
+- [Sync a vault with Git](https://wordcell.io/docs/sync): Keep one vault
+  current on several machines with a private repository and a scheduled
+  commit and push.
+- [Comparisons](https://wordcell.io/docs/comparisons): Markdown tools such as
+  QMD, Basic Memory, and Obsidian, and agent memory services such as
+  Supermemory, Mem0, and Zep, compared with Wordcell from primary sources.
 - [Evidence](https://wordcell.io/docs/evidence): The reproducible
   context-payload study.
 
