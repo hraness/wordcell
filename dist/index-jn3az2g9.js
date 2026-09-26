@@ -2405,7 +2405,9 @@ async function confirmFromTerminal() {
   } finally {
     if (timer !== undefined)
       clearTimeout(timer);
-    reader.releaseLock();
+    await reader.cancel().catch(() => {
+      return;
+    });
   }
 }
 function captureSummary(outcome) {

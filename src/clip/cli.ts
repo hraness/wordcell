@@ -76,7 +76,8 @@ async function confirmFromTerminal(): Promise<"continue" | "skip"> {
     return await Promise.race([answer, timeout]);
   } finally {
     if (timer !== undefined) clearTimeout(timer);
-    reader.releaseLock();
+    // A read still pending after the timeout must not keep stdin open.
+    await reader.cancel().catch(() => undefined);
   }
 }
 
