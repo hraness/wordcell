@@ -52,6 +52,9 @@ export function isUsefulSupportResult(args: readonly string[], environment: Read
       const metadata = parseUrlMetadataArguments(command.arguments, environment);
       return metadata.ok && metadata.value.kind === "backfill";
     }
+    case "mcp":
+      // stdout belongs to JSON-RPC frames, so a long-running server never invites.
+      return false;
     default:
       return false;
   }

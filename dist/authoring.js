@@ -14,7 +14,7 @@ import {
   noteRevision,
   removeNoteRelation,
   updateNoteBody
-} from "./index-f7fnww7a.js";
+} from "./index-2vey6bzt.js";
 import"./index-3rm7cz6h.js";
 import"./index-zy7an84p.js";
 import"./index-z1w83f81.js";

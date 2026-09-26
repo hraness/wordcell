@@ -2,7 +2,7 @@
 import {
   parseArguments as parseArguments2,
   parseUrlMetadataArguments
-} from "./index-sda8x0ga.js";
+} from "./index-712as1w2.js";
 import"./index-bcknqxrq.js";
 import {
   parsePdfArguments
@@ -53,7 +53,7 @@ import"./index-23m6bbjt.js";
 import"./index-hya40gb2.js";
 import"./index-5vwpzb5a.js";
 import"./index-x3fthpsc.js";
-import"./index-f7fnww7a.js";
+import"./index-2vey6bzt.js";
 import"./index-3rm7cz6h.js";
 import"./index-zy7an84p.js";
 import"./index-z1w83f81.js";
@@ -115,6 +115,8 @@ function isUsefulSupportResult(args, environment) {
       const metadata = parseUrlMetadataArguments(command.arguments, environment);
       return metadata.ok && metadata.value.kind === "backfill";
     }
+    case "mcp":
+      return false;
     default:
       return false;
   }

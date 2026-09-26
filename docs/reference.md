@@ -232,6 +232,7 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell history <note> --root <vault> --repo <repository>` | Return bounded direct provenance for one resolved note, including explicit oversized-commit limitations. |
 | `wordcell history search <query-or-path> --root <vault> --repo <repository>` | Search bounded commit subjects, note paths, and co-change paths without authoring links or repository scopes. |
 | `wordcell context <repository-path> --root <vault> --repo <repository>` | List inherited guides root to nearest, reciprocal hubs nearest to root, and grouped repository-scoped current and historical memory. Use `--kind auto\|file\|directory` to control path interpretation. |
+| `wordcell mcp --root <vault> [--repo <repository>] [--read-only]` | Serve one vault to a local MCP client over standard input and output with search, note, link, and authoring tools; see [Local MCP server](#local-mcp-server). Available from source until the next release. |
 | `wordcell inbox --root <vault>` | List recent captures without a maintained-note disposition. This is advisory and never creates links or fails merely because a source is a leaf. |
 | `wordcell evaluate <manifest.json> --root <vault> --repo <repository>` | Verify an exact frozen Git/vault snapshot and run built-in exact, QMD, metadata, graph, path-context, and Git retrievers with raw evidence, latency, resource counters, metrics, and paired intervals. |
 | `wordcell publish --root <directory> --out <directory>` | Project a vault or a selected subsection into a self-contained `hraness.wordcell.site.v1` static site with prerendered read-only pages, browser-local search, and content-addressed assets. See [Publish a static site](publish.md). |
@@ -418,6 +419,162 @@ read back the document and reconcile its content and revision before retrying;
 do not assume that an error means the replacement did not become visible.
 If a conflict or `NoteRecoveryRequiredError` reports `recoveryPath`, retain
 those displaced bytes until recovery is resolved.
+
+## Local MCP server
+
+`wordcell mcp` is available from source until the next release.
+
+`wordcell mcp` serves one vault to a Model Context Protocol (MCP) client, such
+as Claude Code, Claude Desktop, Cursor, or Codex. The client starts the
+command, writes JSON-RPC requests to its standard input, and reads one JSON-RPC
+message per line from its standard output. Keyword, semantic, and hybrid
+search use the same optional local QMD index as `wordcell search`.
+
+```sh
+wordcell mcp --root /absolute/path/to/kb [--repo /absolute/path/to/repository] [--read-only]
+```
+
+- `--root <vault>` is required. The server checks that it is a real directory
+  before it reads a request. A missing or invalid root prints one `error:`
+  line to standard error and exits with status 2.
+- `--repo <repository>` adds the `context` tool for that working tree.
+- `--read-only` removes the three write tools.
+
+Standard output carries only protocol messages. Diagnostics, including QMD
+model-loading progress, go to standard error, and the command prints no
+support message. The server exits with status 0 when the client closes
+standard input and with status 1 when it cannot read or write the stream.
+
+The server answers `initialize` before it scans the vault. The first tool call
+scans the vault, and later calls reuse that scan until a Markdown file under
+the root is added, removed, or changed, or a write tool runs. Edits from an
+editor or Git are visible on the next call.
+
+### Protocol versions
+
+The server supports MCP revisions `2025-11-25` and `2025-06-18`. It answers
+`initialize` with the revision the client requests when it supports that
+revision, and with `2025-11-25` otherwise. The response names the server
+`hraness-wordcell`, gives the package version, and includes short
+instructions for the client's model. Each message must fit on one line of at
+most 1 MiB. The server does not accept JSON-RPC batches, and its tool list
+does not change during a session.
+
+MCP revision `2026-07-28` drops the `initialize` handshake: each request
+carries its protocol version
+([versioning](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning),
+checked 2026-09-26). A stdio client that also supports older revisions probes
+with `server/discover` first. This server answers `server/discover` with
+JSON-RPC error -32601, so such a client falls back to `initialize`. A client
+that supports only `2026-07-28` cannot use this server.
+
+### Tools
+
+Note IDs are vault-relative paths without `.md`, such as `notes/decision`.
+
+| Tool | Arguments | Result |
+| --- | --- | --- |
+| `search` | `query`; optional `mode` (`exact`, `keyword`, `semantic`, or `hybrid`, default `hybrid`), `limit` (1-100, default 10), `tags`, `where` (exact metadata values), `has` (metadata paths that must exist), and `scope` (exact repository scopes) | Ranked hits, each with its own exact or QMD evidence. When QMD is unavailable, the result is partial and `diagnostics.lanes` gives the reason. |
+| `context` (with `--repo`) | `path` (repository-relative); optional `kind` (`auto`, `file`, or `directory`, default `auto`) | Inherited guides, reciprocal hubs, and repository-scoped memory, as in `wordcell context --json`. |
+| `list_notes` | Optional `where`, `has`, `tags`, `scope`, `sort` (`title`, `path`, `inbound`, `outbound`, or `metadata.<path>`), `order` (`asc` or `desc`), and `limit` (1-1,000, default 100) | Matching notes with metadata and link counts, and the total number of matches. |
+| `get_note` | `id` | The note's `frontmatter` as JSON, its `body`, and its `revision`. The read stops at 64 KiB. |
+| `backlinks` | `id`; optional `depth` (1-10, default 1) and `limit` (1-1,000, default 50) | Incoming contextual links and typed relationships. |
+| `links` | `id`; optional `direction` (`in`, `out`, or `both`, default `both`), `depth`, and `limit` | Linked notes, edges, and typed relationships in that direction. |
+| `create_note` | `id` and `title`; optional `type` (default `note`), `tags`, and `body` | The new note's `path` and `revision`. |
+| `update_note_body` | `id`, `body`, and `expected_revision` | The note's new `revision`. |
+| `add_relation` | `source`, `predicate`, and `target`; optional `expected_revision` | The source note's new `revision`. |
+
+Each result is JSON, sent as structured content and repeated as one text
+block. The structured value is capped at 64 KiB, and the text block carries the
+same JSON, so a response line can be more than twice that size. When the cap
+applies, the server leaves out the items of the result's main list that do not
+fit, keeps the rest in order, and sets `truncated: true` and an `omitted`
+count. `get_note` shortens the body instead and sets `truncated: true`.
+Invalid arguments, a missing note, and a refused write return a tool error
+with a message the client's model can act on. The session continues after a
+tool error.
+
+### Write safety
+
+The write tools use the same authoring operations as `wordcell note create`,
+`updateNoteBody`, and `wordcell relation add`.
+
+- `create_note` never replaces a note. If the ID exists, it returns a tool
+  error and leaves the file unchanged. It does not create directories.
+- `update_note_body` requires the `revision` from `get_note`. If the note
+  changed after that read, the call fails, reports the current revision, and
+  leaves the file unchanged. The update keeps the note's frontmatter bytes.
+  When `get_note` reports `truncated: true`, do not send that body back.
+- `add_relation` is idempotent. With `expected_revision`, a stale revision
+  fails.
+- An ID that resolves outside the vault root is refused.
+
+### Connect a client
+
+Client setup was checked against each client's documentation on 2026-09-26.
+Replace `/absolute/path/to/kb` with your vault. If a desktop application
+cannot find `wordcell`, use the absolute path that `which wordcell` prints.
+Add `--read-only` to the arguments to offer only the read tools, or
+`--repo /absolute/path/to/repository` to add `context`.
+
+Claude Code ([MCP guide](https://code.claude.com/docs/en/mcp)):
+
+```sh
+claude mcp add --transport stdio --scope project wordcell -- wordcell mcp --root /absolute/path/to/kb
+```
+
+Everything after `--` is the server command. `--scope project` saves the
+server in the project's `.mcp.json`, which everyone who uses the repository
+shares. Omit `--scope` to keep the server private to you in this project, or
+use `--scope user` for all your projects.
+
+Claude Desktop ([local server guide](https://modelcontextprotocol.io/docs/develop/connect-local-servers)):
+open the Claude menu, choose Settings, then Developer, then Edit Config. Add the server to
+`claude_desktop_config.json`, then quit and restart Claude Desktop. The file is
+in `~/Library/Application Support/Claude/` on macOS and `%APPDATA%\Claude\` on
+Windows. On macOS, the server's standard error is in
+`~/Library/Logs/Claude/mcp-server-wordcell.log`.
+
+```json
+{
+  "mcpServers": {
+    "wordcell": {
+      "command": "wordcell",
+      "args": ["mcp", "--root", "/absolute/path/to/kb"]
+    }
+  }
+}
+```
+
+Cursor ([MCP guide](https://cursor.com/docs/context/mcp)): add the server to
+`.cursor/mcp.json` in a project, or to `~/.cursor/mcp.json` for every project.
+
+```json
+{
+  "mcpServers": {
+    "wordcell": {
+      "type": "stdio",
+      "command": "wordcell",
+      "args": ["mcp", "--root", "/absolute/path/to/kb"]
+    }
+  }
+}
+```
+
+Codex ([MCP guide](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)):
+
+```sh
+codex mcp add wordcell -- wordcell mcp --root /absolute/path/to/kb
+```
+
+You can also add the entry to `~/.codex/config.toml`, or to
+`.codex/config.toml` in a trusted project:
+
+```toml
+[mcp_servers.wordcell]
+command = "wordcell"
+args = ["mcp", "--root", "/absolute/path/to/kb"]
+```
 
 ## Agent skills
 

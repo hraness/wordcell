@@ -1,5 +1,5 @@
 import { terminalIntro } from "./cli-intro.js";
-import { open } from "node:fs/promises";
+import { open, realpath, stat } from "node:fs/promises";
 import { cpus, release, totalmem } from "node:os";
 import { relative, resolve } from "node:path";
 import { format } from "node:util";
@@ -104,6 +104,9 @@ import {
   type PublishSelectionInput,
 } from "./publish.js";
 import { serveSite } from "./serve.js";
+import { resolveVault } from "./authoring-platform.js";
+import { guardStdout, runMcpServer, serverVersion } from "./mcp-server.js";
+import { createToolCatalog, serverInstructions, type ContextBuilder } from "./mcp-tools.js";
 import {
   MAX_AUTHORIZED_VAULTS,
   loadPortfolioRegistry,
@@ -277,6 +280,7 @@ Usage:
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
   wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--include-glob <pattern>]... [--exclude-glob <pattern>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--list-limit <0-1000>] [--force] [--json]
   wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
+  wordcell mcp --root <vault> [--repo <repository>] [--read-only]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
   wordcell agents identity <repository-scope> [--json]
@@ -503,6 +507,12 @@ type ParsedCommand =
       readonly host: string;
       readonly port: number;
       readonly json: boolean;
+    }
+  | {
+      readonly kind: "mcp";
+      readonly root: string;
+      readonly repository?: string;
+      readonly readOnly: boolean;
     };
 
 type ParseResult =
@@ -541,6 +551,13 @@ type CliDependencies = GraphCliDependencies & {
   readonly validateMarkdownAttachments?: typeof validateMarkdownAttachments;
   readonly publishVault?: typeof publishVault;
   readonly serveSite?: typeof serveSite;
+  /** Test seam: serve MCP frames over these streams instead of guarding the process stdout. */
+  readonly mcp?: McpStreams;
+};
+
+type McpStreams = {
+  readonly input: AsyncIterable<Uint8Array>;
+  readonly writeFrame: (line: string) => Promise<void>;
 };
 
 function safe(value: string): string {
@@ -1124,6 +1141,38 @@ function parseServeCommand(arguments_: readonly string[]): ParseResult {
   }
   if (root === undefined) return { ok: false, message: "serve requires --root <directory>" };
   return { ok: true, value: { kind: "serve", root, host, port, json } };
+}
+
+/** No `--json`: stdout carries only protocol frames. */
+function parseMcpCommand(arguments_: readonly string[]): ParseResult {
+  let root: string | undefined;
+  let repository: string | undefined;
+  let readOnly = false;
+  for (let cursor = 0; cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined) continue;
+    if (argument === "--read-only") { readOnly = true; continue; }
+    if (argument === "--root" || argument === "--repo") {
+      const value = readValue(arguments_, cursor);
+      // An empty directory would resolve to the working directory of whatever launched the server.
+      if (value === null || value === "") return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root") root = value;
+      else repository = value;
+      cursor += 1;
+      continue;
+    }
+    return {
+      ok: false,
+      message: argument.startsWith("--")
+        ? "unknown mcp option"
+        : "mcp does not accept positional arguments",
+    };
+  }
+  if (root === undefined) return { ok: false, message: "mcp requires --root <vault>" };
+  return {
+    ok: true,
+    value: { kind: "mcp", root, ...(repository === undefined ? {} : { repository }), readOnly },
+  };
 }
 
 function parseInboxCommand(arguments_: readonly string[]): ParseResult {
@@ -2220,6 +2269,7 @@ export function parseArguments(arguments_: readonly string[]): ParseResult {
   if (command === "percolate") return parsePercolateCommand(arguments_.slice(1));
   if (command === "publish") return parsePublishCommand(arguments_.slice(1));
   if (command === "serve") return parseServeCommand(arguments_.slice(1));
+  if (command === "mcp") return parseMcpCommand(arguments_.slice(1));
   return { ok: false, message: "unknown command" };
 }
 
@@ -3248,6 +3298,72 @@ async function runServe(
   return 0;
 }
 
+/** The `context` tool's payload, identical to `wordcell context --json`. */
+function mcpContextBuilder(dependencies: CliDependencies): ContextBuilder {
+  return async (snapshot, request) => {
+    const inspection = await (
+      dependencies.inspectAgentContextRepository ?? inspectAgentContextRepository
+    )(snapshot.notes, request);
+    const memory = await (
+      dependencies.buildRepositoryMemoryContext ?? buildRepositoryMemoryContext
+    )(snapshot.notes, { repositoryRoot: request.repositoryRoot, target: inspection.target });
+    return contextPayload(inspection, snapshot, memory);
+  };
+}
+
+async function resolveMcpDirectories(
+  command: Extract<ParsedCommand, { readonly kind: "mcp" }>,
+): Promise<{ readonly root: string; readonly repository?: string }> {
+  const { root } = await resolveVault(command.root);
+  if (command.repository === undefined) return { root };
+  const repository = await realpath(resolve(command.repository));
+  if (!(await stat(repository)).isDirectory()) throw new Error(`--repo is not a directory: ${repository}`);
+  return { root, repository };
+}
+
+async function runMcp(
+  command: Extract<ParsedCommand, { readonly kind: "mcp" }>,
+  output: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  let directories: Awaited<ReturnType<typeof resolveMcpDirectories>>;
+  try {
+    directories = await resolveMcpDirectories(command);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    output.stderr(`error: ${safe(message)}\n`);
+    return 2;
+  }
+  const version = await serverVersion();
+  const catalog = createToolCatalog({
+    ...directories,
+    readOnly: command.readOnly,
+    context: mcpContextBuilder(dependencies),
+    warn: (message) => output.stderr(`${safe(message)}\n`),
+  });
+  const instructions = serverInstructions({ root: directories.root, readOnly: command.readOnly });
+  const streams = mcpStreams(dependencies);
+  try {
+    return await runMcpServer({
+      catalog,
+      instructions,
+      version,
+      input: streams.input,
+      writeFrame: streams.writeFrame,
+      stderr: (text) => output.stderr(text),
+    });
+  } finally {
+    streams.restore();
+  }
+}
+
+/** Process stdio with stdout held for frames, unless a test supplies its own streams. */
+function mcpStreams(dependencies: CliDependencies): McpStreams & { readonly restore: () => void } {
+  if (dependencies.mcp !== undefined) return { ...dependencies.mcp, restore: () => undefined };
+  const guard = guardStdout();
+  return { input: process.stdin, writeFrame: guard.writeFrame, restore: guard.restore };
+}
+
 async function runCatalog(
   command: Extract<ParsedCommand, { readonly kind: "catalog" }>,
   output: Output,
@@ -3950,13 +4066,18 @@ async function runVault(
   return 0;
 }
 
+/** `mcp` owns stdout for protocol frames, so it never takes a `--json` path and its failures go to stderr. */
+function machineJsonRequested(rawArguments: readonly string[]): boolean {
+  return rawArguments[0] !== "mcp" && rawArguments.includes("--json");
+}
+
 /** Stable CLI entry point with injectable filesystem and capture boundaries. */
 export async function main(
   rawArguments: readonly string[] = process.argv.slice(2),
   output: Output = defaultOutput,
   dependencies: CliDependencies = {},
 ): Promise<number> {
-  const jsonRequested = rawArguments.includes("--json");
+  const jsonRequested = machineJsonRequested(rawArguments);
   const parsed = parseArguments(rawArguments);
   if (!parsed.ok) {
     if (jsonRequested) {
@@ -4011,6 +4132,7 @@ export async function main(
     if (command.kind === "list") return await runList(command, output, dependencies);
     if (command.kind === "publish") return await runPublish(command, output, dependencies);
     if (command.kind === "serve") return await runServe(command, output, dependencies);
+    if (command.kind === "mcp") return await runMcp(command, output, dependencies);
     if (command.kind === "inbox") return await runInbox(command, output, dependencies);
     if (command.kind === "catalog") return await runCatalog(command, output, dependencies);
     return await runVault(command, output, dependencies);
@@ -4061,7 +4183,7 @@ export async function runExecutable(
   rawArguments: readonly string[] = process.argv.slice(2),
   dependencies: CliDependencies = {},
 ): Promise<number> {
-  if (!rawArguments.includes("--json")) {
+  if (!machineJsonRequested(rawArguments)) {
     return main(rawArguments, defaultOutput, dependencies);
   }
   return serializeStrictJson(async () => {

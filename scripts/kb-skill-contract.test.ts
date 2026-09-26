@@ -317,6 +317,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "inspect",
     "links",
     "list",
+    "mcp",
     "note create",
     "pdf",
     "percolate",
