@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+`wordcell mcp --root <vault>` serves a vault to local Model Context Protocol
+clients, such as Claude Code, Claude Desktop, Cursor, and Codex, over standard
+input and output. Its tools search, list, and read notes, follow links, and,
+with `--repo`, return repository context. Write tools create notes, update a
+note body at a known revision, and add typed relations through the existing
+authoring checks; `--read-only` removes them. Standard output carries only
+protocol messages.
+
 ## 0.22.5
 
 `wordcell check` and `wordcell refresh` now find unlinked mentions through a

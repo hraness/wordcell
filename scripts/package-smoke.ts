@@ -12,7 +12,7 @@ import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
 
 const packageName = "@hraness/wordcell";
 const maximumPackageFiles = 280;
-const maximumPackedBytes = 1_300_000;
+const maximumPackedBytes = 1_350_000;
 const importSpecifiers = [
   "@hraness/wordcell",
   "@hraness/wordcell/agent-context",

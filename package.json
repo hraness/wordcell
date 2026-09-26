@@ -381,6 +381,8 @@
     "src/evaluation-v2.ts",
     "src/evaluation.ts",
     "src/graph.ts",
+    "src/mcp-server.ts",
+    "src/mcp-tools.ts",
     "src/mention-index.ts",
     "src/index.ts",
     "src/init.ts",

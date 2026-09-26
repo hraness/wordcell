@@ -102,6 +102,7 @@ import {
   renderPublishReportText
 } from "./index-xzvcw9ga.js";
 import {
+  markdownFiles,
   refreshVaultComplete,
   scanVault,
   scanVaultComplete
@@ -111,7 +112,9 @@ import {
 } from "./index-d13v9ckt.js";
 import {
   MAX_QUERY_FILTERS,
+  MAX_QUERY_METADATA_PATH_UTF8_BYTES,
   MAX_QUERY_TAGS,
+  MAX_QUERY_TEXT_UTF8_BYTES,
   queryVault,
   validateQueryOptions
 } from "./index-48pz4jpc.js";
@@ -141,10 +144,20 @@ import {
   validateMarkdownAttachments
 } from "./index-x3fthpsc.js";
 import {
+  InvalidCanonicalNoteIdError,
+  NOTE_REVISION_PATTERN,
+  NoteAlreadyExistsError,
+  NoteRevisionConflictError,
   addNoteRelation,
+  canonicalNoteId,
   createNote,
-  removeNoteRelation
-} from "./index-f7fnww7a.js";
+  frontmatter,
+  noteRevision,
+  removeNoteRelation,
+  resolveVault,
+  revisionFor,
+  updateNoteBody
+} from "./index-2vey6bzt.js";
 import {
   lookupNote,
   parseVaultKey,
@@ -816,10 +829,10 @@ function terminalIntro(terminal) {
 }
 
 // src/cli-program.ts
-import { open as open2 } from "fs/promises";
+import { open as open2, realpath as realpath2, stat as stat2 } from "fs/promises";
 import { cpus, release, totalmem } from "os";
 import { relative, resolve as resolve3 } from "path";
-import { format } from "util";
+import { format as format2 } from "util";
 
 // src/graph-cli.ts
 function parseGraphCommand(arguments_) {
@@ -1065,6 +1078,1142 @@ async function serveSite(options, io = {}) {
   });
 }
 
+// src/mcp-server.ts
+import { readFile } from "fs/promises";
+import { format } from "util";
+var LATEST_PROTOCOL_VERSION = "2025-11-25";
+var SUPPORTED_PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18"];
+var MAX_FRAME_BYTES = 1048576;
+var SERVER_NAME = "hraness-wordcell";
+var PARSE_ERROR = -32700;
+var INVALID_REQUEST = -32600;
+var METHOD_NOT_FOUND = -32601;
+var INVALID_PARAMS = -32602;
+var INTERNAL_ERROR = -32603;
+function negotiateProtocolVersion(requested) {
+  const match = SUPPORTED_PROTOCOL_VERSIONS.find((version) => version === requested);
+  return match ?? LATEST_PROTOCOL_VERSION;
+}
+function isRequestId(value) {
+  return typeof value === "string" || typeof value === "number" && Number.isSafeInteger(value);
+}
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function invalid(id, message) {
+  return { kind: "invalid", id, code: INVALID_REQUEST, message };
+}
+function parseFrame(text) {
+  let value;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    return { kind: "invalid", id: null, code: PARSE_ERROR, message: "Frame must be valid JSON." };
+  }
+  if (Array.isArray(value))
+    return invalid(null, "Batch requests are not supported.");
+  if (!isRecord(value))
+    return invalid(null, "Expected a JSON-RPC object.");
+  const hasMethod = Object.hasOwn(value, "method");
+  if (!hasMethod && (Object.hasOwn(value, "result") || Object.hasOwn(value, "error"))) {
+    return { kind: "response" };
+  }
+  const hasId = Object.hasOwn(value, "id");
+  const id = hasId && isRequestId(value.id) ? value.id : null;
+  if (value.jsonrpc !== "2.0")
+    return invalid(id, 'Expected jsonrpc "2.0".');
+  if (hasId && id === null)
+    return invalid(null, "Request id must be a string or a safe integer.");
+  if (!hasMethod)
+    return invalid(id, "Missing method.");
+  if (typeof value.method !== "string")
+    return invalid(id, "Method must be a string.");
+  const params = value.params;
+  if (params !== undefined && !isRecord(params))
+    return invalid(id, "Params must be an object.");
+  if (id === null)
+    return { kind: "notification", method: value.method, params };
+  return { kind: "request", id, method: value.method, params };
+}
+function frameFromLine(event, maxFrameBytes = MAX_FRAME_BYTES) {
+  if (event.kind === "line")
+    return parseFrame(event.text);
+  if (event.kind === "oversized")
+    return invalid(null, `Frame exceeds ${maxFrameBytes} bytes.`);
+  return { kind: "invalid", id: null, code: PARSE_ERROR, message: "Frame must be valid UTF-8." };
+}
+var NEWLINE = 10;
+var CARRIAGE_RETURN = 13;
+async function readFrames(input, onFrame, options = {}) {
+  const maxFrameBytes = options.maxFrameBytes ?? MAX_FRAME_BYTES;
+  if (!Number.isSafeInteger(maxFrameBytes) || maxFrameBytes < 1) {
+    throw new RangeError("maxFrameBytes must be a positive safe integer.");
+  }
+  let pieces = [];
+  let length = 0;
+  let oversized = false;
+  const append = (piece) => {
+    if (oversized || piece.length === 0)
+      return;
+    length += piece.length;
+    if (length > maxFrameBytes) {
+      oversized = true;
+      pieces = [];
+      return;
+    }
+    pieces.push(piece);
+  };
+  const finish = async () => {
+    const wasOversized = oversized;
+    const line = concat(pieces, length);
+    pieces = [];
+    length = 0;
+    oversized = false;
+    if (wasOversized)
+      return onFrame({ kind: "oversized" });
+    const end = line.length > 0 && line[line.length - 1] === CARRIAGE_RETURN ? line.length - 1 : line.length;
+    let text;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(line.subarray(0, end));
+    } catch {
+      return onFrame({ kind: "unparseable" });
+    }
+    if (text.trim() === "")
+      return;
+    return onFrame({ kind: "line", text });
+  };
+  for await (const chunk of input) {
+    let start = 0;
+    for (let index = chunk.indexOf(NEWLINE);index !== -1; index = chunk.indexOf(NEWLINE, start)) {
+      append(chunk.subarray(start, index));
+      await finish();
+      start = index + 1;
+    }
+    append(chunk.slice(start));
+  }
+  if (length > 0 || oversized)
+    await finish();
+}
+function concat(pieces, length) {
+  if (pieces.length === 1)
+    return pieces[0];
+  const out = new Uint8Array(length);
+  let offset = 0;
+  for (const piece of pieces) {
+    out.set(piece, offset);
+    offset += piece.length;
+  }
+  return out;
+}
+function errorResponse(id, code, message) {
+  return { jsonrpc: "2.0", id, error: { code, message } };
+}
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+function createDispatcher(options) {
+  const { catalog, instructions, version } = options;
+  const listed = new Set(catalog.tools.map((tool) => tool.name));
+  const request = async (id, method, params) => {
+    switch (method) {
+      case "initialize":
+        return {
+          jsonrpc: "2.0",
+          id,
+          result: {
+            protocolVersion: negotiateProtocolVersion(params?.protocolVersion),
+            capabilities: { tools: { listChanged: false } },
+            serverInfo: { name: SERVER_NAME, version },
+            instructions
+          }
+        };
+      case "ping":
+        return { jsonrpc: "2.0", id, result: {} };
+      case "tools/list":
+        return { jsonrpc: "2.0", id, result: { tools: catalog.tools } };
+      case "tools/call": {
+        const name = params?.name;
+        const args = params !== undefined && Object.hasOwn(params, "arguments") ? params.arguments : {};
+        if (typeof name !== "string" || !isRecord(args)) {
+          return errorResponse(id, INVALID_PARAMS, "Invalid tools/call params.");
+        }
+        if (!listed.has(name))
+          return errorResponse(id, INVALID_PARAMS, `Unknown tool: ${name}`);
+        return { jsonrpc: "2.0", id, result: await catalog.call(name, args) };
+      }
+      default:
+        return errorResponse(id, METHOD_NOT_FOUND, `Method ${method} is not supported.`);
+    }
+  };
+  return {
+    async handle(frame) {
+      if (frame.kind === "invalid")
+        return errorResponse(frame.id, frame.code, frame.message);
+      if (frame.kind !== "request")
+        return null;
+      try {
+        return await request(frame.id, frame.method, frame.params);
+      } catch (error) {
+        return errorResponse(frame.id, INTERNAL_ERROR, `Internal error: ${errorMessage(error)}`);
+      }
+    }
+  };
+}
+function encodeResponse(response) {
+  try {
+    const text = JSON.stringify(response);
+    if (typeof text === "string")
+      return `${text}
+`;
+    throw new TypeError("response is not serializable");
+  } catch (error) {
+    return `${JSON.stringify(errorResponse(response.id, INTERNAL_ERROR, `Internal error: ${errorMessage(error)}`))}
+`;
+  }
+}
+var STABLE_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+function parseStableVersion(value) {
+  const match = typeof value === "string" ? STABLE_VERSION.exec(value) : null;
+  if (match === null || match.slice(1).some((part) => !Number.isSafeInteger(Number(part)))) {
+    throw new TypeError("package.json version must be a stable x.y.z version.");
+  }
+  return match[0];
+}
+async function serverVersion(packageJson = new URL("../package.json", import.meta.url)) {
+  const manifest = JSON.parse(await readFile(packageJson, "utf8"));
+  return parseStableVersion(isRecord(manifest) ? manifest.version : undefined);
+}
+function guardStdout() {
+  const stdout = process.stdout;
+  const ownWrite = Object.getOwnPropertyDescriptor(stdout, "write");
+  const rawStdoutWrite = stdout.write.bind(stdout);
+  const rawStderrWrite = process.stderr.write.bind(process.stderr);
+  const originalConsole = { log: console.log, info: console.info, debug: console.debug };
+  let streamError;
+  const onError = (error) => {
+    streamError ??= error;
+  };
+  const restore = () => {
+    if (ownWrite === undefined)
+      Reflect.deleteProperty(stdout, "write");
+    else
+      Object.defineProperty(stdout, "write", ownWrite);
+    console.log = originalConsole.log;
+    console.info = originalConsole.info;
+    console.debug = originalConsole.debug;
+    stdout.off("error", onError);
+  };
+  const redirectedWrite = (...arguments_) => {
+    Reflect.apply(rawStderrWrite, process.stderr, arguments_);
+    return true;
+  };
+  const redirectedConsole = (...arguments_) => {
+    rawStderrWrite(`${format(...arguments_)}
+`);
+  };
+  try {
+    stdout.on("error", onError);
+    Object.defineProperty(stdout, "write", { configurable: true, writable: true, value: redirectedWrite });
+    console.log = redirectedConsole;
+    console.info = redirectedConsole;
+    console.debug = redirectedConsole;
+  } catch (error) {
+    restore();
+    throw error;
+  }
+  return {
+    writeFrame: (line) => new Promise((resolve3, reject) => {
+      if (streamError !== undefined)
+        return reject(streamError);
+      rawStdoutWrite(line, (error) => {
+        const failure = error ?? streamError;
+        if (failure)
+          reject(failure);
+        else
+          resolve3();
+      });
+    }),
+    restore
+  };
+}
+async function runMcpServer(options) {
+  const dispatcher = createDispatcher(options);
+  const maxFrameBytes = options.maxFrameBytes ?? MAX_FRAME_BYTES;
+  let code = 0;
+  try {
+    await readFrames(options.input, async (event) => {
+      const response = await dispatcher.handle(frameFromLine(event, maxFrameBytes));
+      if (response !== null)
+        await options.writeFrame(encodeResponse(response));
+    }, { maxFrameBytes });
+  } catch (error) {
+    options.stderr(`error: MCP transport failed: ${errorMessage(error).replaceAll(`
+`, " ")}
+`);
+    code = 1;
+  }
+  try {
+    await options.catalog.close();
+  } catch (error) {
+    options.stderr(`error: MCP session close failed: ${errorMessage(error).replaceAll(`
+`, " ")}
+`);
+    code = 1;
+  }
+  return code;
+}
+
+// src/mcp-tools.ts
+import { createHash } from "crypto";
+import { lstat } from "fs/promises";
+var MAX_TOOL_RESULT_BYTES = 65536;
+var MAX_NOTE_READ_BYTES = 65536;
+var MAX_NOTE_ID_UTF8_BYTES = 4096;
+var DEFAULT_LIST_LIMIT = 100;
+var MAX_LIST_LIMIT = 1000;
+var DEFAULT_LINK_LIMIT = 50;
+var MAX_LINK_LIMIT = 1000;
+var MAX_LINK_DEPTH = 10;
+var SEARCH_MODES = ["exact", "keyword", "semantic", "hybrid"];
+var LINK_DIRECTIONS = ["in", "out", "both"];
+var SORT_FIELDS = ["title", "path", "inbound", "outbound"];
+var ORDERS = ["asc", "desc"];
+var ID_HINT = "IDs are vault-relative paths without .md, for example notes/decision.";
+
+class ToolArgumentError extends Error {
+  name = "ToolArgumentError";
+}
+
+class ResultTooLargeError extends Error {
+  name = "ResultTooLargeError";
+}
+function utf8Length(text) {
+  return Buffer.byteLength(text, "utf8");
+}
+function jsonLength(value) {
+  return utf8Length(JSON.stringify(value));
+}
+function errorMessage2(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+function toolSuccess(value) {
+  return { content: [{ type: "text", text: JSON.stringify(value) }], structuredContent: value };
+}
+function toolFailure(message) {
+  return { content: [{ type: "text", text: message }], isError: true };
+}
+function isMissingPath(error) {
+  return errorMessage2(error).startsWith("vault path component is not exact");
+}
+function noteNotFound(id, suggestion) {
+  return toolFailure(suggestion === undefined || suggestion === id ? `note ${id} was not found` : `note ${id} was not found; did you mean ${suggestion}?`);
+}
+function failureFor(error) {
+  if (error instanceof NoteRevisionConflictError) {
+    const recovery = error.recoveryPath === null ? "" : `; displaced bytes remain at ${error.recoveryPath}`;
+    return toolFailure(`revision conflict: expected ${error.expected ?? "none"}, current ${error.actual ?? "none"}${recovery}; ` + "call get_note and retry");
+  }
+  const message = errorMessage2(error);
+  return toolFailure(error instanceof InvalidCanonicalNoteIdError ? `${message} ${ID_HINT}` : message);
+}
+function fitResult(value, steps, maxBytes = MAX_TOOL_RESULT_BYTES) {
+  if (jsonLength(value) <= maxBytes)
+    return value;
+  let current = value;
+  let omitted = 0;
+  const marked = (candidate, dropped) => ({
+    ...candidate,
+    truncated: true,
+    omitted: omitted + dropped
+  });
+  for (const step of steps) {
+    const field = current[step.field];
+    if (step.kind === "clear") {
+      if (field === step.empty || field === undefined)
+        continue;
+      current = marked({ ...current, [step.field]: step.empty }, 0);
+      if (jsonLength(current) <= maxBytes)
+        return current;
+      continue;
+    }
+    if (!Array.isArray(field) || field.length === 0)
+      continue;
+    const list = field;
+    const empty = marked({ ...current, [step.field]: [] }, list.length);
+    let size = jsonLength(empty);
+    if (size > maxBytes) {
+      current = empty;
+      omitted += list.length;
+      continue;
+    }
+    const kept = [];
+    for (const item of list) {
+      const cost = utf8Length(JSON.stringify(item) ?? "null") + (kept.length === 0 ? 0 : 1);
+      if (size + cost > maxBytes)
+        continue;
+      kept.push(item);
+      size += cost;
+    }
+    return marked({ ...current, [step.field]: kept }, list.length - kept.length);
+  }
+  if (jsonLength(current) <= maxBytes)
+    return current;
+  throw new ResultTooLargeError(`The result exceeds ${maxBytes} bytes even after trimming.`);
+}
+function fitBody(value, maxBytes = MAX_TOOL_RESULT_BYTES) {
+  if (jsonLength(value) <= maxBytes)
+    return value;
+  const points = Array.from(value.body);
+  const withBody = (count) => ({ ...value, body: points.slice(0, count).join(""), truncated: true });
+  if (points.length === 0 || jsonLength(withBody(0)) > maxBytes) {
+    throw new ResultTooLargeError(`The result exceeds ${maxBytes} bytes even without the note body.`);
+  }
+  let low = 0;
+  let high = points.length - 1;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (jsonLength(withBody(middle)) <= maxBytes)
+      low = middle;
+    else
+      high = middle - 1;
+  }
+  return withBody(low);
+}
+function has(arguments_, key) {
+  return Object.hasOwn(arguments_, key) && arguments_[key] !== undefined;
+}
+function allowOnly(arguments_, allowed) {
+  for (const key of Object.keys(arguments_)) {
+    if (!allowed.includes(key))
+      throw new ToolArgumentError(`Unknown argument "${key}".`);
+  }
+}
+function checkedText(value, label, maxBytes) {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new ToolArgumentError(`Invalid argument "${label}": expected a non-empty string.`);
+  }
+  if (utf8Length(value) > maxBytes) {
+    throw new ToolArgumentError(`Invalid argument "${label}": expected at most ${maxBytes} UTF-8 bytes.`);
+  }
+  return value;
+}
+function requiredText(arguments_, key, maxBytes) {
+  if (!has(arguments_, key))
+    throw new ToolArgumentError(`Missing argument "${key}".`);
+  return checkedText(arguments_[key], key, maxBytes);
+}
+function optionalText(arguments_, key, maxBytes) {
+  return has(arguments_, key) ? checkedText(arguments_[key], key, maxBytes) : undefined;
+}
+function optionalInteger(arguments_, key, minimum, maximum) {
+  if (!has(arguments_, key))
+    return;
+  const value = arguments_[key];
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < minimum || value > maximum) {
+    throw new ToolArgumentError(`Invalid argument "${key}": expected an integer from ${minimum} through ${maximum}.`);
+  }
+  return value;
+}
+function optionalChoice(arguments_, key, choices) {
+  if (!has(arguments_, key))
+    return;
+  const value = arguments_[key];
+  const choice = choices.find((candidate) => candidate === value);
+  if (choice === undefined) {
+    throw new ToolArgumentError(`Invalid argument "${key}": expected one of ${choices.join(", ")}.`);
+  }
+  return choice;
+}
+function optionalTextList(arguments_, key, maxItems, maxBytes) {
+  if (!has(arguments_, key))
+    return;
+  const value = arguments_[key];
+  if (!Array.isArray(value) || value.length > maxItems) {
+    throw new ToolArgumentError(`Invalid argument "${key}": expected an array of at most ${maxItems} strings.`);
+  }
+  const items = value;
+  return items.map((item, index) => checkedText(item, `${key}[${index}]`, maxBytes));
+}
+function isPlainObject(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function metadataScalar(value, label) {
+  if (value === null || typeof value === "boolean")
+    return value;
+  if (typeof value === "number" && Number.isFinite(value))
+    return value;
+  if (typeof value === "string" && utf8Length(value) <= MAX_QUERY_TEXT_UTF8_BYTES)
+    return value;
+  throw new ToolArgumentError(`Invalid argument "${label}": expected a string, finite number, boolean, or null.`);
+}
+function metadataFilters(arguments_) {
+  const filters = [];
+  if (has(arguments_, "where")) {
+    const where = arguments_["where"];
+    if (!Array.isArray(where) || where.length > MAX_QUERY_FILTERS) {
+      throw new ToolArgumentError(`Invalid argument "where": expected an array of at most ${MAX_QUERY_FILTERS} {path, value} objects.`);
+    }
+    const entries = where;
+    entries.forEach((entry, index) => {
+      const label = `where[${index}]`;
+      if (!isPlainObject(entry)) {
+        throw new ToolArgumentError(`Invalid argument "${label}": expected a {path, value} object.`);
+      }
+      allowOnlyIn(entry, ["path", "value"], label);
+      if (!Object.hasOwn(entry, "value")) {
+        throw new ToolArgumentError(`Invalid argument "${label}": missing value.`);
+      }
+      filters.push({
+        kind: "equals",
+        path: checkedText(entry["path"], `${label}.path`, MAX_QUERY_METADATA_PATH_UTF8_BYTES),
+        value: metadataScalar(entry["value"], `${label}.value`)
+      });
+    });
+  }
+  for (const path of optionalTextList(arguments_, "has", MAX_QUERY_FILTERS, MAX_QUERY_METADATA_PATH_UTF8_BYTES) ?? []) {
+    filters.push({ kind: "exists", path });
+  }
+  if (filters.length > MAX_QUERY_FILTERS) {
+    throw new ToolArgumentError(`Invalid arguments "where" and "has": at most ${MAX_QUERY_FILTERS} filters in total.`);
+  }
+  return filters;
+}
+function allowOnlyIn(value, allowed, label) {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key))
+      throw new ToolArgumentError(`Invalid argument "${label}": unknown field "${key}".`);
+  }
+}
+function bodyArgument(arguments_, key, required) {
+  if (!has(arguments_, key)) {
+    if (required)
+      throw new ToolArgumentError(`Missing argument "${key}".`);
+    return;
+  }
+  const value = arguments_[key];
+  if (typeof value !== "string" || utf8Length(value) > MAX_FRAME_BYTES) {
+    throw new ToolArgumentError(`Invalid argument "${key}": expected a string of at most ${MAX_FRAME_BYTES} UTF-8 bytes.`);
+  }
+  return value;
+}
+function revisionArgument(arguments_, key, required) {
+  if (!has(arguments_, key)) {
+    if (required)
+      throw new ToolArgumentError(`Missing argument "${key}".`);
+    return;
+  }
+  const value = arguments_[key];
+  if (typeof value !== "string" || !NOTE_REVISION_PATTERN.test(value)) {
+    throw new ToolArgumentError(`Invalid argument "${key}": expected sha256: followed by 64 lowercase hex digits.`);
+  }
+  return value;
+}
+function noteIdArgument(arguments_, key) {
+  return canonicalNoteId(requiredText(arguments_, key, MAX_NOTE_ID_UTF8_BYTES));
+}
+function querySort(raw) {
+  const builtin = SORT_FIELDS.find((field) => field === raw);
+  if (builtin !== undefined)
+    return { kind: "builtin", field: builtin };
+  const path = raw.startsWith("metadata.") ? raw.slice("metadata.".length) : "";
+  if (path === "") {
+    throw new ToolArgumentError(`Invalid argument "sort": expected ${SORT_FIELDS.join(", ")}, or metadata.<path>.`);
+  }
+  return { kind: "metadata", path };
+}
+async function vaultFingerprint(root) {
+  const files = await markdownFiles(root);
+  const stats = await Promise.all(files.map((file) => lstat(file, { bigint: true }).catch(() => null)));
+  const hash = createHash("sha256");
+  files.forEach((file, index) => {
+    const stat2 = stats[index];
+    hash.update(stat2 === null || stat2 === undefined ? `${file}\x00missing
+` : `${file}\x00${stat2.ino}\x00${stat2.size}\x00${stat2.mtimeNs}\x00${stat2.ctimeNs}
+`);
+  });
+  return hash.digest("hex");
+}
+function createVaultSessions(options) {
+  let open = null;
+  const warn = options.warn ?? ((message) => {
+    process.stderr.write(`${message}
+`);
+  });
+  const close = async () => {
+    const current = open;
+    open = null;
+    if (current !== null)
+      await current.entry.kb.close();
+  };
+  const discard = async () => {
+    try {
+      await close();
+    } catch (error) {
+      warn(`warning: closing the cached vault session failed: ${errorMessage2(error).replaceAll(`
+`, " ")}`);
+    }
+  };
+  return {
+    async get() {
+      const fingerprint = await vaultFingerprint(options.root);
+      if (open !== null && open.fingerprint === fingerprint)
+        return open.entry;
+      await discard();
+      const scan = options.dependencies?.scanVault ?? scanVault;
+      const captured = {};
+      const kb = await openKnowledgeBase({ root: options.root, ...options.repository === undefined ? {} : { repository: options.repository } }, {
+        ...options.dependencies,
+        scanVault: async (root, scanOptions) => {
+          const snapshot = await scan(root, scanOptions);
+          captured.snapshot = snapshot;
+          return snapshot;
+        }
+      });
+      if (captured.snapshot === undefined) {
+        await kb.close();
+        throw new Error("The vault scan did not run.");
+      }
+      open = { fingerprint, entry: { kb, snapshot: captured.snapshot } };
+      return open.entry;
+    },
+    invalidate: discard,
+    close
+  };
+}
+var noteIdSchema = {
+  type: "string",
+  minLength: 1,
+  maxLength: MAX_NOTE_ID_UTF8_BYTES,
+  description: ID_HINT
+};
+var textListSchema = (maxItems, maxLength, description) => ({
+  type: "array",
+  maxItems,
+  items: { type: "string", minLength: 1, maxLength },
+  description
+});
+var filterProperties = {
+  where: {
+    type: "array",
+    maxItems: MAX_QUERY_FILTERS,
+    items: {
+      type: "object",
+      additionalProperties: false,
+      required: ["path", "value"],
+      properties: {
+        path: { type: "string", minLength: 1, maxLength: MAX_QUERY_METADATA_PATH_UTF8_BYTES },
+        value: { type: ["string", "number", "boolean", "null"] }
+      }
+    },
+    description: "Frontmatter fields that must equal the given values. Filters combine with AND."
+  },
+  has: textListSchema(MAX_QUERY_FILTERS, MAX_QUERY_METADATA_PATH_UTF8_BYTES, "Frontmatter fields that must exist."),
+  tags: textListSchema(MAX_QUERY_TAGS, MAX_QUERY_TEXT_UTF8_BYTES, "Tags that must all be present."),
+  scope: textListSchema(MAX_REPOSITORY_SCOPES, MAX_QUERY_TEXT_UTF8_BYTES, "Repository scopes; a note matches when it declares any of them.")
+};
+var linkProperties = {
+  id: noteIdSchema,
+  depth: { type: "integer", minimum: 1, maximum: MAX_LINK_DEPTH, default: 1 },
+  limit: {
+    type: "integer",
+    minimum: 1,
+    maximum: MAX_LINK_LIMIT,
+    default: DEFAULT_LINK_LIMIT,
+    description: "Maximum returned notes, including the starting note."
+  }
+};
+var revisionSchema = {
+  type: "string",
+  pattern: NOTE_REVISION_PATTERN.source,
+  description: "The revision from get_note or from an earlier write."
+};
+var READ_ONLY = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false
+};
+function listRow(row) {
+  return {
+    id: row.id,
+    path: row.path,
+    title: row.title,
+    aliases: row.aliases,
+    tags: row.tags,
+    properties: row.properties,
+    metadata: row.metadata,
+    summary: row.summary,
+    inboundContextualCount: row.inboundContextualCount,
+    outboundContextualCount: row.outboundContextualCount
+  };
+}
+function bodyAfterFrontmatter(suffix) {
+  let body = suffix;
+  for (let count = 0;count < 2; count += 1) {
+    if (body.startsWith(`\r
+`))
+      body = body.slice(2);
+    else if (body.startsWith(`
+`))
+      body = body.slice(1);
+    else
+      break;
+  }
+  return body;
+}
+function noteView(read, revision) {
+  let parts;
+  try {
+    parts = frontmatter(read.content, read.path);
+  } catch (error) {
+    const reason = read.truncated ? `the note is larger than ${MAX_NOTE_READ_BYTES} bytes and its frontmatter did not fit` : errorMessage2(error);
+    throw new Error(`Cannot split note ${read.id} into frontmatter and body: ${reason}.`);
+  }
+  const document = parts.document.toJSON();
+  return {
+    id: read.id,
+    path: read.path,
+    title: read.title,
+    frontmatter: document ?? {},
+    body: parts.hadFrontmatter ? bodyAfterFrontmatter(parts.bodySuffix) : parts.bodySuffix,
+    revision,
+    truncated: read.truncated
+  };
+}
+var UTF8_BOM = new Uint8Array([239, 187, 191]);
+function contentMatchesRevision(content, revision) {
+  const bytes = new TextEncoder().encode(content);
+  if (revisionFor(bytes) === revision)
+    return true;
+  const withBom = new Uint8Array(UTF8_BOM.length + bytes.length);
+  withBom.set(UTF8_BOM);
+  withBom.set(bytes, UTF8_BOM.length);
+  return revisionFor(withBom) === revision;
+}
+function readTools(root, sessions) {
+  return [
+    {
+      definition: {
+        name: "search",
+        title: "Search notes",
+        description: "Search the vault. Hybrid mode joins exact matches with local semantic search (QMD); each hit keeps " + "its own evidence. When QMD is unavailable the result is partial and diagnostics.lanes says why.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["query"],
+          properties: {
+            query: { type: "string", minLength: 1, maxLength: MAX_QUERY_TEXT_UTF8_BYTES },
+            mode: { type: "string", enum: SEARCH_MODES, default: "hybrid" },
+            limit: { type: "integer", minimum: 1, maximum: MAX_SEARCH_RESULTS, default: DEFAULT_SEARCH_RESULTS },
+            ...filterProperties
+          }
+        },
+        annotations: { title: "Search notes", ...READ_ONLY }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["query", "mode", "limit", "tags", "where", "has", "scope"]);
+        const query = requiredText(arguments_, "query", MAX_QUERY_TEXT_UTF8_BYTES);
+        const mode = optionalChoice(arguments_, "mode", SEARCH_MODES) ?? "hybrid";
+        const limit = optionalInteger(arguments_, "limit", 1, MAX_SEARCH_RESULTS) ?? DEFAULT_SEARCH_RESULTS;
+        const filters = metadataFilters(arguments_);
+        const tags = optionalTextList(arguments_, "tags", MAX_QUERY_TAGS, MAX_QUERY_TEXT_UTF8_BYTES);
+        const scopes = optionalTextList(arguments_, "scope", MAX_REPOSITORY_SCOPES, MAX_QUERY_TEXT_UTF8_BYTES);
+        const { kb } = await sessions.get();
+        const result = await kb.search({
+          query,
+          mode,
+          limit,
+          ...filters.length === 0 ? {} : { filters },
+          ...tags === undefined ? {} : { tags },
+          ...scopes === undefined ? {} : { repositoryScopes: scopes }
+        });
+        return toolSuccess(fitResult({ ...result, truncated: false }, [
+          { kind: "list", field: "results" },
+          { kind: "clear", field: "graph", empty: null }
+        ]));
+      }
+    },
+    {
+      definition: {
+        name: "list_notes",
+        title: "List notes",
+        description: "List notes with their frontmatter, filtered by frontmatter fields, tags, and repository scopes. " + "total counts every match before the limit.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            ...filterProperties,
+            sort: {
+              type: "string",
+              minLength: 1,
+              description: "title, path, inbound, outbound, or metadata.<path>. Defaults to path."
+            },
+            order: { type: "string", enum: ORDERS, default: "asc" },
+            limit: { type: "integer", minimum: 1, maximum: MAX_LIST_LIMIT, default: DEFAULT_LIST_LIMIT }
+          }
+        },
+        annotations: { title: "List notes", ...READ_ONLY }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["where", "has", "tags", "scope", "sort", "order", "limit"]);
+        const filters = metadataFilters(arguments_);
+        const tags = optionalTextList(arguments_, "tags", MAX_QUERY_TAGS, MAX_QUERY_TEXT_UTF8_BYTES);
+        const scopes = optionalTextList(arguments_, "scope", MAX_REPOSITORY_SCOPES, MAX_QUERY_TEXT_UTF8_BYTES);
+        const sortText = optionalText(arguments_, "sort", MAX_QUERY_METADATA_PATH_UTF8_BYTES + "metadata.".length);
+        const sort = sortText === undefined ? { kind: "builtin", field: "path" } : querySort(sortText);
+        const direction = optionalChoice(arguments_, "order", ORDERS) ?? "asc";
+        const limit = optionalInteger(arguments_, "limit", 1, MAX_LIST_LIMIT) ?? DEFAULT_LIST_LIMIT;
+        const { kb } = await sessions.get();
+        const rows = kb.list({
+          sort,
+          direction,
+          ...filters.length === 0 ? {} : { filters },
+          ...tags === undefined ? {} : { tags },
+          ...scopes === undefined ? {} : { repositoryScopes: scopes }
+        });
+        const notes = rows.slice(0, limit).map(listRow);
+        return toolSuccess(fitResult({ notes, total: rows.length, truncated: rows.length > notes.length }, [{ kind: "list", field: "notes" }]));
+      }
+    },
+    {
+      definition: {
+        name: "get_note",
+        title: "Read a note",
+        description: "Read one note as frontmatter, body, and revision. Pass revision as expected_revision to " + "update_note_body. When truncated is true the body is incomplete: do not send it back.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["id"],
+          properties: { id: noteIdSchema }
+        },
+        annotations: { title: "Read a note", ...READ_ONLY }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["id"]);
+        const id = noteIdArgument(arguments_, "id");
+        for (let attempt = 0;attempt < 2; attempt += 1) {
+          let before;
+          try {
+            before = await noteRevision(root, id);
+          } catch (error) {
+            const resolved = (await sessions.get()).kb.read(id, { maxBytes: 1 }).id;
+            if (isMissingPath(error))
+              return noteNotFound(id, resolved);
+            throw error;
+          }
+          const { kb } = await sessions.get();
+          const read = kb.read(id, { maxBytes: MAX_NOTE_READ_BYTES });
+          const after = await noteRevision(root, id);
+          if (read.id === id && before === after && (read.truncated || contentMatchesRevision(read.content, after))) {
+            return toolSuccess(fitBody(noteView(read, after)));
+          }
+          await sessions.invalidate();
+        }
+        return toolFailure(`note ${id} changed while it was read; call get_note again`);
+      }
+    },
+    {
+      definition: {
+        name: "backlinks",
+        title: "Find backlinks",
+        description: "Notes that link to this note, with the linking edges and authored relations.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["id"],
+          properties: linkProperties
+        },
+        annotations: { title: "Find backlinks", ...READ_ONLY }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["id", "depth", "limit"]);
+        const id = noteIdArgument(arguments_, "id");
+        const depth = optionalInteger(arguments_, "depth", 1, MAX_LINK_DEPTH) ?? 1;
+        const limit = optionalInteger(arguments_, "limit", 1, MAX_LINK_LIMIT) ?? DEFAULT_LINK_LIMIT;
+        const { kb } = await sessions.get();
+        return toolSuccess(fitNeighborhood(kb.backlinks(id, { depth, limit })));
+      }
+    },
+    {
+      definition: {
+        name: "links",
+        title: "Follow links",
+        description: "Notes linked from or to this note, with the edges and authored relations between them.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["id"],
+          properties: {
+            ...linkProperties,
+            direction: { type: "string", enum: LINK_DIRECTIONS, default: "both" }
+          }
+        },
+        annotations: { title: "Follow links", ...READ_ONLY }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["id", "direction", "depth", "limit"]);
+        const id = noteIdArgument(arguments_, "id");
+        const direction = optionalChoice(arguments_, "direction", LINK_DIRECTIONS) ?? "both";
+        const depth = optionalInteger(arguments_, "depth", 1, MAX_LINK_DEPTH) ?? 1;
+        const limit = optionalInteger(arguments_, "limit", 1, MAX_LINK_LIMIT) ?? DEFAULT_LINK_LIMIT;
+        const { kb } = await sessions.get();
+        return toolSuccess(fitNeighborhood(kb.links(id, { direction, depth, limit })));
+      }
+    }
+  ];
+}
+function fitNeighborhood(neighborhood) {
+  return fitResult({ ...neighborhood }, [
+    { kind: "list", field: "nodes" },
+    { kind: "list", field: "edges" },
+    { kind: "list", field: "relations" }
+  ]);
+}
+var CONTEXT_KINDS = ["auto", "file", "directory"];
+function contextTool(repository, sessions, build) {
+  return {
+    needsRepository: true,
+    definition: {
+      name: "context",
+      title: "Repository context",
+      description: "Agent guides, context notes, and repository memory records that apply to a file or directory " + "in the configured repository. Issues are reported in the result.",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["path"],
+        properties: {
+          path: {
+            type: "string",
+            minLength: 1,
+            maxLength: MAX_NOTE_ID_UTF8_BYTES,
+            description: "Repository-relative path, for example src/index.ts or . for the root."
+          },
+          kind: { type: "string", enum: CONTEXT_KINDS, default: "auto" }
+        }
+      },
+      annotations: { title: "Repository context", ...READ_ONLY }
+    },
+    handler: async (arguments_) => {
+      allowOnly(arguments_, ["path", "kind"]);
+      const target = requiredText(arguments_, "path", MAX_NOTE_ID_UTF8_BYTES);
+      const targetKind = optionalChoice(arguments_, "kind", CONTEXT_KINDS) ?? "auto";
+      const { snapshot } = await sessions.get();
+      const payload = await build(snapshot, { repositoryRoot: repository, target, targetKind });
+      return toolSuccess(fitResult({ ...payload, truncated: false }, [
+        { kind: "list", field: "contexts" },
+        { kind: "list", field: "guides" },
+        { kind: "list", field: "issues" },
+        { kind: "clear", field: "records", empty: null }
+      ]));
+    }
+  };
+}
+function alreadyExists(id, path) {
+  return toolFailure(`note ${id} already exists at ${path}; read it with get_note and change it with update_note_body`);
+}
+function authoringSuccess(result) {
+  return toolSuccess({ ...result });
+}
+async function writing(sessions, write) {
+  try {
+    return await write();
+  } finally {
+    await sessions.invalidate();
+  }
+}
+function writeTools(root, sessions) {
+  return [
+    {
+      writes: true,
+      definition: {
+        name: "create_note",
+        title: "Create a note",
+        description: "Create a new Markdown note with frontmatter. Never overwrites: an existing note is an error. " + "The parent directory must already exist. Search first to avoid duplicates.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["id", "title"],
+          properties: {
+            id: noteIdSchema,
+            title: { type: "string", minLength: 1, maxLength: MAX_QUERY_TEXT_UTF8_BYTES },
+            type: { type: "string", minLength: 1, maxLength: MAX_QUERY_METADATA_PATH_UTF8_BYTES, default: "note" },
+            tags: textListSchema(MAX_QUERY_TAGS, MAX_QUERY_TEXT_UTF8_BYTES, "Tags for the new note."),
+            body: { type: "string", description: "Markdown after the frontmatter. Defaults to a heading with the title." }
+          }
+        },
+        annotations: {
+          title: "Create a note",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false
+        }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["id", "title", "type", "tags", "body"]);
+        const id = noteIdArgument(arguments_, "id");
+        const title = requiredText(arguments_, "title", MAX_QUERY_TEXT_UTF8_BYTES);
+        const type = optionalText(arguments_, "type", MAX_QUERY_METADATA_PATH_UTF8_BYTES) ?? "note";
+        const tags = optionalTextList(arguments_, "tags", MAX_QUERY_TAGS, MAX_QUERY_TEXT_UTF8_BYTES);
+        const body = bodyArgument(arguments_, "body", false);
+        return writing(sessions, async () => {
+          let result;
+          try {
+            result = await createNote(root, {
+              id,
+              title,
+              type,
+              ...tags === undefined ? {} : { tags },
+              ...body === undefined ? {} : { body }
+            });
+          } catch (error) {
+            if (error instanceof NoteAlreadyExistsError)
+              return alreadyExists(id, error.path);
+            if (isMissingPath(error)) {
+              return toolFailure(`${errorMessage2(error)}; create_note does not create directories`);
+            }
+            throw error;
+          }
+          if (!result.changed)
+            return alreadyExists(id, result.path);
+          return authoringSuccess(result);
+        });
+      }
+    },
+    {
+      writes: true,
+      definition: {
+        name: "update_note_body",
+        title: "Replace a note body",
+        description: "Replace the Markdown after a note's frontmatter. expected_revision must be the note's current " + "revision; a stale one is a conflict and nothing is written.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["id", "body", "expected_revision"],
+          properties: {
+            id: noteIdSchema,
+            body: { type: "string" },
+            expected_revision: revisionSchema
+          }
+        },
+        annotations: {
+          title: "Replace a note body",
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: false
+        }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["id", "body", "expected_revision"]);
+        const id = noteIdArgument(arguments_, "id");
+        const body = bodyArgument(arguments_, "body", true) ?? "";
+        const expectedRevision = revisionArgument(arguments_, "expected_revision", true);
+        if (expectedRevision === undefined)
+          throw new ToolArgumentError(`Missing argument "expected_revision".`);
+        return writing(sessions, async () => {
+          try {
+            return authoringSuccess(await updateNoteBody(root, id, body, { expectedRevision }));
+          } catch (error) {
+            if (isMissingPath(error))
+              return noteNotFound(id);
+            throw error;
+          }
+        });
+      }
+    },
+    {
+      writes: true,
+      definition: {
+        name: "add_relation",
+        title: "Add a relation",
+        description: "Add a typed relation from one note to another in the source note's frontmatter. " + "Adding an existing relation changes nothing.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["source", "predicate", "target"],
+          properties: {
+            source: noteIdSchema,
+            predicate: {
+              type: "string",
+              minLength: 1,
+              maxLength: MAX_QUERY_METADATA_PATH_UTF8_BYTES,
+              description: "Relation name, for example supports or depends_on."
+            },
+            target: noteIdSchema,
+            expected_revision: revisionSchema
+          }
+        },
+        annotations: {
+          title: "Add a relation",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false
+        }
+      },
+      handler: async (arguments_) => {
+        allowOnly(arguments_, ["source", "predicate", "target", "expected_revision"]);
+        const source = noteIdArgument(arguments_, "source");
+        const predicate = requiredText(arguments_, "predicate", MAX_QUERY_METADATA_PATH_UTF8_BYTES);
+        const target = requiredText(arguments_, "target", MAX_NOTE_ID_UTF8_BYTES);
+        const expectedRevision = revisionArgument(arguments_, "expected_revision", false);
+        return writing(sessions, async () => {
+          try {
+            return authoringSuccess(await addNoteRelation(root, source, predicate, target, expectedRevision === undefined ? {} : { expectedRevision }));
+          } catch (error) {
+            if (!isMissingPath(error))
+              throw error;
+            const sourceMissing = await noteRevision(root, source).then(() => false, isMissingPath);
+            return noteNotFound(sourceMissing ? source : target);
+          }
+        });
+      }
+    }
+  ];
+}
+function catalogEntries(options, sessions) {
+  const [search, ...reads] = readTools(options.root, sessions);
+  const context = options.repository === undefined || options.context === undefined ? [] : [contextTool(options.repository, sessions, options.context)];
+  return [
+    ...search === undefined ? [] : [search],
+    ...context,
+    ...reads,
+    ...writeTools(options.root, sessions)
+  ];
+}
+function visibleEntries(entries, options) {
+  return entries.filter((entry) => !(options.readOnly && entry.writes === true) && !(options.repository === undefined && entry.needsRepository === true));
+}
+function createToolCatalog(options) {
+  const sessions = createVaultSessions({
+    root: options.root,
+    ...options.repository === undefined ? {} : { repository: options.repository },
+    ...options.dependencies === undefined ? {} : { dependencies: options.dependencies },
+    ...options.warn === undefined ? {} : { warn: options.warn }
+  });
+  const entries = visibleEntries(catalogEntries(options, sessions), options);
+  const handlers = new Map(entries.map((entry) => [entry.definition.name, entry.handler]));
+  return {
+    tools: entries.map((entry) => entry.definition),
+    async call(name, arguments_) {
+      const handler = handlers.get(name);
+      if (handler === undefined)
+        return toolFailure(`Unknown tool: ${name}`);
+      try {
+        return await handler(arguments_);
+      } catch (error) {
+        return failureFor(error);
+      }
+    },
+    close: () => sessions.close()
+  };
+}
+function serverInstructions(options) {
+  const writes = options.readOnly ? "This server is read-only: the write tools are off." : "Call search before create_note to avoid duplicates, and pass get_note's revision as " + "expected_revision to update_note_body.";
+  return `Wordcell vault at ${options.root}. Notes are Markdown files addressed by vault-relative IDs ` + `without .md, for example notes/decision. ${writes}`;
+}
+
 // src/rerank-credentials.ts
 import { constants as constants2 } from "fs";
 import { open } from "fs/promises";
@@ -1188,6 +2337,7 @@ Usage:
   wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
   wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--include-glob <pattern>]... [--exclude-glob <pattern>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--list-limit <0-1000>] [--force] [--json]
   wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
+  wordcell mcp --root <vault> [--repo <repository>] [--read-only]
   wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
   wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
   wordcell agents identity <repository-scope> [--json]
@@ -1424,7 +2574,7 @@ function parseCatalogCommand(arguments_) {
     }
   };
 }
-function metadataScalar(raw) {
+function metadataScalar2(raw) {
   const value = raw.trim();
   if (value.startsWith('"') || value.endsWith('"')) {
     try {
@@ -1457,7 +2607,7 @@ function metadataScalar(raw) {
   }
   return { ok: true, value };
 }
-function querySort(raw) {
+function querySort2(raw) {
   const value = raw.trim();
   if (value === "title" || value === "path" || value === "inbound" || value === "outbound") {
     return { kind: "builtin", field: value };
@@ -1522,7 +2672,7 @@ function parseListCommand(arguments_) {
         const path = equals === -1 ? "" : value.slice(0, equals).trim();
         if (path === "")
           return { ok: false, message: "--where requires path=value" };
-        const scalar = metadataScalar(value.slice(equals + 1));
+        const scalar = metadataScalar2(value.slice(equals + 1));
         if (!scalar.ok)
           return scalar;
         if (filters.length >= MAX_QUERY_FILTERS) {
@@ -1533,7 +2683,7 @@ function parseListCommand(arguments_) {
         }
         filters.push({ kind: "equals", path, value: scalar.value });
       } else if (argument === "--sort") {
-        const parsed = querySort(value);
+        const parsed = querySort2(value);
         if (parsed === null)
           return { ok: false, message: "--sort requires a field" };
         sort = parsed;
@@ -1707,7 +2857,7 @@ function parsePublishCommand(arguments_) {
         const path = equals === -1 ? "" : value.slice(0, equals).trim();
         if (path === "")
           return { ok: false, message: "--where requires path=value" };
-        const scalar = metadataScalar(value.slice(equals + 1));
+        const scalar = metadataScalar2(value.slice(equals + 1));
         if (!scalar.ok)
           return scalar;
         if (filters.length >= MAX_QUERY_FILTERS) {
@@ -1801,6 +2951,41 @@ function parseServeCommand(arguments_) {
   if (root === undefined)
     return { ok: false, message: "serve requires --root <directory>" };
   return { ok: true, value: { kind: "serve", root, host, port, json } };
+}
+function parseMcpCommand(arguments_) {
+  let root;
+  let repository;
+  let readOnly = false;
+  for (let cursor = 0;cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined)
+      continue;
+    if (argument === "--read-only") {
+      readOnly = true;
+      continue;
+    }
+    if (argument === "--root" || argument === "--repo") {
+      const value = readValue(arguments_, cursor);
+      if (value === null || value === "")
+        return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root")
+        root = value;
+      else
+        repository = value;
+      cursor += 1;
+      continue;
+    }
+    return {
+      ok: false,
+      message: argument.startsWith("--") ? "unknown mcp option" : "mcp does not accept positional arguments"
+    };
+  }
+  if (root === undefined)
+    return { ok: false, message: "mcp requires --root <vault>" };
+  return {
+    ok: true,
+    value: { kind: "mcp", root, ...repository === undefined ? {} : { repository }, readOnly }
+  };
 }
 function parseInboxCommand(arguments_) {
   let root = ".";
@@ -1958,7 +3143,7 @@ function parseSemanticCommand(command, arguments_) {
         const path = equals === -1 ? "" : value.slice(0, equals).trim();
         if (path === "")
           return { ok: false, message: "--where requires path=value" };
-        const scalar = metadataScalar(value.slice(equals + 1));
+        const scalar = metadataScalar2(value.slice(equals + 1));
         if (!scalar.ok)
           return scalar;
         if (filters.length >= MAX_QUERY_FILTERS) {
@@ -2877,6 +4062,8 @@ function parseArguments(arguments_) {
     return parsePublishCommand(arguments_.slice(1));
   if (command === "serve")
     return parseServeCommand(arguments_.slice(1));
+  if (command === "mcp")
+    return parseMcpCommand(arguments_.slice(1));
   return { ok: false, message: "unknown command" };
 }
 function embeddingCount(result) {
@@ -3644,6 +4831,63 @@ async function runServe(command, output, dependencies) {
 `);
   return 0;
 }
+function mcpContextBuilder(dependencies) {
+  return async (snapshot, request) => {
+    const inspection = await (dependencies.inspectAgentContextRepository ?? inspectAgentContextRepository)(snapshot.notes, request);
+    const memory = await (dependencies.buildRepositoryMemoryContext ?? buildRepositoryMemoryContext)(snapshot.notes, { repositoryRoot: request.repositoryRoot, target: inspection.target });
+    return contextPayload(inspection, snapshot, memory);
+  };
+}
+async function resolveMcpDirectories(command) {
+  const { root } = await resolveVault(command.root);
+  if (command.repository === undefined)
+    return { root };
+  const repository = await realpath2(resolve3(command.repository));
+  if (!(await stat2(repository)).isDirectory())
+    throw new Error(`--repo is not a directory: ${repository}`);
+  return { root, repository };
+}
+async function runMcp(command, output, dependencies) {
+  let directories;
+  try {
+    directories = await resolveMcpDirectories(command);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    output.stderr(`error: ${safe(message)}
+`);
+    return 2;
+  }
+  const version = await serverVersion();
+  const catalog = createToolCatalog({
+    ...directories,
+    readOnly: command.readOnly,
+    context: mcpContextBuilder(dependencies),
+    warn: (message) => output.stderr(`${safe(message)}
+`)
+  });
+  const instructions = serverInstructions({ root: directories.root, readOnly: command.readOnly });
+  const streams = mcpStreams(dependencies);
+  try {
+    return await runMcpServer({
+      catalog,
+      instructions,
+      version,
+      input: streams.input,
+      writeFrame: streams.writeFrame,
+      stderr: (text) => output.stderr(text)
+    });
+  } finally {
+    streams.restore();
+  }
+}
+function mcpStreams(dependencies) {
+  if (dependencies.mcp !== undefined)
+    return { ...dependencies.mcp, restore: () => {
+      return;
+    } };
+  const guard = guardStdout();
+  return { input: process.stdin, writeFrame: guard.writeFrame, restore: guard.restore };
+}
 async function runCatalog(command, output, dependencies) {
   const snapshot = await (dependencies.scanVault ?? scanVault)(command.root, command.options);
   const relativeIndex = relative(snapshot.root, snapshot.indexPath).split("\\").join("/");
@@ -3918,8 +5162,8 @@ function renderContext(inspection, snapshot, memory) {
   }
   if (memory.invalidRecords.total > 0) {
     lines.push(`Repository-memory errors (${memory.invalidRecords.returned}/${memory.invalidRecords.total}):`);
-    for (const invalid of memory.invalidRecords.details) {
-      lines.push(`  ${safe(invalid.path)}: ${invalid.issues.map(safe).join(" ")}`);
+    for (const invalid2 of memory.invalidRecords.details) {
+      lines.push(`  ${safe(invalid2.path)}: ${invalid2.issues.map(safe).join(" ")}`);
     }
   }
   if (memory.advisories.total > 0) {
@@ -4151,8 +5395,11 @@ async function runVault(command, output, dependencies) {
   output.stdout(command.json ? terminalSafeJson(backlinkPayload(lookup.note.path, backlinks, relationBacklinks)) : sanitizeTerminalText(renderBacklinks(lookup.note.path, backlinks, relationBacklinks)));
   return 0;
 }
+function machineJsonRequested(rawArguments) {
+  return rawArguments[0] !== "mcp" && rawArguments.includes("--json");
+}
 async function main4(rawArguments = process.argv.slice(2), output = defaultOutput2, dependencies = {}) {
-  const jsonRequested = rawArguments.includes("--json");
+  const jsonRequested = machineJsonRequested(rawArguments);
   const parsed = parseArguments(rawArguments);
   if (!parsed.ok) {
     if (jsonRequested) {
@@ -4225,6 +5472,8 @@ ${sanitizeTerminalText(usage)}`);
       return await runPublish(command, output, dependencies);
     if (command.kind === "serve")
       return await runServe(command, output, dependencies);
+    if (command.kind === "mcp")
+      return await runMcp(command, output, dependencies);
     if (command.kind === "inbox")
       return await runInbox(command, output, dependencies);
     if (command.kind === "catalog")
@@ -4268,7 +5517,7 @@ function strictProtocolObject(value) {
   return parsed;
 }
 async function runExecutable(rawArguments = process.argv.slice(2), dependencies = {}) {
-  if (!rawArguments.includes("--json")) {
+  if (!machineJsonRequested(rawArguments)) {
     return main4(rawArguments, defaultOutput2, dependencies);
   }
   return serializeStrictJson(async () => {
@@ -4293,7 +5542,7 @@ async function runExecutable(rawArguments = process.argv.slice(2), dependencies 
       return true;
     };
     const redirectedConsole = (...arguments_) => {
-      rawStderrWrite(`${format(...arguments_)}
+      rawStderrWrite(`${format2(...arguments_)}
 `);
     };
     try {

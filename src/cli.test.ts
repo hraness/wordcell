@@ -3359,3 +3359,160 @@ describe("kb check repository scope advisories", () => {
     }
   });
 });
+
+describe("mcp command", () => {
+  test("parses the vault, repository, and read-only options", () => {
+    expect(parseArguments(["mcp", "--root", "kb"])).toEqual({
+      ok: true,
+      value: { kind: "mcp", root: "kb", readOnly: false },
+    });
+    expect(parseArguments(["mcp", "--read-only", "--repo", "..", "--root", "kb"])).toEqual({
+      ok: true,
+      value: { kind: "mcp", root: "kb", repository: "..", readOnly: true },
+    });
+  });
+
+  test("rejects a missing root, unknown options, positional arguments, and missing values", () => {
+    expect(parseArguments(["mcp"])).toEqual({ ok: false, message: "mcp requires --root <vault>" });
+    expect(parseArguments(["mcp", "--root", "kb", "--json"])).toEqual({ ok: false, message: "unknown mcp option" });
+    expect(parseArguments(["mcp", "--root", "kb", "extra"])).toEqual({
+      ok: false,
+      message: "mcp does not accept positional arguments",
+    });
+    expect(parseArguments(["mcp", "--root"])).toEqual({ ok: false, message: "--root requires a value" });
+    expect(parseArguments(["mcp", "--root", "kb", "--repo"])).toEqual({ ok: false, message: "--repo requires a value" });
+    expect(parseArguments(["mcp", "--root", ""])).toEqual({ ok: false, message: "--root requires a value" });
+    expect(parseArguments(["mcp", "--root", "kb", "--repo", ""])).toEqual({ ok: false, message: "--repo requires a value" });
+  });
+
+  test("parse failures go to stderr even with --json, leaving stdout for protocol frames", async () => {
+    for (const arguments_ of [
+      ["mcp", "--root", "kb", "--json"],
+      ["mcp", "--json"],
+      ["mcp", "--root", "--json"],
+      ["mcp", "--root", ""],
+    ]) {
+      const captured = captureOutput();
+      expect(await main(arguments_, captured.output)).toBe(2);
+      expect(captured.stdout()).toBe("");
+      expect(captured.stderr()).toStartWith("error: ");
+    }
+  });
+
+  test("a missing vault or repository exits 2 with one stderr line before reading input", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-cli-mcp-"));
+    try {
+      let reads = 0;
+      const input = {
+        async *[Symbol.asyncIterator]() {
+          reads += 1;
+          yield new Uint8Array();
+        },
+      };
+      const frames: string[] = [];
+      const writeFrame = async (line: string) => { frames.push(line); };
+      const missingRoot = captureOutput();
+      expect(await main(
+        ["mcp", "--root", join(temporary, "absent")],
+        missingRoot.output,
+        { mcp: { input, writeFrame } },
+      )).toBe(2);
+      expect(missingRoot.stderr()).toStartWith("error: ");
+      expect(missingRoot.stderr().split("\n")).toHaveLength(2);
+      expect(missingRoot.stdout()).toBe("");
+
+      const vault = join(temporary, "kb");
+      await mkdir(vault);
+      const missingRepository = captureOutput();
+      expect(await main(
+        ["mcp", "--root", vault, "--repo", join(temporary, "absent-repository")],
+        missingRepository.output,
+        { mcp: { input, writeFrame } },
+      )).toBe(2);
+      expect(missingRepository.stderr()).toStartWith("error: ");
+      expect(missingRepository.stderr().split("\n")).toHaveLength(2);
+      expect(missingRepository.stdout()).toBe("");
+      expect(reads).toBe(0);
+      expect(frames).toEqual([]);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("serves frames through injected streams", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-cli-mcp-"));
+    const vault = join(temporary, "kb");
+    try {
+      expect(await main(["init", vault], captureOutput().output)).toBe(0);
+      const serve = async (extra: readonly string[], messages: readonly unknown[]) => {
+        const encoder = new TextEncoder();
+        const input = {
+          async *[Symbol.asyncIterator]() {
+            for (const message of messages) yield encoder.encode(`${JSON.stringify(message)}\n`);
+          },
+        };
+        const frames: string[] = [];
+        const captured = captureOutput();
+        const code = await main(["mcp", "--root", vault, ...extra], captured.output, {
+          mcp: { input, writeFrame: async (line) => { frames.push(line); } },
+        });
+        return {
+          code,
+          stdout: captured.stdout(),
+          responses: frames.map((line) => {
+            expect(line.endsWith("\n")).toBe(true);
+            return JSON.parse(line) as { id: number; result?: Record<string, unknown>; error?: unknown };
+          }),
+        };
+      };
+      const toolNames = (result: Record<string, unknown> | undefined) =>
+        (result?.tools as readonly { name: string }[]).map((tool) => tool.name);
+
+      const writable = await serve([], [
+        { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "test", version: "0" } } },
+        { jsonrpc: "2.0", method: "notifications/initialized" },
+        { jsonrpc: "2.0", id: 2, method: "tools/list" },
+        { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "list_notes", arguments: {} } },
+      ]);
+      expect(writable.code).toBe(0);
+      expect(writable.stdout).toBe("");
+      expect(writable.responses.map((response) => response.id)).toEqual([1, 2, 3]);
+      expect(writable.responses[0]?.result).toMatchObject({
+        protocolVersion: "2025-11-25",
+        capabilities: { tools: { listChanged: false } },
+        serverInfo: { name: "hraness-wordcell" },
+      });
+      expect(toolNames(writable.responses[1]?.result)).toEqual([
+        "search",
+        "list_notes",
+        "get_note",
+        "backlinks",
+        "links",
+        "create_note",
+        "update_note_body",
+        "add_relation",
+      ]);
+      expect(writable.responses[2]?.result).toMatchObject({ structuredContent: { truncated: false } });
+      expect(writable.responses[2]?.result?.isError).toBeUndefined();
+
+      const readOnly = await serve(["--read-only", "--repo", temporary], [
+        { jsonrpc: "2.0", id: 1, method: "tools/list" },
+        { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "context", arguments: { path: "kb" } } },
+      ]);
+      expect(readOnly.code).toBe(0);
+      expect(toolNames(readOnly.responses[0]?.result)).toEqual([
+        "search",
+        "context",
+        "list_notes",
+        "get_note",
+        "backlinks",
+        "links",
+      ]);
+      expect(readOnly.responses[1]?.result).toMatchObject({
+        structuredContent: { repositoryRoot: await realpath(temporary), vaultRoot: await realpath(vault) },
+      });
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+});

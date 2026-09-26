@@ -1237,4 +1237,4 @@ async function removeNoteRelation(root, sourceId, predicate, targetId, options =
   return runAuthoring(editNoteRelationProgram(nativeAuthoringPlatform, "remove", root, sourceId, predicate, targetId, options));
 }
 
-export { InvalidCanonicalNoteIdError, NoteRevisionConflictError, NoteAlreadyExistsError, NoteRecoveryRequiredError, canonicalNoteId, canonicalRelationTarget, normalizeRelationPredicate, noteRevision, listNoteRelations, createNote, createConceptNote, updateNoteBody, addNoteRelation, removeNoteRelation };
+export { NOTE_REVISION_PATTERN, InvalidCanonicalNoteIdError, NoteRevisionConflictError, NoteAlreadyExistsError, NoteRecoveryRequiredError, revisionFor, canonicalNoteId, canonicalRelationTarget, normalizeRelationPredicate, frontmatter, resolveVault, noteRevision, listNoteRelations, createNote, createConceptNote, updateNoteBody, addNoteRelation, removeNoteRelation };
