@@ -1,6 +1,6 @@
 # Public writing style
 
-<!-- synced from hraness/.github STYLE.md sha256:be6e2fd4488f500d4276fe7e9257568115dee2bf85e8627854938e7bb534eaea -->
+<!-- synced from hraness/.github STYLE.md sha256:3e0d4984501e1d7bfbaa2812fa0b71ba6846cc537d9e79c358e771e567aa58a5 -->
 
 This guide covers everything written for readers outside a repository: product pages, documentation, READMEs, interface text, metadata, and text a model writes for publication. Apply the voice rules in [`WRITING.md`](WRITING.md) first. The [documentation guidelines](https://github.com/hraness/.github/blob/main/DOCUMENTATION_GUIDELINES.md) choose a document's purpose and shape, and the [README guidelines](https://github.com/hraness/.github/blob/main/README_GUIDELINES.md) cover the repository front door.
 
@@ -81,10 +81,10 @@ Accuracy has priority over a local line-editing rule. Record a recurring excepti
 
 ## Keep one definition per product
 
-- Each product has one canonical one-line description in the portfolio registry. The page description, GitHub About text, package description, CLI introduction, README first sentence, `llms.txt` lead, and sibling sites use that line or a shortening of it.
+- Each product has one messaging record in the portfolio registry: a category, a tagline, and short, meta, medium, and long descriptions. [`MESSAGING.md`](https://github.com/hraness/.github/blob/main/MESSAGING.md) defines each field and the surfaces that use it. The page description, GitHub About text, package description, CLI introduction, README first paragraph, `llms.txt` summary, and sibling sites take their words from that record.
 - Shorten by cutting words from the original sentence. Do not replace plain words with house nouns: “a tool for creating a dossier on any person” should not become “evidence-backed dossiers and revisable models of people”.
 - Render repeated text from one constant: the visible FAQ and its JSON-LD, a page and its Markdown twin, a hidden agent layer and the visible page.
-- Describe a sibling product with its registry line. Say what two products do together only when both support it in shipped code, and take that sentence from the registry's relationships file.
+- Describe a sibling product with its registry name and `short` line. Say what two products do together only when both support it in shipped code, and take that sentence from the registry's relationships file.
 - Do not paste a marketing sentence into several repositories. Put shared copy in a shared component or the registry.
 
 ## Cite sources exactly
@@ -100,7 +100,7 @@ Accuracy has priority over a local line-editing rule. Record a recurring excepti
 
 Most Hraness copy is drafted by agents working inside repository guides full of delivery and governance language. That language belongs in `AGENTS.md`. On a product page it tells the reader how carefully something was built instead of what it does for them.
 
-- Treat the vocabulary of `AGENTS.md`, CI, admission ledgers, and data schemas as internal. On a page for readers outside the repository, define such a word where it first appears (a technical reference may) or say what the reader gets instead. The words that leak most often are *admission*, *admitted*, *qualification*, *qualified*, *custody*, *settlement*, *settled*, *receipt*, *attest*, *attested*, *evidence-backed*, *provenance* (as a label), *bounded*, *boundary*, *typed*, *contract*, *fenced*, *lease*, *manifest*, *promoted*, *gate*, *lane*, *workstream*, *surface*, *projection*, *foundation*, *substrate*, *authority*, *inert*, *canonical*, *retained*, *source pilot*, *source-bound*, *steel thread*, and *owns* (for a source or a record). “Every turn lands on one eligible account, bounded, with custody proven at settlement” becomes “Each task runs on one of your accounts that is signed in, idle, and not at a known quota limit, and xcb keeps that account locked until the provider process exits.”
+- Treat the vocabulary of `AGENTS.md`, CI, admission ledgers, and data schemas as internal. On a page for readers outside the repository, define such a word where it first appears (a technical reference may) or say what the reader gets instead. The words that leak most often are *admission*, *admitted*, *qualification*, *qualified*, *custody*, *settlement*, *settled*, *receipt*, *attest*, *attested*, *evidence-backed*, *provenance* (as a label), *bounded*, *boundary*, *typed*, *contract*, *fenced*, *lease*, *manifest*, *promoted*, *gate*, *lane*, *workstream*, *surface*, *projection*, *foundation*, *substrate*, *authority*, *inert*, *canonical*, *retained*, *source pilot*, *source-bound*, *steel thread*, and *owns* (for a source or a record). “Every turn lands on one eligible account, bounded, with custody proven at settlement” becomes “Each task runs on one of your signed-in connections that is idle and not at a known quota limit, and xcb keeps that connection locked until the provider process exits.”
 - Do not stack precision words. *Exact*, *explicit*, *full*, *complete*, *independently*, and *retained* each have to change the meaning of their sentence. “Sign only the exact retained draft” becomes “Sign the draft you saved.”
 - Do not let one word become the page's signature. When most sections lean on the same framing word, keep it where it marks a real distinction and rewrite the rest.
 - Lead a product page with what the reader can do, then the mechanism. A hero that stacks four mechanisms into one sentence makes the reader do the work.
@@ -153,7 +153,7 @@ Readers trust a page that states its limits plainly. They skim a page that repea
 - Put literal input and interface values in `code`.
 - Use an ellipsis glyph (`…`) only when an action opens another input step.
 - Do not use em dashes in authored text: prose, titles, meta descriptions, social text, alt text, captions, image credits, list separators, and the templates that generate them. Rewrite the sentence instead of substituting a spaced hyphen. Quoted third-party titles keep their own punctuation. Use parentheses only for a short, necessary explanation.
-- Use each product's name exactly as the portfolio registry spells it, including case (xcb, Textbutler, AI Charts, Soundfish, Sys1). Do not use the repository slug or the domain as the name in prose, and do not use a product name as a common noun.
+- Use each product's prose name exactly as its messaging record spells it (`names.name`), including case (xcb, Textbutler, AI Charts, Soundfish, Sys1). The all-capitals `names.catalog` form belongs only in designs that set every name in capitals. Do not use the repository slug or the domain as the name in prose, and do not use a product name as a common noun.
 - Give each destination one label across the header, footer, breadcrumbs, and Markdown twins.
 - Make interpolated counts agree with their nouns (“1 check”, “2 checks”), and test zero, one, and several.
 - Spell out zero through nine in prose. Use numerals for 10 or more, measurements, dates, and money.
@@ -230,7 +230,7 @@ A prompt, skill, or template that makes a model write published text is public c
 - Tests pin facts: commands, versions, counts, limits, prices, legal text, and links that resolve. They do not pin headings, taglines, or prose sentences. When a test protects a limit, it asserts the limit in plain words.
 - Assert the shape of a real value, such as a run URL that matches `/runs/\d{10,}/`, never a placeholder.
 - A test or validator may require that a disclosure exists and matches the provenance record. It may not require a reviewer name or a review claim, except that an essay or blog post's provenance note must match its review record.
-- Guides, briefs, examples, schemas, and fixtures are copy one step removed; agents copy them word for word. Keep taglines, slogans, and internal vocabulary out of them. Do not define a field every item must fill (`closing`, `tagline`) whose role invites a closer or a slogan.
+- Guides, briefs, examples, schemas, and fixtures are copy one step removed; agents copy them word for word. Keep taglines, slogans, and internal vocabulary out of them. Do not define a field every item must fill, such as a `closing` line, whose role invites a closer or a slogan. A product's messaging `tagline` is a sentence with one claim the page proves, defined in `MESSAGING.md`.
 
 ## Say who wrote and who checked
 
