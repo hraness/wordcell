@@ -1070,6 +1070,14 @@ function absoluteSource(value, label, allowLocalPdf) {
   }
   return normalizedPublicUrl(value, label);
 }
+function savedSourceProblem(value) {
+  try {
+    absoluteSource(value, "source", false);
+    return;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
 function confined(root, path, label) {
   const pathFromRoot = relative(root, path);
   if (pathFromRoot === "" || pathFromRoot === ".." || pathFromRoot.startsWith(`..${sep}`) || pathFromRoot.includes(`\x00`)) {
@@ -1940,4 +1948,4 @@ async function backfillSavedUrlMetadata(options, dependencies) {
   return report(generatedAt, records.length, items, interrupted);
 }
 
-export { isolatedMetadataSearchEnvironment, createExactUrlSearchQuery, createRustMetadataSearchProvider, parseUrlMetadataDocument, createUrlMetadataDocument, renderUrlMetadataDocument, discoverSavedUrlRecords, readUrlMetadataDocument, writeUrlMetadataDocument, backfillSavedUrlMetadata };
+export { isolatedMetadataSearchEnvironment, createExactUrlSearchQuery, createRustMetadataSearchProvider, parseUrlMetadataDocument, createUrlMetadataDocument, renderUrlMetadataDocument, savedSourceProblem, discoverSavedUrlRecords, readUrlMetadataDocument, writeUrlMetadataDocument, backfillSavedUrlMetadata };

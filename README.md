@@ -184,6 +184,7 @@ provider failure retains the baseline order with a diagnostic. See the
 | Publish selected notes | `wordcell publish --root kb --out site/ --include notes/parser-contract --dry-run --json` | Previews a static site selection locally; remove `--dry-run` to build it. |
 | Preview a site | `wordcell serve --root site --port 8080` | Serves a published site on a loopback static file server with the emitted `404.html` fallback. |
 | Connect an MCP client | `wordcell mcp --root kb` | Serves this vault to a local MCP client over standard input and output; `--read-only` removes the write tools. Available from source until the next release. |
+| Import from Supermemory | `wordcell import supermemory documents.json --root kb` | Turns saved Supermemory API responses into Markdown notes and reports local edits as conflicts on later imports. Available from source until the next release. |
 
 Use `--json` for structured output and `wordcell --help` for the complete command
 surface. [Full command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md#command-surface).

@@ -3,10 +3,10 @@ import {
   GRAPH_LIMITS,
   GraphAuthorityError,
   validateGraphQueryRequest
-} from "./index-pz2b2x0y.js";
+} from "./index-pgtm2nhf.js";
 import {
   scanVault
-} from "./index-8v6k9h4r.js";
+} from "./index-1s8mc4hz.js";
 import {
   analyzeAuthoredRepositoryScopes
 } from "./index-06c9ctr6.js";
@@ -19,7 +19,7 @@ import {
   documentIdState,
   isCanonicalNoteId,
   parseNote
-} from "./index-zy7an84p.js";
+} from "./index-jvb7w0gg.js";
 import {
   __require
 } from "./index-z1w83f81.js";
@@ -231,7 +231,7 @@ import { lstat, open } from "fs/promises";
 var graphCacheFileSystem = { lstat, open };
 
 // src/graph-authority.ts
-var openOhGraphAdapter = async (...args) => await (await import("./authority-3ga47syb.js")).openOhGraphAdapter(...args);
+var openOhGraphAdapter = async (...args) => await (await import("./authority-35cbvp1x.js")).openOhGraphAdapter(...args);
 var MAX_CACHE_BYTES = 67108864;
 var ignoredCache = `# Disposable Wordcell graph state. Rebuild from Markdown.
 *

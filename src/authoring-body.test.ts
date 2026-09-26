@@ -7,7 +7,14 @@ import { join } from "node:path";
 import {
   NoteRevisionConflictError, noteRevision, updateNoteBody, type UpdateNoteBodyOptions,
 } from "./authoring.js";
-import { MAX_NOTE_BYTES, frontmatter, renderUpdatedNoteBody } from "./authoring-model.js";
+import {
+  MAX_NOTE_BYTES, NoteAlreadyExistsError, frontmatter, renderUpdatedNoteBody, renderUpdatedNoteBodyAndFields,
+  type FrontmatterFields,
+} from "./authoring-model.js";
+import { nativeAuthoringPlatform } from "./authoring-platform.js";
+import { isMetadataNumber } from "./graph.js";
+import { createNoteProgram, updateNoteBodyProgram } from "./authoring-program.js";
+import { runAuthoring } from "./authoring-runtime.js";
 
 const fixtures: string[] = [];
 afterEach(async () => {
@@ -193,5 +200,169 @@ describe("body update preservation properties", () => {
       expect(next).toBe(`${header}${newline}${newline}${nextBody.endsWith("\n") ? nextBody : `${nextBody}\n`}`);
       expect(frontmatter(next, snapshot.relativePath).document.toJS()).toEqual(frontmatter(snapshot.content, snapshot.relativePath).document.toJS());
     }), { numRuns: 100 });
+  });
+});
+
+describe("internal frontmatter fields", () => {
+  const fields: FrontmatterFields = {
+    imported_from: "supermemory",
+    external_id: "acxV5LHMEsG2hMSNb4umbn",
+    created: "2025-04-15T09:30:00.000Z",
+    version: 3,
+    is_static: true,
+    source_document_ids: ["doc_a", "doc_b"],
+    metadata: { priority: 2, "team:name": "platform", flagged: false, label: "true" },
+  };
+
+  async function vault() {
+    const { base, root } = await fixture();
+    const lock = { cacheHome: join(base, "locks"), waitTimeoutMs: 2_000 };
+    return { root, lock };
+  }
+
+  test("create renders fields after title and tags and round-trips them", async () => {
+    const { root, lock } = await vault();
+    const input = { id: "notes/imported", title: "Imported", type: "note", tags: ["memory"], body: "Imported text.\n" };
+    const created = await runAuthoring(createNoteProgram(nativeAuthoringPlatform, root, input, { lock }, fields));
+    expect(created.changed).toBe(true);
+    const content = await readFile(join(root, "notes/imported.md"), "utf8");
+    const keys = Object.keys(frontmatter(content, "notes/imported.md").document.toJS() as object);
+    expect(keys).toEqual([
+      "document_id", "type", "title", "tags", "imported_from", "external_id", "created", "version", "is_static",
+      "source_document_ids", "metadata",
+    ]);
+    const values = frontmatter(content, "notes/imported.md").document.toJS() as Record<string, unknown>;
+    for (const [key, value] of Object.entries(fields)) expect(values[key]).toEqual(value);
+    expect(content.endsWith("---\n\nImported text.\n")).toBe(true);
+
+    const again = await runAuthoring(createNoteProgram(nativeAuthoringPlatform, root, input, { lock }, fields));
+    expect(again).toMatchObject({ changed: false, revision: created.revision });
+    expect(await readFile(join(root, "notes/imported.md"), "utf8")).toBe(content);
+
+    const differing = runAuthoring(createNoteProgram(nativeAuthoringPlatform, root, input, { lock }, { ...fields, version: 4 }));
+    await expect(differing).rejects.toBeInstanceOf(NoteAlreadyExistsError);
+    await expect(differing).rejects.toThrow("version differs");
+    const missing = runAuthoring(createNoteProgram(nativeAuthoringPlatform, root, input, { lock }, { ...fields, extra_key: "x" }));
+    await expect(missing).rejects.toThrow("extra_key differs");
+    expect(await readFile(join(root, "notes/imported.md"), "utf8")).toBe(content);
+  });
+
+  test.each([
+    [{ document_id: "x" }, "reserved"],
+    [{ type: "note" }, "reserved"],
+    [{ title: "Other" }, "reserved"],
+    [{ tags: ["a"] }, "reserved"],
+    [{ relations: "x" }, "reserved"],
+    [{ Upper: "x" }, "not a valid frontmatter field name"],
+    [{ "bad-key": "x" }, "not a valid frontmatter field name"],
+    [{ multi: "one\ntwo" }, "single line"],
+    [{ nul: "a\u0000b" }, "single line"],
+    [{ lone: "\ud800" }, "well-formed"],
+    [{ infinite: Number.POSITIVE_INFINITY }, "finite number"],
+    [{ list: ["ok", 3] }, "must be a string"],
+    [{ nested: { deeper: { no: 1 } } }, "must be a string"],
+    [{ nested: { "bad key": 1 } }, "invalid key"],
+    [{ nested: JSON.parse('{"__proto__": 1}') as Record<string, number> }, "invalid key"],
+  ] as const)("create rejects malformed fields %j", async (bad, message) => {
+    const { root, lock } = await vault();
+    const input = { id: "notes/bad", title: "Bad", type: "note" };
+    await expect(runAuthoring(createNoteProgram(
+      nativeAuthoringPlatform, root, input, { lock }, bad as unknown as FrontmatterFields,
+    ))).rejects.toThrow(message);
+    expect(await readdir(join(root, "notes"))).toEqual(["research.md"]);
+  });
+
+  test("update sets fields, deletes nulls, and replaces the body in one revision", async () => {
+    const header = [
+      "---", "document_id: stable-note", "type: note", "title: Research", "custom: keep # comment",
+      "imported_from: supermemory", "status: queued", "import_digest: sha256:old",
+      "relations:", "  supersedes: [notes/older]", "---",
+    ].join("\n");
+    const { root, path, options } = await fixture(`${header}\n\nOld body.\n`);
+    const updated = await runAuthoring(updateNoteBodyProgram(
+      nativeAuthoringPlatform, root, "notes/research", "New body.", options,
+      { title: "Renamed", status: null, import_digest: "sha256:new", updated: "2025-05-01T00:00:00.000Z" },
+    ));
+    expect(updated).toMatchObject({
+      changed: true, documentId: "stable-note", relations: [{ predicate: "supersedes", target: "notes/older" }],
+    });
+    const content = await readFile(path, "utf8");
+    expect(updated.revision).toBe(await noteRevision(root, "notes/research"));
+    expect(content.endsWith("---\n\nNew body.\n")).toBe(true);
+    expect(frontmatter(content, "notes/research.md").document.toJS()).toEqual({
+      document_id: "stable-note", type: "note", title: "Renamed", custom: "keep", imported_from: "supermemory",
+      import_digest: "sha256:new", relations: { supersedes: ["notes/older"] }, updated: "2025-05-01T00:00:00.000Z",
+    });
+    expect(content).toContain("custom: keep # comment");
+
+    const same = await runAuthoring(updateNoteBodyProgram(
+      nativeAuthoringPlatform, root, "notes/research", "New body.", { ...options, expectedRevision: updated.revision },
+      { title: "Renamed", status: null, import_digest: "sha256:new" },
+    ));
+    expect(same).toMatchObject({ changed: false, revision: updated.revision });
+    expect(await readFile(path, "utf8")).toBe(content);
+  });
+
+  test("update rejects reserved fields and stale revisions without writing", async () => {
+    const { root, path, options } = await fixture();
+    const before = await readFile(path, "utf8");
+    for (const bad of [{ document_id: "x" }, { relations: null }, { type: "note" }, { title: "" }]) {
+      await expect(runAuthoring(updateNoteBodyProgram(
+        nativeAuthoringPlatform, root, "notes/research", "New.", options, bad,
+      ))).rejects.toThrow();
+    }
+    await expect(runAuthoring(updateNoteBodyProgram(
+      nativeAuthoringPlatform, root, "notes/research", "New.", { ...options, expectedRevision: `sha256:${"0".repeat(64)}` },
+      { import_digest: "sha256:new" },
+    ))).rejects.toBeInstanceOf(NoteRevisionConflictError);
+    expect(await readFile(path, "utf8")).toBe(before);
+  });
+
+  test("fields need a frontmatter map", () => {
+    const snapshot = { content: "Legacy prose.\n", relativePath: "notes/legacy.md" };
+    expect(() => renderUpdatedNoteBodyAndFields(
+      snapshot, frontmatter(snapshot.content, snapshot.relativePath), "New.", { import_digest: "sha256:new" },
+    )).toThrow("frontmatter map");
+  });
+
+  test("an update without fields is byte-identical to the body-only renderer", () => {
+    const body = fc.array(fc.constantFrom("a", "é", "\n", "\r\n", "---", " "), { maxLength: 40 }).map((parts) => parts.join(""));
+    fc.assert(fc.property(body, fc.constantFrom("\n", "\r\n"), fc.constantFrom(undefined, {}), (nextBody, newline, empty) => {
+      const header = ["---", "document_id: stable-note", "label: 'x' # keep", "---"].join(newline);
+      const snapshot = { content: `${header}${newline}${newline}Old.${newline}`, relativePath: "notes/research.md" };
+      expect(renderUpdatedNoteBodyAndFields(snapshot, frontmatter(snapshot.content, snapshot.relativePath), nextBody, empty))
+        .toBe(renderUpdatedNoteBody(snapshot, frontmatter(snapshot.content, snapshot.relativePath), nextBody));
+    }), { numRuns: 100 });
+  });
+
+  test("integers outside the safe range are refused, because the vault reader rejects them", () => {
+    const snapshot = { content: "---\ndocument_id: stable-note\n---\n\nOld.\n", relativePath: "notes/research.md" };
+    for (const value of [1e21, 2 ** 53 + 2, -(2 ** 53) - 2, 1.5e300]) {
+      expect(() => renderUpdatedNoteBodyAndFields(snapshot, frontmatter(snapshot.content, snapshot.relativePath), "New.", {
+        big: value,
+      })).toThrow("safe integer when integral");
+      expect(() => renderUpdatedNoteBodyAndFields(snapshot, frontmatter(snapshot.content, snapshot.relativePath), "New.", {
+        map: { big: value },
+      })).toThrow("safe integer when integral");
+    }
+    for (const value of [2 ** 53 - 1, -(2 ** 53 - 1), 1.5, 1e-7]) {
+      const next = renderUpdatedNoteBodyAndFields(snapshot, frontmatter(snapshot.content, snapshot.relativePath), "New.", {
+        kept: value,
+      });
+      expect((frontmatter(next, snapshot.relativePath).document.toJS() as Record<string, unknown>).kept).toBe(value);
+    }
+  });
+
+  test("rendered fields round-trip for arbitrary single-line values", () => {
+    const line = fc.string({ maxLength: 40 }).filter((value) => !/[\u0000-\u001f\u007f]/u.test(value)
+      && Buffer.from(value, "utf8").toString("utf8") === value);
+    fc.assert(fc.property(line, fc.array(line, { maxLength: 4 }), fc.double({ noNaN: true, noDefaultInfinity: true }).map((value) => Object.is(value, -0) ? 0 : value).filter(isMetadataNumber), (text, list, number) => {
+      const snapshot = { content: "---\ndocument_id: stable-note\n---\n\nOld.\n", relativePath: "notes/research.md" };
+      const next = renderUpdatedNoteBodyAndFields(snapshot, frontmatter(snapshot.content, snapshot.relativePath), "New.", {
+        text, list, number, map: { key: text },
+      });
+      const values = frontmatter(next, snapshot.relativePath).document.toJS() as Record<string, unknown>;
+      expect(values).toEqual({ document_id: "stable-note", text, list, number, map: { key: text } });
+    }), { numRuns: 200 });
   });
 });

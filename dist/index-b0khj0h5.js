@@ -5,9 +5,10 @@ import {
 import {
   isCanonicalNoteId,
   isCanonicalRelationPredicate,
+  isMetadataNumber,
   parseDocumentId,
   parseQualifiedDocumentUri
-} from "./index-zy7an84p.js";
+} from "./index-jvb7w0gg.js";
 
 // src/authoring-model.ts
 import { createHash } from "crypto";
@@ -462,13 +463,159 @@ function renderUpdatedNoteBody(snapshot, parts, body) {
   const header = snapshot.content.slice(0, snapshot.content.length - parts.bodySuffix.length);
   return `${header}${parts.newline}${parts.newline}${normalized}`;
 }
-function renderCreatedNote(input, documentId) {
+var MAX_FRONTMATTER_FIELDS = 64;
+var MAX_FRONTMATTER_LIST_ITEMS = 256;
+var FRONTMATTER_FIELD_KEY = /^[a-z][a-z0-9_]{0,63}$/u;
+var FRONTMATTER_MAP_KEY = /^[A-Za-z0-9_.:-]{1,64}$/u;
+var RESERVED_FRONTMATTER_FIELDS = new Set([
+  "document_id",
+  "type",
+  "title",
+  "tags",
+  "relations"
+]);
+function validateFieldString(value, label) {
+  if (typeof value !== "string")
+    throw new TypeError(`frontmatter field ${label} must be a string`);
+  if (Buffer.from(value, "utf8").toString("utf8") !== value || /[\u0000-\u001f\u007f]/u.test(value)) {
+    throw new TypeError(`frontmatter field ${label} must be a single line of well-formed text`);
+  }
+  return value;
+}
+function validateFieldScalar(value, label) {
+  if (typeof value === "boolean")
+    return value;
+  if (typeof value === "number") {
+    if (!isMetadataNumber(value)) {
+      throw new TypeError(`frontmatter field ${label} must be a finite number and a safe integer when integral`);
+    }
+    return value;
+  }
+  return validateFieldString(value, label);
+}
+function validateFieldValue(value, key) {
+  if (Array.isArray(value)) {
+    if (value.length > MAX_FRONTMATTER_LIST_ITEMS) {
+      throw new TypeError(`frontmatter field ${key} has too many items`);
+    }
+    return value.map((item, index) => validateFieldString(item, `${key}[${index}]`));
+  }
+  if (typeof value === "object" && value !== null) {
+    if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+      throw new TypeError(`frontmatter field ${key} must be a plain map`);
+    }
+    const entries = Object.entries(value);
+    if (entries.length > MAX_FRONTMATTER_FIELDS) {
+      throw new TypeError(`frontmatter field ${key} has too many keys`);
+    }
+    const result = {};
+    for (const [nested, item] of entries) {
+      if (!FRONTMATTER_MAP_KEY.test(nested) || nested === "__proto__") {
+        throw new TypeError(`frontmatter field ${key} has an invalid key: ${JSON.stringify(nested)}`);
+      }
+      result[nested] = validateFieldScalar(item, `${key}.${nested}`);
+    }
+    return result;
+  }
+  return validateFieldScalar(value, key);
+}
+function validateFieldKey(key, allowTitle) {
+  if (!FRONTMATTER_FIELD_KEY.test(key)) {
+    throw new TypeError(`not a valid frontmatter field name: ${JSON.stringify(key)}`);
+  }
+  if (RESERVED_FRONTMATTER_FIELDS.has(key) && !(allowTitle && key === "title")) {
+    throw new TypeError(`frontmatter field ${key} is reserved`);
+  }
+}
+function validateFrontmatterFields(fields) {
+  if (fields === undefined)
+    return {};
+  const entries = Object.entries(fields);
+  if (entries.length > MAX_FRONTMATTER_FIELDS)
+    throw new TypeError("too many frontmatter fields");
+  const result = {};
+  for (const [key, value] of entries) {
+    validateFieldKey(key, false);
+    result[key] = validateFieldValue(value, key);
+  }
+  return result;
+}
+function validateFrontmatterFieldUpdates(fields) {
+  if (fields === undefined)
+    return {};
+  const entries = Object.entries(fields);
+  if (entries.length > MAX_FRONTMATTER_FIELDS)
+    throw new TypeError("too many frontmatter fields");
+  const result = {};
+  for (const [key, value] of entries) {
+    validateFieldKey(key, true);
+    if (key === "title") {
+      if (typeof value !== "string")
+        throw new TypeError("frontmatter field title must be a string");
+      result[key] = validateTitle(value);
+    } else {
+      result[key] = value === null ? null : validateFieldValue(value, key);
+    }
+  }
+  return result;
+}
+function canonicalJson(value) {
+  if (Array.isArray(value))
+    return `[${value.map(canonicalJson).join(",")}]`;
+  if (typeof value === "object" && value !== null) {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "undefined";
+}
+function topLevelValue(parts, key) {
+  const contents = parts.document.contents;
+  if (!isMap(contents) || !contents.has(key))
+    return;
+  const node = contents.get(key, true);
+  if (typeof node === "object" && node !== null && "toJSON" in node && typeof node.toJSON === "function") {
+    return node.toJSON();
+  }
+  return node;
+}
+function sameFrontmatterValue(present, requested) {
+  return canonicalJson(present) === canonicalJson(requested);
+}
+function renderUpdatedNoteBodyAndFields(snapshot, parts, body, fields) {
+  const updates = validateFrontmatterFieldUpdates(fields);
+  const bodyOnly = renderUpdatedNoteBody(snapshot, parts, body);
+  if (Object.keys(updates).length === 0)
+    return bodyOnly;
+  if (!parts.hadFrontmatter || !isMap(parts.document.contents)) {
+    throw new TypeError("frontmatter fields require a note with a frontmatter map");
+  }
+  const contents = parts.document.contents;
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === null) {
+      contents.delete(key);
+    } else if (!sameFrontmatterValue(topLevelValue(parts, key), value)) {
+      contents.set(key, parts.document.createNode(value));
+    }
+  }
+  const content = renderFrontmatter({
+    ...parts,
+    bodySuffix: `${parts.newline}${parts.newline}${normalizedRequestedBody(body)}`
+  });
+  if (Buffer.byteLength(content, "utf8") > MAX_NOTE_BYTES) {
+    throw new RangeError("the note is too large for bounded authoring");
+  }
+  return content;
+}
+function renderCreatedNote(input, documentId, fields) {
   const title = validateTitle(input.title);
   const type = validateType(input.type);
   const tags = validateTags(input.tags);
+  const extra = validateFrontmatterFields(fields);
   const metadata = { document_id: documentId, type, title };
   if (tags.length > 0)
     metadata["tags"] = tags;
+  for (const [key, value] of Object.entries(extra))
+    metadata[key] = value;
   const document = new Document(metadata, { schema: "core" });
   const body = normalizedRequestedBody(input.body ?? `# ${title}
 `);
@@ -517,8 +664,9 @@ function existingDocumentId(parts) {
     return { kind: "invalid" };
   }
 }
-function assertCompatibleCreate(snapshot, input, requestedDocumentId) {
+function assertCompatibleCreate(snapshot, input, requestedDocumentId, fields) {
   const parts = frontmatter(snapshot.content, snapshot.relativePath);
+  const requestedFields = validateFrontmatterFields(fields);
   const requestedType = validateType(input.type);
   const requestedTitle = validateTitle(input.title);
   if (topLevelScalar(parts, "type") !== requestedType) {
@@ -534,6 +682,11 @@ function assertCompatibleCreate(snapshot, input, requestedDocumentId) {
   }
   if (input.body !== undefined && parts.bodySuffix !== `${parts.newline}${parts.newline}${normalizedRequestedBody(input.body)}`) {
     throw new NoteAlreadyExistsError(snapshot.relativePath, "body differs");
+  }
+  for (const [key, value] of Object.entries(requestedFields)) {
+    if (!sameFrontmatterValue(topLevelValue(parts, key), value)) {
+      throw new NoteAlreadyExistsError(snapshot.relativePath, `${key} differs`);
+    }
   }
   const existingId = existingDocumentId(parts);
   if (requestedDocumentId !== undefined && (existingId.kind !== "valid" || existingId.documentId !== requestedDocumentId)) {
@@ -1125,10 +1278,11 @@ function installNote(platform, vault, id, content, expected, lock, dependencies)
     }));
   });
 }
-function createNoteProgram(platform, root, input, options) {
+function createNoteProgram(platform, root, input, options, fields) {
   return Effect2.gen(function* () {
     const vault = yield* authoringNative(() => platform.resolveVault(root));
     const id = yield* authoringSync(() => canonicalNoteId(input.id));
+    const extra = yield* authoringSync(() => validateFrontmatterFields(fields));
     const requestedDocumentId = yield* authoringSync(() => input.documentId === undefined ? undefined : parseDocumentId(input.documentId));
     const expected = yield* authoringSync(() => checkedExpectedRevision(options));
     const dependencies = yield* authoringSync(() => platform.dependenciesFor(options.dependencies));
@@ -1137,13 +1291,13 @@ function createNoteProgram(platform, root, input, options) {
       const existing = yield* authoringNative(() => platform.readOptionalSnapshot(vault, id));
       if (existing !== null) {
         yield* authoringSync(() => assertExpected(existing, expected));
-        const compatible = yield* authoringSync(() => assertCompatibleCreate(existing, input, requestedDocumentId));
+        const compatible = yield* authoringSync(() => assertCompatibleCreate(existing, input, requestedDocumentId, extra));
         return yield* authoringSync(() => noteResult(existing, compatible.relations, false, compatible.documentId));
       }
       if (expected !== undefined)
         return yield* fail(new NoteRevisionConflictError(`${id}.md`, expected, null));
       const documentId = yield* authoringSync(() => requestedDocumentId ?? parseDocumentId(dependencies.documentId()));
-      const content = yield* authoringSync(() => renderCreatedNote(input, documentId));
+      const content = yield* authoringSync(() => renderCreatedNote(input, documentId, extra));
       const revision = yield* installNote(platform, vault, id, content, null, lock, dependencies);
       return { changed: true, path: `${id}.md`, revision, relations: [], documentId };
     }), (lock) => authoringNative(() => lock.release()));
@@ -1177,9 +1331,10 @@ function editNoteRelationProgram(platform, operation, root, sourceIdInput, predi
     }), (lock) => authoringNative(() => lock.release()));
   });
 }
-function updateNoteBodyProgram(platform, root, idInput, body, options) {
+function updateNoteBodyProgram(platform, root, idInput, body, options, fields) {
   return Effect2.gen(function* () {
     const id = yield* authoringSync(() => canonicalNoteId(idInput));
+    const updates = yield* authoringSync(() => validateFrontmatterFieldUpdates(fields));
     const expected = yield* authoringSync(() => {
       if (typeof options?.expectedRevision !== "string") {
         throw new TypeError("expectedRevision is required for a note body update");
@@ -1198,7 +1353,7 @@ function updateNoteBodyProgram(platform, root, idInput, body, options) {
         return yield* fail(new TypeError("the note has an invalid document_id"));
       const documentId = identity.kind === "valid" ? identity.documentId : undefined;
       const relations = yield* authoringSync(() => relationsFromParts(parts, source.relativePath));
-      const content = yield* authoringSync(() => renderUpdatedNoteBody(source, parts, body));
+      const content = yield* authoringSync(() => renderUpdatedNoteBodyAndFields(source, parts, body, updates));
       if (content === source.content)
         return yield* authoringSync(() => noteResult(source, relations, false, documentId));
       const revision = yield* installNote(platform, vault, id, content, source, lock, dependencies);
@@ -1237,4 +1392,4 @@ async function removeNoteRelation(root, sourceId, predicate, targetId, options =
   return runAuthoring(editNoteRelationProgram(nativeAuthoringPlatform, "remove", root, sourceId, predicate, targetId, options));
 }
 
-export { NOTE_REVISION_PATTERN, InvalidCanonicalNoteIdError, NoteRevisionConflictError, NoteAlreadyExistsError, NoteRecoveryRequiredError, revisionFor, canonicalNoteId, canonicalRelationTarget, normalizeRelationPredicate, frontmatter, resolveVault, noteRevision, listNoteRelations, createNote, createConceptNote, updateNoteBody, addNoteRelation, removeNoteRelation };
+export { MAX_NOTE_BYTES, NOTE_REVISION_PATTERN, InvalidCanonicalNoteIdError, NoteRevisionConflictError, NoteAlreadyExistsError, NoteRecoveryRequiredError, isErrno, sha256, revisionFor, canonicalNoteId, canonicalRelationTarget, normalizeRelationPredicate, frontmatter, relationsFromParts, renderUpdatedNoteBodyAndFields, renderCreatedNote, resolveVault, assertExactDirectoryEntry, assertSafeParent, nativeAuthoringPlatform, runAuthoring, createNoteProgram, updateNoteBodyProgram, noteRevision, listNoteRelations, createNote, createConceptNote, updateNoteBody, addNoteRelation, removeNoteRelation };

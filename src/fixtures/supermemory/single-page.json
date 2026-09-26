@@ -1,0 +1,48 @@
+{
+  "memories": [
+    {
+      "id": "acxV5LHMEsG2hMSNb4umbn",
+      "connectionId": null,
+      "customId": null,
+      "title": "API Rate Limiting Policy",
+      "summary": "Public API requests are limited per key; bursts above the limit return 429.",
+      "content": "# API Rate Limiting Policy\n\nEach API key may send 100 requests per minute.\nBursts above the limit return HTTP 429 with a Retry-After header.\n",
+      "filepath": null,
+      "metadata": { "team": "platform", "reviewed": true, "revision": 3 },
+      "status": "done",
+      "type": "text",
+      "createdAt": "2025-04-15T09:30:00.000Z",
+      "updatedAt": "2025-04-15T09:31:00.000Z",
+      "containerTags": ["user_42"]
+    },
+    {
+      "id": "Q7pLm2Xc9RtB4vNw8KsJ1a",
+      "connectionId": "conn_gdrive_8f2k",
+      "customId": "handbook-onboarding",
+      "title": "Onboarding handbook",
+      "summary": "How new engineers get access, pick a first issue, and ship in week one.",
+      "filepath": "/Handbook/Onboarding.gdoc",
+      "metadata": null,
+      "status": "done",
+      "type": "google_doc",
+      "createdAt": "2025-05-02T14:05:10.250+02:00",
+      "updatedAt": "2025-06-11T08:00:00Z",
+      "url": "https://docs.google.com/document/d/1AbCdEf/edit",
+      "containerTags": ["user_42", "project:handbook"]
+    },
+    {
+      "id": "Zr8TqW3nHc6YpD1fGk5LmV",
+      "connectionId": null,
+      "customId": null,
+      "title": null,
+      "summary": "Draft retrieval notes captured from a chat session.",
+      "filepath": null,
+      "metadata": {},
+      "status": "queued",
+      "type": "text",
+      "createdAt": "2025-07-01T00:00:00Z",
+      "updatedAt": "2025-07-01T00:00:00Z"
+    }
+  ],
+  "pagination": { "currentPage": 1, "limit": 10, "totalItems": 3, "totalPages": 1 }
+}

@@ -10,6 +10,18 @@ note body at a known revision, and add typed relations through the existing
 authoring checks; `--read-only` removes them. Standard output carries only
 protocol messages.
 
+`wordcell import supermemory <export.json>...` turns documents and memory
+entries saved from the Supermemory API into Markdown notes. Documents with a
+public web URL or a type other than text land under `articles/`, other
+documents under `notes/imported/`, and memory versions under
+`notes/imported/memories/`, linked newest to oldest by `supersedes` relations.
+Each note records its Supermemory ID and an import digest, so a later import
+updates unedited notes, skips unchanged ones, and reports locally edited notes
+as conflicts without changing them. `--dry-run` writes nothing, and `--json`
+prints one report object.
+
+`wordcell note create --body-file -` reads the note body from standard input.
+
 ## 0.22.5
 
 `wordcell check` and `wordcell refresh` now find unlinked mentions through a

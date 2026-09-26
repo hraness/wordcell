@@ -1,0 +1,43 @@
+{
+  "memories": [
+    {
+      "id": "Mr1fffffffffffffffffff",
+      "title": "Valid row",
+      "summary": "This row is fine.",
+      "type": "text",
+      "status": "done",
+      "createdAt": "2025-03-10T08:00:00Z",
+      "updatedAt": "2025-03-10T08:00:00Z"
+    },
+    {
+      "title": "Missing id",
+      "summary": "No id here.",
+      "createdAt": "2025-03-10T08:00:00Z",
+      "updatedAt": "2025-03-10T08:00:00Z"
+    },
+    {
+      "id": "Mr3hhhhhhhhhhhhhhhhhhh",
+      "title": "Impossible date",
+      "summary": "April has thirty days.",
+      "createdAt": "2025-04-31T08:00:00Z",
+      "updatedAt": "2025-04-31T08:00:00Z"
+    },
+    {
+      "id": "Mr4iiiiiiiiiiiiiiiiiii",
+      "title": 42,
+      "summary": "The title is a number.",
+      "createdAt": "2025-03-10T08:00:00Z",
+      "updatedAt": "2025-03-10T08:00:00Z"
+    },
+    {
+      "id": "Mr5jjjjjjjjjjjjjjjjjjj",
+      "title": "Empty body",
+      "summary": "   ",
+      "content": null,
+      "createdAt": "2025-03-10T08:00:00Z",
+      "updatedAt": "2025-03-10T08:00:00Z"
+    },
+    "not an object"
+  ],
+  "pagination": { "currentPage": 1, "limit": 10, "totalItems": 6, "totalPages": 1 }
+}

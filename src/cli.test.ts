@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, realpath, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -3514,5 +3514,305 @@ describe("mcp command", () => {
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }
+  });
+});
+
+describe("note create --body-file -", () => {
+  const encoder = new TextEncoder();
+  function stdin(chunks: readonly Uint8Array[], isTTY = false) {
+    let pulled = 0;
+    return {
+      source: {
+        isTTY,
+        chunks: (async function* () {
+          for (const chunk of chunks) {
+            pulled += 1;
+            yield chunk;
+          }
+        })(),
+      },
+      pulled: () => pulled,
+    };
+  }
+  async function withVault(run: (vault: string) => Promise<void>) {
+    const temporary = await mkdtemp(join(tmpdir(), "wordcell-cli-stdin-"));
+    const vault = join(temporary, "vault");
+    try {
+      expect(await main(["init", vault], captureOutput().output)).toBe(0);
+      await run(vault);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  }
+  const create = (vault: string, ...body: string[]) => [
+    "note", "create", "notes/x", "--title", "T", ...body, "--root", vault,
+  ];
+
+  test("reads a piped body from standard input", async () => {
+    await withVault(async (vault) => {
+      const input = stdin([encoder.encode("# Transcript\n\nFirst "), encoder.encode("turn. 🧽\n")]);
+      const output = captureOutput();
+      expect(await main([...create(vault, "--body-file", "-"), "--json"], output.output, { stdin: input.source })).toBe(0);
+      expect(JSON.parse(output.stdout())).toMatchObject({ changed: true, path: "notes/x.md" });
+      const content = await Bun.file(join(vault, "notes/x.md")).text();
+      expect(content.endsWith("---\n\n# Transcript\n\nFirst turn. 🧽\n")).toBe(true);
+    });
+  });
+
+  test.each([
+    ["an empty body", [new Uint8Array()], false, "note body from standard input is empty"],
+    ["a whitespace-only body", [encoder.encode(" \n\t\r\n")], false, "note body from standard input is empty"],
+    ["a terminal", [encoder.encode("typed")], true, "standard input is a terminal; pipe the body in or name a file"],
+    ["invalid UTF-8", [new Uint8Array([0x23, 0xff, 0x0a])], false, "note body is not valid UTF-8"],
+  ] as const)("refuses %s and writes nothing", async (_label, chunks, isTTY, message) => {
+    await withVault(async (vault) => {
+      const input = stdin(chunks, isTTY);
+      const output = captureOutput();
+      expect(await main(create(vault, "--body-file", "-"), output.output, { stdin: input.source })).toBe(1);
+      expect(output.stderr()).toContain(message);
+      expect(await Bun.file(join(vault, "notes/x.md")).exists()).toBe(false);
+      if (isTTY) expect(input.pulled()).toBe(0);
+    });
+  });
+
+  test("stops reading once the body passes 16 MiB", async () => {
+    await withVault(async (vault) => {
+      const limit = 16 * 1024 * 1024;
+      const input = stdin([new Uint8Array(limit).fill(0x61), new Uint8Array([0x61]), new Uint8Array([0x61])]);
+      const output = captureOutput();
+      expect(await main(create(vault, "--body-file", "-"), output.output, { stdin: input.source })).toBe(1);
+      expect(output.stderr()).toContain(`note body exceeds the ${limit}-byte limit`);
+      expect(input.pulled()).toBe(2);
+      expect(await Bun.file(join(vault, "notes/x.md")).exists()).toBe(false);
+    });
+  });
+
+  test("--body - stays a literal dash and never reads standard input", async () => {
+    await withVault(async (vault) => {
+      const input = stdin([encoder.encode("unused\n")]);
+      expect(await main(create(vault, "--body", "-"), captureOutput().output, { stdin: input.source })).toBe(0);
+      expect((await Bun.file(join(vault, "notes/x.md")).text()).endsWith("---\n\n-\n")).toBe(true);
+      expect(input.pulled()).toBe(0);
+    });
+  });
+
+  test("a piped subprocess writes the transcript", async () => {
+    await withVault(async (vault) => {
+      const child = Bun.spawn([process.execPath, join(import.meta.dir, "cli.ts"), ...create(vault, "--body-file", "-")], {
+        stdin: new Blob(["transcript"]),
+        stdout: "pipe",
+        stderr: "pipe",
+        env: { ...process.env, HRANESS_SUPPORT: "off" },
+      });
+      const [code, stderr] = await Promise.all([child.exited, new Response(child.stderr).text()]);
+      expect(stderr).toBe("");
+      expect(code).toBe(0);
+      expect((await Bun.file(join(vault, "notes/x.md")).text()).endsWith("---\n\ntranscript\n")).toBe(true);
+    });
+  });
+});
+
+describe("import supermemory command", () => {
+  const fixture = (name: string) => join(import.meta.dir, "fixtures", "supermemory", name);
+  const importNow = () => new Date("2026-09-26T12:00:00.000Z");
+  async function withImportVault(run: (vault: string, temporary: string) => Promise<void>) {
+    const temporary = await mkdtemp(join(tmpdir(), "wordcell-cli-import-"));
+    const vault = join(temporary, "vault");
+    try {
+      expect(await main(["init", vault], captureOutput().output)).toBe(0);
+      await run(await realpath(vault), temporary);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  }
+  async function tree(directory: string): Promise<string> {
+    const paths: string[] = [];
+    for await (const path of new Bun.Glob("**").scan({ cwd: directory, dot: true, onlyFiles: false })) paths.push(path);
+    paths.sort();
+    const parts: string[] = [];
+    for (const path of paths) {
+      const absolute = join(directory, path);
+      parts.push(`${path}\n${(await stat(absolute)).isDirectory() ? "<directory>" : await readFile(absolute, "base64")}`);
+    }
+    return parts.join("\n");
+  }
+
+  test("parses its options and rejects malformed invocations with exit 2", async () => {
+    expect(parseArguments([
+      "import", "supermemory", "a.json", "b.json", "--root", "kb", "--prefix", "inbox/sm", "--dry-run", "--json",
+    ])).toEqual({
+      ok: true,
+      value: {
+        kind: "import-supermemory",
+        root: "kb",
+        files: ["a.json", "b.json"],
+        prefix: "inbox/sm",
+        dryRun: true,
+        json: true,
+      },
+    });
+    expect(parseArguments(["import", "supermemory", "a.json", "--prefix", "inbox/sm/"])).toMatchObject({
+      ok: true,
+      value: { prefix: "inbox/sm" },
+    });
+    expect(parseArguments(["import", "supermemory", "a.json"])).toEqual({
+      ok: true,
+      value: { kind: "import-supermemory", root: ".", files: ["a.json"], dryRun: false, json: false },
+    });
+    const cases: readonly (readonly [readonly string[], string])[] = [
+      [["import"], "import requires supermemory"],
+      [["import", "mem0", "a.json"], "import requires supermemory"],
+      [["import", "supermemory"], "import supermemory requires at least one export file"],
+      [["import", "supermemory", "a.json", "--bogus"], "unknown import supermemory option"],
+      [["import", "supermemory", "a.json", "--prefix"], "--prefix requires a value"],
+      [["import", "supermemory", "a.json", "--prefix", "--dry-run"], "--prefix requires a value"],
+      [["import", "supermemory", "a.json", "--root", ""], "--root requires a value"],
+      [
+        ["import", "supermemory", "a.json", "--prefix", "../x"],
+        "--prefix must be a vault-relative directory such as notes/imported",
+      ],
+      [
+        ["import", "supermemory", "a.json", "--prefix", "articles/sm"],
+        "--prefix must be outside articles/, where each directory holds one captured source; omit --prefix to place web documents there",
+      ],
+      [
+        ["import", "supermemory", ...Array.from({ length: 1_001 }, (_, index) => `f${index}.json`)],
+        "import supermemory accepts at most 1000 export files",
+      ],
+    ];
+    for (const [arguments_, message] of cases) {
+      const captured = captureOutput();
+      expect(await main(arguments_, captured.output)).toBe(2);
+      expect(captured.stdout()).toBe("");
+      expect(captured.stderr()).toStartWith(`error: ${message}\n`);
+      expect(captured.stderr()).toContain("wordcell import supermemory <export.json>... [--root <directory>] [--prefix <directory>] [--dry-run] [--json]");
+    }
+    const captured = captureOutput();
+    expect(await main(["import", "supermemory", "--json"], captured.output)).toBe(2);
+    expect(JSON.parse(captured.stdout())).toEqual({
+      ok: false,
+      error: { kind: "parse", message: "import supermemory requires at least one export file" },
+    });
+  });
+
+  test("text output reports outcomes and the refresh step, and a rerun skips every item", async () => {
+    await withImportVault(async (vault) => {
+      const first = captureOutput();
+      expect(await main(["import", "supermemory", fixture("single-page.json"), "--root", vault], first.output, { importNow })).toBe(0);
+      expect(first.stderr()).toBe("");
+      expect(first.stdout()).toStartWith("Imported 3 items from 1 file: created 3, updated 0, skipped 0, conflicts 0, rejected 0.\n");
+      expect(first.stdout()).toEndWith(`Next: wordcell refresh --root ${vault}, then wordcell check --root ${vault}.\n`);
+
+      const second = captureOutput();
+      expect(await main(["import", "supermemory", fixture("single-page.json"), "--root", vault], second.output, { importNow })).toBe(0);
+      expect(second.stdout()).toStartWith("Imported 3 items from 1 file: created 0, updated 0, skipped 3, conflicts 0, rejected 0.\n");
+      expect(second.stdout()).not.toContain("Next:");
+
+      expect(await main(["refresh", "--root", vault], captureOutput().output)).toBe(0);
+      expect(await main(["check", "--root", vault], captureOutput().output)).toBe(0);
+    });
+  });
+
+  test("--json writes one report object with file and pointer for each item", async () => {
+    await withImportVault(async (vault) => {
+      const captured = captureOutput();
+      const file = fixture("single-page.json");
+      expect(await main(["import", "supermemory", file, "--root", vault, "--json"], captured.output, { importNow })).toBe(0);
+      expect(captured.stderr()).toBe("");
+      const report = JSON.parse(captured.stdout()) as {
+        ok: boolean;
+        dryRun: boolean;
+        root: string;
+        counts: Record<string, number>;
+        items: { outcome: string; file: string; pointer: string; externalId?: string; note?: string; path?: string }[];
+        diagnostics: unknown[];
+      };
+      expect(report.ok).toBe(true);
+      expect(report.dryRun).toBe(false);
+      expect(report.root).toBe(vault);
+      expect(report.counts).toEqual({ created: 3, updated: 0, skipped: 0, conflicts: 0, rejected: 0 });
+      expect(report.items.map((item) => [item.outcome, item.file, item.pointer])).toEqual([
+        ["created", file, "/memories/0"],
+        ["created", file, "/memories/1"],
+        ["created", file, "/memories/2"],
+      ]);
+      const first = report.items[0];
+      expect(first?.externalId).toBe("acxV5LHMEsG2hMSNb4umbn");
+      expect(first?.note).toBe("notes/imported/api-rate-limiting-policy");
+      expect(first?.path).toBe("notes/imported/api-rate-limiting-policy.md");
+      expect(await Bun.file(join(vault, "notes/imported/api-rate-limiting-policy.md")).exists()).toBe(true);
+    });
+  });
+
+  test("a file-level error exits 1 and writes nothing", async () => {
+    await withImportVault(async (vault, temporary) => {
+      const broken = join(temporary, "broken.json");
+      await writeFile(broken, "{\"memories\": [");
+      const before = await tree(vault);
+
+      const text = captureOutput();
+      expect(await main(["import", "supermemory", fixture("single-page.json"), broken, "--root", vault], text.output, { importNow })).toBe(1);
+      expect(text.stdout()).toBe("");
+      expect(text.stderr()).toStartWith(`error: ${broken}`);
+
+      const json = captureOutput();
+      expect(await main(["import", "supermemory", fixture("single-page.json"), broken, "--root", vault, "--json"], json.output, { importNow })).toBe(1);
+      expect(json.stderr()).toBe("");
+      const failure = JSON.parse(json.stdout()) as { ok: boolean; error: { kind: string; message: string } };
+      expect(failure.ok).toBe(false);
+      expect(failure.error.kind).toBe("runtime");
+      expect(failure.error.message).toStartWith(broken);
+      expect(await tree(vault)).toBe(before);
+    });
+  });
+
+  test("an export whose every item is rejected exits 1 and names each row", async () => {
+    await withImportVault(async (vault, temporary) => {
+      const rejected = join(temporary, "rejected.json");
+      await writeFile(rejected, JSON.stringify([{ id: "not an id!", createdAt: "yesterday", content: "x" }]));
+      const before = await tree(vault);
+      const captured = captureOutput();
+      expect(await main(["import", "supermemory", rejected, "--root", vault], captured.output, { importNow })).toBe(1);
+      expect(captured.stdout()).toStartWith("Imported 1 item from 1 file: created 0, updated 0, skipped 0, conflicts 0, rejected 1.\n");
+      expect(captured.stdout()).toContain(`rejected: ${rejected}#/0: `);
+      expect(captured.stdout()).not.toContain("Next:");
+      expect(await tree(vault)).toBe(before);
+    });
+  });
+
+  test("--dry-run reports the same outcomes and leaves the vault byte-identical", async () => {
+    await withImportVault(async (vault) => {
+      const before = await tree(vault);
+      const captured = captureOutput();
+      expect(await main(["import", "supermemory", fixture("single-page.json"), "--root", vault, "--dry-run"], captured.output, { importNow })).toBe(0);
+      expect(captured.stdout()).toStartWith("Dry run of 3 items from 1 file: created 3, updated 0, skipped 0, conflicts 0, rejected 0. Nothing was written.\n");
+      expect(captured.stdout()).not.toContain("Next:");
+      expect(await tree(vault)).toBe(before);
+    });
+  });
+
+  test("a subprocess with --json prints exactly one JSON object on stdout", async () => {
+    await withImportVault(async (vault, temporary) => {
+      const env = {
+        ...process.env,
+        XDG_STATE_HOME: join(temporary, "state"),
+        HRANESS_SUPPORT: "",
+        HRANESS_SUPPORT_EMAIL: "off",
+        HRANESS_SUPPORT_AUDIENCE: "agent",
+        CI: "",
+        CONTINUOUS_INTEGRATION: "",
+        GITHUB_ACTIONS: "",
+      };
+      const child = Bun.spawn([
+        process.execPath, join(import.meta.dir, "cli.ts"),
+        "import", "supermemory", fixture("memory-entries.json"), "--root", vault, "--json",
+      ], { env, stdout: "pipe", stderr: "pipe" });
+      const [code, stdout] = await Promise.all([child.exited, new Response(child.stdout).text()]);
+      expect(code).toBe(0);
+      const report = JSON.parse(stdout) as { ok: boolean; counts: { created: number }; relations: unknown[] };
+      expect(report.ok).toBe(true);
+      expect(report.counts.created).toBeGreaterThan(0);
+      expect(report.relations.length).toBeGreaterThan(0);
+    });
   });
 });

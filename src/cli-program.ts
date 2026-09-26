@@ -106,6 +106,7 @@ import {
 import { serveSite } from "./serve.js";
 import { resolveVault } from "./authoring-platform.js";
 import { guardStdout, runMcpServer, serverVersion } from "./mcp-server.js";
+import { importSupermemory, MAX_IMPORT_FILES, normalizePrefix, type ImportReport } from "./import-supermemory.js";
 import { createToolCatalog, serverInstructions, type ContextBuilder } from "./mcp-tools.js";
 import {
   MAX_AUTHORIZED_VAULTS,
@@ -188,6 +189,42 @@ const defaultOutput: Output = {
   stderr: (value) => process.stderr.write(value),
 };
 
+/** Read standard input as fatal UTF-8, stopping as soon as it passes `maximumBytes`. */
+async function readBoundedStdinUtf8(
+  source: StdinSource,
+  maximumBytes: number,
+  label: string,
+): Promise<string> {
+  if (source.isTTY) {
+    throw new Error(
+      "--body-file - reads the note body from standard input, but standard input is a terminal; pipe the body in or name a file",
+    );
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for await (const chunk of source.chunks) {
+    total += chunk.byteLength;
+    if (total > maximumBytes) {
+      throw new Error(`${label} exceeds the ${maximumBytes}-byte limit`);
+    }
+    chunks.push(chunk);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  let text: string;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (error) {
+    throw new Error(`${label} is not valid UTF-8`, { cause: error });
+  }
+  if (text.trim() === "") throw new Error(`${label} from standard input is empty`);
+  return text;
+}
+
 async function readBoundedUtf8(
   path: string,
   maximumBytes: number,
@@ -265,7 +302,8 @@ Usage:
   wordcell graph query --program <backlinks|reachability|scope-route|relation-closure|shared-tags|shared-concepts> [--note <id> | --scope <path>] [--predicate <predicate>] [--depth <count>] [--limit <count>] [--persisted] [--root <directory>] [--index <path>] [--json]
   wordcell backlinks <note> [--root <directory>] [--index <path>] [--json]
   wordcell links <note> [--root <directory>] [--direction <in|out|both>] [--depth <count>] [--limit <count>] [--json]
-  wordcell note create <id> --title <title> [--type <type>] [--tag <tag>] [--body <markdown> | --body-file <path>] [--root <directory>] [--json]
+  wordcell note create <id> --title <title> [--type <type>] [--tag <tag>] [--body <markdown> | --body-file <path|->] [--root <directory>] [--json]
+  wordcell import supermemory <export.json>... [--root <directory>] [--prefix <directory>] [--dry-run] [--json]
   wordcell relation add <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
   wordcell relation remove <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
   wordcell relation list <note> [--root <directory>] [--json]
@@ -465,6 +503,15 @@ type ParsedCommand =
       readonly json: boolean;
     }
   | {
+      readonly kind: "import-supermemory";
+      readonly root: string;
+      /** Export file paths as given, read relative to the working directory. */
+      readonly files: readonly string[];
+      readonly prefix?: string;
+      readonly dryRun: boolean;
+      readonly json: boolean;
+    }
+  | {
       readonly kind: "relation";
       readonly action: "add" | "remove" | "list";
       readonly root: string;
@@ -553,7 +600,21 @@ type CliDependencies = GraphCliDependencies & {
   readonly serveSite?: typeof serveSite;
   /** Test seam: serve MCP frames over these streams instead of guarding the process stdout. */
   readonly mcp?: McpStreams;
+  /** Test seam: the standard input that `note create --body-file -` reads. */
+  readonly stdin?: StdinSource;
+  readonly importSupermemory?: typeof importSupermemory;
+  /** Test seam: the clock for the provenance line of `import supermemory`. */
+  readonly importNow?: () => Date;
 };
+
+export type StdinSource = {
+  readonly isTTY: boolean;
+  readonly chunks: AsyncIterable<Uint8Array>;
+};
+
+function processStdin(): StdinSource {
+  return { isTTY: process.stdin.isTTY === true, chunks: process.stdin };
+}
 
 type McpStreams = {
   readonly input: AsyncIterable<Uint8Array>;
@@ -1942,6 +2003,53 @@ function parseNoteCommand(arguments_: readonly string[]): ParseResult {
   };
 }
 
+function parseImportCommand(arguments_: readonly string[]): ParseResult {
+  if (arguments_[0] !== "supermemory") return { ok: false, message: "import requires supermemory" };
+  let root = ".";
+  let prefix: string | undefined;
+  let dryRun = false;
+  let json = false;
+  const files: string[] = [];
+  for (let cursor = 1; cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined) continue;
+    if (argument === "--json") { json = true; continue; }
+    if (argument === "--dry-run") { dryRun = true; continue; }
+    if (argument === "--root" || argument === "--prefix") {
+      const value = readValue(arguments_, cursor);
+      if (value === null || value === "") return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root") root = value;
+      else prefix = value;
+      cursor += 1;
+      continue;
+    }
+    if (argument.startsWith("--")) return { ok: false, message: "unknown import supermemory option" };
+    files.push(argument);
+  }
+  if (files.length === 0) return { ok: false, message: "import supermemory requires at least one export file" };
+  if (files.length > MAX_IMPORT_FILES) {
+    return { ok: false, message: `import supermemory accepts at most ${MAX_IMPORT_FILES} export files` };
+  }
+  if (prefix !== undefined) {
+    try {
+      prefix = normalizePrefix(prefix);
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : String(error) };
+    }
+  }
+  return {
+    ok: true,
+    value: {
+      kind: "import-supermemory",
+      root,
+      files,
+      ...(prefix === undefined ? {} : { prefix }),
+      dryRun,
+      json,
+    },
+  };
+}
+
 function isNoteRevision(value: string): value is `sha256:${string}` {
   return /^sha256:[0-9a-f]{64}$/u.test(value);
 }
@@ -2265,6 +2373,7 @@ export function parseArguments(arguments_: readonly string[]): ParseResult {
   if (command === "context") return parseContextCommand(arguments_.slice(1));
   if (command === "agents") return parseAgentsCommand(arguments_.slice(1));
   if (command === "note") return parseNoteCommand(arguments_.slice(1));
+  if (command === "import") return parseImportCommand(arguments_.slice(1));
   if (command === "relation") return parseRelationCommand(arguments_.slice(1));
   if (command === "percolate") return parsePercolateCommand(arguments_.slice(1));
   if (command === "publish") return parsePublishCommand(arguments_.slice(1));
@@ -3017,7 +3126,9 @@ async function runNoteCreate(
   const body = command.body ?? (
     command.bodyFile === undefined
       ? undefined
-      : await readBoundedUtf8(command.bodyFile, 16 * 1024 * 1024, "note body")
+      : command.bodyFile === "-"
+        ? await readBoundedStdinUtf8(dependencies.stdin ?? processStdin(), 16 * 1024 * 1024, "note body")
+        : await readBoundedUtf8(command.bodyFile, 16 * 1024 * 1024, "note body")
   );
   const result = await (dependencies.createNote ?? createNote)(
     command.root,
@@ -3030,6 +3141,67 @@ async function runNoteCreate(
     ? terminalSafeJson(result)
     : sanitizeTerminalText(renderAuthoringResult("Created", result)));
   return 0;
+}
+
+function countOf(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+function shellWord(value: string): string {
+  return /^[A-Za-z0-9_./:@%+=,-]+$/u.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+function renderImportReport(report: ImportReport): string {
+  const { counts } = report;
+  const tally = `created ${counts.created}, updated ${counts.updated}, skipped ${counts.skipped}, `
+    + `conflicts ${counts.conflicts}, rejected ${counts.rejected}`;
+  const scope = `${countOf(report.items.length, "item")} from ${countOf(report.files, "file")}`;
+  const lines = [report.dryRun
+    ? `Dry run of ${scope}: ${tally}. Nothing was written.`
+    : `Imported ${scope}: ${tally}.`];
+  const location = (item: ImportReport["items"][number]) => item.note === undefined
+    ? `${item.file}#${item.pointer}`
+    : `${item.note} from ${item.file}#${item.pointer}`;
+  for (const item of report.items) {
+    if (item.outcome !== "conflict" && item.outcome !== "rejected") continue;
+    const external = item.externalId === undefined ? "" : ` (${item.externalId})`;
+    lines.push(`${item.outcome}: ${safe(location(item))}${safe(external)}: ${safe(item.reason ?? "no reason given")}`);
+  }
+  const added = report.relations.filter((relation) => relation.outcome === "added").length;
+  if (added > 0) {
+    lines.push(`${report.dryRun ? "Would add" : "Added"} ${countOf(added, "supersedes relation")}.`);
+  }
+  for (const relation of report.relations) {
+    if (relation.outcome !== "failed" && relation.outcome !== "omitted") continue;
+    lines.push(`relation ${relation.outcome}: ${safe(relation.source)} supersedes ${safe(relation.target)}: ${safe(relation.reason ?? "no reason given")}`);
+  }
+  for (const diagnostic of report.diagnostics) lines.push(`diagnostic: ${safe(diagnostic)}`);
+  for (const item of report.items) {
+    for (const diagnostic of item.diagnostics ?? []) {
+      lines.push(`diagnostic: ${safe(item.note ?? `${item.file}#${item.pointer}`)}: ${safe(diagnostic)}`);
+    }
+  }
+  if (!report.dryRun && counts.created + counts.updated + added > 0) {
+    const root = safe(shellWord(report.root));
+    lines.push(`Next: wordcell refresh --root ${root}, then wordcell check --root ${root}.`);
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+async function runImportSupermemory(
+  command: Extract<ParsedCommand, { readonly kind: "import-supermemory" }>,
+  output: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  const report = await (dependencies.importSupermemory ?? importSupermemory)({
+    root: command.root,
+    files: command.files,
+    ...(command.prefix === undefined ? {} : { prefix: command.prefix }),
+    dryRun: command.dryRun,
+    ...(dependencies.importNow === undefined ? {} : { now: dependencies.importNow() }),
+  });
+  output.stdout(command.json ? terminalSafeJson(report) : sanitizeTerminalText(renderImportReport(report)));
+  return report.ok ? 0 : 1;
 }
 
 async function runRelation(
@@ -4122,6 +4294,7 @@ export async function main(
     if (command.kind === "agent-identity") return runAgentIdentity(command, output);
     if (command.kind === "agents") return await runAgents(command, output, dependencies);
     if (command.kind === "note-create") return await runNoteCreate(command, output, dependencies);
+    if (command.kind === "import-supermemory") return await runImportSupermemory(command, output, dependencies);
     if (command.kind === "relation") return await runRelation(command, output, dependencies);
     if (command.kind === "graph-rebuild" || command.kind === "graph-verify" || command.kind === "graph-query") {
       const result = await executeGraphCommand(command, dependencies);

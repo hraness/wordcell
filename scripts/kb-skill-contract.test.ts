@@ -311,6 +311,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "graph verify",
     "history",
     "history search",
+    "import supermemory",
     "inbox",
     "index",
     "init",

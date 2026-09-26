@@ -11,6 +11,7 @@ import {
   catalogStart,
   isCanonicalNoteId,
   isCanonicalRelationPredicate,
+  isMetadataNumber,
   lookupNote,
   metadataValueFromUnknown,
   normalizeVaultPath,
@@ -19,7 +20,7 @@ import {
   replaceCatalog,
   searchableMarkdown,
   wikiLinks
-} from "./index-zy7an84p.js";
+} from "./index-jvb7w0gg.js";
 import"./index-z1w83f81.js";
 export {
   wikiLinks,
@@ -30,6 +31,7 @@ export {
   normalizeVaultPath,
   metadataValueFromUnknown,
   lookupNote,
+  isMetadataNumber,
   isCanonicalRelationPredicate,
   isCanonicalNoteId,
   catalogStart,
