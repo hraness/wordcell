@@ -657,53 +657,6 @@ pre {
   line-height: 1.55;
 }
 
-/* 404: a single note card over the sleeping vault. */
-.wordcell-404 {
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-block-size: 100svh;
-  padding: 2rem;
-  overflow: clip;
-}
-
-.wordcell-404-card {
-  position: relative;
-  z-index: 1;
-  inline-size: min(100%, 28rem);
-  padding: 1.9rem 2.1rem;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--wordcell-note-surface);
-  box-shadow: var(--wordcell-note-shadow);
-}
-
-.wordcell-404-card h1 {
-  margin: .7rem 0 .6rem;
-  font-family: var(--hraness-marketing-display-font);
-  font-size: clamp(1.9rem, 4vw, 2.4rem);
-  font-weight: 400;
-  line-height: 1.1;
-}
-
-.wordcell-404-card p {
-  margin: .5rem 0;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.wordcell-404-card .wordcell-404-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .35rem .75rem;
-  margin-block-start: 1rem;
-}
-
-.wordcell-404-links a {
-  color: var(--primary);
-  font-weight: 500;
-}
-
 @media (width < 34rem) {
   .wordcell-bytes-row {
     grid-template-columns: 1fr;

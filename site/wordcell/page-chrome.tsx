@@ -15,21 +15,28 @@ const navigation = [
   { href: repository, label: "GitHub" },
 ] as const;
 
+/** The launch-page header, also used by the 404 page. */
+export function WordcellSiteHeader() {
+  return (
+    <MarketingSiteHeader
+      className="hraness-material-chrome"
+      action={{ href: "/#install", label: "Install Wordcell" }}
+      brand="Wordcell"
+      brandMark="/marks/kb.svg"
+      brandLabel="Wordcell home"
+      links={navigation}
+      trailing={<ThemeMenuButton aria-label="Appearance" />}
+    />
+  );
+}
+
 /* Shared chrome for the launch pages (/benchmarks, /compare/supermemory,
  * /migrate/supermemory). Home and /developers keep their own chrome. */
 export function WordcellPageChrome({ path, children }: Readonly<{ path: `/${string}`; children: ReactNode }>) {
   return (
     <div data-hraness-marketing-preset="editorial">
       <a className="skip-link" href="#main">Skip to content</a>
-      <MarketingSiteHeader
-        className="hraness-material-chrome"
-        action={{ href: "/#install", label: "Install Wordcell" }}
-        brand="Wordcell"
-        brandMark="/marks/kb.svg"
-        brandLabel="Wordcell home"
-        links={navigation}
-        trailing={<ThemeMenuButton aria-label="Appearance" />}
-      />
+      <WordcellSiteHeader />
 
       <main id="main" tabIndex={-1}>
         <MarketingPage>{children}</MarketingPage>

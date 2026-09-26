@@ -232,14 +232,16 @@ test("scopes the editorial preset to the homepage header and the living vault fi
 });
 
 
-test("the 404 page renders a note card over the sleeping vault", async () => {
+test("the 404 page leads with the install action inside the site header", async () => {
   const { default: NotFound } = await import("../app/not-found");
   const html = renderToStaticMarkup(<NotFound />);
-  expect(html).toContain("wordcell-404-card");
-  expect(html).toContain("wordcell-field");
-  expect(html).toContain("missing note");
-  expect(html).toContain("Page not found");
-  expect(html).toContain('href="/docs"');
+  expect(html).toContain("hraness-status-page");
+  expect(html).toContain('data-hraness-appearance-menu=');
+  expect(html).toMatch(/data-emphasis="primary"[^>]*href="\/#install"[^>]*>Install Wordcell</u);
+  expect(html).toContain('href="/docs/getting-started"');
+  expect(html.match(/class="hraness-status-page__next-link"/gu)).toHaveLength(3);
+  expect(html).toContain("data-hraness-status-routes=");
+  expect(html).toContain('id="main"');
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
 });
 

@@ -7,6 +7,7 @@
 @import "@hraness/design-kit/plain-site.css";
 @import "@hraness/design-kit/plain-publication.css";
 @import "@hraness/design-kit/palettes.css";
+@import "@hraness/design-kit/status-page.css";
 
 @import "../vendor/hraness-marketing/product-marketing-preset.css";
 @import "../vendor/hraness-lantern/lantern-material.css";
