@@ -5,7 +5,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   validateKnowledgeBaseSearchHistory
-} from "./index-42tb8qqp.js";
+} from "./index-tvd2sqrx.js";
 import {
   expandSearchRequest,
   parseSearchRules
@@ -15,10 +15,10 @@ import {
 } from "./index-1gwbassd.js";
 import {
   validateSearchQuery
-} from "./index-aer0jdrq.js";
+} from "./index-ahyhryb8.js";
 import {
   scanVault
-} from "./index-8v6k9h4r.js";
+} from "./index-1s8mc4hz.js";
 import {
   validateQueryOptions
 } from "./index-48pz4jpc.js";
@@ -32,7 +32,7 @@ import {
   parseVaultKey,
   portfolioDocumentIdentity,
   portfolioVaultIdentity
-} from "./index-zy7an84p.js";
+} from "./index-jvb7w0gg.js";
 
 // src/portfolio.ts
 import { createHash as createHash2 } from "crypto";

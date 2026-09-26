@@ -1,0 +1,17 @@
+{
+  "documents": [
+    {
+      "id": "Dw1eeeeeeeeeeeeeeeeeee",
+      "connectionId": null,
+      "customId": null,
+      "title": "Wrapped document",
+      "summary": "A document inside a documents wrapper.",
+      "filepath": null,
+      "metadata": null,
+      "status": "done",
+      "type": "text",
+      "createdAt": "2025-03-01T08:00:00Z",
+      "updatedAt": "2025-03-01T08:00:00Z"
+    }
+  ]
+}

@@ -1,8 +1,9 @@
 // @bun
 import {
   backfillSavedUrlMetadata,
-  createRustMetadataSearchProvider
-} from "./index-bcknqxrq.js";
+  createRustMetadataSearchProvider,
+  savedSourceProblem
+} from "./index-0eacgvpv.js";
 import {
   main as main2
 } from "./index-054mb7d3.js";
@@ -12,7 +13,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-h2qn3y3f.js";
+} from "./index-r4qs6vq4.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -20,10 +21,14 @@ import {
   main
 } from "./index-de2w8crk.js";
 import {
+  slugify
+} from "./index-hgve9rh2.js";
+import {
   verifyCaptureBundle
 } from "./index-npg9z1a4.js";
 import {
-  redactSensitiveText
+  redactSensitiveText,
+  sanitizeArtifactUrl
 } from "./index-mxxxytys.js";
 import {
   initVault
@@ -39,7 +44,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-1r5rnkfr.js";
+} from "./index-mnq2wy34.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -48,7 +53,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-42tb8qqp.js";
+} from "./index-tvd2sqrx.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -59,7 +64,7 @@ import {
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
   sha256EmbeddingModelFile
-} from "./index-n57tewfr.js";
+} from "./index-fp732bgg.js";
 import {
   MAX_RERANK_CANDIDATES
 } from "./index-j70m75wd.js";
@@ -72,25 +77,25 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-gtwqye5a.js";
+} from "./index-tcaq1c7f.js";
 import {
   MAX_PERCOLATION_MENTIONS,
   MAX_PERCOLATION_MENTION_PAIRS,
   MAX_PERCOLATION_NOTES,
   MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
   percolateVault
-} from "./index-qdb8f8va.js";
+} from "./index-bdwcjvr4.js";
 import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-f75zmmdr.js";
+} from "./index-1er88ckw.js";
 import {
   validateGraphQueryRequest
-} from "./index-pz2b2x0y.js";
+} from "./index-pgtm2nhf.js";
 import {
   validateSearchQuery
-} from "./index-aer0jdrq.js";
+} from "./index-ahyhryb8.js";
 import {
   sanitizeTerminalLine,
   sanitizeTerminalText
@@ -100,13 +105,15 @@ import {
   MAX_PUBLISH_LIST_LIMIT,
   publishVault,
   renderPublishReportText
-} from "./index-xzvcw9ga.js";
+} from "./index-r0m5taz2.js";
 import {
+  MAX_SCANNED_NOTES,
+  MAX_VAULT_UTF8_BYTES,
   markdownFiles,
   refreshVaultComplete,
   scanVault,
   scanVaultComplete
-} from "./index-8v6k9h4r.js";
+} from "./index-1s8mc4hz.js";
 import {
   navigateLinks
 } from "./index-d13v9ckt.js";
@@ -145,24 +152,37 @@ import {
 } from "./index-x3fthpsc.js";
 import {
   InvalidCanonicalNoteIdError,
+  MAX_NOTE_BYTES,
   NOTE_REVISION_PATTERN,
   NoteAlreadyExistsError,
   NoteRevisionConflictError,
   addNoteRelation,
+  assertExactDirectoryEntry,
+  assertSafeParent,
   canonicalNoteId,
   createNote,
+  createNoteProgram,
   frontmatter,
+  isErrno,
+  nativeAuthoringPlatform,
   noteRevision,
+  relationsFromParts,
   removeNoteRelation,
+  renderCreatedNote,
+  renderUpdatedNoteBodyAndFields,
   resolveVault,
   revisionFor,
-  updateNoteBody
-} from "./index-2vey6bzt.js";
+  runAuthoring,
+  sha256,
+  updateNoteBody,
+  updateNoteBodyProgram
+} from "./index-b0khj0h5.js";
 import {
+  isMetadataNumber,
   lookupNote,
   parseVaultKey,
   renderCatalog
-} from "./index-zy7an84p.js";
+} from "./index-jvb7w0gg.js";
 
 // src/clip/url-metadata-cli.ts
 import { resolve as resolve2 } from "path";
@@ -829,7 +849,7 @@ function terminalIntro(terminal) {
 }
 
 // src/cli-program.ts
-import { open as open2, realpath as realpath2, stat as stat2 } from "fs/promises";
+import { open as open3, realpath as realpath2, stat as stat2 } from "fs/promises";
 import { cpus, release, totalmem } from "os";
 import { relative, resolve as resolve3 } from "path";
 import { format as format2 } from "util";
@@ -1363,9 +1383,1273 @@ async function runMcpServer(options) {
   return code;
 }
 
+// src/import-supermemory.ts
+import { lstat, mkdir, open, readdir, readFile as readFile2 } from "fs/promises";
+import { basename as basename2, join as join3 } from "path";
+
+// src/authoring-import.ts
+async function createNoteWithFields(root, input, options, fields) {
+  return runAuthoring(createNoteProgram(nativeAuthoringPlatform, root, input, options, fields));
+}
+async function updateNoteBodyWithFields(root, id, body, options, fields) {
+  return runAuthoring(updateNoteBodyProgram(nativeAuthoringPlatform, root, id, body, options, fields));
+}
+
+// src/import-supermemory.ts
+var MAX_IMPORT_FILE_BYTES = 128 * 1024 * 1024;
+var MAX_IMPORT_FILES = 1000;
+var MAX_IMPORT_ITEMS = MAX_SCANNED_NOTES;
+var MAX_METADATA_KEYS = 64;
+var MAX_METADATA_VALUE_CHARS = 1024;
+var MAX_TITLE_CHARS = 200;
+var MAX_JSON_DEPTH = 32;
+var MAX_CONTAINER_TAGS = 64;
+var MAX_SOURCE_DOCUMENT_IDS = 256;
+var MAX_CUSTOM_ID_CHARS = 255;
+var MAX_FIELD_CHARS = 2048;
+var MAX_TITLE_SOURCE_CHARS = 65536;
+var READ_CHUNK_BYTES = 1024 * 1024;
+var MAX_SLUG_ATTEMPTS = 25000;
+var EXTERNAL_ID = /^[A-Za-z0-9_-]{1,128}$/u;
+var CONTAINER_TAG = /^[a-zA-Z0-9_:-]{1,100}$/u;
+var ENUM_VALUE = /^[a-z][a-z0-9_]{0,63}$/u;
+var METADATA_KEY = /^[A-Za-z0-9_.:-]{1,64}$/u;
+var LONE_SURROGATE = /\p{Cs}/u;
+var CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/u;
+var STRICT_TIMESTAMP = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/u;
+var SUPERMEMORY_DOCUMENT_TYPES = [
+  "text",
+  "pdf",
+  "tweet",
+  "google_doc",
+  "google_slide",
+  "google_sheet",
+  "image",
+  "video",
+  "audio",
+  "notion_doc",
+  "webpage",
+  "onedrive",
+  "github_markdown",
+  "granola"
+];
+var SUPERMEMORY_STATUSES = [
+  "unknown",
+  "queued",
+  "extracting",
+  "chunking",
+  "embedding",
+  "indexing",
+  "done",
+  "failed"
+];
+
+class ImportFileError extends Error {
+  file;
+  pointer;
+  constructor(file, pointer, reason, options) {
+    super(pointer === "" ? `${file}: ${reason}` : `${file}#${pointer}: ${reason}`, options);
+    this.name = "ImportFileError";
+    this.file = file;
+    this.pointer = pointer;
+  }
+}
+function isRecord2(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function pointerSegment(segment) {
+  return `/${String(segment).replaceAll("~", "~0").replaceAll("/", "~1")}`;
+}
+function errorMessage2(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+async function readExportFile(path, file, maximumBytes = MAX_IMPORT_FILE_BYTES) {
+  let handle;
+  try {
+    handle = await open(path, "r");
+  } catch (error) {
+    throw new ImportFileError(file, "", `cannot read export file (${errorMessage2(error)})`, { cause: error });
+  }
+  try {
+    const chunks = [];
+    let total = 0;
+    for (;; ) {
+      const chunk = new Uint8Array(Math.min(READ_CHUNK_BYTES, maximumBytes + 1 - total));
+      let bytesRead;
+      try {
+        ({ bytesRead } = await handle.read(chunk, 0, chunk.byteLength, null));
+      } catch (error) {
+        throw new ImportFileError(file, "", `cannot read export file (${errorMessage2(error)})`, { cause: error });
+      }
+      if (bytesRead === 0)
+        break;
+      total += bytesRead;
+      if (total > maximumBytes) {
+        throw new ImportFileError(file, "", `export file exceeds the ${maximumBytes}-byte limit`);
+      }
+      chunks.push(chunk.subarray(0, bytesRead));
+    }
+    try {
+      return new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, total));
+    } catch (error) {
+      throw new ImportFileError(file, "", "export file is not valid UTF-8", { cause: error });
+    }
+  } finally {
+    await handle.close();
+  }
+}
+function assertJsonDepth(text, file) {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = 0;index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    if (inString) {
+      if (escaped)
+        escaped = false;
+      else if (code === 92)
+        escaped = true;
+      else if (code === 34)
+        inString = false;
+      continue;
+    }
+    if (code === 34)
+      inString = true;
+    else if (code === 91 || code === 123) {
+      depth += 1;
+      if (depth > MAX_JSON_DEPTH) {
+        throw new ImportFileError(file, "", `JSON nesting exceeds ${MAX_JSON_DEPTH} levels`);
+      }
+    } else if (code === 93 || code === 125)
+      depth -= 1;
+  }
+}
+var PAGE_KEYS = ["memories", "memoryEntries", "documents"];
+function isPage(value) {
+  return isRecord2(value) && PAGE_KEYS.some((key) => Array.isArray(value[key]));
+}
+function bareItemKind(value) {
+  return isRecord2(value) && typeof value.memory === "string" && typeof value.version === "number" ? "memory" : "document";
+}
+function parseExportText(text, file) {
+  const source = text.startsWith("\uFEFF") ? text.slice(1) : text;
+  assertJsonDepth(source, file);
+  let root;
+  try {
+    root = JSON.parse(source);
+  } catch (error) {
+    throw new ImportFileError(file, "", `not valid JSON (${errorMessage2(error)})`, { cause: error });
+  }
+  const items = [];
+  const push = (pointer, kind, value) => {
+    if (items.length >= MAX_IMPORT_ITEMS) {
+      throw new ImportFileError(file, pointer, `export holds more than ${MAX_IMPORT_ITEMS} items`);
+    }
+    items.push({ file, pointer, kind, value });
+  };
+  const collectPage = (page, base) => {
+    for (const key of PAGE_KEYS) {
+      const rows = page[key];
+      if (rows === undefined)
+        continue;
+      if (!Array.isArray(rows)) {
+        throw new ImportFileError(file, `${base}${pointerSegment(key)}`, `${key} must be an array`);
+      }
+      rows.forEach((value, index) => {
+        const pointer = `${base}${pointerSegment(key)}${pointerSegment(index)}`;
+        const kind = key === "memories" ? "document" : key === "memoryEntries" ? "memory" : bareItemKind(value);
+        push(pointer, kind, value);
+      });
+    }
+    const pagination = page.pagination;
+    if (pagination !== undefined && !isRecord2(pagination)) {
+      throw new ImportFileError(file, `${base}/pagination`, "pagination must be an object");
+    }
+  };
+  if (Array.isArray(root)) {
+    if (root.length > 0 && root.every(isPage)) {
+      root.forEach((page, index) => collectPage(page, pointerSegment(index)));
+    } else {
+      root.forEach((value, index) => push(pointerSegment(index), bareItemKind(value), value));
+    }
+  } else if (isPage(root)) {
+    collectPage(root, "");
+  } else {
+    throw new ImportFileError(file, "", "unknown export shape: expected {memories}, {memoryEntries}, {documents}, or an array");
+  }
+  return items;
+}
+function daysInMonth(year, month) {
+  if (month === 2)
+    return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28;
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+}
+function parseStrictTimestamp(value) {
+  if (typeof value !== "string")
+    return;
+  const match = STRICT_TIMESTAMP.exec(value);
+  if (match === null)
+    return;
+  const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number);
+  const fraction = match[7] ?? "";
+  const zone = match[8] ?? "Z";
+  if (month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month))
+    return;
+  if (hour > 23 || minute > 59 || second > 59)
+    return;
+  let offsetMinutes = 0;
+  if (zone !== "Z") {
+    const offsetHour = Number(zone.slice(1, 3));
+    const offsetMinute = Number(zone.slice(4, 6));
+    if (offsetHour > 23 || offsetMinute > 59)
+      return;
+    offsetMinutes = (zone.startsWith("-") ? -1 : 1) * (offsetHour * 60 + offsetMinute);
+  }
+  const milliseconds = Number(fraction.padEnd(3, "0").slice(0, 3));
+  const instant = new Date(0);
+  instant.setUTCFullYear(year, month - 1, day);
+  instant.setUTCHours(hour, minute, second, milliseconds);
+  const time = instant.getTime() - offsetMinutes * 60000;
+  if (!Number.isFinite(time))
+    return;
+  const result = new Date(time);
+  const resultYear = result.getUTCFullYear();
+  if (resultYear < 0 || resultYear > 9999)
+    return;
+  return result.toISOString();
+}
+function stringProblem(value, maximum, singleLine) {
+  if (LONE_SURROGATE.test(value))
+    return "is not well-formed Unicode";
+  if (value.includes("\x00"))
+    return "contains a NUL character";
+  if (singleLine && CONTROL_CHARACTER.test(value))
+    return "contains control characters";
+  if (value.length > maximum)
+    return `is longer than ${maximum} characters`;
+  return;
+}
+function flatMetadata(value, label = "metadata") {
+  if (value === undefined || value === null)
+    return { diagnostics: [] };
+  if (!isRecord2(value))
+    return { diagnostics: [`${label}: expected an object; dropped`] };
+  const diagnostics = [];
+  const kept = [];
+  for (const key of Object.keys(value).sort()) {
+    const entry = value[key];
+    if (entry === null || entry === undefined)
+      continue;
+    const name = JSON.stringify(key.length > 64 ? `${key.slice(0, 64)}\u2026` : key);
+    if (!METADATA_KEY.test(key) || key === "__proto__") {
+      diagnostics.push(`${label} key ${name} is not a safe key; dropped`);
+      continue;
+    }
+    if (typeof entry === "string") {
+      const problem = stringProblem(entry, MAX_METADATA_VALUE_CHARS, true);
+      if (problem !== undefined) {
+        diagnostics.push(`${label}.${key} ${problem}; dropped`);
+        continue;
+      }
+    } else if (typeof entry === "number") {
+      if (!Number.isFinite(entry)) {
+        diagnostics.push(`${label}.${key} is not a finite number; dropped`);
+        continue;
+      }
+      if (!isMetadataNumber(entry)) {
+        diagnostics.push(`${label}.${key} is an integer outside the safe range; dropped`);
+        continue;
+      }
+    } else if (typeof entry !== "boolean") {
+      diagnostics.push(`${label}.${key} is a nested value; dropped`);
+      continue;
+    }
+    if (kept.length >= MAX_METADATA_KEYS) {
+      diagnostics.push(`${label}.${key} is past the ${MAX_METADATA_KEYS}-key limit; dropped`);
+      continue;
+    }
+    kept.push([key, entry]);
+  }
+  return kept.length === 0 ? { diagnostics } : { value: Object.fromEntries(kept), diagnostics };
+}
+function normalizeText(value) {
+  return value.replace(/\r\n?/gu, `
+`).replace(/^(?:[ \t]*\n)+/u, "").trimEnd();
+}
+function cleanTitle(value) {
+  if (value === undefined)
+    return "";
+  const single = value.replace(/[\s\p{Cc}]+/gu, " ").trim();
+  const characters = Array.from(single);
+  if (characters.length <= MAX_TITLE_CHARS)
+    return single;
+  return `${characters.slice(0, MAX_TITLE_CHARS - 1).join("").trimEnd()}\u2026`;
+}
+function titleFor(candidates) {
+  for (const candidate of candidates) {
+    const title = cleanTitle(candidate);
+    if (title !== "")
+      return title;
+  }
+  return "Untitled";
+}
+function slugFor(candidates) {
+  for (const candidate of candidates) {
+    if (candidate === undefined)
+      continue;
+    const slug = slugify(candidate);
+    if (slug !== "")
+      return slug;
+  }
+  return "untitled";
+}
+
+class FieldReader {
+  reasons = [];
+  diagnostics = [];
+  record;
+  constructor(record) {
+    this.record = record;
+  }
+  id(key, required) {
+    const value = this.record[key];
+    if (value === undefined || value === null) {
+      if (required)
+        this.reasons.push(`${key}: missing`);
+      return;
+    }
+    if (typeof value !== "string" || !EXTERNAL_ID.test(value)) {
+      this.reasons.push(`${key}: expected an ID of 1 to 128 letters, digits, "_" or "-"`);
+      return;
+    }
+    return value;
+  }
+  timestamp(key) {
+    const value = this.record[key];
+    if (value === undefined || value === null) {
+      this.reasons.push(`${key}: missing`);
+      return;
+    }
+    const parsed = parseStrictTimestamp(value);
+    if (parsed === undefined)
+      this.reasons.push(`${key}: expected an RFC 3339 timestamp with an offset`);
+    return parsed;
+  }
+  optionalString(key, maximum = MAX_FIELD_CHARS, singleLine = true) {
+    const value = this.record[key];
+    if (value === undefined || value === null || value === "")
+      return;
+    if (typeof value !== "string") {
+      this.reasons.push(`${key}: expected a string or null`);
+      return;
+    }
+    const problem = stringProblem(value, maximum, singleLine);
+    if (problem !== undefined) {
+      this.reasons.push(`${key}: ${problem}`);
+      return;
+    }
+    return value;
+  }
+  optionalEnum(key, known) {
+    const value = this.optionalString(key, 64);
+    if (value === undefined)
+      return;
+    if (!ENUM_VALUE.test(value)) {
+      this.reasons.push(`${key}: expected a lower-case identifier`);
+      return;
+    }
+    if (!known.includes(value))
+      this.diagnostics.push(`${key} "${value}" is not a documented value`);
+    return value;
+  }
+  boolean(key, fallback) {
+    const value = this.record[key];
+    if (value === undefined || value === null)
+      return fallback;
+    if (typeof value !== "boolean") {
+      this.reasons.push(`${key}: expected a boolean`);
+      return fallback;
+    }
+    return value;
+  }
+  body(keys) {
+    for (const key of keys) {
+      const value = this.record[key];
+      if (value === undefined || value === null)
+        continue;
+      if (typeof value !== "string") {
+        this.reasons.push(`${key}: expected a string or null`);
+        return;
+      }
+      const text = normalizeText(value);
+      if (text.trim() === "")
+        continue;
+      const problem = stringProblem(text, Number.POSITIVE_INFINITY, false);
+      if (problem !== undefined) {
+        this.reasons.push(`${key}: ${problem}`);
+        return;
+      }
+      if (Buffer.byteLength(text, "utf8") > MAX_NOTE_BYTES) {
+        this.reasons.push(`${key}: body exceeds the ${MAX_NOTE_BYTES}-byte note limit`);
+        return;
+      }
+      return text;
+    }
+    this.reasons.push(`empty body: no non-blank ${keys.join(" or ")}`);
+    return;
+  }
+  idList(key, maximum) {
+    const value = this.record[key];
+    if (value === undefined || value === null)
+      return [];
+    if (!Array.isArray(value)) {
+      this.diagnostics.push(`${key}: expected an array; dropped`);
+      return [];
+    }
+    const kept = [];
+    value.forEach((entry, index) => {
+      if (typeof entry !== "string" || !EXTERNAL_ID.test(entry)) {
+        this.diagnostics.push(`${key}/${index}: not a valid ID; dropped`);
+      } else if (kept.length >= maximum) {
+        this.diagnostics.push(`${key}/${index}: past the ${maximum}-entry limit; dropped`);
+      } else if (!kept.includes(entry))
+        kept.push(entry);
+    });
+    return kept;
+  }
+}
+function rejection(raw, reasons, externalId) {
+  return {
+    ok: false,
+    rejection: {
+      file: raw.file,
+      pointer: raw.pointer,
+      ...externalId === undefined ? {} : { externalId },
+      reasons
+    }
+  };
+}
+function externalIdOf(value) {
+  return isRecord2(value) && typeof value.id === "string" && EXTERNAL_ID.test(value.id) ? value.id : undefined;
+}
+function validateDocument(raw) {
+  if (!isRecord2(raw.value))
+    return rejection(raw, ["expected an object"]);
+  const fields = new FieldReader(raw.value);
+  const externalId = fields.id("id", true);
+  const customId = fields.optionalString("customId", MAX_CUSTOM_ID_CHARS);
+  const rawTitle = fields.optionalString("title", MAX_TITLE_SOURCE_CHARS, false);
+  const supermemoryType = fields.optionalEnum("type", SUPERMEMORY_DOCUMENT_TYPES);
+  const status = fields.optionalEnum("status", SUPERMEMORY_STATUSES);
+  const url = fields.optionalString("url");
+  const connectionId = fields.optionalString("connectionId", 128);
+  const filepath = fields.optionalString("filepath");
+  const created = fields.timestamp("createdAt");
+  const updated = fields.timestamp("updatedAt");
+  const text = fields.body(["content", "summary"]);
+  const containerTags = [];
+  const tags = raw.value.containerTags;
+  if (Array.isArray(tags)) {
+    tags.forEach((tag, index) => {
+      if (typeof tag !== "string" || !CONTAINER_TAG.test(tag)) {
+        fields.diagnostics.push(`containerTags/${index}: not a valid container tag; dropped`);
+      } else if (containerTags.length >= MAX_CONTAINER_TAGS) {
+        fields.diagnostics.push(`containerTags/${index}: past the ${MAX_CONTAINER_TAGS}-tag limit; dropped`);
+      } else if (!containerTags.includes(tag))
+        containerTags.push(tag);
+    });
+  } else if (tags !== undefined && tags !== null) {
+    fields.diagnostics.push("containerTags: expected an array; dropped");
+  }
+  const metadata = flatMetadata(raw.value.metadata);
+  if (fields.reasons.length > 0 || externalId === undefined || created === undefined || updated === undefined || text === undefined) {
+    return rejection(raw, fields.reasons, externalIdOf(raw.value));
+  }
+  return {
+    ok: true,
+    item: {
+      kind: "document",
+      file: raw.file,
+      pointer: raw.pointer,
+      externalId,
+      ...customId === undefined ? {} : { customId },
+      title: titleFor([rawTitle, customId, externalId]),
+      slug: slugFor([customId, rawTitle, externalId]),
+      ...supermemoryType === undefined ? {} : { supermemoryType },
+      ...status === undefined ? {} : { status },
+      containerTags,
+      ...url === undefined ? {} : { url },
+      ...connectionId === undefined ? {} : { connectionId },
+      ...filepath === undefined ? {} : { filepath },
+      created,
+      updated,
+      ...metadata.value === undefined ? {} : { metadata: metadata.value },
+      text,
+      diagnostics: [...fields.diagnostics, ...metadata.diagnostics]
+    }
+  };
+}
+function validateMemoryVersion(raw, value, pointer, history) {
+  const at = { ...raw, pointer, value };
+  if (!isRecord2(value))
+    return rejection(at, ["expected an object"]);
+  const fields = new FieldReader(value);
+  const externalId = fields.id("id", true);
+  const parentId = fields.id("parentMemoryId", false);
+  const rootId = fields.id("rootMemoryId", false);
+  const version = value.version;
+  if (typeof version !== "number" || !Number.isFinite(version)) {
+    fields.reasons.push("version: expected a finite number");
+  } else if (!isMetadataNumber(version)) {
+    fields.reasons.push("version: integer outside the safe range");
+  }
+  const created = fields.timestamp("createdAt");
+  const updated = fields.timestamp("updatedAt");
+  const isLatest = fields.boolean("isLatest", !history);
+  const forgotten = fields.boolean("isForgotten", false);
+  const isStatic = history ? false : fields.boolean("isStatic", false);
+  const isInference = history ? false : fields.boolean("isInference", false);
+  const text = fields.body(["memory"]);
+  let forgetAfter;
+  if (!history && value.forgetAfter !== undefined && value.forgetAfter !== null) {
+    forgetAfter = parseStrictTimestamp(value.forgetAfter);
+    if (forgetAfter === undefined)
+      fields.diagnostics.push("forgetAfter: not a valid timestamp; dropped");
+  }
+  const sourceDocumentIds = history ? [] : fields.idList("documentIds", MAX_SOURCE_DOCUMENT_IDS);
+  const metadata = history ? { diagnostics: [] } : flatMetadata(value.metadata);
+  const relations = value.memoryRelations;
+  const hasMemoryRelations = !history && isRecord2(relations) && Object.keys(relations).length > 0;
+  if (fields.reasons.length > 0 || externalId === undefined || typeof version !== "number" || created === undefined || updated === undefined || text === undefined) {
+    return rejection(at, fields.reasons, externalIdOf(value));
+  }
+  const title = titleFor([text.split(`
+`).find((line) => line.trim() !== ""), externalId]);
+  return {
+    ok: true,
+    item: {
+      kind: "memory",
+      file: raw.file,
+      pointer,
+      externalId,
+      title,
+      slug: slugFor([title, externalId]),
+      version,
+      isLatest,
+      forgotten,
+      ...parentId === undefined ? {} : { parentId },
+      ...rootId === undefined ? {} : { rootId },
+      isStatic,
+      isInference,
+      ...forgetAfter === undefined ? {} : { forgetAfter },
+      sourceDocumentIds,
+      created,
+      updated,
+      ...metadata.value === undefined ? {} : { metadata: metadata.value },
+      hasMemoryRelations,
+      text,
+      diagnostics: [...fields.diagnostics, ...metadata.diagnostics]
+    }
+  };
+}
+function validateMemoryEntry(raw) {
+  const results = [validateMemoryVersion(raw, raw.value, raw.pointer, false)];
+  if (!isRecord2(raw.value))
+    return results;
+  const history = raw.value.history;
+  if (history === undefined || history === null)
+    return results;
+  if (!Array.isArray(history)) {
+    const latest = results[0];
+    if (latest?.ok === true) {
+      results[0] = {
+        ok: true,
+        item: { ...latest.item, diagnostics: [...latest.item.diagnostics, "history: expected an array; dropped"] }
+      };
+    }
+    return results;
+  }
+  history.forEach((entry, index) => {
+    results.push(validateMemoryVersion(raw, entry, `${raw.pointer}/history/${index}`, true));
+  });
+  return results;
+}
+function validateRawItem(raw) {
+  return raw.kind === "memory" ? validateMemoryEntry(raw) : [validateDocument(raw)];
+}
+var ARTICLES_DIRECTORY = "articles";
+var IMPORTED_NOTES_DIRECTORY = "notes/imported";
+var IMPORTED_MEMORIES_DIRECTORY = "notes/imported/memories";
+var DOCUMENT_KEYS = [
+  "imported_from",
+  "external_id",
+  "custom_id",
+  "supermemory_type",
+  "status",
+  "container_tag",
+  "container_tags",
+  "source",
+  "url",
+  "connection_id",
+  "filepath",
+  "clipped",
+  "created",
+  "updated",
+  "metadata",
+  "import_digest"
+];
+var MEMORY_KEYS = [
+  "imported_from",
+  "external_id",
+  "version",
+  "parent_id",
+  "root_id",
+  "is_static",
+  "is_inference",
+  "forget_after",
+  "source_document_ids",
+  "created",
+  "updated",
+  "metadata",
+  "import_digest"
+];
+var PROVENANCE_LINE = /\n\nImported from supermemory export `[^`\n]*` on \d{4}-\d{2}-\d{2}\.$/u;
+function occupancyKey(value) {
+  return value.normalize("NFC").toLowerCase();
+}
+function normalizePrefix(prefix) {
+  const trimmed = prefix.replace(/\/+$/u, "");
+  let canonical;
+  try {
+    canonical = canonicalNoteId(trimmed);
+  } catch {
+    canonical = undefined;
+  }
+  if (canonical !== trimmed || trimmed === "") {
+    throw new TypeError("--prefix must be a vault-relative directory such as notes/imported");
+  }
+  const key = occupancyKey(trimmed);
+  if (key === ARTICLES_DIRECTORY || key.startsWith(`${ARTICLES_DIRECTORY}/`)) {
+    throw new TypeError("--prefix must be outside articles/, where each directory holds one captured source; omit --prefix to place web documents there");
+  }
+  return trimmed;
+}
+function credentialShaped(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.username !== "" || parsed.password !== "")
+    return true;
+  const probe = parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : `https://supermemory.invalid/${parsed.pathname.replace(/^\/+/u, "")}${parsed.search}${parsed.hash}`;
+  try {
+    return sanitizeArtifactUrl(probe) !== new URL(probe).href;
+  } catch {
+    return true;
+  }
+}
+function urlPlacement(url) {
+  if (credentialShaped(url)) {
+    return { kind: "dropped", diagnostic: "url carries credential-shaped data; dropped" };
+  }
+  if (!/^https?:/iu.test(url))
+    return { kind: "url", value: url };
+  const problem = savedSourceProblem(url);
+  return problem === undefined ? { kind: "source", value: url } : { kind: "url", value: url, diagnostic: `url is kept as url, not source: ${problem}` };
+}
+function noteType(item) {
+  if (item.kind === "memory")
+    return "memory";
+  const url = item.url;
+  return url !== undefined && urlPlacement(url).kind === "source" || item.supermemoryType !== undefined && item.supermemoryType !== "text" ? "article" : "note";
+}
+function placement(item, slug, prefix) {
+  if (prefix !== undefined) {
+    const id2 = `${prefix}/${slug}`;
+    return { id: id2, keys: [occupancyKey(id2)] };
+  }
+  if (item.kind === "memory") {
+    const id2 = `${IMPORTED_MEMORIES_DIRECTORY}/${slug}`;
+    return { id: id2, keys: [occupancyKey(id2)] };
+  }
+  if (noteType(item) !== "article") {
+    const id2 = `${IMPORTED_NOTES_DIRECTORY}/${slug}`;
+    return { id: id2, keys: [occupancyKey(id2)] };
+  }
+  const directory = `${ARTICLES_DIRECTORY}/${slug}`;
+  const id = `${directory}/${slug}`;
+  return { id, keys: [occupancyKey(id), occupancyKey(directory)] };
+}
+function sortedJson(value) {
+  if (Array.isArray(value))
+    return value.map(sortedJson);
+  if (isRecord2(value)) {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sortedJson(value[key])]));
+  }
+  return value;
+}
+function importDigest(title, fields, text) {
+  const owned = Object.fromEntries(Object.entries(fields).filter(([key]) => key !== "import_digest"));
+  return `sha256:${sha256(JSON.stringify(sortedJson({ title, fields: owned, text })))}`;
+}
+function provenanceLine(file, now) {
+  const name = basename2(file).replace(/[`\u0000-\u001f\u007f]/gu, "_");
+  return `Imported from supermemory export \`${name}\` on ${now.toISOString().slice(0, 10)}.`;
+}
+function localImportedText(body) {
+  const text = normalizeText(body);
+  const match = PROVENANCE_LINE.exec(text);
+  return (match === null ? text : text.slice(0, match.index)).trimEnd();
+}
+function ownedFields(item, inArticles) {
+  const fields = { imported_from: "supermemory", external_id: item.externalId };
+  if (item.kind === "document") {
+    if (item.customId !== undefined)
+      fields.custom_id = item.customId;
+    if (item.supermemoryType !== undefined)
+      fields.supermemory_type = item.supermemoryType;
+    if (item.status !== undefined && item.status !== "done")
+      fields.status = item.status;
+    const [firstTag] = item.containerTags;
+    if (firstTag !== undefined)
+      fields.container_tag = firstTag;
+    if (item.containerTags.length > 1)
+      fields.container_tags = item.containerTags;
+    if (item.url !== undefined) {
+      const url = urlPlacement(item.url);
+      if (url.kind === "source")
+        fields.source = url.value;
+      else if (url.kind === "url")
+        fields.url = url.value;
+    }
+    if (item.connectionId !== undefined)
+      fields.connection_id = item.connectionId;
+    if (item.filepath !== undefined)
+      fields.filepath = item.filepath;
+    if (inArticles)
+      fields.clipped = item.created.slice(0, 10);
+  } else {
+    fields.version = item.version;
+    if (item.parentId !== undefined)
+      fields.parent_id = item.parentId;
+    if (item.rootId !== undefined)
+      fields.root_id = item.rootId;
+    if (item.isStatic)
+      fields.is_static = true;
+    if (item.isInference)
+      fields.is_inference = true;
+    if (item.forgetAfter !== undefined)
+      fields.forget_after = item.forgetAfter;
+    if (item.sourceDocumentIds.length > 0)
+      fields.source_document_ids = item.sourceDocumentIds;
+  }
+  fields.created = item.created;
+  fields.updated = item.updated;
+  if (item.metadata !== undefined)
+    fields.metadata = item.metadata;
+  return fields;
+}
+function isInArticles(id) {
+  return id.startsWith(`${ARTICLES_DIRECTORY}/`);
+}
+function renderedBody(item, now) {
+  return `${item.text}
+
+${provenanceLine(item.file, now)}
+`;
+}
+function itemDiagnostics(item) {
+  if (item.kind !== "document")
+    return item.diagnostics;
+  const diagnostics = [...item.diagnostics];
+  const url = item.url === undefined ? undefined : urlPlacement(item.url).diagnostic;
+  if (url !== undefined)
+    diagnostics.push(url);
+  if (item.status !== undefined && item.status !== "done") {
+    diagnostics.push(`status is "${item.status}"; the imported text may be incomplete`);
+  }
+  return diagnostics;
+}
+function localState(note, keys) {
+  const revision = note.revision ?? revisionFor(new TextEncoder().encode(note.content));
+  let parts;
+  try {
+    parts = frontmatter(note.content, note.path);
+  } catch (error) {
+    return { revision, error: `cannot read frontmatter (${errorMessage2(error)})` };
+  }
+  const data = parts.document.toJS();
+  if (!isRecord2(data))
+    return { revision };
+  const recorded = typeof data.import_digest === "string" ? data.import_digest : undefined;
+  const fields = Object.fromEntries(keys.filter((key) => (key in data)).map((key) => [key, data[key]]));
+  const title = typeof data.title === "string" ? data.title : "";
+  return {
+    digest: importDigest(title, fields, localImportedText(parts.bodySuffix)),
+    ...recorded === undefined ? {} : { recorded },
+    revision
+  };
+}
+function laterItem(left, right) {
+  return Date.parse(right.updated) > Date.parse(left.updated);
+}
+function planImport(input) {
+  const prefix = input.prefix === undefined ? undefined : normalizePrefix(input.prefix);
+  const items = new Array(input.items.length);
+  const winners = new Map;
+  input.items.forEach((result, index) => {
+    if (!result.ok) {
+      const { rejection: rejection2 } = result;
+      items[index] = {
+        outcome: "rejected",
+        file: rejection2.file,
+        pointer: rejection2.pointer,
+        ...rejection2.externalId === undefined ? {} : { externalId: rejection2.externalId },
+        reason: rejection2.reasons.join("; "),
+        diagnostics: []
+      };
+      return;
+    }
+    const previous = winners.get(result.item.externalId);
+    const previousResult = previous === undefined ? undefined : input.items[previous];
+    if (previousResult?.ok !== true || laterItem(previousResult.item, result.item)) {
+      winners.set(result.item.externalId, index);
+    }
+  });
+  const accepted = [];
+  input.items.forEach((result, index) => {
+    if (!result.ok)
+      return;
+    const { item } = result;
+    const base = { file: item.file, pointer: item.pointer, externalId: item.externalId, diagnostics: itemDiagnostics(item) };
+    if (winners.get(item.externalId) !== index) {
+      items[index] = { ...base, outcome: "skipped", reason: "duplicate in export" };
+    } else if (item.kind === "memory" && item.forgotten) {
+      items[index] = { ...base, outcome: "skipped", reason: "forgotten" };
+    } else {
+      accepted.push({ index, item });
+    }
+  });
+  const existing = new Map;
+  for (const note of input.existing) {
+    if (note.metadata.imported_from !== "supermemory")
+      continue;
+    const externalId = note.metadata.external_id;
+    if (typeof externalId !== "string")
+      continue;
+    existing.set(externalId, [...existing.get(externalId) ?? [], note]);
+  }
+  const fresh = accepted.filter(({ item }) => !existing.has(item.externalId)).map((entry) => ({ ...entry, baseId: placement(entry.item, entry.item.slug, prefix).id })).sort((left, right) => left.baseId < right.baseId ? -1 : left.baseId > right.baseId ? 1 : left.item.externalId < right.item.externalId ? -1 : left.item.externalId > right.item.externalId ? 1 : 0);
+  const taken = new Set(input.occupied);
+  const allocated = new Map;
+  const nextSuffix = new Map;
+  for (const { index, item, baseId } of fresh) {
+    const counter = occupancyKey(baseId);
+    const first = nextSuffix.get(counter) ?? 1;
+    let suffix = first;
+    for (;suffix < first + MAX_SLUG_ATTEMPTS; suffix += 1) {
+      const candidate = placement(item, suffix === 1 ? item.slug : `${item.slug}-${suffix}`, prefix);
+      if (candidate.keys.some((key) => taken.has(key)))
+        continue;
+      for (const key of candidate.keys)
+        taken.add(key);
+      allocated.set(index, candidate.id);
+      break;
+    }
+    nextSuffix.set(counter, suffix + 1);
+  }
+  let growthNotes = 0;
+  let growthBytes = 0;
+  for (const { index, item } of accepted) {
+    const base = { file: item.file, pointer: item.pointer, externalId: item.externalId, diagnostics: itemDiagnostics(item) };
+    const keys = item.kind === "document" ? DOCUMENT_KEYS : MEMORY_KEYS;
+    const body = renderedBody(item, input.now);
+    const matches = existing.get(item.externalId);
+    if (matches === undefined) {
+      const id = allocated.get(index);
+      if (id === undefined) {
+        items[index] = {
+          ...base,
+          outcome: "rejected",
+          reason: `no free note ID for slug "${item.slug}" after ${MAX_SLUG_ATTEMPTS} attempts`
+        };
+        continue;
+      }
+      const fields2 = ownedFields(item, isInArticles(id));
+      const write = {
+        kind: "create",
+        input: { id, title: item.title, type: noteType(item), body },
+        fields: { ...fields2, import_digest: importDigest(item.title, fields2, item.text) }
+      };
+      const rendered = renderedSize(() => renderCreatedNote(write.input, MEASURE_DOCUMENT_ID, write.fields));
+      if (typeof rendered === "string") {
+        items[index] = { ...base, outcome: "rejected", reason: rendered };
+        continue;
+      }
+      growthNotes += 1;
+      growthBytes += rendered;
+      items[index] = { ...base, outcome: "created", note: id, write };
+      continue;
+    }
+    if (matches.length > 1) {
+      const paths = matches.map((note2) => note2.path).sort().join(", ");
+      items[index] = { ...base, outcome: "conflict", reason: `more than one note imports this ID: ${paths}` };
+      continue;
+    }
+    const note = matches[0];
+    const local = localState(note, keys);
+    const fields = ownedFields(item, isInArticles(note.id));
+    const digest = importDigest(item.title, fields, item.text);
+    const matched = { ...base, note: note.id };
+    if (local.error !== undefined) {
+      items[index] = { ...matched, outcome: "conflict", reason: local.error };
+    } else if (local.recorded === undefined) {
+      items[index] = { ...matched, outcome: "conflict", reason: "missing import_digest" };
+    } else if (local.digest !== local.recorded) {
+      items[index] = { ...matched, outcome: "conflict", reason: "the note was edited after the last import" };
+    } else if (digest === local.recorded) {
+      items[index] = { ...matched, outcome: "skipped", reason: "unchanged" };
+    } else {
+      const updates = { title: item.title };
+      for (const key of keys)
+        updates[key] = key === "import_digest" ? digest : fields[key] ?? null;
+      const rendered = renderedSize(() => renderUpdatedNoteBodyAndFields({ content: note.content, relativePath: note.path }, frontmatter(note.content, note.path), body, updates));
+      if (typeof rendered === "string") {
+        items[index] = { ...matched, outcome: "rejected", reason: rendered };
+        continue;
+      }
+      growthBytes += rendered - Buffer.byteLength(note.content, "utf8");
+      items[index] = {
+        ...matched,
+        outcome: "updated",
+        write: { kind: "update", body, expectedRevision: local.revision, fields: updates }
+      };
+    }
+  }
+  const noteByExternalId = new Map;
+  for (const [externalId, notes] of existing) {
+    const [only] = notes;
+    if (notes.length === 1 && only !== undefined)
+      noteByExternalId.set(externalId, only.id);
+  }
+  const outcomeByNote = new Map;
+  for (const planned of items) {
+    if (planned?.note !== undefined && planned.externalId !== undefined) {
+      noteByExternalId.set(planned.externalId, planned.note);
+      outcomeByNote.set(planned.note, planned.outcome);
+    }
+  }
+  const existingById = new Map(input.existing.map((note) => [note.id, note]));
+  const candidates = [];
+  let sawMemoryRelations = false;
+  for (const { index, item } of accepted) {
+    if (item.kind !== "memory")
+      continue;
+    sawMemoryRelations ||= item.hasMemoryRelations;
+    const planned = items[index];
+    if (item.parentId === undefined || planned?.note === undefined)
+      continue;
+    if (planned.outcome === "conflict" || planned.outcome === "rejected")
+      continue;
+    const target = noteByExternalId.get(item.parentId);
+    if (target === undefined) {
+      items[index] = {
+        ...planned,
+        diagnostics: [
+          ...planned.diagnostics,
+          `parent memory ${item.parentId} was not imported; supersedes relation omitted`
+        ]
+      };
+      continue;
+    }
+    if (target === planned.note)
+      continue;
+    const targetOutcome = outcomeByNote.get(target);
+    if (targetOutcome === "conflict" || targetOutcome === "rejected")
+      continue;
+    const written = planned.outcome === "created" || planned.outcome === "updated" || targetOutcome === "created";
+    if (!written)
+      continue;
+    const source = existingById.get(planned.note);
+    if (source !== undefined && supersedesTargets(source).includes(target))
+      continue;
+    candidates.push({ index, relation: { source: planned.note, predicate: "supersedes", target } });
+  }
+  candidates.sort((left, right) => compareRelations(left.relation, right.relation));
+  const graph = new Map;
+  const addEdge = (source, target) => {
+    const targets = graph.get(source);
+    if (targets === undefined)
+      graph.set(source, [target]);
+    else
+      targets.push(target);
+  };
+  for (const note of input.existing) {
+    for (const target of supersedesTargets(note))
+      addEdge(note.id, target);
+  }
+  const relations = [];
+  for (const { index, relation } of candidates) {
+    if (reaches(graph, relation.target, relation.source)) {
+      const planned = items[index];
+      items[index] = {
+        ...planned,
+        diagnostics: [
+          ...planned.diagnostics,
+          `supersedes relation to ${relation.target} omitted because it would close a cycle`
+        ]
+      };
+      continue;
+    }
+    addEdge(relation.source, relation.target);
+    relations.push(relation);
+  }
+  return {
+    items: items.filter((item) => item !== undefined),
+    relations,
+    diagnostics: sawMemoryRelations ? ["memoryRelations are the service's inferred links and were not imported"] : [],
+    growth: { notes: growthNotes, bytes: growthBytes }
+  };
+}
+var MEASURE_DOCUMENT_ID = "00000000-0000-4000-8000-000000000000";
+function renderedSize(render) {
+  let content;
+  try {
+    content = render();
+  } catch (error) {
+    return error instanceof RangeError ? `the rendered note is larger than the ${MAX_NOTE_BYTES / (1024 * 1024)} MiB note limit` : errorMessage2(error);
+  }
+  const bytes = Buffer.byteLength(content, "utf8");
+  return bytes > MAX_NOTE_BYTES ? `the rendered note is larger than the ${MAX_NOTE_BYTES / (1024 * 1024)} MiB note limit` : bytes;
+}
+function compareRelations(left, right) {
+  return left.source < right.source ? -1 : left.source > right.source ? 1 : left.target < right.target ? -1 : left.target > right.target ? 1 : 0;
+}
+function reaches(graph, from, to) {
+  const seen = new Set([from]);
+  const stack = [from];
+  for (let current = stack.pop();current !== undefined; current = stack.pop()) {
+    if (current === to)
+      return true;
+    for (const next of graph.get(current) ?? []) {
+      if (seen.has(next))
+        continue;
+      seen.add(next);
+      stack.push(next);
+    }
+  }
+  return false;
+}
+function supersedesTargets(note) {
+  if (note.supersedes !== undefined)
+    return note.supersedes;
+  try {
+    return relationsFromParts(frontmatter(note.content, note.path), note.path).filter((relation) => relation.predicate === "supersedes").map((relation) => relation.target);
+  } catch {
+    return [];
+  }
+}
+function reportItem(item) {
+  return {
+    outcome: item.outcome,
+    file: item.file,
+    pointer: item.pointer,
+    ...item.externalId === undefined ? {} : { externalId: item.externalId },
+    ...item.note === undefined ? {} : { note: item.note, path: `${item.note}.md` },
+    ...item.reason === undefined ? {} : { reason: item.reason },
+    ...item.diagnostics.length === 0 ? {} : { diagnostics: item.diagnostics }
+  };
+}
+async function lstatOrNull(path) {
+  try {
+    return await lstat(path);
+  } catch (error) {
+    if (isErrno(error, "ENOENT"))
+      return null;
+    throw error;
+  }
+}
+async function ensureNoteParent(vault, noteId) {
+  const id = canonicalNoteId(noteId);
+  let current = vault.root;
+  for (const segment of id.split("/").slice(0, -1)) {
+    const next = join3(current, segment);
+    let metadata = await lstatOrNull(next);
+    if (metadata === null) {
+      try {
+        await mkdir(next);
+      } catch (error) {
+        if (!isErrno(error, "EEXIST"))
+          throw error;
+      }
+      metadata = await lstat(next);
+    }
+    await assertExactDirectoryEntry(current, segment);
+    if (metadata.isSymbolicLink())
+      throw new Error("the note path must not traverse a symbolic link");
+    if (!metadata.isDirectory())
+      throw new Error("every note parent must be a directory");
+    current = next;
+  }
+  await assertSafeParent(vault, join3(vault.root, `${id}.md`));
+}
+async function applyItem(vault, item, options) {
+  const reported = reportItem(item);
+  const { write, note } = item;
+  if (write === undefined || note === undefined)
+    return reported;
+  const authoring = options.dependencies === undefined ? {} : { dependencies: options.dependencies };
+  try {
+    if (write.kind === "create") {
+      await ensureNoteParent(vault, note);
+      const result = await createNoteWithFields(vault.root, write.input, authoring, write.fields);
+      return result.changed ? reported : { ...reported, outcome: "skipped", reason: "unchanged" };
+    }
+    await updateNoteBodyWithFields(vault.root, note, write.body, { ...authoring, expectedRevision: write.expectedRevision }, write.fields);
+    return reported;
+  } catch (error) {
+    if (error instanceof NoteRevisionConflictError) {
+      return { ...reported, outcome: "conflict", reason: "the note changed during import" };
+    }
+    if (error instanceof NoteAlreadyExistsError) {
+      return { ...reported, outcome: "conflict", reason: error.message };
+    }
+    return { ...reported, outcome: "rejected", reason: errorMessage2(error) };
+  }
+}
+async function applyImportPlan(root, plan, options = {}) {
+  const vault = await resolveVault(root);
+  const items = [];
+  for (const item of plan.items)
+    items.push(await applyItem(vault, item, options));
+  const failed = new Set(items.flatMap((item) => item.note !== undefined && (item.outcome === "conflict" || item.outcome === "rejected") ? [item.note] : []));
+  const authoring = options.dependencies === undefined ? {} : { dependencies: options.dependencies };
+  const relations = [];
+  for (const relation of plan.relations) {
+    const unwritten = [relation.source, relation.target].find((note) => failed.has(note));
+    if (unwritten !== undefined) {
+      relations.push({ ...relation, outcome: "omitted", reason: `${unwritten} was not written` });
+      continue;
+    }
+    try {
+      const result = await addNoteRelation(vault.root, relation.source, relation.predicate, relation.target, authoring);
+      relations.push({ ...relation, outcome: result.changed ? "added" : "unchanged" });
+    } catch (error) {
+      relations.push({ ...relation, outcome: "failed", reason: errorMessage2(error) });
+    }
+  }
+  return { items, relations };
+}
+async function occupiedIds(vault, ids, prefix) {
+  const occupied = new Set(ids.map(occupancyKey));
+  const parents = prefix === undefined ? [ARTICLES_DIRECTORY, IMPORTED_NOTES_DIRECTORY, IMPORTED_MEMORIES_DIRECTORY] : [prefix];
+  for (const parent of parents) {
+    const directory = join3(vault.root, ...parent.split("/"));
+    const metadata = await lstatOrNull(directory).catch((error) => {
+      if (isErrno(error, "ENOTDIR"))
+        return null;
+      throw error;
+    });
+    if (metadata === null || !metadata.isDirectory())
+      continue;
+    for (const name of await readdir(directory)) {
+      occupied.add(occupancyKey(`${parent}/${name}`));
+      if (/\.md$/iu.test(name))
+        occupied.add(occupancyKey(`${parent}/${name.slice(0, -3)}`));
+    }
+  }
+  return occupied;
+}
+async function diskRevision(root, path, content) {
+  let bytes;
+  try {
+    bytes = await readFile2(join3(root, ...path.split("/")));
+  } catch {
+    return;
+  }
+  return new TextDecoder().decode(bytes) === content ? revisionFor(bytes) : undefined;
+}
+function assertWithinVaultCaps(notes, plan, limits) {
+  const maximumNotes = limits?.notes ?? MAX_SCANNED_NOTES;
+  const maximumBytes = limits?.bytes ?? MAX_VAULT_UTF8_BYTES;
+  const noteCount = notes.length + plan.growth.notes;
+  if (noteCount > maximumNotes) {
+    throw new Error(`the import would leave ${noteCount} notes, more than the vault's ${maximumNotes}-note limit; nothing was written`);
+  }
+  let bytes = plan.growth.bytes;
+  for (const note of notes)
+    bytes += Buffer.byteLength(note.content, "utf8");
+  if (bytes > maximumBytes) {
+    throw new Error(`the import would leave ${bytes} bytes of notes, more than the vault's ${maximumBytes}-byte limit; nothing was written`);
+  }
+}
+function countOutcomes(items) {
+  const count = (outcome) => items.filter((item) => item.outcome === outcome).length;
+  return {
+    created: count("created"),
+    updated: count("updated"),
+    skipped: count("skipped"),
+    conflicts: count("conflict"),
+    rejected: count("rejected")
+  };
+}
+async function importSupermemory(options) {
+  if (options.files.length === 0)
+    throw new TypeError("import supermemory requires at least one export file");
+  if (options.files.length > MAX_IMPORT_FILES) {
+    throw new TypeError(`import supermemory accepts at most ${MAX_IMPORT_FILES} export files`);
+  }
+  const prefix = options.prefix === undefined ? undefined : normalizePrefix(options.prefix);
+  const vault = await resolveVault(options.root);
+  const now = options.now ?? new Date;
+  const raw = [];
+  for (const file of options.files) {
+    for (const item of parseExportText(await readExportFile(file, file), file))
+      raw.push(item);
+    if (raw.length > MAX_IMPORT_ITEMS)
+      throw new Error(`the exports hold more than ${MAX_IMPORT_ITEMS} items`);
+  }
+  const validated = raw.flatMap((item) => validateRawItem(item));
+  if (validated.length > MAX_IMPORT_ITEMS) {
+    throw new Error(`the exports hold more than ${MAX_IMPORT_ITEMS} items after memory history versions`);
+  }
+  const snapshot = await scanVault(vault.root, { mentionScope: false });
+  const wanted = new Set(validated.flatMap((result) => result.ok ? [result.item.externalId] : []));
+  const existing = [];
+  for (const note of snapshot.notes) {
+    const supersedes = (note.relationDeclarations ?? []).filter((relation) => relation.predicate === "supersedes").map((relation) => relation.target.replace(/\.md$/iu, ""));
+    const base = { id: note.id, path: note.path, content: note.content, metadata: note.metadata, supersedes };
+    const externalId = note.metadata.external_id;
+    const matched = note.metadata.imported_from === "supermemory" && typeof externalId === "string" && wanted.has(externalId);
+    const revision = matched ? await diskRevision(vault.root, note.path, note.content) : undefined;
+    existing.push(revision === undefined ? base : { ...base, revision });
+  }
+  const occupied = await occupiedIds(vault, snapshot.notes.map((note) => note.id), prefix);
+  const plan = planImport({ items: validated, existing, occupied, ...prefix === undefined ? {} : { prefix }, now });
+  assertWithinVaultCaps(snapshot.notes, plan, options.limits);
+  const dryRun = options.dryRun === true;
+  const applied = dryRun ? {
+    items: plan.items.map(reportItem),
+    relations: plan.relations.map((relation) => ({ ...relation, outcome: "added" }))
+  } : await applyImportPlan(vault.root, plan, options);
+  const counts = countOutcomes(applied.items);
+  return {
+    ok: applied.items.length === 0 || counts.rejected < applied.items.length,
+    dryRun,
+    root: vault.root,
+    files: options.files.length,
+    counts,
+    items: applied.items,
+    relations: applied.relations,
+    diagnostics: plan.diagnostics
+  };
+}
+
 // src/mcp-tools.ts
 import { createHash } from "crypto";
-import { lstat } from "fs/promises";
+import { lstat as lstat2 } from "fs/promises";
 var MAX_TOOL_RESULT_BYTES = 65536;
 var MAX_NOTE_READ_BYTES = 65536;
 var MAX_NOTE_ID_UTF8_BYTES = 4096;
@@ -1393,7 +2677,7 @@ function utf8Length(text) {
 function jsonLength(value) {
   return utf8Length(JSON.stringify(value));
 }
-function errorMessage2(error) {
+function errorMessage3(error) {
   return error instanceof Error ? error.message : String(error);
 }
 function toolSuccess(value) {
@@ -1403,7 +2687,7 @@ function toolFailure(message) {
   return { content: [{ type: "text", text: message }], isError: true };
 }
 function isMissingPath(error) {
-  return errorMessage2(error).startsWith("vault path component is not exact");
+  return errorMessage3(error).startsWith("vault path component is not exact");
 }
 function noteNotFound(id, suggestion) {
   return toolFailure(suggestion === undefined || suggestion === id ? `note ${id} was not found` : `note ${id} was not found; did you mean ${suggestion}?`);
@@ -1413,7 +2697,7 @@ function failureFor(error) {
     const recovery = error.recoveryPath === null ? "" : `; displaced bytes remain at ${error.recoveryPath}`;
     return toolFailure(`revision conflict: expected ${error.expected ?? "none"}, current ${error.actual ?? "none"}${recovery}; ` + "call get_note and retry");
   }
-  const message = errorMessage2(error);
+  const message = errorMessage3(error);
   return toolFailure(error instanceof InvalidCanonicalNoteIdError ? `${message} ${ID_HINT}` : message);
 }
 function fitResult(value, steps, maxBytes = MAX_TOOL_RESULT_BYTES) {
@@ -1623,7 +2907,7 @@ function querySort(raw) {
 }
 async function vaultFingerprint(root) {
   const files = await markdownFiles(root);
-  const stats = await Promise.all(files.map((file) => lstat(file, { bigint: true }).catch(() => null)));
+  const stats = await Promise.all(files.map((file) => lstat2(file, { bigint: true }).catch(() => null)));
   const hash = createHash("sha256");
   files.forEach((file, index) => {
     const stat2 = stats[index];
@@ -1634,14 +2918,14 @@ async function vaultFingerprint(root) {
   return hash.digest("hex");
 }
 function createVaultSessions(options) {
-  let open = null;
+  let open2 = null;
   const warn = options.warn ?? ((message) => {
     process.stderr.write(`${message}
 `);
   });
   const close = async () => {
-    const current = open;
-    open = null;
+    const current = open2;
+    open2 = null;
     if (current !== null)
       await current.entry.kb.close();
   };
@@ -1649,15 +2933,15 @@ function createVaultSessions(options) {
     try {
       await close();
     } catch (error) {
-      warn(`warning: closing the cached vault session failed: ${errorMessage2(error).replaceAll(`
+      warn(`warning: closing the cached vault session failed: ${errorMessage3(error).replaceAll(`
 `, " ")}`);
     }
   };
   return {
     async get() {
       const fingerprint = await vaultFingerprint(options.root);
-      if (open !== null && open.fingerprint === fingerprint)
-        return open.entry;
+      if (open2 !== null && open2.fingerprint === fingerprint)
+        return open2.entry;
       await discard();
       const scan = options.dependencies?.scanVault ?? scanVault;
       const captured = {};
@@ -1673,8 +2957,8 @@ function createVaultSessions(options) {
         await kb.close();
         throw new Error("The vault scan did not run.");
       }
-      open = { fingerprint, entry: { kb, snapshot: captured.snapshot } };
-      return open.entry;
+      open2 = { fingerprint, entry: { kb, snapshot: captured.snapshot } };
+      return open2.entry;
     },
     invalidate: discard,
     close
@@ -1766,7 +3050,7 @@ function noteView(read, revision) {
   try {
     parts = frontmatter(read.content, read.path);
   } catch (error) {
-    const reason = read.truncated ? `the note is larger than ${MAX_NOTE_READ_BYTES} bytes and its frontmatter did not fit` : errorMessage2(error);
+    const reason = read.truncated ? `the note is larger than ${MAX_NOTE_READ_BYTES} bytes and its frontmatter did not fit` : errorMessage3(error);
     throw new Error(`Cannot split note ${read.id} into frontmatter and body: ${reason}.`);
   }
   const document = parts.document.toJSON();
@@ -2070,7 +3354,7 @@ function writeTools(root, sessions) {
             if (error instanceof NoteAlreadyExistsError)
               return alreadyExists(id, error.path);
             if (isMissingPath(error)) {
-              return toolFailure(`${errorMessage2(error)}; create_note does not create directories`);
+              return toolFailure(`${errorMessage3(error)}; create_note does not create directories`);
             }
             throw error;
           }
@@ -2216,9 +3500,9 @@ function serverInstructions(options) {
 
 // src/rerank-credentials.ts
 import { constants as constants2 } from "fs";
-import { open } from "fs/promises";
+import { open as open2 } from "fs/promises";
 import { homedir } from "os";
-import { isAbsolute as isAbsolute2, join as join3 } from "path";
+import { isAbsolute as isAbsolute2, join as join4 } from "path";
 function unavailable(message) {
   return { id: "typesafe", rerank: async () => ({ status: "unavailable", message }) };
 }
@@ -2231,10 +3515,10 @@ async function createCliTypeSafeReranker(environment = process.env, homeDirector
   if (explicitFile !== undefined && !isAbsolute2(explicitFile) || configDirectory !== undefined && configDirectory !== "" && !isAbsolute2(configDirectory)) {
     return unavailable("TypeSafe credential file configuration requires absolute paths.");
   }
-  const path = explicitFile ?? join3(configDirectory || join3(homeDirectory, ".config"), "wordcell", "typesafe-api-key");
+  const path = explicitFile ?? join4(configDirectory || join4(homeDirectory, ".config"), "wordcell", "typesafe-api-key");
   let handle;
   try {
-    handle = await open(path, constants2.O_RDONLY | constants2.O_NOFOLLOW | constants2.O_NONBLOCK);
+    handle = await open2(path, constants2.O_RDONLY | constants2.O_NOFOLLOW | constants2.O_NONBLOCK);
     const metadata = await handle.stat();
     const uid = process.getuid?.();
     if (!metadata.isFile() || metadata.nlink !== 1 || metadata.size < 1 || metadata.size > 514 || process.platform !== "win32" && ((metadata.mode & 63) !== 0 || metadata.uid !== uid)) {
@@ -2259,8 +3543,37 @@ var defaultOutput2 = {
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value)
 };
+async function readBoundedStdinUtf8(source, maximumBytes, label) {
+  if (source.isTTY) {
+    throw new Error("--body-file - reads the note body from standard input, but standard input is a terminal; pipe the body in or name a file");
+  }
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source.chunks) {
+    total += chunk.byteLength;
+    if (total > maximumBytes) {
+      throw new Error(`${label} exceeds the ${maximumBytes}-byte limit`);
+    }
+    chunks.push(chunk);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  let text;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (error) {
+    throw new Error(`${label} is not valid UTF-8`, { cause: error });
+  }
+  if (text.trim() === "")
+    throw new Error(`${label} from standard input is empty`);
+  return text;
+}
 async function readBoundedUtf8(path, maximumBytes, label) {
-  const handle = await open2(path, "r");
+  const handle = await open3(path, "r");
   try {
     const bytes = new Uint8Array(maximumBytes + 1);
     let offset = 0;
@@ -2322,7 +3635,8 @@ Usage:
   wordcell graph query --program <backlinks|reachability|scope-route|relation-closure|shared-tags|shared-concepts> [--note <id> | --scope <path>] [--predicate <predicate>] [--depth <count>] [--limit <count>] [--persisted] [--root <directory>] [--index <path>] [--json]
   wordcell backlinks <note> [--root <directory>] [--index <path>] [--json]
   wordcell links <note> [--root <directory>] [--direction <in|out|both>] [--depth <count>] [--limit <count>] [--json]
-  wordcell note create <id> --title <title> [--type <type>] [--tag <tag>] [--body <markdown> | --body-file <path>] [--root <directory>] [--json]
+  wordcell note create <id> --title <title> [--type <type>] [--tag <tag>] [--body <markdown> | --body-file <path|->] [--root <directory>] [--json]
+  wordcell import supermemory <export.json>... [--root <directory>] [--prefix <directory>] [--dry-run] [--json]
   wordcell relation add <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
   wordcell relation remove <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
   wordcell relation list <note> [--root <directory>] [--json]
@@ -2354,6 +3668,9 @@ HRANESS_SUPPORT_AUDIENCE=human and an interactive stderr. No command signs up or
 
 Run \`wordcell clip --help\` for web capture options or \`wordcell pdf --help\` for PDF conversion options.
 `;
+function processStdin() {
+  return { isTTY: process.stdin.isTTY === true, chunks: process.stdin };
+}
 function safe(value) {
   return sanitizeTerminalLine(redactSensitiveText(value));
 }
@@ -3717,6 +5034,65 @@ function parseNoteCommand(arguments_) {
     }
   };
 }
+function parseImportCommand(arguments_) {
+  if (arguments_[0] !== "supermemory")
+    return { ok: false, message: "import requires supermemory" };
+  let root = ".";
+  let prefix;
+  let dryRun = false;
+  let json = false;
+  const files = [];
+  for (let cursor = 1;cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined)
+      continue;
+    if (argument === "--json") {
+      json = true;
+      continue;
+    }
+    if (argument === "--dry-run") {
+      dryRun = true;
+      continue;
+    }
+    if (argument === "--root" || argument === "--prefix") {
+      const value = readValue(arguments_, cursor);
+      if (value === null || value === "")
+        return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root")
+        root = value;
+      else
+        prefix = value;
+      cursor += 1;
+      continue;
+    }
+    if (argument.startsWith("--"))
+      return { ok: false, message: "unknown import supermemory option" };
+    files.push(argument);
+  }
+  if (files.length === 0)
+    return { ok: false, message: "import supermemory requires at least one export file" };
+  if (files.length > MAX_IMPORT_FILES) {
+    return { ok: false, message: `import supermemory accepts at most ${MAX_IMPORT_FILES} export files` };
+  }
+  if (prefix !== undefined) {
+    try {
+      prefix = normalizePrefix(prefix);
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : String(error) };
+    }
+  }
+  return {
+    ok: true,
+    value: {
+      kind: "import-supermemory",
+      root,
+      files,
+      ...prefix === undefined ? {} : { prefix },
+      dryRun,
+      json
+    }
+  };
+}
 function isNoteRevision(value) {
   return /^sha256:[0-9a-f]{64}$/u.test(value);
 }
@@ -4054,6 +5430,8 @@ function parseArguments(arguments_) {
     return parseAgentsCommand(arguments_.slice(1));
   if (command === "note")
     return parseNoteCommand(arguments_.slice(1));
+  if (command === "import")
+    return parseImportCommand(arguments_.slice(1));
   if (command === "relation")
     return parseRelationCommand(arguments_.slice(1));
   if (command === "percolate")
@@ -4628,13 +6006,66 @@ function renderAuthoringResult(verb, result) {
 `);
 }
 async function runNoteCreate(command, output, dependencies) {
-  const body = command.body ?? (command.bodyFile === undefined ? undefined : await readBoundedUtf8(command.bodyFile, 16 * 1024 * 1024, "note body"));
+  const body = command.body ?? (command.bodyFile === undefined ? undefined : command.bodyFile === "-" ? await readBoundedStdinUtf8(dependencies.stdin ?? processStdin(), 16 * 1024 * 1024, "note body") : await readBoundedUtf8(command.bodyFile, 16 * 1024 * 1024, "note body"));
   const result = await (dependencies.createNote ?? createNote)(command.root, {
     ...command.input,
     ...body === undefined ? {} : { body }
   });
   output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderAuthoringResult("Created", result)));
   return 0;
+}
+function countOf(count, noun) {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+function shellWord(value) {
+  return /^[A-Za-z0-9_./:@%+=,-]+$/u.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`;
+}
+function renderImportReport(report) {
+  const { counts } = report;
+  const tally = `created ${counts.created}, updated ${counts.updated}, skipped ${counts.skipped}, ` + `conflicts ${counts.conflicts}, rejected ${counts.rejected}`;
+  const scope = `${countOf(report.items.length, "item")} from ${countOf(report.files, "file")}`;
+  const lines = [report.dryRun ? `Dry run of ${scope}: ${tally}. Nothing was written.` : `Imported ${scope}: ${tally}.`];
+  const location = (item) => item.note === undefined ? `${item.file}#${item.pointer}` : `${item.note} from ${item.file}#${item.pointer}`;
+  for (const item of report.items) {
+    if (item.outcome !== "conflict" && item.outcome !== "rejected")
+      continue;
+    const external = item.externalId === undefined ? "" : ` (${item.externalId})`;
+    lines.push(`${item.outcome}: ${safe(location(item))}${safe(external)}: ${safe(item.reason ?? "no reason given")}`);
+  }
+  const added = report.relations.filter((relation) => relation.outcome === "added").length;
+  if (added > 0) {
+    lines.push(`${report.dryRun ? "Would add" : "Added"} ${countOf(added, "supersedes relation")}.`);
+  }
+  for (const relation of report.relations) {
+    if (relation.outcome !== "failed" && relation.outcome !== "omitted")
+      continue;
+    lines.push(`relation ${relation.outcome}: ${safe(relation.source)} supersedes ${safe(relation.target)}: ${safe(relation.reason ?? "no reason given")}`);
+  }
+  for (const diagnostic of report.diagnostics)
+    lines.push(`diagnostic: ${safe(diagnostic)}`);
+  for (const item of report.items) {
+    for (const diagnostic of item.diagnostics ?? []) {
+      lines.push(`diagnostic: ${safe(item.note ?? `${item.file}#${item.pointer}`)}: ${safe(diagnostic)}`);
+    }
+  }
+  if (!report.dryRun && counts.created + counts.updated + added > 0) {
+    const root = safe(shellWord(report.root));
+    lines.push(`Next: wordcell refresh --root ${root}, then wordcell check --root ${root}.`);
+  }
+  return `${lines.join(`
+`)}
+`;
+}
+async function runImportSupermemory(command, output, dependencies) {
+  const report = await (dependencies.importSupermemory ?? importSupermemory)({
+    root: command.root,
+    files: command.files,
+    ...command.prefix === undefined ? {} : { prefix: command.prefix },
+    dryRun: command.dryRun,
+    ...dependencies.importNow === undefined ? {} : { now: dependencies.importNow() }
+  });
+  output.stdout(command.json ? terminalSafeJson(report) : sanitizeTerminalText(renderImportReport(report)));
+  return report.ok ? 0 : 1;
 }
 async function runRelation(command, output, dependencies) {
   if (command.action === "list") {
@@ -5457,6 +6888,8 @@ ${sanitizeTerminalText(usage)}`);
       return await runAgents(command, output, dependencies);
     if (command.kind === "note-create")
       return await runNoteCreate(command, output, dependencies);
+    if (command.kind === "import-supermemory")
+      return await runImportSupermemory(command, output, dependencies);
     if (command.kind === "relation")
       return await runRelation(command, output, dependencies);
     if (command.kind === "graph-rebuild" || command.kind === "graph-verify" || command.kind === "graph-query") {

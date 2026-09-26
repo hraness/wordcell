@@ -221,6 +221,8 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell backlinks <note> --root <directory>` | Show incoming contextual links and typed relationships for a note resolved by path, title, or alias. |
 | `wordcell links <note> --root <directory>` | Traverse incoming, outgoing, or bidirectional contextual links and typed relationships with explicit depth and node limits. |
 | `wordcell note create <id> --title <title> --root <directory>` | Atomically create one confined Markdown note; use `--type concept` for a reusable concept. |
+| `wordcell note create <id> --title <title> --body-file - --root <directory>` | Read the note body from standard input, such as a transcript piped from another command. Standard input must not be a terminal or blank. Name a file called `-` as `./-`. Available from source until the next release. |
+| `wordcell import supermemory <export.json>... --root <vault>` | Import documents and memory entries saved from the Supermemory API as Markdown notes; see [Import from Supermemory](#import-from-supermemory). Available from source until the next release. |
 | `wordcell relation add\|remove <source> <predicate> <target>` | Idempotently edit one source note's typed outbound relationship using an exact local note ID or canonical stable `kb://` URI. |
 | `wordcell relation list <note> --root <directory>` | List a note's authored outbound and derived inbound typed relationships. |
 | `wordcell percolate [note] --root <directory>` | Report evidence-backed recurring-concept and missing-relationship candidates without writing notes. |
@@ -419,6 +421,148 @@ read back the document and reconcile its content and revision before retrying;
 do not assume that an error means the replacement did not become visible.
 If a conflict or `NoteRecoveryRequiredError` reports `recoveryPath`, retain
 those displaced bytes until recovery is resolved.
+
+## Import from Supermemory
+
+`wordcell import supermemory` is available from source until the next release.
+
+`wordcell import supermemory` turns JSON responses saved from the Supermemory
+API into Markdown notes in a vault. It reads only the files you name and never
+calls the Supermemory API. Run `wordcell refresh` and then `wordcell check`
+afterward, as you would after `wordcell note create`.
+
+```sh
+wordcell import supermemory <export.json>... [--root <vault>] [--prefix <directory>] [--dry-run] [--json]
+```
+
+- `--root <vault>` defaults to the current directory.
+- `--prefix <directory>` writes every note directly under that vault
+  directory instead of the locations below.
+- `--dry-run` reports the same outcomes and writes nothing.
+- `--json` prints one report object with counts and, for each item, its
+  outcome, file, JSON Pointer, Supermemory ID, and note.
+
+### Save an export
+
+The importer reads responses from two endpoints, as the Supermemory API
+reference documented them when checked on 2026-09-26:
+
+- [List documents](https://supermemory.ai/docs/api-reference/documents/list-documents):
+  `POST https://api.supermemory.ai/v3/documents/list` returns
+  `{"memories": [...], "pagination": {...}}`. Send `"includeContent": true`.
+  Without it a document carries only its `summary`, and the importer uses the
+  summary as the note body.
+- [List memory entries](https://supermemory.ai/docs/api-reference/content-management/list-memory-entries-with-history):
+  `POST https://api.supermemory.ai/v4/memories/list` requires `containerTags`
+  and returns `{"memoryEntries": [...], "pagination": {...}}`. Each entry
+  carries its earlier versions in `history`.
+
+A file can also hold `{"documents": [...]}`, an array of such pages, or an
+array of document or memory-entry objects. This request saves the first page of
+documents:
+
+```sh
+curl -fsS https://api.supermemory.ai/v3/documents/list \
+  -H "Authorization: Bearer $SUPERMEMORY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"includeContent": true, "limit": 100, "page": 1}' \
+  -o documents-1.json
+wordcell import supermemory documents-1.json --root kb --dry-run
+```
+
+When `pagination.totalPages` is greater than 1, save each page to its own file
+and name every file in one import. For memory entries, post to
+`https://api.supermemory.ai/v4/memories/list` with `"containerTags": ["<tag>"]`
+in place of `"includeContent": true`, and save the pages under another name,
+such as `memories-1.json`.
+
+Wordcell's tests use files built from these documented schemas and the
+reference's example document, not recorded API responses.
+
+### Where notes go
+
+| Item | Note | `type` |
+| --- | --- | --- |
+| A document with a public `http` or `https` URL, or with a Supermemory type other than `text` | `articles/<slug>/<slug>.md` | `article` |
+| Any other document | `notes/imported/<slug>.md` | `note` |
+| Each memory entry version | `notes/imported/memories/<slug>.md` | `memory` |
+
+With `--prefix <directory>`, every note goes to `<directory>/<slug>.md` and
+keeps its type. The directory must be outside `articles/`, because each
+directory there holds one captured source. The slug comes from `customId`,
+then the title, then the ID, with the rules `wordcell clip` uses. When a slug
+is taken, the importer adds `-2`, `-3`, and so on. The note title is the
+document title, or the first line of a memory, up to 200 characters. The body
+is the imported text (`content`, else `summary`, or the memory text) followed
+by one line that names the export file and the import date.
+
+### Frontmatter
+
+Every imported note records `imported_from: supermemory`, `external_id` (the
+Supermemory ID), `created` and `updated` (the Supermemory timestamps, converted
+to UTC), and `import_digest`. The importer adds these fields when the item has
+a value:
+
+| Field | Written for | Value |
+| --- | --- | --- |
+| `custom_id` | Documents | `customId` |
+| `supermemory_type` | Documents | `type`, such as `text` or `google_doc` |
+| `status` | Documents | `status`, only when it is not `done` |
+| `container_tag`, `container_tags` | Documents | The first container tag, and the full list when there are several |
+| `source` | Documents | A public `http` or `https` URL that `wordcell url-metadata` accepts, the field `wordcell clip` writes |
+| `url` | Documents | Any other URL, such as one on a private network. A URL that carries credentials, such as a signed download link, is dropped with a diagnostic |
+| `connection_id`, `filepath` | Documents | `connectionId` and `filepath` |
+| `clipped` | Notes under `articles/` | The UTC date of `createdAt` |
+| `version`, `parent_id`, `root_id` | Memory entries | The version number and the IDs of the previous and first versions |
+| `is_static`, `is_inference` | Memory entries | `true` when Supermemory set it |
+| `forget_after` | Memory entries | `forgetAfter` |
+| `source_document_ids` | Memory entries | `documentIds` |
+| `metadata` | Both | String, number, and boolean values from `metadata`, at most 64 keys; nested values and integers too large to store exactly are dropped with a diagnostic |
+
+Each memory version gets a `supersedes` relation to the version before it when
+that version is in the vault or in the same import. The importer adds it only
+when it creates or updates the newer version, or creates the older one, so a
+relation you remove stays removed. It omits a relation that would make versions
+supersede each other in a loop, with a diagnostic, and reports a relation as
+`omitted` when either note ended as a conflict or was rejected. Forgotten
+entries are skipped. The importer does not convert `memoryRelations`, because
+Supermemory [creates those links itself](https://supermemory.ai/docs/concepts/graph-memory)
+(checked on 2026-09-26) and a Wordcell vault does not store inferred
+relationships. It also drops `spaceId`, `orgId`, `sourceCount`, and
+`forgetReason`.
+
+### Import again
+
+A later import finds notes by `imported_from` and `external_id`, wherever you
+have moved them, and reports each item as one of these outcomes:
+
+- `created`: the importer wrote a new note.
+- `updated`: the item changed in Supermemory and the note has no local edits.
+  The importer replaces the body and its own fields in one write, which fails
+  as a conflict if the note changes during the import.
+- `skipped`: the item is unchanged, is a forgotten memory, or shares its ID
+  with a newer copy in the same export. The copy with the latest `updatedAt`
+  is imported, and ties keep the first.
+- `conflict`: the note was edited since the last import, has no
+  `import_digest`, or shares its `external_id` with another note. The importer
+  leaves the note unchanged.
+- `rejected`: the item failed validation or cannot be written, for example
+  because its note would exceed 16 MiB. The reason names the field or the
+  problem.
+
+`import_digest` covers the title, the fields the importer writes, and the
+imported text, so an edit to any of them is a local edit. Tags and fields you
+add yourself are not covered.
+
+The command exits with status 0 when every file parses and not every item is
+rejected. An export with no items also exits with status 0, and conflicts do
+not change the status. It exits with status 1, and writes nothing, when a file
+cannot be read or parsed or when the vault would pass its size limits. It also
+exits with status 1 when every item is rejected, and with status 2 for invalid
+arguments. One run reads at most 1,000 files of up to 128 MiB each and 10,000
+items, counting each memory version. After the import the vault must hold at
+most 10,000 notes and 256 MiB of Markdown. JSON may nest 32 levels deep. An
+item whose note would exceed 16 MiB is rejected, not truncated.
 
 ## Local MCP server
 

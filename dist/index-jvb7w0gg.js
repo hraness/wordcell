@@ -303,12 +303,15 @@ class VaultAnalysisBudgetError extends RangeError {
 function isMetadataObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
+function isMetadataNumber(value) {
+  return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value));
+}
 function parsedMetadataValue(value, ancestors) {
   if (value === null || typeof value === "string" || typeof value === "boolean") {
     return { ok: true, value };
   }
   if (typeof value === "number") {
-    return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value)) ? { ok: true, value } : { ok: false };
+    return isMetadataNumber(value) ? { ok: true, value } : { ok: false };
   }
   if (typeof value !== "object" || ancestors.has(value))
     return { ok: false };
@@ -1281,4 +1284,4 @@ function replaceCatalog(indexContent, catalog) {
   return indexContent.slice(0, start) + catalog + indexContent.slice(end + catalogEnd.length);
 }
 
-export { MAX_PORTFOLIO_NAME_BYTES, MAX_DOCUMENT_ID_BYTES, portfolioVaultIdentity, parseVaultKey, parseDocumentId, documentIdState, formatQualifiedDocumentUri, parseQualifiedDocumentUri, portfolioDocumentIdentity, catalogStart, catalogEnd, MAX_ANALYZED_NOTES, MAX_CONNECTION_OBSERVATIONS, MAX_MENTION_PAIRS, MAX_MENTIONS, VaultAnalysisBudgetError, metadataValueFromUnknown, isCanonicalRelationPredicate, isCanonicalNoteId, normalizeVaultPath, searchableMarkdown, wikiLinks, parseNote, lookupNote, analyzeVault, analyzeVaultComplete, renderCatalog, replaceCatalog };
+export { MAX_PORTFOLIO_NAME_BYTES, MAX_DOCUMENT_ID_BYTES, portfolioVaultIdentity, parseVaultKey, parseDocumentId, documentIdState, formatQualifiedDocumentUri, parseQualifiedDocumentUri, portfolioDocumentIdentity, catalogStart, catalogEnd, MAX_ANALYZED_NOTES, MAX_CONNECTION_OBSERVATIONS, MAX_MENTION_PAIRS, MAX_MENTIONS, VaultAnalysisBudgetError, isMetadataNumber, metadataValueFromUnknown, isCanonicalRelationPredicate, isCanonicalNoteId, normalizeVaultPath, searchableMarkdown, wikiLinks, parseNote, lookupNote, analyzeVault, analyzeVaultComplete, renderCatalog, replaceCatalog };

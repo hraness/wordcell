@@ -7,7 +7,7 @@ const packagePrefix = "package/";
 const maximumTarBytes = 6_500_000;
 const ustarSignature = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00, 0x30, 0x30]);
 
-export const maximumUnpackedBytes = 5_900_000;
+export const maximumUnpackedBytes = 6_050_000;
 
 const packageBudget = Object.freeze({
   entryCount: { min: 190, max: 420 },

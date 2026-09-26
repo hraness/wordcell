@@ -10,7 +10,7 @@ import {
   readUrlMetadataDocument,
   renderUrlMetadataDocument,
   writeUrlMetadataDocument
-} from "./index-bcknqxrq.js";
+} from "./index-0eacgvpv.js";
 import {
   ARCHIVE_TODAY_HOSTS,
   ArchiveTodayFailure,

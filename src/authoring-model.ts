@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { posix, relative, resolve, sep } from "node:path";
 import { Document, isMap, isScalar, isSeq, parseDocument, type YAMLMap, type YAMLSeq } from "yaml";
 import { type NoteLockOptions } from "./note-lock.js";
-import { isCanonicalNoteId, isCanonicalRelationPredicate } from "./graph.js";
+import { isCanonicalNoteId, isCanonicalRelationPredicate, isMetadataNumber } from "./graph.js";
 import { parseDocumentId, parseQualifiedDocumentUri } from "./portfolio-identity.js";
 
 export const MAX_NOTE_BYTES = 16 * 1024 * 1024;
@@ -721,12 +721,188 @@ export function renderUpdatedNoteBody(
   return `${header}${parts.newline}${parts.newline}${normalized}`;
 }
 
-export function renderCreatedNote(input: CreateNoteInput, documentId: string): string {
+/**
+ * Extra top-level frontmatter values that internal writers, such as the
+ * supermemory importer, own. Public authoring never passes them.
+ */
+export type FrontmatterScalar = string | number | boolean;
+export type FrontmatterFieldValue =
+  | FrontmatterScalar
+  | readonly string[]
+  | Readonly<Record<string, FrontmatterScalar>>;
+export type FrontmatterFields = Readonly<Record<string, FrontmatterFieldValue>>;
+/** Field updates; `null` deletes the key. `title` is allowed here. */
+export type FrontmatterFieldUpdates = Readonly<Record<string, FrontmatterFieldValue | null>>;
+
+export const MAX_FRONTMATTER_FIELDS = 64;
+export const MAX_FRONTMATTER_LIST_ITEMS = 256;
+const FRONTMATTER_FIELD_KEY = /^[a-z][a-z0-9_]{0,63}$/u;
+const FRONTMATTER_MAP_KEY = /^[A-Za-z0-9_.:-]{1,64}$/u;
+const RESERVED_FRONTMATTER_FIELDS: ReadonlySet<string> = new Set([
+  "document_id", "type", "title", "tags", "relations",
+]);
+
+function validateFieldString(value: unknown, label: string): string {
+  if (typeof value !== "string") throw new TypeError(`frontmatter field ${label} must be a string`);
+  if (
+    Buffer.from(value, "utf8").toString("utf8") !== value
+    || /[\u0000-\u001f\u007f]/u.test(value)
+  ) {
+    throw new TypeError(`frontmatter field ${label} must be a single line of well-formed text`);
+  }
+  return value;
+}
+
+function validateFieldScalar(value: unknown, label: string): FrontmatterScalar {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (!isMetadataNumber(value)) {
+      throw new TypeError(`frontmatter field ${label} must be a finite number and a safe integer when integral`);
+    }
+    return value;
+  }
+  return validateFieldString(value, label);
+}
+
+function validateFieldValue(value: unknown, key: string): FrontmatterFieldValue {
+  if (Array.isArray(value)) {
+    if (value.length > MAX_FRONTMATTER_LIST_ITEMS) {
+      throw new TypeError(`frontmatter field ${key} has too many items`);
+    }
+    return value.map((item, index) => validateFieldString(item, `${key}[${index}]`));
+  }
+  if (typeof value === "object" && value !== null) {
+    if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+      throw new TypeError(`frontmatter field ${key} must be a plain map`);
+    }
+    const entries = Object.entries(value);
+    if (entries.length > MAX_FRONTMATTER_FIELDS) {
+      throw new TypeError(`frontmatter field ${key} has too many keys`);
+    }
+    const result: Record<string, FrontmatterScalar> = {};
+    for (const [nested, item] of entries) {
+      if (!FRONTMATTER_MAP_KEY.test(nested) || nested === "__proto__") {
+        throw new TypeError(`frontmatter field ${key} has an invalid key: ${JSON.stringify(nested)}`);
+      }
+      result[nested] = validateFieldScalar(item, `${key}.${nested}`);
+    }
+    return result;
+  }
+  return validateFieldScalar(value, key);
+}
+
+function validateFieldKey(key: string, allowTitle: boolean): void {
+  if (!FRONTMATTER_FIELD_KEY.test(key)) {
+    throw new TypeError(`not a valid frontmatter field name: ${JSON.stringify(key)}`);
+  }
+  if (RESERVED_FRONTMATTER_FIELDS.has(key) && !(allowTitle && key === "title")) {
+    throw new TypeError(`frontmatter field ${key} is reserved`);
+  }
+}
+
+/** Validate importer-owned fields in their given key order. */
+export function validateFrontmatterFields(fields: FrontmatterFields | undefined): FrontmatterFields {
+  if (fields === undefined) return {};
+  const entries = Object.entries(fields);
+  if (entries.length > MAX_FRONTMATTER_FIELDS) throw new TypeError("too many frontmatter fields");
+  const result: Record<string, FrontmatterFieldValue> = {};
+  for (const [key, value] of entries) {
+    validateFieldKey(key, false);
+    result[key] = validateFieldValue(value, key);
+  }
+  return result;
+}
+
+/** Validate field updates; `title` must pass `validateTitle` and `null` deletes. */
+export function validateFrontmatterFieldUpdates(
+  fields: FrontmatterFieldUpdates | undefined,
+): FrontmatterFieldUpdates {
+  if (fields === undefined) return {};
+  const entries = Object.entries(fields);
+  if (entries.length > MAX_FRONTMATTER_FIELDS) throw new TypeError("too many frontmatter fields");
+  const result: Record<string, FrontmatterFieldValue | null> = {};
+  for (const [key, value] of entries) {
+    validateFieldKey(key, true);
+    if (key === "title") {
+      if (typeof value !== "string") throw new TypeError("frontmatter field title must be a string");
+      result[key] = validateTitle(value);
+    } else {
+      result[key] = value === null ? null : validateFieldValue(value, key);
+    }
+  }
+  return result;
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (typeof value === "object" && value !== null) {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "undefined";
+}
+
+/** The plain value of one top-level key, or `undefined` when absent. */
+export function topLevelValue(parts: FrontmatterParts, key: string): unknown {
+  const contents = parts.document.contents;
+  if (!isMap(contents) || !contents.has(key)) return undefined;
+  const node: unknown = contents.get(key, true);
+  if (typeof node === "object" && node !== null && "toJSON" in node && typeof node.toJSON === "function") {
+    return (node as { toJSON: () => unknown }).toJSON();
+  }
+  return node;
+}
+
+export function sameFrontmatterValue(present: unknown, requested: unknown): boolean {
+  return canonicalJson(present) === canonicalJson(requested);
+}
+
+/**
+ * Replace the body and set or delete top-level fields in one rendered write.
+ * With no fields this is exactly `renderUpdatedNoteBody`.
+ */
+export function renderUpdatedNoteBodyAndFields(
+  snapshot: Pick<NoteSnapshot, "content" | "relativePath">,
+  parts: FrontmatterParts,
+  body: string,
+  fields: FrontmatterFieldUpdates | undefined,
+): string {
+  const updates = validateFrontmatterFieldUpdates(fields);
+  const bodyOnly = renderUpdatedNoteBody(snapshot, parts, body);
+  if (Object.keys(updates).length === 0) return bodyOnly;
+  if (!parts.hadFrontmatter || !isMap(parts.document.contents)) {
+    throw new TypeError("frontmatter fields require a note with a frontmatter map");
+  }
+  const contents = parts.document.contents;
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === null) {
+      contents.delete(key);
+    } else if (!sameFrontmatterValue(topLevelValue(parts, key), value)) {
+      contents.set(key, parts.document.createNode(value));
+    }
+  }
+  const content = renderFrontmatter({
+    ...parts,
+    bodySuffix: `${parts.newline}${parts.newline}${normalizedRequestedBody(body)}`,
+  });
+  if (Buffer.byteLength(content, "utf8") > MAX_NOTE_BYTES) {
+    throw new RangeError("the note is too large for bounded authoring");
+  }
+  return content;
+}
+
+export function renderCreatedNote(
+  input: CreateNoteInput,
+  documentId: string,
+  fields?: FrontmatterFields,
+): string {
   const title = validateTitle(input.title);
   const type = validateType(input.type);
   const tags = validateTags(input.tags);
+  const extra = validateFrontmatterFields(fields);
   const metadata: Record<string, unknown> = { document_id: documentId, type, title };
   if (tags.length > 0) metadata["tags"] = tags;
+  for (const [key, value] of Object.entries(extra)) metadata[key] = value;
   const document = new Document(metadata, { schema: "core" });
   const body = normalizedRequestedBody(input.body ?? `# ${title}\n`);
   return `---\n${document.toString({ lineWidth: 0 })}---\n\n${body}`;
@@ -786,8 +962,10 @@ export function assertCompatibleCreate(
   snapshot: NoteSnapshot,
   input: CreateNoteInput,
   requestedDocumentId: string | undefined,
+  fields?: FrontmatterFields,
 ): CompatibleCreate {
   const parts = frontmatter(snapshot.content, snapshot.relativePath);
+  const requestedFields = validateFrontmatterFields(fields);
   const requestedType = validateType(input.type);
   const requestedTitle = validateTitle(input.title);
   if (topLevelScalar(parts, "type") !== requestedType) {
@@ -809,6 +987,11 @@ export function assertCompatibleCreate(
     && parts.bodySuffix !== `${parts.newline}${parts.newline}${normalizedRequestedBody(input.body)}`
   ) {
     throw new NoteAlreadyExistsError(snapshot.relativePath, "body differs");
+  }
+  for (const [key, value] of Object.entries(requestedFields)) {
+    if (!sameFrontmatterValue(topLevelValue(parts, key), value)) {
+      throw new NoteAlreadyExistsError(snapshot.relativePath, `${key} differs`);
+    }
   }
   const existingId = existingDocumentId(parts);
   if (

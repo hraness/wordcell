@@ -1,7 +1,7 @@
 // @bun
 import {
   scanVault
-} from "./index-8v6k9h4r.js";
+} from "./index-1s8mc4hz.js";
 import {
   navigateLinks
 } from "./index-d13v9ckt.js";
@@ -39,7 +39,7 @@ import {
 import {
   lookupNote,
   normalizeVaultPath
-} from "./index-zy7an84p.js";
+} from "./index-jvb7w0gg.js";
 
 // src/publish.ts
 import { createHash } from "crypto";

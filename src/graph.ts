@@ -248,6 +248,14 @@ type MetadataParseResult =
   | { readonly ok: true; readonly value: MetadataValue }
   | { readonly ok: false };
 
+/**
+ * The vault's number rule for frontmatter values: finite, and a safe integer
+ * when integral. Writers share it so every note they write reads back.
+ */
+export function isMetadataNumber(value: number): boolean {
+  return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value));
+}
+
 function parsedMetadataValue(
   value: unknown,
   ancestors: WeakSet<object>,
@@ -256,10 +264,7 @@ function parsedMetadataValue(
     return { ok: true, value };
   }
   if (typeof value === "number") {
-    return Number.isFinite(value)
-      && (!Number.isInteger(value) || Number.isSafeInteger(value))
-      ? { ok: true, value }
-      : { ok: false };
+    return isMetadataNumber(value) ? { ok: true, value } : { ok: false };
   }
   if (typeof value !== "object" || ancestors.has(value)) return { ok: false };
 
