@@ -119,8 +119,161 @@ export async function verifyReleaseFiles(directory: string, includeProvenance = 
   return manifest;
 }
 
-export function releaseBody(manifest: ReleaseManifest): string {
+// Pre-standard releases (through 0.22.5) were published with a visible
+// identity paragraph. Their tagged changelogs cannot reproduce standard notes,
+// so they admit the exact legacy body or a standard page whose generated
+// Install/Verify sections and trailing identity record are exact.
+const lastPreStandardVersion = [0n, 22n, 5n] as const;
+const identityMarker = "<!-- hraness-github-release-v1\n";
+const maximumChangelogBytes = 4 * 1024 * 1024;
+
+function versionParts(version: string): readonly [bigint, bigint, bigint] {
+  const [major, minor, patch] = stableVersion(version).split(".").map(BigInt);
+  return [major!, minor!, patch!];
+}
+
+export function isPreStandardRelease(version: string): boolean {
+  const parts = versionParts(version);
+  for (let index = 0; index < 3; index += 1) {
+    if (parts[index]! !== lastPreStandardVersion[index]) return parts[index]! < lastPreStandardVersion[index]!;
+  }
+  return true;
+}
+
+export type ChangelogSection = Readonly<{ summary: string; changes: string }>;
+
+/** Copy one version's summary paragraph(s) and bullet list from CHANGELOG.md. */
+export function changelogSection(changelog: string, version: string): ChangelogSection {
+  stableVersion(version);
+  if (changelog.includes("\r")) throw new Error("CHANGELOG.md must use LF line endings");
+  const lines = changelog.split("\n");
+  const escaped = version.replaceAll(".", "\\.");
+  const heading = new RegExp(`^## v?${escaped}(?: - [0-9]{4}-[0-9]{2}-[0-9]{2})?$`, "u");
+  const starts = lines.flatMap((line, index) => heading.test(line) ? [index] : []);
+  if (starts.length === 0) throw new Error(`CHANGELOG.md has no section for ${version}`);
+  if (starts.length > 1) throw new Error(`CHANGELOG.md repeats the section for ${version}`);
+  const start = starts[0]! + 1;
+  let end = lines.findIndex((line, index) => index >= start && /^#{1,2} /u.test(line));
+  if (end < 0) end = lines.length;
+  const body = lines.slice(start, end);
+  const text = body.join("\n").trim();
+  if (text === "") throw new Error(`CHANGELOG.md section for ${version} is empty`);
+  if (/\bunreleased\b/iu.test(text)) throw new Error(`CHANGELOG.md section for ${version} still says Unreleased`);
+  if (body.some((line) => /^#/u.test(line))) throw new Error(`CHANGELOG.md section for ${version} must not contain headings`);
+  const first = body.findIndex((line) => line.startsWith("- "));
+  if (first < 0) throw new Error(`CHANGELOG.md section for ${version} has no bulleted changes`);
+  const summary = body.slice(0, first).join("\n").trim();
+  if (summary === "") throw new Error(`CHANGELOG.md section for ${version} has no summary`);
+  const list = body.slice(first).join("\n").trim().split("\n");
+  if (list.some((line) => line !== "" && !line.startsWith("- ") && !line.startsWith("  "))) {
+    throw new Error(`CHANGELOG.md section for ${version} must end with its bulleted changes`);
+  }
+  if (list.some((line) => line.trim() === "-")) throw new Error(`CHANGELOG.md section for ${version} has an empty change`);
+  return { summary, changes: list.join("\n") };
+}
+
+function generatedSections(manifest: ReleaseManifest): string {
+  const download = `https://github.com/${repository}/releases/download/${manifest.tag}`;
+  return [
+    "## Install",
+    "",
+    "Install this version from its GitHub Release archive with Bun:",
+    "",
+    "```sh",
+    `bun add --global --ignore-scripts ${download}/${manifest.archive.name}`,
+    "```",
+    "",
+    "The same archive is mirrored on npm:",
+    "",
+    "```sh",
+    `npm install --global --ignore-scripts ${packageName}@${manifest.version}`,
+    "```",
+    "",
+    "## Verify",
+    "",
+    `- Checksums: [\`SHA256SUMS\`](${download}/SHA256SUMS) lists the SHA-256 of the archive, \`npm-pack.json\`, and \`release-manifest.json\`. The archive's SHA-256 is \`${manifest.archive.sha256}\`.`,
+    `- Source commit: [\`${manifest.sourceSha}\`](https://github.com/${repository}/commit/${manifest.sourceSha})`,
+    `- Signed build provenance is attached as \`provenance.jsonl\`. To check it, follow [Verify a published release](https://github.com/${repository}/blob/${manifest.tag}/docs/publishing.md#verify-a-published-release).`,
+  ].join("\n");
+}
+
+export function releaseTitle(manifest: ReleaseManifest): string {
+  return `Wordcell ${manifest.tag}`;
+}
+
+/** The machine-readable identity record: the final bytes of every release body. */
+export function releaseIdentity(manifest: ReleaseManifest): string {
+  return `${identityMarker}Package: ${packageName}@${manifest.version}\nSource commit: ${manifest.sourceSha}\nWorkflow run: ${manifest.runId}\nWorkflow attempt: ${manifest.runAttempt}\nArchive SHA-256: ${manifest.archive.sha256}\n-->`;
+}
+
+/** Visible release notes: changelog summary and changes, then generated Install and Verify. */
+export function releaseNotes(manifest: ReleaseManifest, changelog: string): string {
+  const section = changelogSection(changelog, manifest.version);
+  return `${section.summary}\n\n## Changes\n\n${section.changes}\n\n${generatedSections(manifest)}`;
+}
+
+export function releaseBody(manifest: ReleaseManifest, changelog: string): string {
+  return `${releaseNotes(manifest, changelog)}\n\n${releaseIdentity(manifest)}`;
+}
+
+/** The pre-standard visible body, admitted only for versions through 0.22.5. */
+export function legacyReleaseBody(manifest: ReleaseManifest): string {
   return `Canonical GitHub release for ${packageName}@${manifest.version}.\n\nSource commit: ${manifest.sourceSha}\nWorkflow run: ${manifest.runId}\nWorkflow attempt: ${manifest.runAttempt}\nArchive SHA-256: ${manifest.archive.sha256}`;
+}
+
+export type ReleaseIdentity = Readonly<{ version: string; sourceSha: string; runId: number; runAttempt: number; archiveSha256: string }>;
+
+/** Split a body at the last identity marker and parse the trailing record. */
+export function parseReleaseBody(body: unknown): Readonly<{ notes: string; identity: ReleaseIdentity }> {
+  if (typeof body !== "string") throw new Error("Release body must be a string");
+  if (!body.endsWith("-->")) throw new Error("Release body must end with its identity record");
+  const start = body.lastIndexOf(identityMarker);
+  if (start < 0) throw new Error("Release body has no identity record");
+  const match = /^Package: @hraness\/wordcell@([0-9.]+)\nSource commit: ([a-f0-9]{40})\nWorkflow run: ([1-9][0-9]*)\nWorkflow attempt: ([1-9][0-9]*)\nArchive SHA-256: ([a-f0-9]{64})\n-->$/u
+    .exec(body.slice(start + identityMarker.length));
+  if (match === null) throw new Error("Release identity record is malformed");
+  const identity = {
+    version: stableVersion(match[1]), sourceSha: match[2]!,
+    runId: positive(Number(match[3]), "Identity run ID"), runAttempt: positive(Number(match[4]), "Identity run attempt"),
+    archiveSha256: match[5]!,
+  };
+  if (String(identity.runId) !== match[3] || String(identity.runAttempt) !== match[4]) throw new Error("Release identity record is malformed");
+  const notes = body.slice(0, start);
+  if (!notes.endsWith("\n\n") || notes.trim() === "") throw new Error("Release body has no notes above its identity record");
+  return { notes: notes.slice(0, -2), identity };
+}
+
+/**
+ * Admit a provider release body. Standard releases must byte-match the tagged
+ * changelog section plus generated sections; `changelog` is the tagged
+ * commit's CHANGELOG.md, or undefined only for pre-standard versions.
+ */
+export function verifyReleaseBody(body: unknown, manifest: ReleaseManifest, changelog: string | undefined): void {
+  const preStandard = isPreStandardRelease(manifest.version);
+  if (preStandard && body === legacyReleaseBody(manifest)) return;
+  const { notes, identity } = parseReleaseBody(body);
+  if (identity.version !== manifest.version || identity.sourceSha !== manifest.sourceSha || identity.runId !== manifest.runId
+    || identity.runAttempt !== manifest.runAttempt || identity.archiveSha256 !== manifest.archive.sha256
+    || !(body as string).endsWith(releaseIdentity(manifest))) {
+    throw new Error("Release identity record differs from the verified manifest");
+  }
+  if (preStandard) {
+    const generated = `\n\n${generatedSections(manifest)}`;
+    if (!notes.endsWith(generated) || !notes.includes("\n\n## Changes\n\n- ") || notes.startsWith("#")) {
+      throw new Error("Release notes differ from the generated release sections");
+    }
+    return;
+  }
+  if (changelog === undefined) throw new Error("Standard release verification requires the tagged CHANGELOG.md");
+  if (notes !== releaseNotes(manifest, changelog)) throw new Error("Release notes differ from the tagged changelog section and generated sections");
+}
+
+/** Read CHANGELOG.md from the exact tagged commit in the local repository. */
+export function taggedChangelog(sourceSha: string): string {
+  if (!exactHex(sourceSha, 40)) throw new Error("Tagged changelog source must be a full commit");
+  return execFileSync("git", ["show", `${sourceSha}:CHANGELOG.md`], {
+    encoding: "utf8", timeout: 30_000, maxBuffer: maximumChangelogBytes, stdio: ["ignore", "pipe", "pipe"],
+  });
 }
 
 export type AssetIdentity = Readonly<{ name: string; bytes: number; sha256: string }>;
@@ -134,10 +287,13 @@ function exactAssetBrowserUrl(value: unknown, name: string, tag: string, draft: 
   return /^[a-f0-9]{20}$/u.test(temporaryId);
 }
 
-export function verifyProviderRelease(value: unknown, manifest: ReleaseManifest, assets: readonly AssetIdentity[], allowDraft: boolean): readonly string[] {
+export function verifyProviderRelease(value: unknown, manifest: ReleaseManifest, assets: readonly AssetIdentity[], allowDraft: boolean, changelog: string | undefined): readonly string[] {
   const release = record(value, "GitHub Release");
   const author = record(release.author, "Release author");
-  if (release.tag_name !== manifest.tag || release.target_commitish !== manifest.sourceSha || release.name !== `Wordcell ${manifest.tag}` || release.body !== releaseBody(manifest)
+  try { verifyReleaseBody(release.body, manifest, changelog); } catch (error) {
+    throw new Error(`GitHub Release is not the exact Actions-authored artifact; reconcile the original run before retrying (${(error as Error).message})`);
+  }
+  if (release.tag_name !== manifest.tag || release.target_commitish !== manifest.sourceSha || release.name !== releaseTitle(manifest)
     || release.prerelease !== false || (!allowDraft && (release.draft !== false || release.immutable !== true))
     || (allowDraft && release.draft !== true && (release.draft !== false || release.immutable !== true))
     || (release.draft === true && release.immutable !== false)
@@ -334,6 +490,9 @@ async function prepare(directory: string): Promise<void> {
   }
   await writeFile(join(directory, "SHA256SUMS"), sums.join(""), { flag: "wx" });
   await verifyReleaseFiles(directory, false);
+  // Fail source verification, before attestation or any release exists, when
+  // the tagged CHANGELOG.md cannot supply this version's notes.
+  releaseBody(manifest, taggedChangelog(manifest.sourceSha));
 }
 
 function verifyCurrentControls(manifest: ReleaseManifest): void {
@@ -382,10 +541,14 @@ export function publishVerifiedRelease(
   directory: string,
   manifest: ReleaseManifest,
   assets: readonly AssetIdentity[],
+  changelog: string,
   run: (program: string, args: readonly string[]) => string = command,
   authorize: () => void = () => verifyCurrentControls(manifest),
   download: (id: number, expectedBytes: number) => Uint8Array = binaryAsset,
 ): void {
+  // Render before any provider read or write so a missing, empty, or
+  // Unreleased changelog section stops publication before a draft exists.
+  const body = releaseBody(manifest, changelog);
   const read = (path: string): unknown => JSON.parse(run("gh", ["api", "--method", "GET", path])) as unknown;
   const discover = (): number | undefined => uniqueReleaseId(JSON.parse(run("gh", [
     "api", "--method", "GET", `/repos/${repository}/releases?per_page=100`, "--paginate", "--slurp",
@@ -397,14 +560,14 @@ export function publishVerifiedRelease(
     authorize();
     const response = run("gh", ["api", "--method", "POST", `/repos/${repository}/releases`, "--include",
       "-f", `tag_name=${manifest.tag}`, "-f", `target_commitish=${manifest.sourceSha}`,
-      "-f", `name=Wordcell ${manifest.tag}`, "-f", `body=${releaseBody(manifest)}`,
+      "-f", `name=${releaseTitle(manifest)}`, "-f", `body=${body}`,
       "-F", "draft=true", "-F", "prerelease=false", "-f", "make_latest=false"]);
     const separator = response.search(/\r?\n\r?\n/u);
     if (!/^HTTP\/(?:1\.1|2(?:\.0)?) 201(?: [^\r\n]*)?\r?\n/u.test(response) || separator < 0) {
       throw new Error("Draft creation did not return an exact 201 receipt; reconcile provider state before retrying");
     }
     const created = record(JSON.parse(response.slice(separator).trim()) as unknown, "Created draft");
-    if (created.draft !== true || verifyProviderRelease(created, manifest, assets, true).length !== assets.length) {
+    if (created.draft !== true || verifyProviderRelease(created, manifest, assets, true, changelog).length !== assets.length) {
       throw new Error("Created draft response is not the exact empty draft");
     }
     // The list response may omit a successful creation. Its exact 201
@@ -429,29 +592,29 @@ export function publishVerifiedRelease(
     }
   };
   let release = readExact();
-  let missing = verifyProviderRelease(release, manifest, assets, true);
+  let missing = verifyProviderRelease(release, manifest, assets, true, changelog);
   for (const name of missing) {
     authorize();
     run("gh", ["api", "--method", "POST", `https://uploads.github.com/repos/${repository}/releases/${releaseId}/assets?name=${encodeURIComponent(name)}`,
       "--input", join(directory, name), "-H", "Content-Type: application/octet-stream",
       "-H", `Content-Length: ${assets.find((asset) => asset.name === name)!.bytes}`]);
     release = readExact();
-    missing = verifyProviderRelease(release, manifest, assets, true);
+    missing = verifyProviderRelease(release, manifest, assets, true, changelog);
   }
   if (missing.length !== 0) throw new Error("Draft release is missing canonical assets");
   release = readExact();
-  if (verifyProviderRelease(release, manifest, assets, true).length !== 0) throw new Error("Draft release became incomplete before publication");
+  if (verifyProviderRelease(release, manifest, assets, true, changelog).length !== 0) throw new Error("Draft release became incomplete before publication");
   if (record(release, "Release").draft === true) {
     verifyRemoteBytes(release);
     authorize();
     run("gh", ["api", "--method", "PATCH", releasePath, "-F", "draft=false", "-f", "make_latest=true"]);
   }
   release = readExact();
-  verifyProviderRelease(release, manifest, assets, false);
+  verifyProviderRelease(release, manifest, assets, false, changelog);
   verifyRemoteBytes(release);
   const published = record(read(`/repos/${repository}/releases/tags/${manifest.tag}`), "Published release");
   if (published.id !== releaseId) throw new Error("Published tag resolves to another release ID");
-  verifyProviderRelease(published, manifest, assets, false);
+  verifyProviderRelease(published, manifest, assets, false, changelog);
   const latest = record(read(`/repos/${repository}/releases/latest`), "Latest release");
   if (latest.id !== releaseId || latest.tag_name !== manifest.tag) throw new Error("Canonical release is not GitHub Latest");
 }
@@ -462,7 +625,7 @@ async function publish(directory: string): Promise<void> {
     || manifest.tag !== process.env.VERIFIED_TAG || String(manifest.runId) !== process.env.GITHUB_RUN_ID
     || String(manifest.runAttempt) !== process.env.GITHUB_RUN_ATTEMPT) throw new Error("Release handoff differs from the authorized run outputs");
   verifyAttestations(directory, manifest);
-  publishVerifiedRelease(directory, manifest, await assetIdentities(directory));
+  publishVerifiedRelease(directory, manifest, await assetIdentities(directory), taggedChangelog(manifest.sourceSha));
 }
 
 export async function downloadCanonicalRelease(directory: string, version: string, expectedSourceSha: string | undefined): Promise<ReleaseManifest> {
@@ -473,7 +636,12 @@ export async function downloadCanonicalRelease(directory: string, version: strin
   const manifest = await verifyReleaseFiles(directory);
   if (manifest.version !== version || manifest.sourceSha !== expectedSourceSha) throw new Error("Canonical GitHub source differs from the reviewed mirror source");
   verifyAttestations(directory, manifest);
-  verifyProviderRelease(api(`/repos/${repository}/releases/tags/${tag}`), manifest, await assetIdentities(directory), false);
+  let changelog: string | undefined;
+  try { changelog = taggedChangelog(manifest.sourceSha); } catch (error) {
+    // Pre-standard tags may predate CHANGELOG.md; standard tags must carry it.
+    if (!isPreStandardRelease(manifest.version)) throw error;
+  }
+  verifyProviderRelease(api(`/repos/${repository}/releases/tags/${tag}`), manifest, await assetIdentities(directory), false, changelog);
   verifyCanonicalPublication(manifest);
   const ref = record(api(`/repos/${repository}/git/ref/tags/${tag}`), "Canonical tag");
   const object = record(ref.object, "Annotated tag object");
@@ -486,8 +654,13 @@ export async function downloadCanonicalRelease(directory: string, version: strin
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode, directory, version] = process.argv.slice(2);
-  if (directory === undefined) throw new Error("Usage: node scripts/github-release.ts prepare|verify|publish|download <directory> [version]");
-  if (mode === "prepare" && version === undefined) await prepare(resolve(directory));
+  if (directory === undefined) throw new Error("Usage: node scripts/github-release.ts prepare|verify|publish|body|download <directory> [version|changelog-commit]");
+  if (mode === "body") {
+    // Print the release body for a downloaded release-manifest.json. The
+    // changelog comes from the tagged commit unless a full commit is named.
+    const manifest = parseReleaseManifest(JSON.parse((await boundedFile(join(resolve(directory), "release-manifest.json"), 16_384)).toString("utf8")) as unknown);
+    process.stdout.write(releaseBody(manifest, taggedChangelog(version ?? manifest.sourceSha)));
+  } else if (mode === "prepare" && version === undefined) await prepare(resolve(directory));
   else if (mode === "verify" && version === undefined) { const manifest = await verifyReleaseFiles(resolve(directory)); verifyAttestations(resolve(directory), manifest); }
   else if (mode === "publish" && version === undefined) await publish(resolve(directory));
   else if (mode === "download" && version !== undefined) await downloadCanonicalRelease(resolve(directory), version, process.env.VERIFIED_SOURCE_SHA);

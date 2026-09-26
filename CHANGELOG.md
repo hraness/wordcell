@@ -2,35 +2,41 @@
 
 ## Unreleased
 
-`wordcell mcp --root <vault>` serves a vault to local Model Context Protocol
-clients, such as Claude Code, Claude Desktop, Cursor, and Codex, over standard
-input and output. Its tools search, list, and read notes, follow links, and,
-with `--repo`, return repository context. Write tools create notes, update a
-note body at a known revision, and add typed relations through the existing
-authoring checks; `--read-only` removes them. Standard output carries only
-protocol messages.
+Wordcell can serve a vault to local Model Context Protocol clients and import
+notes exported from Supermemory.
 
-`wordcell import supermemory <export.json>...` turns documents and memory
-entries saved from the Supermemory API into Markdown notes. Documents with a
-public web URL or a type other than text land under `articles/`, other
-documents under `notes/imported/`, and memory versions under
-`notes/imported/memories/`, linked newest to oldest by `supersedes` relations.
-Each note records its Supermemory ID and an import digest, so a later import
-updates unedited notes, skips unchanged ones, and reports locally edited notes
-as conflicts without changing them. `--dry-run` writes nothing, and `--json`
-prints one report object.
-
-`wordcell note create --body-file -` reads the note body from standard input.
+- `wordcell mcp --root <vault>` serves a vault to local Model Context Protocol
+  clients, such as Claude Code, Claude Desktop, Cursor, and Codex, over
+  standard input and output. Its tools search, list, and read notes, follow
+  links, and, with `--repo`, return repository context. Write tools create
+  notes, update a note body at a known revision, and add typed relations
+  through the existing authoring checks; `--read-only` removes them. Standard
+  output carries only protocol messages.
+- `wordcell import supermemory <export.json>...` turns documents and memory
+  entries saved from the Supermemory API into Markdown notes. Documents with a
+  public web URL or a type other than text land under `articles/`, other
+  documents under `notes/imported/`, and memory versions under
+  `notes/imported/memories/`, linked newest to oldest by `supersedes`
+  relations. Each note records its Supermemory ID and an import digest, so a
+  later import updates unedited notes, skips unchanged ones, and reports
+  locally edited notes as conflicts without changing them. `--dry-run` writes
+  nothing, and `--json` prints one report object.
+- `wordcell note create --body-file -` reads the note body from standard input.
 
 ## 0.22.5
 
-`wordcell check` and `wordcell refresh` now find unlinked mentions through a
-phrase index, so sparse vaults can grow beyond the previous all-pairs limit.
-Results retain the same phrase selection, ordering, and line numbers. Complete
-scans enforce explicit input, index, work, and result limits and fail without
-returning partial results. SDK callers can opt in with `analyzeVaultComplete`,
-`scanVaultComplete`, and `refreshVaultComplete`; existing APIs keep their
-current limits.
+`wordcell check` and `wordcell refresh` find unlinked mentions through a phrase
+index, so sparse vaults can grow beyond the previous all-pairs limit.
+
+- `wordcell check` and `wordcell refresh` scan the whole vault through the
+  phrase index. Results keep the same phrase selection, ordering, and line
+  numbers as before.
+- A complete scan enforces explicit limits on input size, index size, work, and
+  matches. When a vault exceeds one, the command fails and names the limit
+  instead of returning partial results.
+- SDK callers can opt in with `analyzeVaultComplete`, `scanVaultComplete`, and
+  `refreshVaultComplete`. `analyzeVault`, `scanVault`, and `refreshVault` keep
+  their current limits.
 
 ## 0.22.4
 

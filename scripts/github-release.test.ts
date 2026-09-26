@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import fc from "fast-check";
 
-import { parseReleaseManifest, publishVerifiedRelease, releaseBody, stableVersion, uniqueReleaseId, verifyAttestationRun, verifyProviderRelease, verifyReleaseFiles, type ReleaseManifest } from "./github-release.js";
+import { changelogSection, isPreStandardRelease, legacyReleaseBody, parseReleaseBody, parseReleaseManifest, publishVerifiedRelease, releaseBody, releaseIdentity, releaseNotes, releaseTitle, stableVersion, uniqueReleaseId, verifyAttestationRun, verifyProviderRelease, verifyReleaseBody, verifyReleaseFiles, type ReleaseManifest } from "./github-release.js";
 
 const archive = Buffer.from("Synthetic packed-byte identity fixture; real USTAR admission is covered by package-artifact tests.");
 const digest = (bytes: Uint8Array, algorithm = "sha256") => createHash(algorithm).update(bytes).digest("hex");
@@ -15,6 +15,16 @@ const manifest: ReleaseManifest = {
   workflow: ".github/workflows/release.yml", workflowSha: "b".repeat(40), runId: 123, runAttempt: 2,
   archive: { name: "hraness-wordcell-0.19.4.tgz", bytes: archive.length, sha256: digest(archive), sha512: digest(archive, "sha512") },
 };
+const current: ReleaseManifest = {
+  ...manifest, version: "0.23.0", tag: "v0.23.0",
+  archive: { ...manifest.archive, name: "hraness-wordcell-0.23.0.tgz" },
+};
+const changelog = [
+  "# Changelog", "", "## Unreleased", "", "Work in progress.", "",
+  "## 0.23.0 - 2026-09-30", "", "Search results name their source file.", "",
+  "- `wordcell search` prints each match's path.", "- `--json` adds a `path` field;", "  older readers ignore it.", "",
+  "## 0.22.5", "", "Older notes.", "",
+].join("\n");
 
 test("manifest admits only exact bounded package, source, and run identity", () => {
   expect(parseReleaseManifest(manifest)).toEqual(manifest);
@@ -66,20 +76,20 @@ test("artifact verification rejects changed bytes, checksums, extra paths, and s
 });
 
 test("draft recovery only admits matching existing assets and published releases require all assets", () => {
-  const assets = [{ name: manifest.archive.name, bytes: archive.length, sha256: manifest.archive.sha256 }];
+  const assets = [{ name: current.archive.name, bytes: archive.length, sha256: current.archive.sha256 }];
   const release = {
-    id: 77, tag_name: manifest.tag, target_commitish: manifest.sourceSha, name: `Wordcell ${manifest.tag}`, body: releaseBody(manifest), draft: true, prerelease: false,
+    id: 77, tag_name: current.tag, target_commitish: current.sourceSha, name: releaseTitle(current), body: releaseBody(current, changelog), draft: true, prerelease: false,
     immutable: false, author: { id: 41898282, login: "github-actions[bot]", type: "Bot" }, assets: [],
   };
-  expect(verifyProviderRelease(release, manifest, assets, true)).toEqual([manifest.archive.name]);
-  const asset = { id: 88, name: manifest.archive.name, size: archive.length, digest: `sha256:${manifest.archive.sha256}`, state: "uploaded", browser_download_url: `https://github.com/hraness/wordcell/releases/download/${manifest.tag}/${manifest.archive.name}`, url: "https://api.github.com/repos/hraness/wordcell/releases/assets/88" };
+  expect(verifyProviderRelease(release, current, assets, true, changelog)).toEqual([current.archive.name]);
+  const asset = { id: 88, name: current.archive.name, size: archive.length, digest: `sha256:${current.archive.sha256}`, state: "uploaded", browser_download_url: `https://github.com/hraness/wordcell/releases/download/${current.tag}/${current.archive.name}`, url: "https://api.github.com/repos/hraness/wordcell/releases/assets/88" };
   const complete = { ...release, assets: [asset] };
-  expect(verifyProviderRelease(complete, manifest, assets, true)).toEqual([]);
-  expect(verifyProviderRelease({ ...complete, draft: false, immutable: true }, manifest, assets, false)).toEqual([]);
+  expect(verifyProviderRelease(complete, current, assets, true, changelog)).toEqual([]);
+  expect(verifyProviderRelease({ ...complete, draft: false, immutable: true }, current, assets, false, changelog)).toEqual([]);
   for (const change of [{ target_commitish: "main" }, { immutable: true }, { assets: [{ ...asset, url: "https://api.github.com/repos/other/repo/releases/assets/88" }] }, { assets: [{ ...asset, browser_download_url: "https://example.invalid/payload" }] }, { body: "different run" }, { author: { id: 1 } }, { assets: [asset, asset] }, { assets: [{ ...asset, digest: `sha256:${"f".repeat(64)}` }] }, { assets: [{ ...asset, name: "extra" }] }, { draft: false, immutable: false }]) {
-    expect(() => verifyProviderRelease({ ...complete, ...change }, manifest, assets, true)).toThrow();
+    expect(() => verifyProviderRelease({ ...complete, ...change }, current, assets, true, changelog)).toThrow();
   }
-  expect(() => verifyProviderRelease({ ...release, draft: false, immutable: true }, manifest, assets, false)).toThrow("missing canonical assets");
+  expect(() => verifyProviderRelease({ ...release, draft: false, immutable: true }, current, assets, false, changelog)).toThrow("missing canonical assets");
 });
 
 test("temporary draft asset URLs remain same-repository and never admit published assets", () => {
@@ -89,21 +99,21 @@ test("temporary draft asset URLs remain same-repository and never admit publishe
   const asset = { id: 552772852, name: "SHA256SUMS", size: 256, digest: `sha256:${sha256}`, state: "uploaded",
     browser_download_url: temporaryUrl, url: "https://api.github.com/repos/hraness/wordcell/releases/assets/552772852" };
   const draft = { id: 385518557, tag_name: manifest.tag, target_commitish: manifest.sourceSha, name: `Wordcell ${manifest.tag}`,
-    body: releaseBody(manifest), draft: true, immutable: false, prerelease: false,
+    body: legacyReleaseBody(manifest), draft: true, immutable: false, prerelease: false,
     author: { id: 41898282, login: "github-actions[bot]", type: "Bot" }, assets: [asset] };
-  expect(verifyProviderRelease(draft, manifest, assets, true)).toEqual([]);
+  expect(verifyProviderRelease(draft, manifest, assets, true, undefined)).toEqual([]);
   for (const url of [
     temporaryUrl.replace("hraness/wordcell", "other/kb"), temporaryUrl.replace("SHA256SUMS", "npm-pack.json"),
     temporaryUrl.replace("ef6c1bd779e9dd4032bb", "ef6c1bd779e9dd4032b"),
     temporaryUrl.replace("ef6c1bd779e9dd4032bb", "EF6C1BD779E9DD4032BB"),
     `${temporaryUrl}?token=anything`, `${temporaryUrl}#fragment`, temporaryUrl.replace("untagged-", "refs/untagged-"),
-  ]) expect(() => verifyProviderRelease({ ...draft, assets: [{ ...asset, browser_download_url: url }] }, manifest, assets, true)).toThrow();
+  ]) expect(() => verifyProviderRelease({ ...draft, assets: [{ ...asset, browser_download_url: url }] }, manifest, assets, true, undefined)).toThrow();
   for (const allowDraft of [true, false]) {
-    expect(() => verifyProviderRelease({ ...draft, draft: false, immutable: true }, manifest, assets, allowDraft)).toThrow();
+    expect(() => verifyProviderRelease({ ...draft, draft: false, immutable: true }, manifest, assets, allowDraft, undefined)).toThrow();
   }
   fc.assert(fc.property(fc.array(fc.constantFrom(..."0123456789abcdef"), { minLength: 20, maxLength: 20 }), (digits) => {
     const url = `https://github.com/hraness/wordcell/releases/download/untagged-${digits.join("")}/SHA256SUMS`;
-    expect(verifyProviderRelease({ ...draft, assets: [{ ...asset, browser_download_url: url }] }, manifest, assets, true)).toEqual([]);
+    expect(verifyProviderRelease({ ...draft, assets: [{ ...asset, browser_download_url: url }] }, manifest, assets, true, undefined)).toEqual([]);
   }));
 });
 
@@ -130,7 +140,7 @@ test("verified certificate and subject bind repository, source, workflow, hosted
 
 test("draft publication survives by-tag 404 through one retained release ID without duplicate writes", () => {
   const remoteBytes = Buffer.from("0123456789");
-  const assets = [manifest.archive.name, "npm-pack.json", "release-manifest.json", "SHA256SUMS", "provenance.jsonl"]
+  const assets = [current.archive.name, "npm-pack.json", "release-current.json", "SHA256SUMS", "provenance.jsonl"]
     .map((name) => ({ name, bytes: remoteBytes.length, sha256: digest(remoteBytes) }));
   const descriptor = (name: string, id: number) => ({
     id, name, size: remoteBytes.length, digest: `sha256:${digest(remoteBytes)}`, state: "uploaded",
@@ -140,8 +150,8 @@ test("draft publication survives by-tag 404 through one retained release ID with
   const fixture = (existing: boolean, conflict = false, fault?: "bytes" | "id" | "published-bytes" | "creation-status" | "creation-identity") => {
     let created = existing;
     const release = {
-      id: 77, tag_name: manifest.tag, target_commitish: manifest.sourceSha, name: `Wordcell ${manifest.tag}`,
-      body: conflict ? "a different original attempt" : releaseBody(manifest),
+      id: 77, tag_name: current.tag, target_commitish: current.sourceSha, name: releaseTitle(current),
+      body: conflict ? "a different original attempt" : releaseBody(current, changelog),
       draft: true, immutable: false, prerelease: false,
       author: { id: 41898282, login: "github-actions[bot]", type: "Bot" },
       assets: existing ? [descriptor(assets[0]!.name, 1)] : [] as ReturnType<typeof descriptor>[],
@@ -157,7 +167,7 @@ test("draft publication survives by-tag 404 through one retained release ID with
       if (args[2] === "POST" && endpoint === "/repos/hraness/wordcell/releases") {
         if (created) throw new Error("Draft must never be recreated");
         created = true;
-        expect(args).toContain(`target_commitish=${manifest.sourceSha}`);
+        expect(args).toContain(`target_commitish=${current.sourceSha}`);
         expect(args).toContain("draft=true");
         expect(args).toContain("make_latest=false");
         return `HTTP/2.0 ${fault === "creation-status" ? 200 : 201} Created\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(fault === "creation-identity" ? { ...release, id: 0 } : release)}`;
@@ -166,7 +176,7 @@ test("draft publication survives by-tag 404 through one retained release ID with
         expect(args).toContain("--paginate");
         expect(args).toContain("--slurp");
         // The provider index intentionally never exposes a draft created here.
-        return JSON.stringify([[{ id: 1, tag_name: "v0.1.0" }], existing ? [{ id: 77, tag_name: manifest.tag }] : []]);
+        return JSON.stringify([[{ id: 1, tag_name: "v0.1.0" }], existing ? [{ id: 77, tag_name: current.tag }] : []]);
       }
       if (args[2] === "POST" && endpoint?.startsWith("https://uploads.github.com/repos/hraness/wordcell/releases/77/assets?name=")) {
         expect(args).toContain("Content-Length: 10");
@@ -181,14 +191,14 @@ test("draft publication survives by-tag 404 through one retained release ID with
         expect(args).toContain("draft=false");
         expect(args).toContain("make_latest=true");
         release.draft = false; release.immutable = true;
-        for (const asset of release.assets) asset.browser_download_url = `https://github.com/hraness/wordcell/releases/download/${manifest.tag}/${asset.name}`;
+        for (const asset of release.assets) asset.browser_download_url = `https://github.com/hraness/wordcell/releases/download/${current.tag}/${asset.name}`;
         return JSON.stringify(release);
       }
-      if (args[2] === "GET" && endpoint === `/repos/hraness/wordcell/releases/tags/${manifest.tag}` && release.draft) {
+      if (args[2] === "GET" && endpoint === `/repos/hraness/wordcell/releases/tags/${current.tag}` && release.draft) {
         draftTagRequests += 1;
         throw new Error("HTTP 404: GitHub hides drafts from by-tag lookup");
       }
-      if (args[2] === "GET" && ["/repos/hraness/wordcell/releases/77", `/repos/hraness/wordcell/releases/tags/${manifest.tag}`, "/repos/hraness/wordcell/releases/latest"].includes(endpoint ?? "")) return JSON.stringify(release);
+      if (args[2] === "GET" && ["/repos/hraness/wordcell/releases/77", `/repos/hraness/wordcell/releases/tags/${current.tag}`, "/repos/hraness/wordcell/releases/latest"].includes(endpoint ?? "")) return JSON.stringify(release);
       throw new Error(`Unexpected provider command ${args.join(" ")}`);
     };
     const download = (id: number, expectedBytes: number): Uint8Array => {
@@ -201,7 +211,7 @@ test("draft publication survives by-tag 404 through one retained release ID with
   };
   for (const existing of [true, false]) {
     const provider = fixture(existing);
-    expect(() => publishVerifiedRelease("/synthetic-release", manifest, assets, provider.run, provider.authorize, provider.download)).not.toThrow();
+    expect(() => publishVerifiedRelease("/synthetic-release", current, assets, changelog, provider.run, provider.authorize, provider.download)).not.toThrow();
     expect(provider.draftTagRequests()).toBe(0);
     expect(provider.release.assets).toHaveLength(5);
     expect(provider.release.immutable).toBe(true);
@@ -211,22 +221,125 @@ test("draft publication survives by-tag 404 through one retained release ID with
     expect(provider.calls.filter((call) => call.startsWith("download "))).toHaveLength(10);
   }
   const conflict = fixture(true, true);
-  expect(() => publishVerifiedRelease("/synthetic-release", manifest, assets, conflict.run, conflict.authorize, conflict.download)).toThrow("reconcile the original run");
+  expect(() => publishVerifiedRelease("/synthetic-release", current, assets, changelog, conflict.run, conflict.authorize, conflict.download)).toThrow("reconcile the original run");
   expect(conflict.calls).not.toContain("authority");
   for (const fault of ["bytes", "id", "published-bytes"] as const) {
     const provider = fixture(true, false, fault);
-    expect(() => publishVerifiedRelease("/synthetic-release", manifest, assets, provider.run, provider.authorize, provider.download))
+    expect(() => publishVerifiedRelease("/synthetic-release", current, assets, changelog, provider.run, provider.authorize, provider.download))
       .toThrow(fault === "id" ? "Release ID changed" : "Downloaded release asset differs");
     expect(provider.calls.filter((call) => call.startsWith("api --method PATCH"))).toHaveLength(fault === "published-bytes" ? 1 : 0);
     if (fault === "id") expect(provider.calls.filter((call) => call.startsWith("api --method POST"))).toHaveLength(1);
   }
   for (const fault of ["creation-status", "creation-identity"] as const) {
     const provider = fixture(false, false, fault);
-    expect(() => publishVerifiedRelease("/synthetic-release", manifest, assets, provider.run, provider.authorize, provider.download)).toThrow();
+    expect(() => publishVerifiedRelease("/synthetic-release", current, assets, changelog, provider.run, provider.authorize, provider.download)).toThrow();
     expect(provider.calls.filter((call) => call.startsWith("api --method POST"))).toHaveLength(1);
     expect(provider.calls.filter((call) => call.startsWith("api --method PATCH"))).toHaveLength(0);
   }
-  expect(() => uniqueReleaseId([[{ id: 1, tag_name: manifest.tag }], [{ id: 2, tag_name: manifest.tag }]], manifest.tag)).toThrow("Multiple");
-  expect(() => uniqueReleaseId([[{ id: 1, tag_name: manifest.tag }], [{ id: 1, tag_name: manifest.tag }]], manifest.tag)).toThrow("repeats an ID");
-  expect(() => uniqueReleaseId([{ id: 1, tag_name: manifest.tag }], manifest.tag)).toThrow("page is malformed");
+  expect(() => uniqueReleaseId([[{ id: 1, tag_name: current.tag }], [{ id: 2, tag_name: current.tag }]], current.tag)).toThrow("Multiple");
+  expect(() => uniqueReleaseId([[{ id: 1, tag_name: current.tag }], [{ id: 1, tag_name: current.tag }]], current.tag)).toThrow("repeats an ID");
+  expect(() => uniqueReleaseId([{ id: 1, tag_name: current.tag }], current.tag)).toThrow("page is malformed");
+});
+
+test("changelog sections fail when missing, empty, unreleased, or without summary and bullets", () => {
+  expect(changelogSection(changelog, "0.23.0")).toEqual({
+    summary: "Search results name their source file.",
+    changes: "- `wordcell search` prints each match's path.\n- `--json` adds a `path` field;\n  older readers ignore it.",
+  });
+  expect(changelogSection("## v0.23.0\n\nSummary.\n\n- Change.\n", "0.23.0").changes).toBe("- Change.");
+  const cases: readonly (readonly [string, string])[] = [
+    ["## 0.22.9\n\nSummary.\n\n- Change.\n", "no section"],
+    ["## 0.23.0\n\n## 0.22.5\n\nSummary.\n\n- Change.\n", "is empty"],
+    ["## 0.23.0\n\nUnreleased.\n\n- Change.\n", "Unreleased"],
+    ["## 0.23.0\n\n- Change without summary.\n", "no summary"],
+    ["## 0.23.0\n\nSummary without bullets.\n", "no bulleted changes"],
+    ["## 0.23.0\n\nSummary.\n\n- Change.\n\nTrailing paragraph.\n", "must end with its bulleted changes"],
+    ["## 0.23.0\n\nSummary.\n\n### Details\n\n- Change.\n", "must not contain headings"],
+    ["## 0.23.0\n\nSummary.\n\n- Change.\n\n## 0.23.0\n\nAgain.\n\n- Change.\n", "repeats"],
+    ["## 0.23.0\r\n\r\nSummary.\r\n\r\n- Change.\r\n", "LF"],
+    ["## 0.23.0 - yesterday\n\nSummary.\n\n- Change.\n", "no section"],
+  ];
+  for (const [text, message] of cases) expect(() => changelogSection(text, "0.23.0")).toThrow(message);
+  expect(() => releaseBody(current, "## Unreleased\n\nSummary.\n\n- Change.\n")).toThrow("no section");
+});
+
+test("standard release body has summary, changes, install, verify, then a trailing identity record", () => {
+  const body = releaseBody(current, changelog);
+  expect(releaseTitle(current)).toBe("Wordcell v0.23.0");
+  expect(body.startsWith("Search results name their source file.\n\n## Changes\n\n- `wordcell search`")).toBe(true);
+  const headings = body.split("\n").filter((line) => line.startsWith("## "));
+  expect(headings).toEqual(["## Changes", "## Install", "## Verify"]);
+  expect(body).toContain("bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz");
+  expect(body).toContain("npm install --global --ignore-scripts @hraness/wordcell@0.23.0");
+  expect(body).toContain("https://github.com/hraness/wordcell/releases/download/v0.23.0/SHA256SUMS");
+  expect(body).toContain(`https://github.com/hraness/wordcell/commit/${current.sourceSha}`);
+  expect(body).toContain("https://github.com/hraness/wordcell/blob/v0.23.0/docs/publishing.md#verify-a-published-release");
+  expect(body.endsWith(releaseIdentity(current))).toBe(true);
+  expect(body.endsWith("-->")).toBe(true);
+  for (const forbidden of ["latest", "What's Changed", "Full Changelog", "Generated with", "Automated release", "Canonical GitHub release for", "Unreleased"]) {
+    expect(body).not.toContain(forbidden);
+  }
+  const visible = body.slice(0, body.lastIndexOf("<!--"));
+  expect(visible).not.toContain("Workflow run:");
+  expect(visible).not.toContain("<!--");
+  expect(body).toBe(`${releaseNotes(current, changelog)}\n\n${releaseIdentity(current)}`);
+});
+
+test("identity parses from the last marker and still binds the exact manifest", () => {
+  const body = releaseBody(current, changelog);
+  expect(parseReleaseBody(body)).toEqual({
+    notes: releaseNotes(current, changelog),
+    identity: { version: "0.23.0", sourceSha: current.sourceSha, runId: 123, runAttempt: 2, archiveSha256: current.archive.sha256 },
+  });
+  const quoted = `${releaseIdentity({ ...current, runId: 999 })}\n\n${body}`;
+  expect(parseReleaseBody(quoted).identity.runId).toBe(123);
+  for (const bad of [`${body}\n`, `${body} `, body.replace("Workflow attempt: 2", "Workflow attempt: 02"), body.replace("<!-- hraness-github-release-v1\n", "<!-- other\n"), releaseIdentity(current), 7]) {
+    expect(() => parseReleaseBody(bad)).toThrow();
+  }
+  expect(() => verifyReleaseBody(body, current, changelog)).not.toThrow();
+  for (const change of [{ runId: 124 }, { runAttempt: 1 }, { sourceSha: "c".repeat(40) }, { archive: { ...current.archive, sha256: "d".repeat(64) } }]) {
+    expect(() => verifyReleaseBody(body, { ...current, ...change }, changelog)).toThrow();
+  }
+});
+
+test("hand edits to published notes are detected", () => {
+  const body = releaseBody(current, changelog);
+  const tampered = [
+    body.replace("Search results name their source file.", "Search results name their source file, faster."),
+    body.replace("- `--json` adds", "- `--json` now adds"),
+    body.replace("npm install --global", "npm install -g"),
+    body.replace("## Verify", "## What's Changed\n\n- extra\n\n## Verify"),
+    `Extra first line.\n\n${body}`,
+  ];
+  for (const edited of tampered) {
+    expect(edited).not.toBe(body);
+    expect(() => verifyReleaseBody(edited, current, changelog)).toThrow("differ");
+  }
+  expect(() => verifyReleaseBody(body, current, changelog.replace("prints each match's path", "prints paths"))).toThrow("differ");
+  expect(() => verifyReleaseBody(body, current, undefined)).toThrow("tagged CHANGELOG.md");
+  expect(() => verifyReleaseBody(legacyReleaseBody(current), current, changelog)).toThrow();
+});
+
+test("pre-standard releases admit their exact legacy body or a backfilled standard page", () => {
+  expect(isPreStandardRelease("0.22.5")).toBe(true);
+  expect(isPreStandardRelease("0.19.4")).toBe(true);
+  expect(isPreStandardRelease("0.22.6")).toBe(false);
+  expect(isPreStandardRelease("0.23.0")).toBe(false);
+  expect(isPreStandardRelease("1.0.0")).toBe(false);
+  expect(() => verifyReleaseBody(legacyReleaseBody(manifest), manifest, undefined)).not.toThrow();
+  expect(() => verifyReleaseBody(`${legacyReleaseBody(manifest)}\n`, manifest, undefined)).toThrow();
+  const backfill = releaseBody(manifest, changelog.replace("## 0.23.0 - 2026-09-30", "## 0.19.4"));
+  expect(() => verifyReleaseBody(backfill, manifest, undefined)).not.toThrow();
+  expect(() => verifyReleaseBody(backfill.replace("npm install --global", "npm install -g"), manifest, undefined)).toThrow("generated release sections");
+  expect(() => verifyReleaseBody(backfill.replace("Workflow run: 123", "Workflow run: 124"), manifest, undefined)).toThrow();
+  expect(() => verifyReleaseBody(backfill.replace("\n\n## Changes\n\n", "\n\n"), manifest, undefined)).toThrow();
+});
+
+test("the repository changelog carries a standard section for the latest published version", async () => {
+  const text = await Bun.file(new URL("../CHANGELOG.md", import.meta.url)).text();
+  const version = (await Bun.file(new URL("../package.json", import.meta.url)).json() as { version: string }).version;
+  const section = changelogSection(text, version);
+  expect(section.summary.length).toBeGreaterThan(0);
+  expect(section.changes.startsWith("- ")).toBe(true);
+  expect(text.indexOf("## Unreleased\n")).toBeLessThan(text.indexOf(`## ${version}\n`));
 });
