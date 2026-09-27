@@ -6,9 +6,9 @@ import { basicMemoryCheckedOn, basicMemoryPages } from "../../../wordcell/basic-
 import { longDate } from "../../../wordcell/format";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
 
-const pageTitle = "Wordcell and Basic Memory compared";
+const pageTitle = "Wordcell vs Basic Memory: two Markdown knowledge graphs";
 const pageDescription =
-  "Compare Basic Memory’s MCP-centered Markdown knowledge graph with a Wordcell vault: typed relations, repository context, and cost.";
+  "Basic Memory vs Wordcell: both keep a knowledge graph in Markdown files. Wordcell adds typed relations, vault checks, and notes tied to code paths.";
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -82,7 +82,7 @@ export default function CompareBasicMemory() {
         heading="Basic Memory indexes Markdown notes into a knowledge graph your assistant works through MCP tools. Wordcell adds typed relations, vault checks, and memory scoped to repository paths."
         headingId="hero-title"
         name=""
-        summary="Both keep knowledge in Markdown files you own. They differ in how structure is written, what gets validated, and whether memory is tied to code."
+        summary="Pick Basic Memory if you want the assistant to write the structure through MCP tools. Pick Wordcell if you want links checked and notes tied to your code."
       />
 
       <MarketingSection
@@ -114,7 +114,7 @@ export default function CompareBasicMemory() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Which to choose"
+        heading="Who should pick which"
         headingId="choose-title"
         id="choose"
         summary="The deciding question is who writes the structure, and whether memory should know about your code."
@@ -136,7 +136,7 @@ export default function CompareBasicMemory() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Moving notes"
+        heading="What carries over from Basic Memory"
         headingId="moving-title"
         id="moving"
         summary="Basic Memory notes are already Markdown, so the files themselves carry over. The markup around them does not, and there is no importer."
@@ -150,7 +150,7 @@ export default function CompareBasicMemory() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Evidence"
+        heading="What has been measured"
         headingId="evidence-title"
         id="evidence"
         summary="Wordcell has published no head-to-head comparison with Basic Memory of retrieval quality or speed."

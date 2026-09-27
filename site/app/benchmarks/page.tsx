@@ -26,7 +26,7 @@ import { publishedRelease } from "../publication";
 
 const pageTitle = "Wordcell and Oh benchmarks, with their limits";
 const pageDescription =
-  "See Wordcell’s own payload and reranking measurements and the Oh memory kernel’s published results, each with its source data and limits.";
+  "Wordcell’s payload and reranking measurements, Oh’s LoCoMo run and Supermemory pilot, and figures other memory systems publish, each with its source.";
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -69,14 +69,14 @@ export default function Benchmarks() {
         boundary={status}
         className="wordcell-marketing-hero"
         eyebrow="Benchmarks"
-        heading="Each Wordcell and Oh result here links its raw data and states its limits."
+        heading="Each Wordcell and Oh result here links its raw data. None of them ranks Wordcell against another memory tool."
         headingId="hero-title"
         name=""
         summary="Wordcell’s own measurements cover the size of a context handoff and reranking quality. The Oh memory kernel that Wordcell embeds publishes its own memory benchmarks, reported here as Oh’s results, not Wordcell’s."
       />
 
       <MarketingSection
-        heading="What Wordcell measures"
+        heading="Wordcell’s own measurements: payload size and reranking"
         headingId="wordcell-title"
         id="wordcell"
         summary={`Across ${prose(handoffEvidence.queries)} queries on a ${prose(handoffEvidence.noteCount)}-note public vault, packed snippets used ${handoffEvidence.reductionPercent}% fewer UTF-8 bytes than the same notes in full.`}
@@ -100,7 +100,7 @@ export default function Benchmarks() {
       </MarketingSection>
 
       <MarketingSection
-        heading="The Oh kernel Wordcell embeds, measured on its own"
+        heading="Oh’s LoCoMo results, reported as Oh’s"
         headingId="oh-title"
         id="oh"
         summary={ohAttribution}
@@ -144,7 +144,7 @@ export default function Benchmarks() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Matched and published comparisons"
+        heading="Oh’s Supermemory pilot and other systems’ published figures"
         headingId="comparisons-title"
         id="comparisons"
         summary="Oh ran one small pilot of Supermemory, Oh, and BM25 under one protocol; it is Oh’s result, not Wordcell’s. Figures that other memory systems publish use their own protocols, so they appear in a table, not a chart."
@@ -192,7 +192,7 @@ export default function Benchmarks() {
       </MarketingSection>
 
       <MarketingSection
-        heading="How to reproduce"
+        heading="Where each figure comes from"
         headingId="reproduce-title"
         id="reproduce"
         summary="Each Wordcell and Oh figure on this page comes from a file you can read and a procedure you can rerun. The published figures in the table link their sources."

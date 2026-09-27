@@ -14,7 +14,7 @@ import { SetupLinks } from "../../../wordcell/setup-links";
 
 const pageTitle = "Migrate from Supermemory to Wordcell";
 const pageDescription =
-  "Export your Supermemory documents and memory entries, import them into a Wordcell vault as Markdown notes, and verify the result.";
+  "Migrate from Supermemory: export documents and memory entries with its API, import them as Markdown notes with one Wordcell command, and verify the result.";
 
 export const metadata: Metadata = {
   title: pageTitle,

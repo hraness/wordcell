@@ -12,9 +12,9 @@ import {
   supermemoryPricing,
 } from "../../../wordcell/supermemory-pricing";
 
-const pageTitle = "Wordcell and Supermemory compared";
+const pageTitle = "Wordcell vs Supermemory: files or a hosted memory API";
 const pageDescription =
-  "Compare Supermemory’s hosted memory engine with a Wordcell vault of Markdown files: where memory lives, how it forms, and what it costs.";
+  "Supermemory vs Wordcell: a hosted memory API that extracts facts for you, or agent memory kept as Markdown files you own and review in Git.";
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -92,7 +92,7 @@ export default function CompareSupermemory() {
         heading="Supermemory is a hosted memory engine for agents and the apps you build. Wordcell keeps your memory in Markdown files you own."
         headingId="hero-title"
         name=""
-        summary="Both give agents a memory. They differ in where it lives, how it forms, who owns the files, and what it costs."
+        summary="Pick Supermemory to store memory for the users of a product you build. Pick Wordcell to keep your own agents’ memory as files you review in Git."
       />
 
       <MarketingSection
@@ -124,7 +124,7 @@ export default function CompareSupermemory() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Which to choose"
+        heading="Who should pick which"
         headingId="choose-title"
         id="choose"
         summary="The deciding question is whose memory you keep, and whether you want the files themselves to be that memory."
@@ -200,7 +200,7 @@ export default function CompareSupermemory() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Evidence"
+        heading="What has been measured"
         headingId="evidence-title"
         id="evidence"
         summary="Wordcell has published no head-to-head comparison with Supermemory of retrieval quality or speed."
