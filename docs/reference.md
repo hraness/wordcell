@@ -11,7 +11,7 @@
 Copy this prompt into Codex, Claude Code, or another coding agent:
 
 ```text
-Install the `wordcell` Agent Skill from `hraness/wordcell#v0.22.5` with the standard skills
+Install the `wordcell` Agent Skill from `hraness/wordcell#v0.23.0` with the standard skills
 CLI. Use the skill's runtime instructions to install the exact
 versioned GitHub release archive only when the command is missing. Verify it
 with `wordcell doctor` and `wordcell --help`, but do not initialize or modify a vault until
@@ -21,8 +21,8 @@ I ask.
 Install the single public skill with either runner:
 
 ```sh
-npx skills add hraness/wordcell#v0.22.5
-bunx skills add hraness/wordcell#v0.22.5
+npx skills add hraness/wordcell#v0.23.0
+bunx skills add hraness/wordcell#v0.23.0
 ```
 
 Both commands discover the same `wordcell` skill and install it into the selected
@@ -39,7 +39,7 @@ installed skill is byte-identical to the repository source.
 Install the two global commands with Bun:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
 wordcell --help
 wordcell-evaluation-builder --help
 ```
@@ -47,7 +47,7 @@ wordcell-evaluation-builder --help
 The same GitHub archive can be installed with npm:
 
 ```sh
-npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
+npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
 wordcell --help
 ```
 
@@ -60,7 +60,7 @@ reviewed and enabled; run `wordcell doctor` to inspect the resulting capabilitie
 For programmatic use, add the versioned GitHub archive to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
 ```
 
 The resulting dependency should remain exact:
@@ -68,7 +68,7 @@ The resulting dependency should remain exact:
 ```json
 {
   "dependencies": {
-    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz"
+    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz"
   }
 }
 ```
@@ -223,8 +223,8 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell backlinks <note> --root <directory>` | Show incoming contextual links and typed relationships for a note resolved by path, title, or alias. |
 | `wordcell links <note> --root <directory>` | Traverse incoming, outgoing, or bidirectional contextual links and typed relationships with explicit depth and node limits. |
 | `wordcell note create <id> --title <title> --root <directory>` | Atomically create one confined Markdown note; use `--type concept` for a reusable concept. The parent directory must already exist. |
-| `wordcell note create <id> --title <title> --body-file - --root <directory>` | Read the note body from standard input, such as a transcript piped from another command. Standard input must not be a terminal or blank. Name a file called `-` as `./-`. Available from source until the next release. |
-| `wordcell import supermemory <export.json>... --root <vault>` | Import documents and memory entries saved from the Supermemory API as Markdown notes; see [Import from Supermemory](#import-from-supermemory). Available from source until the next release. |
+| `wordcell note create <id> --title <title> --body-file - --root <directory>` | Read the note body from standard input, such as a transcript piped from another command. Standard input must not be a terminal or blank. Name a file called `-` as `./-`. |
+| `wordcell import supermemory <export.json>... --root <vault>` | Import documents and memory entries saved from the Supermemory API as Markdown notes; see [Import from Supermemory](#import-from-supermemory). |
 | `wordcell relation add\|remove <source> <predicate> <target>` | Idempotently edit one source note's typed outbound relationship using an exact local note ID or canonical stable `kb://` URI. |
 | `wordcell relation list <note> --root <directory>` | List a note's authored outbound and derived inbound typed relationships. |
 | `wordcell percolate [note] --root <directory>` | Report evidence-backed recurring-concept and missing-relationship candidates without writing notes. |
@@ -236,7 +236,7 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell history <note> --root <vault> --repo <repository>` | Return bounded direct provenance for one resolved note, including explicit oversized-commit limitations. |
 | `wordcell history search <query-or-path> --root <vault> --repo <repository>` | Search bounded commit subjects, note paths, and co-change paths without authoring links or repository scopes. |
 | `wordcell context <repository-path> --root <vault> --repo <repository>` | List inherited guides root to nearest, reciprocal hubs nearest to root, and grouped repository-scoped current and historical memory. Use `--kind auto\|file\|directory` to control path interpretation. Notes of other types, such as `type: session` and `type: profile`, are not listed. |
-| `wordcell mcp --root <vault> [--repo <repository>] [--read-only]` | Serve one vault to a local MCP client over standard input and output with search, note, link, and authoring tools; see [Local MCP server](#local-mcp-server). Available from source until the next release. |
+| `wordcell mcp --root <vault> [--repo <repository>] [--read-only]` | Serve one vault to a local MCP client over standard input and output with search, note, link, and authoring tools; see [Local MCP server](#local-mcp-server). |
 | `wordcell inbox --root <vault>` | List recent captures without a maintained-note disposition. This is advisory and never creates links or fails merely because a source is a leaf. |
 | `wordcell evaluate <manifest.json> --root <vault> --repo <repository>` | Verify an exact frozen Git/vault snapshot and run built-in exact, QMD, metadata, graph, path-context, and Git retrievers with raw evidence, latency, resource counters, metrics, and paired intervals. |
 | `wordcell publish --root <directory> --out <directory>` | Project a vault or a selected subsection into a self-contained `hraness.wordcell.site.v1` static site with prerendered read-only pages, browser-local search, and content-addressed assets. See [Publish a static site](publish.md). |
@@ -426,8 +426,6 @@ those displaced bytes until recovery is resolved.
 
 ## Import from Supermemory
 
-`wordcell import supermemory` is available from source until the next release.
-
 `wordcell import supermemory` turns JSON responses saved from the Supermemory
 API into Markdown notes in a vault. It reads only the files you name and never
 calls the Supermemory API. Run `wordcell refresh` and then `wordcell check`
@@ -567,8 +565,6 @@ most 10,000 notes and 256 MiB of Markdown. JSON may nest 32 levels deep. An
 item whose note would exceed 16 MiB is rejected, not truncated.
 
 ## Local MCP server
-
-`wordcell mcp` is available from source until the next release.
 
 `wordcell mcp` serves one vault to a Model Context Protocol (MCP) client, such
 as Claude Code, Claude Desktop, Cursor, or Codex. The client starts the
@@ -733,15 +729,12 @@ plans, saving session notes and a profile note, promoting concepts and typed
 relationships, refreshing and checking a vault, or designing a setup through an
 interview and approved proposal. An approved setup may scaffold a bounded
 companion skill for a distinct recurring ritual. The package smoke test keeps
-future tagged packages byte-identical to that source tree. The session-memory
-reference is available from source until the next release; the `#v0.22.5`
-skill below does not include it. To use it before that release, add the skill
-from the main branch with `bunx skills add hraness/wordcell --skill wordcell`.
+future tagged packages byte-identical to that source tree.
 
 ```sh
-npx skills add hraness/wordcell#v0.22.5
+npx skills add hraness/wordcell#v0.23.0
 # or
-bunx skills add hraness/wordcell#v0.22.5
+bunx skills add hraness/wordcell#v0.23.0
 ```
 
 The skill invokes the installed `wordcell` command without depending on a repository

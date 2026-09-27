@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.23.0
 
 Wordcell can serve a vault to local Model Context Protocol clients and import
 notes exported from Supermemory. Its Agent Skill can save a conversation as a

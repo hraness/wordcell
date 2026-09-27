@@ -1,10 +1,11 @@
-// The migration landing page's steps. Every command is copied from
-// docs/migration-from-supermemory.md, and a test checks that the guide still
-// contains each one.
+// The migration landing page's steps. The install commands are the release
+// install from docs/getting-started.md, bound to the admitted release; every
+// other command is copied from docs/migration-from-supermemory.md. A test
+// checks that those pages still contain each one.
 
 import type { ReactNode } from "react";
 
-import { SETUP_COMMANDS } from "./setup-prompt";
+import { AGENT_MEMORY_RELEASE, SETUP_COMMANDS } from "./setup-prompt";
 
 export const MIGRATION_GUIDE_PATH = "/docs/migration-from-supermemory";
 
@@ -34,15 +35,15 @@ export type MigrationStep = Readonly<{
 export const migrationSteps = [
   {
     id: "install",
-    title: "Install Wordcell from source",
-    lead: "You need Bun 1.3.14 or newer and Git.",
+    title: "Install Wordcell",
+    lead: `You need Bun 1.3.14 or newer and Git. The importer needs Wordcell ${AGENT_MEMORY_RELEASE} or later.`,
     commands: SETUP_COMMANDS.install,
-    href: "/docs/reference#installation-reference",
+    href: "/docs/getting-started#install-the-cli",
   },
   {
     id: "export",
     title: "Export your data",
-    lead: <>Leave the Wordcell checkout, for example with <code>cd ..</code>. Save the guide’s export script in your working directory and set <code>SUPERMEMORY_API_KEY</code>. The script uses curl and jq.</>,
+    lead: <>Save the guide’s export script in your working directory and set <code>SUPERMEMORY_API_KEY</code>. The script uses curl and jq.</>,
     commands: ["sh export-supermemory.sh <tag>..."],
     note: <>The script saves your documents, and the memory entries for each container tag, as JSON pages. A Python version saves one <code>supermemory-export.json</code> file.</>,
     href: `${MIGRATION_GUIDE_PATH}#export-your-data`,

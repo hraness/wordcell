@@ -11,10 +11,8 @@ on its own.
 - Resolve `KB_ROOT` and `KB_REPO` as in [the query guide](query.md), then read
   the vault's applicable agent instructions and note conventions.
 - Pass the resolved path to every `--root`.
-- `note create --body-file -` and the tools of the local MCP server that
-  `wordcell mcp --root "$KB_ROOT"` starts are available from source until the
-  next release. With the release CLI that SKILL.md installs, write the body to
-  a file and pass `--body-file <path>`.
+- `note create --body-file -` reads the body from standard input, and
+  `--body-file <path>` reads it from a file.
 - Write each body file outside the vault, for example under `${TMPDIR:-/tmp}`,
   and delete it after `note create`. A Markdown file left in the vault becomes
   a note at the next refresh.

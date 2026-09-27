@@ -28,10 +28,10 @@ assessment of those documented capabilities.
 | --- | --- | --- |
 | Plain Markdown with your editor, Git, and `rg` | Portable files and a small toolset you already know. | Consistent metadata queries, derived backlinks and typed relations, repository-scope context, bounded agent handoffs, and a publication workflow. |
 | QMD | Local search over document collections, with keyword, vector, and hybrid retrieval. | Uses QMD as an optional retrieval layer, then joins results to current authored metadata, explicit graph context, and bounded Git provenance. |
-| Basic Memory | A Markdown knowledge graph that AI assistants can read and update through MCP. | A headless CLI/SDK workflow centered on repository scopes, code-mode composition, explicit Git evidence, and static publication. `wordcell mcp` serves a vault to local MCP clients and is available from source until the next release. |
+| Basic Memory | A Markdown knowledge graph that AI assistants can read and update through MCP. | A headless CLI/SDK workflow centered on repository scopes, code-mode composition, explicit Git evidence, and static publication. `wordcell mcp` serves a vault to local MCP clients. |
 | Obsidian | An interactive editor for a local vault, with links, graph navigation, and optional publishing. | Agent-oriented operations over compatible Markdown; it can accompany your editor. Wordcell does not supply a desktop note editor. |
 | Quartz | A customizable website or digital garden built from Markdown. | Publishes selected slices directly from the same agent knowledge workflow, with paths, metadata, tags, or graph neighborhoods as selectors. |
-| Supermemory | A memory API for your own product, with per-user container tags, managed connectors, and a hosted MCP server. | Memory as Markdown notes that you edit and commit, an importer for Supermemory exports, and a local MCP server that needs no account. The importer and the MCP server are available from source until the next release. |
+| Supermemory | A memory API for your own product, with per-user container tags, managed connectors, and a hosted MCP server. | Memory as Markdown notes that you edit and commit, an importer for Supermemory exports, and a local MCP server that needs no account. |
 | Mem0 | Memories that a model extracts per user, agent, or run inside your application, on a managed platform or self-hosted. | Notes that people and agents write, with exact search, links, and Git history that need no model. |
 | Zep | A temporal context graph built from each user’s chat and business data. | Authored relations and Git history in place of facts that Zep derives from your data. |
 
@@ -135,8 +135,7 @@ Wordcell keeps one person’s or one team’s memory as Markdown files in Git,
 which you and your agent read, edit, and review like code. It does not store
 memory for the users of your product. `wordcell import supermemory` converts
 saved Supermemory exports into notes, and `wordcell mcp` serves a vault to
-local MCP clients. Both commands are available from source until the next
-release. [Migrate from Supermemory](migration-from-supermemory.md) covers the
+local MCP clients. [Migrate from Supermemory](migration-from-supermemory.md) covers the
 export, the import, and what does not transfer.
 
 Supermemory may be a better fit if you build a product that stores memory for

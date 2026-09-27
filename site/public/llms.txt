@@ -46,8 +46,7 @@ When to use this site:
   when to choose each.
 - [Migrate from Supermemory to Wordcell](https://wordcell.io/migrate/supermemory):
   The install, export, import, and verify steps from the migration guide, with
-  a prompt that connects a local agent. The importer is available from source
-  until the next release.
+  a prompt that connects a local agent.
 - [Documentation](https://wordcell.io/docs): The documentation index, grouped
   into tutorials, how-to guides, reference, and explanation, with the install
   command.
@@ -58,15 +57,13 @@ When to use this site:
 - [Use Wordcell with a coding agent](https://wordcell.io/docs/agent-workflow):
   Set up, query, maintain, and revise repository memory.
 - [Reference](https://wordcell.io/docs/reference): Exact commands, formats,
-  SDK imports, optional adapters, and the local MCP server (wordcell mcp,
-  available from source until the next release) with its tools and client
-  settings.
+  SDK imports, optional adapters, and the local MCP server (wordcell mcp)
+  with its tools and client settings.
 - [Publish](https://wordcell.io/docs/publish): Select notes and build a static
   site.
 - [Migrate from Supermemory](https://wordcell.io/docs/migration-from-supermemory):
   Export Supermemory documents and memory entries, import them as Markdown
-  notes, and see what does not transfer. The importer is available from
-  source until the next release.
+  notes, and see what does not transfer.
 - [Sync a vault with Git](https://wordcell.io/docs/sync): Keep one vault
   current on several machines with a private repository and a scheduled
   commit and push.
@@ -82,8 +79,8 @@ When to use this site:
   Markdown as the record and how it works with other Hraness tools. Atom feed:
   https://wordcell.io/blog/feed.xml
 - [Free local agent memory in Markdown files you own](https://wordcell.io/blog/free-local-agent-memory):
-  What the launch adds from source, the measured results with their limits,
-  and how to move from Supermemory.
+  What the launch adds, the measured results with their limits, and how to
+  move from Supermemory.
 - [Introducing Wordcell](https://wordcell.io/blog/introducing-wordcell): Who
   Wordcell suits, one saved rule traced to a cited search and graph answer,
   and its limits.

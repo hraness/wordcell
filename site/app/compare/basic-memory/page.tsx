@@ -56,7 +56,7 @@ const differences: readonly Difference[] = [
   {
     topic: "Agent access",
     basicMemory: <>MCP is the interface: <code>search_notes</code>, <code>read_note</code>, and <code>build_context</code> <a href={basicMemoryPages.mcpLocal}>run the same locally and on Cloud</a>.</>,
-    wordcell: <>The CLI and TypeScript SDK first. <code>wordcell mcp</code> serves a vault to local MCP clients and is available from source until the next release.</>,
+    wordcell: <>The CLI and TypeScript SDK first. <code>wordcell mcp</code> serves a vault to local MCP clients.</>,
   },
   {
     topic: "Repository context",

@@ -222,7 +222,7 @@ export const blogArticles = [
   {
     slug: "free-local-agent-memory",
     title: "Free local agent memory in Markdown files you own",
-    dek: "A source build of Wordcell serves a Markdown vault to local MCP clients and imports Supermemory exports, so agent memory stays in files you can read and commit.",
+    dek: "Wordcell serves a Markdown vault to local MCP clients and imports Supermemory exports, so agent memory stays in files you can read and commit.",
     eyebrow: "Launch",
     published: launchChecked,
     tags: ["wordcell", "agent-memory", "mcp", "supermemory", "markdown"],
@@ -243,8 +243,9 @@ export const blogArticles = [
       sources: launchSources.map(({ title, href }) => ({ title, url: href, checkedOn: launchChecked })),
       observations: [
         "Supermemory's self-hosted edition is also free and open source, so price alone does not separate it from Wordcell; the post argues from who writes the memory and where it lives.",
-        "Neither the launch commands nor the skill's session-memory workflow is in the published 0.22.5 release, so the post cannot point to an npm install or the release-pinned skill for them and sends readers to the source install and the main-branch skill instead.",
+        "When the post was first reviewed, neither the launch commands nor the skill's session-memory workflow was in the published 0.22.5 release, so the post sent readers to the source install and the main-branch skill.",
         "2026-09-26 editorial pass: retitled to name the query it answers, led with what the launch adds, stated each study's limits beside that study, and cut a closing paragraph that stated a goal rather than a fact; no figure, link, quotation, or status changed.",
+        "2026-09-26 release update: Wordcell 0.23.0 carries the launch commands and the session-memory reference, so the opening sentence, the dek, and the status paragraph drop the source-build wording and point to the release install and the release-pinned skill; no figure or quotation changed.",
       ],
       // The review's accuracy, sourcing, and style reports raised no problem that sets any score to zero, and the
       // separate verification review on 2026-09-26 scored the fixed post independently and gave these same six scores.
@@ -263,7 +264,7 @@ export const blogArticles = [
       reassessOn: "2026-11-07",
       harmIfWrong: "A reader could cite Oh's LoCoMo figures as Wordcell's results, or switch from Supermemory expecting hosted extraction and connectors.",
       refreshTriggers: [
-        "A release that includes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",
+        "A release that changes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",
         "A change to a vendored evidence file under docs/ or to the evidence modules under site/wordcell/",
         "A matched run of a Wordcell vault against Supermemory",
         "A change to a cited Supermemory documentation page",

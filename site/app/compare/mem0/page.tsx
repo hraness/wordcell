@@ -66,7 +66,7 @@ const differences: readonly Difference[] = [
   {
     topic: "Agent access",
     mem0: <>Python and TypeScript SDKs, a REST API, and a <a href={mem0Pages.mcp}>hosted MCP server</a> at <code>mcp.mem0.ai</code> behind OAuth or an API key.</>,
-    wordcell: <><code>wordcell mcp</code> serves a vault to local MCP clients over standard input and output. It is available from source until the next release.</>,
+    wordcell: <><code>wordcell mcp</code> serves a vault to local MCP clients over standard input and output.</>,
   },
 ];
 

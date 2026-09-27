@@ -18,7 +18,7 @@ import CompareMem0 from "../app/compare/mem0/page";
 import CompareSupermemory from "../app/compare/supermemory/page";
 import MigrateSupermemory from "../app/migrate/supermemory/page";
 import { locomoArms } from "../wordcell/oh-evidence";
-import { SETUP_PROMPT } from "../wordcell/setup-prompt";
+import { AGENT_MEMORY_RELEASE, SETUP_PROMPT } from "../wordcell/setup-prompt";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactStudy } from "../wordcell/benchmark-evidence";
 
@@ -74,7 +74,9 @@ test("the homepage connects an agent, links the launch pages, and keeps Oh LoCoM
   expect(agentMemory).toBeGreaterThan(install);
   expect(model).toBeGreaterThan(agentMemory);
   const section = html.slice(agentMemory, model);
-  expect(section).toContain("available from source until the next release");
+  expect(section).toContain(`need Wordcell ${AGENT_MEMORY_RELEASE} or later.`);
+  if (publishedRelease !== null) expect(section).toContain(`The prompt below installs Wordcell v${publishedRelease.version}.`);
+  expect(section).not.toMatch(/from source|until the next release|checkout/u);
   expect(section).toContain("<code>wordcell mcp</code>");
   expect(section).toContain("<code>wordcell import supermemory</code>");
   expect(section).toContain("Wordcell’s local MCP server serves a vault");

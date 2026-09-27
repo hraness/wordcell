@@ -46,7 +46,9 @@ import { SetupLinks } from "../wordcell/setup-links";
 import { siteDescription } from "../app/site-description";
 import { launchRoutes } from "../wordcell/launch-routes";
 import { publishedRelease } from "../app/publication";
+import { publishedReadme } from "../scripts/published-readme";
 import {
+  AGENT_MEMORY_RELEASE,
   CONNECT_CLIENT_URL,
   MAX_SETUP_URL,
   SETUP_COMMANDS,
@@ -56,6 +58,21 @@ import {
 } from "../wordcell/setup-prompt";
 
 const repository = join(import.meta.dir, "..", "..");
+
+/** docs/getting-started.md as /docs/getting-started renders it: install commands bound to the admitted release. */
+async function publishedGettingStarted(): Promise<string> {
+  const source = await readFile(join(repository, "docs", "getting-started.md"), "utf8");
+  const manifest = JSON.parse(await readFile(join(repository, "package.json"), "utf8")) as { version: string };
+  return publishedReadme(source, manifest.version, publishedRelease?.version ?? null);
+}
+
+/** The CHANGELOG section that first lists `wordcell mcp`. */
+async function firstMcpRelease(): Promise<string | undefined> {
+  const changelog = await readFile(join(repository, "CHANGELOG.md"), "utf8");
+  const mcpEntry = changelog.indexOf("`wordcell mcp");
+  const headings = [...changelog.slice(0, mcpEntry).matchAll(/^## (\S+)$/gmu)];
+  return headings.at(-1)?.[1];
+}
 const vendored = join(repository, "docs", "evaluations", "oh");
 
 function record(value: unknown, label: string): Readonly<Record<string, unknown>> {
@@ -317,11 +334,21 @@ describe("agent setup prompt", () => {
     expect(first?.kind === "link" ? new URL(first.href).searchParams.get("q") : null).toBe("a & b + c #d");
   });
 
-  test("the prompt labels the from-source install and matches the documented commands", async () => {
+  test("the prompt installs the admitted release and matches the documented commands", async () => {
     const migration = await readFile(join(repository, "docs", "migration-from-supermemory.md"), "utf8");
     const reference = await readFile(join(repository, "docs", "reference.md"), "utf8");
-    expect(SETUP_PROMPT).toContain("`wordcell mcp` is available from source until the next release");
-    expect(migration).toContain(SETUP_COMMANDS.install.join("\n"));
+    const readme = await readFile(join(repository, "README.md"), "utf8");
+    const manifest = JSON.parse(await readFile(join(repository, "package.json"), "utf8")) as { version: string };
+    if (publishedRelease === null) throw new Error("The site has no admitted release.");
+    // The install block is Get started's, and the skill command is the README's, each bound to the admitted release.
+    expect(await publishedGettingStarted()).toContain(`\`\`\`sh\n${SETUP_COMMANDS.install.join("\n")}\n\`\`\``);
+    expect(publishedReadme(readme, manifest.version, publishedRelease.version)).toContain(SETUP_COMMANDS.skill);
+    expect(SETUP_COMMANDS.install[0]).toContain(`/v${publishedRelease.version}/hraness-wordcell-${publishedRelease.version}.tgz`);
+    expect(SETUP_COMMANDS.skill).toContain(`hraness/wordcell#v${publishedRelease.version} `);
+    expect(migration).toContain("(getting-started.md#install-the-cli)");
+    expect(migration.replace(/\s+/gu, " ")).toContain(`need Wordcell ${AGENT_MEMORY_RELEASE} or later`);
+    expect(SETUP_PROMPT).toContain(`\`wordcell --version\` already shows ${AGENT_MEMORY_RELEASE} or later, the first release with \`wordcell mcp\``);
+    expect(SETUP_PROMPT).not.toMatch(/from source|checkout|git clone|bun link/u);
     for (const command of SETUP_COMMANDS.install) expect(SETUP_PROMPT).toContain(`   ${command}\n`);
     expect(reference).toContain(SETUP_COMMANDS.codex);
     expect(reference).toContain(SETUP_COMMANDS.claudeCode.replace("--scope user", "--scope project"));
@@ -352,17 +379,14 @@ describe("agent setup prompt", () => {
     expect(markup).not.toContain("Copied the setup prompt");
   });
 
-  test("the register-it-yourself sentence names the source install while the published release lacks wordcell mcp", async () => {
+  test("the release the site names for wordcell mcp is the CHANGELOG section that first lists it", async () => {
+    expect(await firstMcpRelease()).toBe(AGENT_MEMORY_RELEASE);
     const changelog = await readFile(join(repository, "CHANGELOG.md"), "utf8");
-    const mcpEntry = changelog.indexOf("`wordcell mcp");
-    const publishedSection = publishedRelease === null ? -1 : changelog.indexOf(`\n## ${publishedRelease.version}\n`);
-    expect(mcpEntry).toBeGreaterThan(-1);
-    const releaseLacksMcp = publishedSection === -1 || mcpEntry < publishedSection;
+    const section = changelog.slice(changelog.indexOf(`\n## ${AGENT_MEMORY_RELEASE}\n`), changelog.indexOf("\n## ", changelog.indexOf(`\n## ${AGENT_MEMORY_RELEASE}\n`) + 1));
+    for (const entry of ["`wordcell import supermemory", "--body-file -", "session-memory reference"]) expect(section, entry).toContain(entry);
     const markup = pageText(renderToStaticMarkup(<SetupLinks />));
-    if (releaseLacksMcp) {
-      expect(markup).toContain("With Wordcell installed from source, you can register the server yourself.");
-      expect(markup).not.toContain("already installed");
-    }
+    expect(markup).toContain("With Wordcell installed, you can register the server yourself.");
+    expect(markup).not.toMatch(/from source|checkout/u);
   });
 });
 
@@ -517,7 +541,8 @@ describe("/compare/supermemory", () => {
     expect(text).toContain(`Monthly plans, checked ${checkedOn}`);
     expect(text).toContain(`Usage rates on every plan, checked ${checkedOn}`);
     expect(markup).toContain(`href="${supermemoryPricing.href}"`);
-    expect(text).toContain("available from source until the next release");
+    expect(text).toContain("wordcell mcp serves a vault to local MCP clients.");
+    expect(text).not.toMatch(/from source|until the next release/u);
     expect(text).toContain(`${pilotInterval.pairedQuestions}-question pilot`);
     expect(text).toContain("It is Oh’s result, not Wordcell’s");
     expect(text).toContain("Wordcell has published no head-to-head comparison with Supermemory");
@@ -559,7 +584,8 @@ describe("/compare/basic-memory", () => {
     for (const literal of ["write_note", "edit_note", "search_notes", "read_note", "build_context", "[category]", "relation [[Note]]", "[[note-id]]", "relations:", "wordcell check", "wordcell mcp", "repository_scopes", "wordcell context"]) {
       expect(markup).toContain(`<code>${literal}</code>`);
     }
-    expect(text).toContain("available from source until the next release");
+    expect(text).toContain("wordcell mcp serves a vault to local MCP clients.");
+    expect(text).not.toMatch(/from source|until the next release/u);
     expect(text).toContain("AGPL-3.0");
     expect(text).toContain("requires a subscription");
     expect(text).toContain("Wordcell has published no head-to-head comparison with Basic Memory");
@@ -601,7 +627,8 @@ describe("/compare/mem0", () => {
     }
     expect(text).toContain("Platform-only");
     expect(text).toContain("Apache-2.0");
-    expect(text).toContain("available from source until the next release");
+    expect(text).toContain("wordcell mcp serves a vault to local MCP clients over standard input and output.");
+    expect(text).not.toMatch(/from source|until the next release/u);
     expect(text).toContain("Wordcell has published no head-to-head comparison with Mem0");
     expect(markup).toContain('href="https://mem0.ai/research"');
     expect(markup).toContain('href="/benchmarks#comparisons"');
@@ -622,13 +649,19 @@ describe("/compare/mem0", () => {
 });
 
 describe("/migrate/supermemory", () => {
-  test("every step command is one the migration guide documents", async () => {
+  test("every step command is one the migration guide or Get started documents", async () => {
     const guide = await readFile(join(repository, "docs", "migration-from-supermemory.md"), "utf8");
+    const gettingStarted = await publishedGettingStarted();
     expect(migrationSteps.map((step) => step.id)).toEqual(["install", "export", "import", "verify"]);
     for (const step of migrationSteps) {
       expect(step.commands.length).toBeGreaterThan(0);
-      for (const command of step.commands) expect(guide, command).toContain(command);
+      // The guide sends readers to Get started for the install, which the site renders with the admitted release.
+      const source = step.id === "install" ? gettingStarted : guide;
+      for (const command of step.commands) expect(source, command).toContain(command);
     }
+    const [install] = migrationSteps;
+    expect(install.href).toBe("/docs/getting-started#install-the-cli");
+    expect(guide).toContain("(getting-started.md#install-the-cli)");
     const guideAnchors = await docAnchors("migration-from-supermemory");
     for (const anchor of ["map-supermemory-concepts-to-wordcell", "connect-your-agent", "replace-connectors", "what-does-not-transfer"]) {
       expect(guideAnchors.has(anchor), anchor).toBe(true);
@@ -637,7 +670,7 @@ describe("/migrate/supermemory", () => {
     expect(guide.replace(/\s+/g, " ")).toContain("With the Python script, name `supermemory-export.json` in place of the two patterns.");
   });
 
-  test("renders the guide link first, the concepts, the steps, the setup links, and the from-source label", async () => {
+  test("renders the guide link first, the concepts, the steps, the setup links, and the release the commands need", async () => {
     const markup = renderToStaticMarkup(<MigrateSupermemory />);
     const text = pageText(markup);
     expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
@@ -659,17 +692,19 @@ describe("/migrate/supermemory", () => {
       expect(markup).toContain(`href="${step.href}"`);
     });
     const exportStep = markup.slice(markup.indexOf('id="export"'), markup.indexOf('id="import"'));
-    expect(exportStep.indexOf("Leave the Wordcell checkout")).toBeGreaterThan(-1);
-    expect(exportStep.indexOf("Leave the Wordcell checkout")).toBeLessThan(exportStep.indexOf("sh export-supermemory.sh"));
+    expect(exportStep).toContain("sh export-supermemory.sh");
+    expect(markup).not.toMatch(/checkout|git clone|bun link/u);
+    expect(text).toContain("Work in a directory outside any vault, so that the export files are never committed.");
     expect(text).toContain("The script saves your documents, and the memory entries for each container tag, as JSON pages.");
     expect(text).toContain("With the Python script, name supermemory-export.json in place of the two patterns.");
     expect(text).toContain("Install, export, import, and verify");
     expect(text).not.toMatch(/\bcheck the result\b/u);
-    expect(text.split("available from source until the next release").length - 1).toBe(2);
+    expect(text).toContain(`Import from Supermemory and the local MCP server need Wordcell ${AGENT_MEMORY_RELEASE} or later.`);
+    expect(text).toContain(`The importer needs Wordcell ${AGENT_MEMORY_RELEASE} or later.`);
     expect(text).toContain(`Supermemory’s features were checked on ${longDate(supermemoryFeaturesCheckedOn)}.`);
     for (const href of Object.values(supermemoryPages)) expect(markup).toContain(`href="${href}"`);
     expect(markup).not.toMatch(/<p[^>]*>wordcell (mcp|import)/u);
-    expect(text).toContain("available from source until the next release");
+    expect(text).not.toMatch(/from source|until the next release/u);
     expect(text).toContain(SETUP_PROMPT.replace(/\s+/g, " "));
     expect(text).toContain("Copy prompt");
     expect(markup).toContain('href="/compare/supermemory"');

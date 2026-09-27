@@ -1,8 +1,8 @@
-A source build of Wordcell now serves a Markdown vault to local Model Context Protocol (MCP) clients, imports Supermemory exports, and gives agents a workflow for saving what a session decided as a note. The memory stays in files you can read, diff, and commit, with no hosted service, no account, and no usage bill.
+Wordcell now serves a Markdown vault to local Model Context Protocol (MCP) clients, imports Supermemory exports, and gives agents a workflow for saving what a session decided as a note. The memory stays in files you can read, diff, and commit, with no hosted service, no account, and no usage bill.
 
 On Monday a coding agent works out why the release script pins an older compiler. On Tuesday a new session opens in the same repository and starts without that reason, unless someone wrote it where the agent looks. Wordcell keeps that kind of record as Markdown notes in a folder you control, and this launch lets agents read and write those notes through their own tools.
 
-Latest release: v{{release.version}}. The MCP server, the Supermemory importer, and the skill’s session-memory workflow are available from source until the next release. The [migration page](/migrate/supermemory#steps) starts with the source install, and `bunx skills add hraness/wordcell --skill wordcell` adds the skill from the main branch.
+Latest release: v{{release.version}}. The [migration page](/migrate/supermemory#steps) starts with the release install, and `bunx skills add hraness/wordcell#v{{release.version}} --skill wordcell` adds the skill from that release.
 
 ## An MCP server, a Supermemory importer, and a session-memory workflow
 

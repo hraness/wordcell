@@ -76,7 +76,7 @@ const differences: readonly Difference[] = [
   {
     topic: "Agent access",
     supermemory: <>A <a href="https://supermemory.ai/docs/supermemory-mcp/mcp">hosted MCP server</a>, after an OAuth sign-in.</>,
-    wordcell: <><code>wordcell mcp</code> serves a vault to local MCP clients. It is available from source until the next release.</>,
+    wordcell: <><code>wordcell mcp</code> serves a vault to local MCP clients.</>,
   },
 ];
 

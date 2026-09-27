@@ -92,7 +92,7 @@ A conversation can settle a decision that no note records. On request, or at a s
 
 On recall and resume requests, the skill [reads the profile and the latest session notes first](../skills/wordcell/references/query.md#read-the-profile-first). `wordcell context` does not list session or profile notes, so list recent sessions directly with `wordcell list --root kb --where type=session --sort date --order desc --limit 5`.
 
-An MCP client connected through [`wordcell mcp`](reference.md#local-mcp-server) follows the same steps with the `search`, `list_notes`, `get_note`, `create_note`, `update_note_body`, and `add_relation` tools. `create_note` writes only the title, type, tags, and a generated `document_id` in the frontmatter and creates no directories, so a session note written only through MCP has no `date` or `repository_scopes` until someone edits its frontmatter. The MCP server and the session-memory workflow are available from source until the next release.
+An MCP client connected through [`wordcell mcp`](reference.md#local-mcp-server) follows the same steps with the `search`, `list_notes`, `get_note`, `create_note`, `update_note_body`, and `add_relation` tools. `create_note` writes only the title, type, tags, and a generated `document_id` in the frontmatter and creates no directories, so a session note written only through MCP has no `date` or `repository_scopes` until someone edits its frontmatter.
 
 ### Search and connect with bounded signals
 

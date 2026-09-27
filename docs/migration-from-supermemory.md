@@ -7,19 +7,9 @@ Supermemory API, import it with `wordcell import supermemory`, check the
 result, and connect your agent. Every external page linked here was checked on
 September 26, 2026.
 
-`wordcell import supermemory` and `wordcell mcp` are available from source
-until the next release. Install Wordcell from a checkout:
-
-```sh
-git clone https://github.com/hraness/wordcell.git
-cd wordcell
-bun install --frozen-lockfile
-bun link
-```
-
-Leave the Wordcell checkout before you continue, for example with `cd ..`, so
-that the vault and the export files are created outside it. The
-[installation reference](reference.md#installation-reference) lists the
+`wordcell import supermemory` and `wordcell mcp` need Wordcell 0.23.0 or
+later. Install it as [Get started](getting-started.md#install-the-cli) shows;
+the [installation reference](reference.md#installation-reference) lists the
 requirements.
 
 ## Who should switch and who should stay
@@ -363,9 +353,8 @@ Google Takeout downloads your mail from Gmail
 ([How to download your Google data](https://support.google.com/accounts/answer/3024190)),
 but Wordcell has no mail importer. Save the messages worth keeping as notes
 instead: ask your agent to write a note from a message with the `create_note`
-tool, or pipe the text into `wordcell note create`. Reading the body from
-standard input with `--body-file -` is available from source until the next
-release. On macOS, pipe the text you copied:
+tool, or pipe the text into `wordcell note create` with `--body-file -`. On
+macOS, pipe the text you copied:
 
 ```sh
 mkdir -p kb/notes/mail
@@ -392,9 +381,6 @@ mkdir -p kb/notes/github
 gh issue view 42 --repo owner/repo --json body --jq .body |
   wordcell note create notes/github/owner-repo-42 --title "owner/repo#42" --body-file - --root kb
 ```
-
-Reading the body from standard input with `--body-file -` is available from
-source until the next release.
 
 ### Web pages
 

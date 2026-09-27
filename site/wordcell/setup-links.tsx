@@ -1,9 +1,8 @@
 import { CopyPromptButton } from "./copy-prompt-button";
 import { SETUP_PROMPT, SETUP_VAULT_PATH, setupTargets } from "./setup-prompt";
 
-/* One prompt for the copy button and every assistant link. Pages that use
- * this component state once, near their top, that the local MCP server is
- * available from source until the next release. */
+/* One prompt for the copy button and every assistant link. The prompt
+ * installs the release this site has admitted. */
 export function SetupLinks() {
   const targets = setupTargets(SETUP_PROMPT);
   return (
@@ -22,7 +21,7 @@ export function SetupLinks() {
         ChatGPT and Grok cannot run commands on your computer. They give you each command to run, and the vault then serves a local agent such as Claude Code, Codex, or Cursor.
       </p>
       <p className="install-note">
-        In Claude Code or Codex, paste the prompt. With Wordcell installed from source, you can register the server yourself. Replace <code>{SETUP_VAULT_PATH}</code> with your vault’s absolute path.
+        In Claude Code or Codex, paste the prompt. With Wordcell installed, you can register the server yourself. Replace <code>{SETUP_VAULT_PATH}</code> with your vault’s absolute path.
       </p>
       {targets.map((target) => target.kind === "command" ? (
         <figure className="wordcell-step" key={target.id}>
