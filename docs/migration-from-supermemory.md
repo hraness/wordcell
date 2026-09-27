@@ -17,7 +17,9 @@ bun install --frozen-lockfile
 bun link
 ```
 
-The [installation reference](reference.md#installation-reference) lists the
+Leave the Wordcell checkout before you continue, for example with `cd ..`, so
+that the vault and the export files are created outside it. The
+[installation reference](reference.md#installation-reference) lists the
 requirements.
 
 ## Who should switch and who should stay

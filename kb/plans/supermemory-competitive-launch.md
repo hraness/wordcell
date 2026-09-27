@@ -3,7 +3,7 @@ title: Supermemory-competitive launch
 description: Ship the feature, documentation, and site surface that makes Wordcell a drop-in supermemory replacement for agent memory users — local MCP, supermemory import, migration and sync docs, session-memory and profile conventions, cited benchmark evidence, comparison pages, a launch post, and setup deep links.
 type: plan
 area: launch
-status: in-progress
+status: completed
 tags:
   - launch
   - competitive
@@ -18,6 +18,8 @@ repository_scopes:
   - site
   - README.md
   - CHANGELOG.md
+  - scripts
+  - package.json
 ---
 
 # Supermemory-competitive launch
@@ -373,7 +375,7 @@ any change to canonical product messaging.
 
 ## Phase 1: Local MCP server
 
-- **Status:** Not started
+- **Status:** Completed in [#132](https://github.com/hraness/wordcell/pull/132) (`820b122`).
 - **Depends on:** none
 - **Objective:** Any MCP-compatible agent host can query and write a local
   Wordcell vault over stdio with `wordcell mcp --root <vault>`, giving
@@ -488,7 +490,7 @@ any change to canonical product messaging.
 
 ## Phase 2: Supermemory import + stdin note body
 
-- **Status:** Not started
+- **Status:** Completed in [#133](https://github.com/hraness/wordcell/pull/133) (`6658033`).
 - **Depends on:** Phase 1
 - **Objective:** A supermemory API export becomes inspectable Markdown notes
   in one command, and agents can pipe a transcript straight into
@@ -574,7 +576,7 @@ any change to canonical product messaging.
 
 ## Phase 3: Migration, sync, and comparison docs
 
-- **Status:** Not started
+- **Status:** Completed in [#135](https://github.com/hraness/wordcell/pull/135) (`f007a26`).
 - **Depends on:** Phase 2 (documents the shipped import flags)
 - **Objective:** A supermemory user can reach a working Wordcell vault in
   one sitting using only public docs, and knows exactly what does and does
@@ -640,7 +642,7 @@ any change to canonical product messaging.
 
 ## Phase 4: Session-memory and profile skill workflow
 
-- **Status:** Not started
+- **Status:** Completed in [#134](https://github.com/hraness/wordcell/pull/134) (`413186c`).
 - **Depends on:** Phase 2 (`--body-file -` exists for transcript capture)
 - **Objective:** An agent following the public skill can save durable memory
   from a conversation at session end, or on request, and keep a living
@@ -686,7 +688,7 @@ any change to canonical product messaging.
 
 ## Phase 5: Site — benchmarks, compare, migrate, home, deep links
 
-- **Status:** Not started
+- **Status:** Completed in [#137](https://github.com/hraness/wordcell/pull/137) (`d87d4ec`).
 - **Depends on:** Phase 3 (migration and comparison content), Phase 4 (the
   setup prompt references the session-memory workflow)
 - **Objective:** wordcell.io presents cited evidence with its limits, a fair
@@ -793,7 +795,7 @@ any change to canonical product messaging.
 
 ## Phase 6: Launch post on the blog
 
-- **Status:** Not started
+- **Status:** Completed in [#149](https://github.com/hraness/wordcell/pull/149) (`a151d6a`).
 - **Depends on:** Phase 5 (evidence modules and pages exist)
 - **Objective:** The existing Wordcell blog gains a launch post that tells
   what shipped, the evidence with its limits, why authored local memory is
@@ -842,7 +844,8 @@ any change to canonical product messaging.
 
 ## Phase 7: README, changelog, docs sweep, plan close-out
 
-- **Status:** Not started
+- **Status:** Completed in the pull request titled
+  `launch: README, changelog, docs sweep, plan close-out`.
 - **Depends on:** Phases 3, 4, 5, 6
 - **Objective:** The README, changelog, and docs reflect the shipped launch
   surface so `main` is ready for the owner's release decision, and this
@@ -911,3 +914,200 @@ do not guess them.
   and 4 edit disjoint files; the MCP server gains `update_note_body` on
   top of the SDK's revision-checked `updateNoteBody`. Recorded the three
   options the owner approved and separated them from convention defaults.
+- 2026-09-26 — Phase 1 merged in #132 (`820b122`).
+  `wordcell mcp --root <vault>` serves search, list_notes, get_note,
+  backlinks, links, context (with `--repo`), create_note, update_note_body,
+  and add_relation over stdio, with JSON-RPC written by hand like the hosted
+  route; `--read-only` removes the write tools, and standard output carries
+  only protocol messages. Instead of a fresh read session per call, the
+  server caches one session keyed on a fingerprint of the vault's Markdown
+  files and drops it after every write: a fresh open took 1.9 to 3.3 s at
+  4,000 notes, past the plan's 500 ms trigger. It answers `server/discover`
+  with -32601; the hosted `tools.list` and `tools.call` aliases and the
+  optional `check` tool were not built. Review round 1: 8 findings fixed and
+  1 kept as a disclosure (gate files changed outside the listed Scope: the
+  kb-skill-contract list and the package budget); list_notes still has no
+  cursor, and the greedy fit reaches every item that fits. Gate 1,740/0.
+  Deviations: package budget raised (packed maximum 1.30 to 1.35 MB,
+  unpacked 5.8 to 5.9 MB) and `mcp` added to
+  scripts/kb-skill-contract.test.ts.
+- 2026-09-26 — Phase 2 merged in #133 (`6658033`).
+  `wordcell import supermemory <export.json>...` reads saved API exports
+  only (no network), writes `imported_from: supermemory`, the web URL in
+  `source`, and an `import_digest` over the title, owned fields, and text,
+  so a rerun creates, updates, skips, or reports a conflict. Planning checks
+  the 16 MiB note limit and the 10,000-note and 256 MiB vault caps before
+  writing, dry runs included. Supersedes relations link memory versions
+  newest to oldest, only for notes the run creates or updates, and omit
+  edges that would close a cycle. `note create --body-file -` reads standard
+  input and rejects blank input. Review round 1: 22 findings fixed. Gate
+  1,862/0. Deviations: an internal authoring `fields` parameter and
+  src/authoring-import.ts (classified in scripts/check-effect-policy.ts),
+  `isMetadataNumber` exported from src/graph.ts and `savedSourceProblem`
+  from src/clip/url-metadata.ts, `--prefix` refuses `articles/`, unpacked
+  budget 5.9 to 6.05 MB, and `import supermemory` in the kb-skill-contract
+  list. Fixtures follow the documented schemas because no API key was
+  available.
+- 2026-09-26 — Phase 4 merged in #134 (`413186c`), before Phase 3.
+  skills/wordcell/references/session-memory.md: list-first session notes
+  with a taken-ID rule, exact `repository_scopes` (at most 16 paths),
+  authored relations to the notes a session changed, a `type: profile` note
+  with Stable and Recent sections, and an MCP-only path flagged as undated
+  and unscoped. query.md reads the profile and recent sessions first. Review
+  round 1: 17 findings fixed. Gate 1,862/0; the dry-run transcript is in the
+  [#134](https://github.com/hraness/wordcell/pull/134) description.
+  Deviations: the SKILL.md description gains one clause,
+  skills/wordcell/AGENTS.md one contents bullet, and the kb-skill-contract
+  list the new reference; no session template.
+- 2026-09-26 — Phase 3 merged in #135 (`f007a26`).
+  docs/migration-from-supermemory.md (export with curl and jq or Python,
+  import, connector replacements, and who should stay), docs/sync.md
+  (private repository, scheduled commit and push, conflict handling), and
+  Supermemory, Mem0, and Zep rows and sections in docs/comparisons.md,
+  retitled "Choose a Markdown knowledge or agent memory tool". Review round
+  1: 22 findings (18 distinct) fixed. Site gate green; root gate 1,862/0 on
+  a rerun after one timing failure at load average 25. Recorded:
+  Supermemory's API reference marks `containerTags` required while its
+  container-tags page says /v4 takes only `containerTag`; the guide says to
+  swap on a 400.
+- 2026-09-26 — Phase 5 merged in #137 (`d87d4ec`). /benchmarks,
+  /compare/supermemory, /migrate/supermemory, the home agent-memory section,
+  and setup links with a copy-prompt button. The published-claims table on
+  /benchmarks carries Mem0's, Zep's, and Supermemory's self-published
+  figures, checked on 2026-09-26, as a sourced table and never as a chart;
+  per the #137 claims check, Oh's unmatched 89.8% figure appears nowhere.
+  Review round 1: 26 findings fixed. Site gate 130/0 plus runtime 3/0; root
+  gate 1,862/0 on run 4 (load timeouts, then a Bun cache error); rendered
+  pass 16/16. Deviations: site-wide `font-variant-ligatures: none` on code,
+  tables that stack below 40rem, the Cursor prompt link instead of the MCP
+  install link, no Claude.ai web link, an unpinned skill and a source
+  install in SETUP_PROMPT, and a launch-routes clause in
+  site/scripts/sync-blog.ts.
+- 2026-09-26 — Phase 6 merged in #149 (`a151d6a`). The post "Agent memory
+  should be free, local, and yours" (/blog/free-local-agent-memory) shipped
+  indexable after an AI editorial review (Claude Opus 5.5, 2026-09-26;
+  reassess on 2026-11-07), with sitemap and llms.txt entries. `sync:blog`
+  now fails on a percentage or decimal that no binder produced. Review round
+  1: 14 findings fixed. On the rebased tree (`fb9986e` plus the change):
+  blog 21/0, site 145/0 plus runtime 3/0, root 1,928/0. The lens reports
+  gave no numeric scores, so the drafted scores stand.
+- 2026-09-26 — Pull requests outside the plan changed launch surfaces during
+  execution: #140 (`12cb285`) turned the `## Unreleased` entries into a lead
+  sentence and bullets, made the release body the version's changelog
+  summary and bullets, and made release preparation fail when that section
+  is missing, empty, repeated, or says Unreleased, rules the consolidated
+  section must pass; #143 (`f963134`) and #144 (`62e1c8a`) added five
+  `## Unreleased` bullets (help, `--version`, cookie notices, first-run next
+  steps, one-line errors), and #143 raised the package budget to 1.45 MB
+  packed and 6.3 MB unpacked; #147 (`08d1ece`) added /compare/basic-memory
+  and /compare/mem0.
+- 2026-09-26 — Phase 7 close-out. README.md gains
+  `## Use a vault as agent memory` (the MCP server, the session-memory
+  skill, moving from Supermemory, and sync), a /benchmarks paragraph in
+  Evidence with no figures, and a Local MCP server row in Documentation; the
+  landing block is unchanged. docs/agent-memory.md gains
+  `### Session memory and profiles`. docs/reference.md now says
+  `note create` needs an existing parent directory, `wordcell context` does
+  not list session or profile notes, and the skill router covers session
+  notes. Outside the listed Scope and disclosed: the Basic Memory row in
+  docs/comparisons.md names `wordcell mcp` (Phase 3 downstream), and
+  docs/migration-from-supermemory.md says to leave the checkout before
+  `wordcell init` (the gap Phase 5 fixed on the site only). `## Unreleased`
+  is one lead paragraph and 12 bullets that pass `changelogSection`. The
+  README command examples ran against `bun src/cli.ts` in a scratch vault:
+  37 pass, 0 fail; the archive and npm install examples were checked by
+  substitute (URL status, `npm view`), and the skill-installer and
+  hybrid-search examples were not run. Review round 1: 16 findings (15
+  distinct) fixed. The four changelog doc links now use wordcell.io routes,
+  so the release body keeps working links; the README says how to install
+  from source and labels the Local MCP server row; the owner's label search
+  tolerates wrapped lines; and log entries, repository scopes, and Durable
+  memory owners were corrected. Gates after review: `bun run build` left
+  `dist/` unchanged; `bun run check` passed 1,928/0 on the second run, after
+  the first timed out one src/vault-complete.test.ts test under machine load
+  (the file passes alone); `cd site && bun run check` passed 145/0 plus
+  runtime 3/0; and the kb percolate, refresh, and check commands passed.
+
+## Result
+
+Shipped in seven pull requests:
+[#132](https://github.com/hraness/wordcell/pull/132) (`820b122`) the local
+MCP server; [#133](https://github.com/hraness/wordcell/pull/133) (`6658033`)
+the Supermemory importer and `note create --body-file -`;
+[#135](https://github.com/hraness/wordcell/pull/135) (`f007a26`) the
+migration, sync, and comparison docs;
+[#134](https://github.com/hraness/wordcell/pull/134) (`413186c`) the
+session-memory skill reference;
+[#137](https://github.com/hraness/wordcell/pull/137) (`d87d4ec`)
+/benchmarks, /compare/supermemory, /migrate/supermemory, the home
+agent-memory section, and setup links;
+[#149](https://github.com/hraness/wordcell/pull/149) (`a151d6a`) the launch
+post; and the Phase 7 pull request (README section, docs sweep, consolidated
+`## Unreleased`, and this record). The CLI and skill changes are available
+from source until the owner releases them. The phase-final review of
+`origin/main` follows this merge, per the Review lane, and any fixes it
+ships are recorded here.
+
+Every figure on the launch surfaces traces to a vendored artifact or to a
+vendor page with a checked-on date, and Oh's results are labeled as Oh's,
+not Wordcell's. The Wordcell-native matched benchmark stayed out of scope by
+owner decision.
+
+Delivery findings: three package budget raises, each disclosed in its pull
+request (the later #143 raise left headroom for README text); README and
+docs edits regenerate site/app/readme.generated.ts and
+site/app/docs/docs.generated.ts, so conflicts there are regenerated with
+`cd site && bun run check`, never merged by hand; several root tests time
+out at 5 s under heavy machine load and pass alone or with a longer timeout;
+and a full disk once failed the package smoke with ENOSPC. These stay here
+as plan history, because they are delivery observations, not operating
+rules. Review finding 9 records the regeneration rule; the CI diff check
+(.github/workflows/ci.yml:79) covers site/app/readme.generated.ts but not
+site/app/docs/docs.generated.ts.
+
+Deviations that later work must know are in the Implementation log:
+command and file names added to scripts/kb-skill-contract.test.ts (Phases
+1, 2, and 4); an internal authoring `fields` parameter and
+src/authoring-import.ts, classified in scripts/check-effect-policy.ts
+(Phase 2); `font-variant-ligatures: none` on code across the site (Phase
+5); and a launch-routes clause in site/scripts/sync-blog.ts (Phase 5).
+
+## Durable memory
+
+Each reusable conclusion has a maintained owner: the MCP contract in
+docs/reference.md#local-mcp-server, pinned by src/mcp-server.test.ts and
+src/mcp-tools.test.ts; the importer in
+docs/reference.md#import-from-supermemory; session and profile conventions
+in skills/wordcell/references/session-memory.md, with the rationale in
+docs/agent-memory.md#session-memory-and-profiles; migration in
+docs/migration-from-supermemory.md; sync in docs/sync.md; comparisons in
+docs/comparisons.md; evidence on /benchmarks in
+site/wordcell/benchmark-evidence.ts and site/wordcell/handoff-evidence.ts
+(Wordcell's own studies, read from docs/evaluations/ and
+docs/product-evidence.json) and site/wordcell/oh-evidence.ts (Oh's results);
+the blog figure rule in `assertBoundFigures` (site/scripts/sync-blog.ts),
+which fails `sync:blog` when a post shows a percentage or decimal the
+evidence binder did not produce, pinned by site/tests/blog.test.tsx; general
+claim support in STYLE.md; and the bans on "SOTA" and "state of the art" in
+site/tests/launch-pages.test.tsx, site/tests/home.test.tsx, and
+site/tests/blog.test.tsx, the last of which also bans CLONEMEM. README.md
+and docs/ have no automated claims guard. No new kb note is needed because
+each item already has an owner, and the from-source labels end at the next
+release (follow-ups below).
+
+Release follow-ups for the owner: remove every "available from source until
+the next release" label and the source-install steps beside some of them,
+including labels that wrap across lines, found with
+`rg -n -i -U 'available\s+from\s+source' README.md docs skills site`, update
+the site tests that pin them (site/tests/blog.test.tsx, home.test.tsx, and
+launch-pages.test.tsx), and regenerate the site modules with
+`cd site && bun run check`; pin the skill in SETUP_PROMPT
+(site/wordcell/setup-prompt.ts) to `#v<release>` and switch its install step
+to the release archive; update the SKILL.md install pin and the
+session-memory reference's fallback for the pinned 0.22.5 CLI; and write the
+version heading over `## Unreleased`. Re-check the dated competitor
+constants on any later edit:
+`rg -n -i 'checked[ -]?on|checked 20' site/wordcell` finds all six modules
+(supermemory-pricing.ts, published-claims.ts, mem0-sources.ts,
+basic-memory-sources.ts, migration-steps.tsx, and the link targets in
+setup-prompt.ts).

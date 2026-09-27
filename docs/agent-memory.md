@@ -86,6 +86,14 @@ The resulting bundle is evidence, not final interpretation. A maintained note ca
 
 The `wordcell` Agent Skill routes vault planning requests to a focused durable-plan workflow. It creates a normal Markdown file under `kb/plans/` with an outcome, status, area, repository scopes, assumptions, dependencies, decisions, and verification method. The file grows during execution as agents record deviations, review findings, and reproducible evidence. Closeout adds a compact result and durable-memory disposition: each reusable conclusion links to the maintained note, guide, code contract, or runbook that now owns it, or says that no promotion was needed. Completed plans remain in Git as the history of the work. When a finding becomes a rule whose omission would make a future edit wrong, move that rule into the applicable `AGENTS.md` and retain the plan as its rationale.
 
+### Session memory and profiles
+
+A conversation can settle a decision that no note records. On request, or at a session close that you or the vault instructions ask for, the [session-memory reference](../skills/wordcell/references/session-memory.md) of the `wordcell` Agent Skill has the agent save what the session settled as a dated `type: session` note whose `repository_scopes` name the paths it touched. The agent links that note to the notes it changed with authored relations and keeps one `type: profile` note with Stable and Recent sections. Wordcell extracts no facts and writes no note on its own.
+
+On recall and resume requests, the skill [reads the profile and the latest session notes first](../skills/wordcell/references/query.md#read-the-profile-first). `wordcell context` does not list session or profile notes, so list recent sessions directly with `wordcell list --root kb --where type=session --sort date --order desc --limit 5`.
+
+An MCP client connected through [`wordcell mcp`](reference.md#local-mcp-server) follows the same steps with the `search`, `list_notes`, `get_note`, `create_note`, `update_note_body`, and `add_relation` tools. `create_note` writes only the title, type, tags, and a generated `document_id` in the frontmatter and creates no directories, so a session note written only through MCP has no `date` or `repository_scopes` until someone edits its frontmatter. The MCP server and the session-memory workflow are available from source until the next release.
+
 ### Search and connect with bounded signals
 
 An identifier, title, alias, path, tag, or quoted phrase should not depend on an embedding. Exact mode reads the live Markdown. The default hybrid mode combines those results with keyword and vector result orders from [QMD, a local search engine for Markdown](<https://github.com/tobi/qmd>), while keeping exact identity matches first. Graph context and Git provenance remain separate evidence, so neither silently changes the primary text rank.

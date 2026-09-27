@@ -224,6 +224,34 @@ selection digest. They keep note bodies out of the agent's context. Use
 prose and attachments still need review before sharing: selection is not secret
 redaction. [Selection recipes and hosting guide](https://github.com/hraness/wordcell/blob/main/docs/publish.md).
 
+## Use a vault as agent memory
+
+The MCP server, the Supermemory importer, and the skill's session-memory
+workflow described here are available from source until the next release. To
+use them before that release, install the CLI from a checkout as the
+[installation reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md#installation-reference)
+shows, and add the skill from the main branch with
+`bunx skills add hraness/wordcell --skill wordcell`.
+
+`wordcell mcp --root kb` serves a vault to a local MCP client, such as Claude
+Code, Claude Desktop, Cursor, or Codex, over standard input and output. The
+client can search, list, and read notes, follow links, create notes, update a
+note body at a known revision, and add typed relations. `--read-only` removes
+the write tools. [Connect a client](https://github.com/hraness/wordcell/blob/main/docs/reference.md#connect-a-client)
+shows the setup for each host.
+
+With the Agent Skill, ask your agent to save the session. It writes a dated
+session note, links it to the notes it changed, and keeps a profile note for
+you or your project. Wordcell extracts no facts and writes no note on its own.
+[Session memory and profiles](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md#session-memory-and-profiles).
+
+To move from Supermemory, `wordcell import supermemory` turns saved Supermemory
+API responses into Markdown notes. The [migration guide](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md)
+covers export, import, and what does not transfer, and the
+[Supermemory comparison](https://wordcell.io/compare/supermemory) lists when to
+choose Supermemory instead. [Sync with Git](https://github.com/hraness/wordcell/blob/main/docs/sync.md)
+keeps one vault current on several machines.
+
 ## Evidence and comparisons
 
 In a four-query example over a seven-note public vault, packed search snippets
@@ -247,6 +275,11 @@ limits beside each result. [The comparison guide](https://github.com/hraness/wor
 covers Markdown alone, QMD, Basic Memory, Obsidian, static publishing tools,
 Supermemory, Mem0, and Zep using their own documentation. Choose the smallest
 workflow that meets your needs.
+
+The [benchmarks page](https://wordcell.io/benchmarks) shows the payload and
+SciFact results beside the published results of Oh, the embedded memory
+framework, each with its source data and limits. Oh's scores measure its own
+memory-retrieval path, not a Wordcell vault.
 
 ## How the files fit together
 
@@ -327,6 +360,7 @@ the design. Browse it on the [documentation index](https://wordcell.io/docs).
 | --- | --- |
 | [Get started](https://github.com/hraness/wordcell/blob/main/docs/getting-started.md) | Learn the full loop on a first vault: save, find, connect, and publish one note. |
 | [Agent workflow](https://github.com/hraness/wordcell/blob/main/docs/agent-workflow.md) | Set up, query, maintain, and revise repository memory. |
+| [Local MCP server](https://github.com/hraness/wordcell/blob/main/docs/reference.md#local-mcp-server) | Connect Claude Code, Claude Desktop, Cursor, or Codex to a vault and review the write tools. Available from source until the next release. |
 | [Installation and command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md) | Exact interfaces, SDK imports, optional adapters, and troubleshooting prerequisites. |
 | [Web capture](https://github.com/hraness/wordcell/blob/main/docs/capture.md) and [PDF capture](https://github.com/hraness/wordcell/blob/main/docs/pdf.md) | Save sources with provenance, assets, and explicit completeness limits. |
 | [Publish selected notes](https://github.com/hraness/wordcell/blob/main/docs/publish.md) | Preview a slice, build a static site, and choose how to host it. |

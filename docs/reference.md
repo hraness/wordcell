@@ -222,7 +222,7 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell graph --root <directory>` | Print the resolved contextual and typed graph, broken or ambiguous targets, orphans, and advisory mention candidates. |
 | `wordcell backlinks <note> --root <directory>` | Show incoming contextual links and typed relationships for a note resolved by path, title, or alias. |
 | `wordcell links <note> --root <directory>` | Traverse incoming, outgoing, or bidirectional contextual links and typed relationships with explicit depth and node limits. |
-| `wordcell note create <id> --title <title> --root <directory>` | Atomically create one confined Markdown note; use `--type concept` for a reusable concept. |
+| `wordcell note create <id> --title <title> --root <directory>` | Atomically create one confined Markdown note; use `--type concept` for a reusable concept. The parent directory must already exist. |
 | `wordcell note create <id> --title <title> --body-file - --root <directory>` | Read the note body from standard input, such as a transcript piped from another command. Standard input must not be a terminal or blank. Name a file called `-` as `./-`. Available from source until the next release. |
 | `wordcell import supermemory <export.json>... --root <vault>` | Import documents and memory entries saved from the Supermemory API as Markdown notes; see [Import from Supermemory](#import-from-supermemory). Available from source until the next release. |
 | `wordcell relation add\|remove <source> <predicate> <target>` | Idempotently edit one source note's typed outbound relationship using an exact local note ID or canonical stable `kb://` URI. |
@@ -235,7 +235,7 @@ or `wordcell search` to expand the question deliberately.
 | `wordcell portfolio audit --registry <file> --workspace <directory>` | Audit selected vault identities, authority groups, graph references, attachments, exact duplicate content, catalogs, and Git availability without repairing or electing an authority. |
 | `wordcell history <note> --root <vault> --repo <repository>` | Return bounded direct provenance for one resolved note, including explicit oversized-commit limitations. |
 | `wordcell history search <query-or-path> --root <vault> --repo <repository>` | Search bounded commit subjects, note paths, and co-change paths without authoring links or repository scopes. |
-| `wordcell context <repository-path> --root <vault> --repo <repository>` | List inherited guides root to nearest, reciprocal hubs nearest to root, and grouped repository-scoped current and historical memory. Use `--kind auto\|file\|directory` to control path interpretation. |
+| `wordcell context <repository-path> --root <vault> --repo <repository>` | List inherited guides root to nearest, reciprocal hubs nearest to root, and grouped repository-scoped current and historical memory. Use `--kind auto\|file\|directory` to control path interpretation. Notes of other types, such as `type: session` and `type: profile`, are not listed. |
 | `wordcell mcp --root <vault> [--repo <repository>] [--read-only]` | Serve one vault to a local MCP client over standard input and output with search, note, link, and authoring tools; see [Local MCP server](#local-mcp-server). Available from source until the next release. |
 | `wordcell inbox --root <vault>` | List recent captures without a maintained-note disposition. This is advisory and never creates links or fails merely because a source is a leaf. |
 | `wordcell evaluate <manifest.json> --root <vault> --repo <repository>` | Verify an exact frozen Git/vault snapshot and run built-in exact, QMD, metadata, graph, path-context, and Git retrievers with raw evidence, latency, resource counters, metrics, and paired intervals. |
@@ -646,7 +646,8 @@ The write tools use the same authoring operations as `wordcell note create`,
 `updateNoteBody`, and `wordcell relation add`.
 
 - `create_note` never replaces a note. If the ID exists, it returns a tool
-  error and leaves the file unchanged. It does not create directories.
+  error and leaves the file unchanged. Like `wordcell note create`, it does not
+  create directories.
 - `update_note_body` requires the `revision` from `get_note`. If the note
   changed after that read, the call fails, reports the current revision, and
   leaves the file unchanged. The update keeps the note's frontmatter bytes.
@@ -727,11 +728,13 @@ args = ["mcp", "--root", "/absolute/path/to/kb"]
 The repository ships one reusable `wordcell` Agent Skill under `skills/wordcell/`. Its
 intent router loads focused references only when a task needs them: querying
 repository context and agent memory, capturing URLs or PDFs, writing durable
-plans, promoting concepts and typed relationships, refreshing and checking a
-vault, or designing a setup through an interview and approved proposal. An
-approved setup may scaffold a bounded companion skill for a distinct recurring
-ritual. The package smoke test keeps future tagged packages byte-identical to
-that source tree.
+plans, saving session notes and a profile note, promoting concepts and typed
+relationships, refreshing and checking a vault, or designing a setup through an
+interview and approved proposal. An approved setup may scaffold a bounded
+companion skill for a distinct recurring ritual. The package smoke test keeps
+future tagged packages byte-identical to that source tree. The session-memory
+reference is available from source until the next release; the `#v0.22.5`
+skill below does not include it.
 
 ```sh
 npx skills add hraness/wordcell#v0.22.5

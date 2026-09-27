@@ -3,7 +3,10 @@
 ## Unreleased
 
 Wordcell can serve a vault to local Model Context Protocol clients and import
-notes exported from Supermemory.
+notes exported from Supermemory. Its Agent Skill can save a conversation as a
+session note and keep a profile note. New guides cover moving from Supermemory
+and syncing a vault with Git. Help and error messages are shorter, and first-run
+commands name the next step.
 
 - `wordcell mcp --root <vault>` serves a vault to local Model Context Protocol
   clients, such as Claude Code, Claude Desktop, Cursor, and Codex, over
@@ -22,6 +25,37 @@ notes exported from Supermemory.
   locally edited notes as conflicts without changing them. `--dry-run` writes
   nothing, and `--json` prints one report object.
 - `wordcell note create --body-file -` reads the note body from standard input.
+- The `wordcell` Agent Skill has a session-memory reference. When the user
+  asks, an agent saves what a conversation settled as a dated `type: session`
+  note with exact `repository_scopes`, links it to the notes it changed with
+  authored relations, and keeps a `type: profile` note with Stable and Recent
+  sections. On recall and resume requests, the agent reads the profile and
+  recent sessions first. Wordcell itself extracts no facts and writes no note
+  on its own. The
+  [agent memory guide](https://wordcell.io/docs/agent-memory#session-memory-and-profiles)
+  explains how to list session notes, which `wordcell context` does not show.
+- [Migrate from Supermemory](https://wordcell.io/docs/migration-from-supermemory)
+  exports Supermemory documents and memory entries, imports them as notes, and
+  lists what does not transfer.
+  [Sync a vault with Git](https://wordcell.io/docs/sync) keeps one vault current
+  on several machines with a private repository and a scheduled commit and push.
+  The [comparison guide](https://wordcell.io/docs/comparisons) now covers
+  Supermemory, Mem0, and Zep.
+- The [benchmarks page](https://wordcell.io/benchmarks) on wordcell.io shows
+  Wordcell's payload and SciFact results beside the published results of Oh,
+  the embedded memory framework, each with its source data and limits. New
+  pages compare Wordcell with
+  [Supermemory](https://wordcell.io/compare/supermemory),
+  [Basic Memory](https://wordcell.io/compare/basic-memory), and
+  [Mem0](https://wordcell.io/compare/mem0), and the
+  [migration page](https://wordcell.io/migrate/supermemory) walks through a
+  move from Supermemory. The home page and the migration page offer a setup
+  prompt for ChatGPT, Grok, and Cursor, and commands that register the MCP
+  server in Claude Code and Codex.
+- A launch post,
+  [Agent memory should be free, local, and yours](https://wordcell.io/blog/free-local-agent-memory),
+  covers the local MCP server, the Supermemory importer, and the evidence with
+  its limits.
 - Help is shorter and easier to scan. Bare `wordcell` shows what it is and the
   first four commands. `wordcell --help` groups everyday commands, and
   maintainer commands move to `wordcell help advanced`. Every command answers
