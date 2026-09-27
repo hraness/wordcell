@@ -844,8 +844,7 @@ any change to canonical product messaging.
 
 ## Phase 7: README, changelog, docs sweep, plan close-out
 
-- **Status:** Completed in the pull request titled
-  `launch: README, changelog, docs sweep, plan close-out`.
+- **Status:** Completed in [#150](https://github.com/hraness/wordcell/pull/150) (`a293ad5`).
 - **Depends on:** Phases 3, 4, 5, 6
 - **Objective:** The README, changelog, and docs reflect the shipped launch
   surface so `main` is ready for the owner's release decision, and this
@@ -1001,7 +1000,7 @@ do not guess them.
   steps, one-line errors), and #143 raised the package budget to 1.45 MB
   packed and 6.3 MB unpacked; #147 (`08d1ece`) added /compare/basic-memory
   and /compare/mem0.
-- 2026-09-26 — Phase 7 close-out. README.md gains
+- 2026-09-26 — Phase 7 merged in #150 (`a293ad5`). README.md gains
   `## Use a vault as agent memory` (the MCP server, the session-memory
   skill, moving from Supermemory, and sync), a /benchmarks paragraph in
   Evidence with no figures, and a Local MCP server row in Documentation; the
@@ -1027,6 +1026,27 @@ do not guess them.
   the first timed out one src/vault-complete.test.ts test under machine load
   (the file passes alone); `cd site && bun run check` passed 145/0 plus
   runtime 3/0; and the kb percolate, refresh, and check commands passed.
+- 2026-09-26 — Phase-final review of `origin/main` at `a293ad5`. Four
+  lenses (completeness, CLI and MCP seams, discovery and integration, and
+  figures and claims) reported 12 findings: one major and 11 minor, with
+  three duplicate pairs. All are fixed. docs/reference.md now describes the
+  two-line error `wordcell mcp` prints for a missing or invalid root, and it
+  gives the unpinned skill command for the session-memory reference.
+  llms.txt names the local MCP server in its Reference entry and labels the
+  two importer entries. The README's Migrate from Supermemory row carries
+  the from-source label. On /benchmarks, the pilot's context sentence says
+  each median covers the questions whose retrieval finished (60 for
+  Supermemory, 57 each for Oh and BM25). The compare pages say "no hosted
+  service" instead of "no server to run". The /migrate/supermemory header
+  action leads to that page's install step. This record now links #150, and
+  the release follow-ups name the source-install copy the label search
+  misses. Not taken: lower-casing "Mcp requires" in parser errors, because
+  every command's message passes through the same `sentence()` helper, and
+  a label on the /docs catalog card, because that summary is also the
+  guide's meta description. Gates: `src/` is unchanged, so `dist/` was not
+  rebuilt; `bun run check` passed 1,928/0; `cd site && bun run check`
+  passed 145/0 plus runtime 3/0; and the kb percolate, refresh, and check
+  commands passed.
 
 ## Result
 
@@ -1042,11 +1062,12 @@ session-memory skill reference;
 /benchmarks, /compare/supermemory, /migrate/supermemory, the home
 agent-memory section, and setup links;
 [#149](https://github.com/hraness/wordcell/pull/149) (`a151d6a`) the launch
-post; and the Phase 7 pull request (README section, docs sweep, consolidated
-`## Unreleased`, and this record). The CLI and skill changes are available
-from source until the owner releases them. The phase-final review of
-`origin/main` follows this merge, per the Review lane, and any fixes it
-ships are recorded here.
+post; and [#150](https://github.com/hraness/wordcell/pull/150) (`a293ad5`)
+the README section, docs sweep, consolidated `## Unreleased`, and this
+record. The CLI and skill changes are available from source until the owner
+releases them. The phase-final review of `origin/main` at `a293ad5` found
+12 findings, one of them major, and one more pull request fixes them; the
+Implementation log lists them.
 
 Every figure on the launch surfaces traces to a vendored artifact or to a
 vendor page with a checked-on date, and Oh's results are labeled as Oh's,
@@ -1101,11 +1122,21 @@ including labels that wrap across lines, found with
 `rg -n -i -U 'available\s+from\s+source' README.md docs skills site`, update
 the site tests that pin them (site/tests/blog.test.tsx, home.test.tsx, and
 launch-pages.test.tsx), and regenerate the site modules with
-`cd site && bun run check`; pin the skill in SETUP_PROMPT
-(site/wordcell/setup-prompt.ts) to `#v<release>` and switch its install step
-to the release archive; update the SKILL.md install pin and the
-session-memory reference's fallback for the pinned 0.22.5 CLI; and write the
-version heading over `## Unreleased`. Re-check the dated competitor
+`cd site && bun run check`. Removing the label in
+docs/reference.md#agent-skills also removes the sentence after it, which
+adds the skill unpinned with
+`bunx skills add hraness/wordcell --skill wordcell`. Pin the skill in
+SETUP_PROMPT (site/wordcell/setup-prompt.ts) to `#v<release>` and switch its
+install step to the release archive. Some source-install copy has no label
+and follows that step; find it with
+`rg -n -i 'from source|source build|from a checkout' site/wordcell site/app site/public`.
+Retitle the /migrate/supermemory install step and reword its lead
+(site/wordcell/migration-steps.tsx), and reword the "installed from source"
+sentence in site/wordcell/setup-links.tsx. The launch post's dek
+(site/app/blog/articles.ts) and its llms.txt entry ("What the launch adds
+from source") are dated post copy and stay. Update the SKILL.md install pin
+and the session-memory reference's fallback for the pinned 0.22.5 CLI, and
+write the version heading over `## Unreleased`. Re-check the dated competitor
 constants on any later edit:
 `rg -n -i 'checked[ -]?on|checked 20' site/wordcell` finds all six modules
 (supermemory-pricing.ts, published-claims.ts, mem0-sources.ts,

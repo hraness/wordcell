@@ -140,7 +140,7 @@ export default function CompareSupermemory() {
         <ul className="wordcell-limits">
           <li>Your agents keep memory about your own work, and you want it in files you can read, edit, and diff.</li>
           <li>You want every memory change reviewed in Git, like code.</li>
-          <li>You want memory as plain files, with no server to run, account, or usage bill.</li>
+          <li>You want memory as plain files, with no hosted service, no account, and no usage bill.</li>
         </ul>
         <p className="record-link"><a href="/docs/comparisons#consider-supermemory-for-a-memory-api-inside-your-product">Read the full comparison with Mem0, Zep, and other tools</a></p>
       </MarketingSection>

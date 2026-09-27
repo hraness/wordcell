@@ -367,7 +367,7 @@ the design. Browse it on the [documentation index](https://wordcell.io/docs).
 | [Graph guide](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md) | Named queries, proofs, revisions, resource limits, and cache recovery. |
 | [Portfolio federation](https://github.com/hraness/wordcell/blob/main/docs/portfolio.md) | Search only selected, authorized vaults. |
 | [Sync with Git](https://github.com/hraness/wordcell/blob/main/docs/sync.md) | Keep one vault current on several machines with a private repository. |
-| [Migrate from Supermemory](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md) | Export documents and memory entries, import them as notes, and replace connectors. |
+| [Migrate from Supermemory](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md) | Export documents and memory entries, import them as notes, and replace connectors. The importer is available from source until the next release. |
 | [Design](https://github.com/hraness/wordcell/blob/main/docs/design.md) and [memory rationale](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md) | File contracts, design choices, and evaluation context. |
 | [Release verification](https://github.com/hraness/wordcell/blob/main/docs/publishing.md#verify-a-published-release) | Verify archive identity, signatures, and provenance. |
 

@@ -581,8 +581,9 @@ wordcell mcp --root /absolute/path/to/kb [--repo /absolute/path/to/repository] [
 ```
 
 - `--root <vault>` is required. The server checks that it is a real directory
-  before it reads a request. A missing or invalid root prints one `error:`
-  line to standard error and exits with status 2.
+  before it reads a request. A missing or invalid root prints a two-line
+  error to standard error, naming the problem and then
+  `wordcell mcp --help`, and exits with status 2.
 - `--repo <repository>` adds the `context` tool for that working tree.
 - `--read-only` removes the three write tools.
 
@@ -734,7 +735,8 @@ interview and approved proposal. An approved setup may scaffold a bounded
 companion skill for a distinct recurring ritual. The package smoke test keeps
 future tagged packages byte-identical to that source tree. The session-memory
 reference is available from source until the next release; the `#v0.22.5`
-skill below does not include it.
+skill below does not include it. To use it before that release, add the skill
+from the main branch with `bunx skills add hraness/wordcell --skill wordcell`.
 
 ```sh
 npx skills add hraness/wordcell#v0.22.5

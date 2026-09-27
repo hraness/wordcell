@@ -202,6 +202,16 @@ describe("Oh LongMemEval pilot evidence", () => {
     expect(pilotInterval.upper).toBe(Math.round((bounds.upper as number) * 100) / 100);
     expect(pilotSecondaryInterval).toMatchObject({ left: "Oh", right: "BM25", estimate: 3.33, lower: -1.67, upper: 8.33 });
     expect(pilotStudy.evaluator).toContain("Oh and BM25 each did not finish three of the 60 questions");
+    const contextTokens = record(raw.contextTokens, "contextTokens");
+    expect(pilotArms.map((arm) => [arm.medianContextTokens, arm.medianContextQuestions])).toEqual(
+      pilotArms.map((arm) => {
+        const context = record(contextTokens[arm.id], arm.id);
+        return [context.p50 as number, context.count as number];
+      }),
+    );
+    expect(pilotStudy.contextBudget).toBe(
+      "Median context per question whose retrieval finished: 1,688 tokens for Supermemory (60 questions), 5,014 for Oh (57 questions), and 7,675 for BM25 (57 questions).",
+    );
   });
 
   test("quoted pilot limits are verbatim and never include the state-of-the-art limitation", async () => {
@@ -496,7 +506,7 @@ describe("/compare/supermemory", () => {
     expect(text.split("every plan").length - 1).toBe(1);
     expect(text).toContain("Supermemory is a hosted memory engine for agents and the apps you build. Wordcell keeps your memory in Markdown files you own.");
     expect(markup).toContain('href="https://supermemory.ai/">MCP server or plugins</a>');
-    expect(text).toContain("You want memory as plain files, with no server to run, account, or usage bill.");
+    expect(text).toContain("You want memory as plain files, with no hosted service, no account, and no usage bill.");
     expect(text).toContain("up to 512 bytes of its snippet");
     expect(text).not.toMatch(/\bbounded\b|\bwe\b/iu);
     for (const plan of supermemoryPricing.plans) {
@@ -633,6 +643,9 @@ describe("/migrate/supermemory", () => {
     expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
     const firstDocsLink = /href="(\/docs\/[^"]*)"/.exec(markup)?.[1];
     expect(firstDocsLink).toBe(MIGRATION_GUIDE_PATH);
+    // The header action leads to this page's own install step, not the release install on the home page.
+    expect(markup).toMatch(/hraness-marketing-action[^>]*href="#install">Install Wordcell<\/a>/u);
+    expect(markup).toContain('id="install"');
     const rendered = (node: ReactNode) => pageText(renderToStaticMarkup(<>{node}</>)).trim();
     for (const concept of migrationConcepts) {
       expect(text).toContain(`${concept.supermemory} ${rendered(concept.wordcell)}`);

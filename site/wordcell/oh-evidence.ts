@@ -362,6 +362,8 @@ export type PilotArm = Readonly<{
   percent: string;
   incomplete: number;
   medianContextTokens: number;
+  /** Questions whose retrieval finished, which the context median covers. */
+  medianContextQuestions: number;
 }>;
 
 const pilotQualityArms = list(pilotQuality.arms, "quality.arms").map((entry, index) => record(entry, `quality.arms[${index}]`));
@@ -374,6 +376,9 @@ export const pilotArms: readonly PilotArm[] = pilotArmOrder.map((id) => {
   if (Math.abs(finite(rate.value, `${id} value`) - correct / questions) > 1e-9) throw new TypeError(`${id} rate must equal its fraction.`);
   const disposition = record(dispositions[id], `retrievalDispositions.${id}`);
   const completed = count(disposition.completed, `${id} completed`);
+  const context = record(contextTokens[id], `contextTokens.${id}`);
+  const medianContextQuestions = count(context.count, `${id} context count`);
+  if (medianContextQuestions !== completed) throw new TypeError(`${id} context median must cover the questions whose retrieval finished.`);
   return {
     id,
     name: pilotArmNames[id],
@@ -381,7 +386,8 @@ export const pilotArms: readonly PilotArm[] = pilotArmOrder.map((id) => {
     questions,
     percent: percent(correct / questions, 2),
     incomplete: questions - completed,
-    medianContextTokens: count(record(contextTokens[id], `contextTokens.${id}`).p50, `${id} median context`),
+    medianContextTokens: count(context.p50, `${id} median context`),
+    medianContextQuestions,
   };
 });
 
@@ -448,7 +454,12 @@ export const pilotStudy = {
   model: "Supermemory search with one fixed profile, Oh retrieval, and BM25 over the same conversation histories.",
   reader: "GPT-4o through an unpinned Vercel AI Gateway alias.",
   evaluator: `A GPT-4o judge through an unpinned gateway alias.${incompleteSentence}`,
-  contextBudget: `Median context per question: ${byArm("supermemory").medianContextTokens.toLocaleString("en-US")} tokens for Supermemory, ${byArm("oh").medianContextTokens.toLocaleString("en-US")} for Oh, and ${byArm("bm25").medianContextTokens.toLocaleString("en-US")} for BM25.`,
+  contextBudget: `Median context per question whose retrieval finished: ${sentenceList(
+    (["supermemory", "oh", "bm25"] as const).map((id, index) => {
+      const arm = byArm(id);
+      return `${arm.medianContextTokens.toLocaleString("en-US")}${index === 0 ? " tokens" : ""} for ${arm.name} (${arm.medianContextQuestions} questions)`;
+    }),
+  )}.`,
   exposure: `${pilotQuestions} ${pilotDataset} questions, ${perTypeText} per question type, all previously exposed. A development pilot, not an unseen test set.`,
   comparability: "same-run",
   source: { label: "Oh’s published pilot result", href: ohLinks.pilotResult },

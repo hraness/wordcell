@@ -38,7 +38,7 @@ const sessionMemoryReference = "https://github.com/hraness/wordcell/blob/main/sk
 
 export default function MigrateSupermemory() {
   return (
-    <WordcellPageChrome path="/migrate/supermemory">
+    <WordcellPageChrome path="/migrate/supermemory" action={{ href: "#install", label: "Install Wordcell" }}>
       <ProductHero
         backdrop={false}
         align="start"

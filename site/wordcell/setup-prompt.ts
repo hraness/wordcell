@@ -2,7 +2,10 @@
  * MCP server and the session-memory reference are on the default branch and
  * not in the latest release yet, so the prompt installs both from source.
  * When a release includes them, pin the skill and switch to the release
- * archive, and drop the from-source sentence. */
+ * archive, and drop the from-source sentence. SETUP_COMMANDS.install is also
+ * the /migrate/supermemory install step, so retitle that step and reword its
+ * lead in migration-steps.tsx, and the "installed from source" sentence in
+ * setup-links.tsx. */
 
 export const SETUP_VAULT_PATH = "/absolute/path/to/kb";
 
