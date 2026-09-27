@@ -2927,7 +2927,11 @@ function importDigest(title, fields, text) {
 }
 function provenanceLine(file, now) {
   const name = basename2(file).replace(/[`\u0000-\u001f\u007f]/gu, "_");
-  return `Imported from supermemory export \`${name}\` on ${now.toISOString().slice(0, 10)}.`;
+  return `Imported from supermemory export \`${name}\` on ${localCalendarDate(now)}.`;
+}
+function localCalendarDate(now) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${String(now.getFullYear()).padStart(4, "0")}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 function localImportedText(body) {
   const text = normalizeText(body);

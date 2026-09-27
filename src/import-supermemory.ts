@@ -938,10 +938,16 @@ export function importDigest(title: string, fields: Readonly<Record<string, unkn
   return `sha256:${sha256(JSON.stringify(sortedJson({ title, fields: owned, text })))}`;
 }
 
-/** Provenance paragraph appended to every imported body. */
+/** Provenance paragraph appended to every imported body, dated with the local calendar day. */
 export function provenanceLine(file: string, now: Date): string {
   const name = basename(file).replace(/[`\u0000-\u001f\u007f]/gu, "_");
-  return `Imported from supermemory export \`${name}\` on ${now.toISOString().slice(0, 10)}.`;
+  return `Imported from supermemory export \`${name}\` on ${localCalendarDate(now)}.`;
+}
+
+/** YYYY-MM-DD for the local calendar day of `now`, so an evening import is not stamped with the next UTC day. */
+export function localCalendarDate(now: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${String(now.getFullYear()).padStart(4, "0")}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 /** The imported text of a note body: drops the provenance paragraph and outer blank lines. */

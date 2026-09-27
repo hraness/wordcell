@@ -34,6 +34,7 @@ import {
   type PlannedCreate,
   type PlannedItem,
   planImport,
+  localCalendarDate,
   provenanceLine,
   localImportedText,
   occupancyKey,
@@ -586,7 +587,8 @@ describe("metadata, titles, and slugs", () => {
 // ---------------------------------------------------------------------------
 // Planning
 
-const NOW = new Date("2026-09-26T12:00:00Z");
+// Local noon: provenance dates use the local calendar day, so a UTC clock would shift them in far time zones.
+const NOW = new Date(2026, 8, 26, 12, 0);
 
 function doc(overrides: Record<string, unknown> = {}): Validated<ImportItem> {
   return validateDocument(documentRow(overrides));
@@ -794,6 +796,10 @@ describe("supermemory import planning", () => {
 
   test("the provenance line and local text helpers are inverse", () => {
     expect(provenanceLine("/tmp/exports/page`1`.json", NOW)).toBe("Imported from supermemory export `page_1_.json` on 2026-09-26.");
+    const evening = new Date(2026, 8, 26, 23, 30);
+    expect(localCalendarDate(evening)).toBe("2026-09-26");
+    expect(provenanceLine("a.json", evening)).toBe("Imported from supermemory export `a.json` on 2026-09-26.");
+    expect(localCalendarDate(new Date(2026, 0, 5, 0, 5))).toBe("2026-01-05");
     expect(localImportedText("\n\nBody\n\nImported from supermemory export `a.json` on 2026-09-26.\n")).toBe("Body");
     expect(localImportedText("\nBody\n\nImported from supermemory export `a.json` on 2026-09-26. Extra\n")).toBe(
       "Body\n\nImported from supermemory export `a.json` on 2026-09-26. Extra",
@@ -863,7 +869,7 @@ describe("supermemory import planning", () => {
 });
 
 describe("importSupermemory writes", () => {
-  const WRITE_NOW = new Date("2026-09-26T12:00:00.000Z");
+  const WRITE_NOW = new Date(2026, 8, 26, 12, 0);
   const SINGLE_PAGE = join(FIXTURES, "single-page.json");
 
   function quiet() {
@@ -1310,7 +1316,7 @@ describe("importSupermemory writes", () => {
 });
 
 describe("memory entries", () => {
-  const MEMORY_NOW = new Date("2026-09-26T12:00:00.000Z");
+  const MEMORY_NOW = new Date(2026, 8, 26, 12, 0);
   const MEMORY_FIXTURE = join(FIXTURES, "memory-entries.json");
 
   async function withMemoryVault(run: (vault: string) => Promise<void>): Promise<void> {
