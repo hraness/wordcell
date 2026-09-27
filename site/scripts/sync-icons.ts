@@ -5,7 +5,7 @@
  * Usage: bun run sync:icons
  */
 
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const SET = "wordcell";
@@ -31,7 +31,11 @@ for (const mark of spec.marks ?? []) {
   files.set(`${mark.slug}.svg`, [MARKS_OUT, `${SET}/${mark.slug}.svg`]);
 }
 for (const reference of spec.references ?? []) {
-  files.set(`${reference.slug}.svg`, [ICONS_OUT, reference.svg.replace(/^\.\.\//u, "")]);
+  // References are generation-time family anchors; sync only the ones the
+  // product actually serves today.
+  if (existsSync(join(ICONS_OUT, `${reference.slug}.svg`))) {
+    files.set(`${reference.slug}.svg`, [ICONS_OUT, reference.svg.replace(/^\.\.\//u, "")]);
+  }
 }
 
 const written: string[] = [];
