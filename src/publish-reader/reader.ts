@@ -321,7 +321,9 @@ function resultHref(base: string, slug: string): string {
 
 function snippetFor(index: SiteIndex, doc: WordcellSiteDocV1, query: PublishQuery): string {
   const hydrated = index.notes.get(doc.s);
-  const text = hydrated?.text ?? doc.x;
+  // doc.x is a normalized ranking basis, not display text. The eager preview
+  // remains readable while the existing bounded hydration fetch is pending.
+  const text = hydrated?.text;
   return text === undefined ? doc.p : publishSnippet(text, query, doc.p);
 }
 

@@ -7,11 +7,11 @@ export type ApiError = Readonly<{
 }>;
 
 export function apiOk(body: Record<string, unknown>, status = 200): Response {
-  return Response.json({ ok: true, ...body }, { status });
+  return Response.json({ ok: true, ...body }, { status, headers: { "cache-control": "no-store" } });
 }
 
 export function apiError(error: ApiError, status: number): Response {
-  const response = Response.json({ ok: false, error }, { status });
+  const response = Response.json({ ok: false, error }, { status, headers: { "cache-control": "no-store" } });
   return response;
 }
 

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import fc from "fast-check";
 
 import {
   MAX_PUBLISH_PREFIX_EXPANSIONS,
@@ -191,6 +192,32 @@ describe("publishSnippet", () => {
   test("falls back when no term matches", () => {
     expect(publishSnippet("nothing here", publishQuery("absent"), "the fallback"))
       .toBe("the fallback");
+  });
+
+  test("maps case-expanding matches back to whole NFC display characters", () => {
+    const text = `${"İ😀é".repeat(100)} NEEDLE ${"界𝄞".repeat(100)}`;
+    const snippet = publishSnippet(text, publishQuery("needle"), "fallback", 64);
+    expect(snippet).toContain("NEEDLE");
+    expect(snippet).toBe(snippet.normalize("NFC"));
+    expect(Buffer.from(snippet, "utf8").toString("utf8")).toBe(snippet);
+    expect(publishUtf8Bytes(snippet)).toBeLessThanOrEqual(64);
+    expect(snippet.startsWith("…")).toBe(true);
+    expect(snippet.endsWith("…")).toBe(true);
+    expect(publishSnippet(text, publishQuery("needle"), "fallback", 0)).toBe("");
+  });
+
+  test("bounds Unicode display windows including ellipses without splitting a code point", () => {
+    fc.assert(fc.property(
+      fc.array(fc.constantFrom("界", "😀", "é", "İ", "𝄞", " ", "\n"), { minLength: 1, maxLength: 20 }),
+      fc.integer({ min: 0, max: 240 }),
+      (points, maximum) => {
+        const text = `${points.join("").repeat(8)} needle ${points.join("").repeat(8)}`;
+        const snippet = publishSnippet(text, publishQuery("needle"), "fallback", maximum);
+        expect(publishUtf8Bytes(snippet)).toBeLessThanOrEqual(maximum);
+        expect(Buffer.from(snippet, "utf8").toString("utf8")).toBe(snippet);
+        expect(snippet).toBe(snippet.normalize("NFC"));
+      },
+    ));
   });
 });
 

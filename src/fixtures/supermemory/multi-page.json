@@ -1,0 +1,38 @@
+[
+  {
+    "memories": [
+      {
+        "id": "Mp1aaaaaaaaaaaaaaaaaaa",
+        "connectionId": null,
+        "customId": null,
+        "title": "First page note",
+        "summary": "Summary on page one.",
+        "filepath": null,
+        "metadata": null,
+        "status": "done",
+        "type": "text",
+        "createdAt": "2025-01-01T10:00:00Z",
+        "updatedAt": "2025-01-01T10:00:00Z"
+      }
+    ],
+    "pagination": { "currentPage": 1, "limit": 1, "totalItems": 2, "totalPages": 2 }
+  },
+  {
+    "memories": [
+      {
+        "id": "Mp2bbbbbbbbbbbbbbbbbbb",
+        "connectionId": null,
+        "customId": null,
+        "title": "Second page note",
+        "summary": "Summary on page two.",
+        "filepath": null,
+        "metadata": null,
+        "status": "done",
+        "type": "text",
+        "createdAt": "2025-01-02T10:00:00Z",
+        "updatedAt": "2025-01-02T10:00:00Z"
+      }
+    ],
+    "pagination": { "currentPage": 2, "limit": 1, "totalItems": 2, "totalPages": 2 }
+  }
+]

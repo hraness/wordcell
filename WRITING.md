@@ -1,6 +1,10 @@
 # Internal writing and voice
 
-This guide covers agent responses, code comments, commits, pull requests, plans, and knowledge-base notes. `STYLE.md` adds rules for public prose.
+<!-- synced from hraness/.github WRITING.md sha256:9ff22e15275ceb5a9113b49d177a6b309233164661cc723bddd98912fb80c92b -->
+
+This guide covers agent responses, code comments, commits, pull requests, plans, and knowledge-base notes. [`STYLE.md`](STYLE.md) adds rules for public prose.
+
+This copy is synced from [hraness/.github](https://github.com/hraness/.github/blob/main/WRITING.md). Change shared rules there; add rules for this repository under “Repository additions” below.
 
 ## Write for the spoken voice
 
@@ -18,6 +22,7 @@ This guide covers agent responses, code comments, commits, pull requests, plans,
 - Unpack long stacks of nouns so the relationship between terms is explicit.
 - Remove filler intensifiers such as *genuinely, really, truly,* and *actually*.
 - Replace vague corporate verbs such as *leverage, utilize, showcase,* and *underscore* with the exact action.
+- Replace abstract slogans and personification with the action, object, and result. A technical property can be named when it changes a decision; it is not a tagline.
 - Use one accurate qualifier when uncertainty matters. Remove empty or repeated hedges.
 - Use natural contractions when they fit the voice. Do not force a formal register.
 - Keep enthusiasm proportional to the evidence. Do not perform excitement or agreement.
@@ -53,6 +58,7 @@ Apply its controlled dictionary and numeric limits only when the task requires S
 - State failures with evidence. Write “3 of 41 tests fail,” and name the failed tests.
 - Name skipped checks and real uncertainty once.
 - Stop when the useful content ends. Do not add a recap to text the reader has just read.
+- Record an AI review as an AI review. Before you call copy done, check it against `STYLE.md` and name what you did not verify.
 - Match the length to the reader's next decision. Delete details that do not change it.
 
 ## Match the writing surface
@@ -60,5 +66,7 @@ Apply its controlled dictionary and numeric limits only when the task requires S
 - Agent responses give the answer first, then necessary reasoning and limits. Match the user's register and time pressure.
 - Code comments explain intent, a tradeoff, or a non-obvious risk. They do not narrate visible code.
 - Commits and pull requests name the outcome and its reason. Keep file inventories secondary.
+- Pull request bodies and commit messages describe a change. Do not paste them into READMEs or guides, which describe the product as it is.
+- The vocabulary of `AGENTS.md`, CI, and admission ledgers is internal. Use it in commits, pull requests, and agent notes when it is the precise term; translate it when the text will reach a reader outside the repository.
 - Knowledge-base notes use complete thoughts, durable context, source links, and descriptive titles.
 - Riffs preserve first-person voice and uncertainty while they repair transcription errors. Do not flatten personality into a summary.

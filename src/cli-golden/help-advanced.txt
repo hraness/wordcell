@@ -1,0 +1,29 @@
+Usage: wordcell <command> [options]
+
+Advanced commands for maintainers, evaluation, and several knowledge bases.
+
+  agents identity <scope>     Print the context note name and marker for a code
+                              folder, without writing
+  graph rebuild               Rebuild the local graph cache from the Markdown
+                              files
+  graph verify                Check that the local graph cache matches the
+                              Markdown files
+  graph query --program <name>
+                              Run a built-in graph query, with proof of each
+                              answer
+  percolate [note]            Suggest recurring concepts and missing links, with
+                              evidence
+  portfolio search <query>    Search several knowledge bases you list in a
+                              registry file
+  portfolio audit             Check several knowledge bases for broken links,
+                              duplicates, and missing files
+  evaluate <manifest.json>    Measure how well each search method finds the
+                              right notes in a frozen test set
+  url-metadata tool build|check
+                              Build or check the helper that looks up metadata
+                              for saved links
+  url-metadata backfill       Add title and archive metadata files next to saved
+                              links
+  support                     Optional support settings
+
+Command help: wordcell help <command> · Everyday commands: wordcell --help

@@ -2,6 +2,7 @@
 
 - `SKILL.md` – public entrypoint, runtime contract, and intent router for all hraness/wordcell agent workflows.
 - `references/query.md` – scoped retrieval through exact metadata, hybrid search, graph structure, and Git provenance.
+- `references/session-memory.md` – authored session notes, their relationships, and maintained profile notes with Stable and Recent sections.
 - `references/customize.md` and `companion-skills.md` – interview-first Wordcell setup, explicit approval boundaries, and contracts for optional recurring rituals.
 - `references/save-url.md`, `url-authentication.md`, and `url-platforms.md` – auditable web capture, signed-in source handling, and platform-specific completeness boundaries.
 - `references/save-pdf.md` and `pdf-review.md` – PDF ingestion, OCR, image evidence, and mixed-media review.

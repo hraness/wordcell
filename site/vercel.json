@@ -5,6 +5,10 @@
   "installCommand": "bun install --frozen-lockfile --ignore-scripts",
   "rewrites": [
     {
+      "source": "/p/:path*/",
+      "destination": "https://wordcell-sites.972abc65.workers.dev/p/:path*/"
+    },
+    {
       "source": "/p/:path*",
       "destination": "https://wordcell-sites.972abc65.workers.dev/p/:path*"
     }

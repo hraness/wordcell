@@ -26,7 +26,7 @@ const SPEC = {
         summary: "Streamable-HTTP MCP endpoint",
         description:
           "JSON-RPC adapter over this REST surface: tools create_token, publish_site, " +
-          "list_sites, delete_site dispatch to the identical route logic. Send the " +
+          "get_site, list_sites, delete_site dispatch to the identical route logic. Send the " +
           "wc_pub_ Bearer token as on REST; the self-serve create_token tool is the " +
           "onboarding path for MCP-only clients.",
         responses: { "200": { description: "JSON-RPC result or tool-level isError result" } },
@@ -112,9 +112,10 @@ const SPEC = {
         description:
           "Accepts a bounded vault file map (utf8 strings, {base64}, or {upload} " +
           "references), runs the wordcell projection server-side, stores the " +
-          "emitted artifact under an immutable digest prefix, and moves the slug " +
-          "pointer after every object is durable. Identical output bytes are an " +
-          "idempotent no-op.",
+          "emitted artifact under an immutable digest prefix, and conditionally commits " +
+          "one authoritative site head after every object is durable. Supply an operation " +
+          "ID and the revision returned by GET (0 for a new slug). Exact operation " +
+          "retries are idempotent; a distinct operation advances revision even for identical bytes.",
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -122,8 +123,9 @@ const SPEC = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["files"],
+                required: ["files", "operation"],
                 properties: {
+                  operation: { $ref: "#/components/schemas/Operation" },
                   files: {
                     type: "object",
                     description:
@@ -151,18 +153,22 @@ const SPEC = {
           "201": { description: "site created" },
           "400": { description: "invalid input" },
           "401": { description: "missing or unknown token" },
-          "409": { description: "namespace site limit reached" },
+          "409": { description: "stale revision, conflicting operation ID, or namespace site limit" },
           "413": { description: "request too large" },
           "422": { description: "projection failed or site exceeds hosted bounds" },
           "429": { description: "quota reached" },
+          "428": { description: "versioned operation contract required" },
+          "502": { description: "storage outcome uncertain; reconcile the operation ID" },
         },
       },
       get: {
         operationId: "getSite",
         summary: "Read a site record",
+        description: "Without operation, reads the current revision. A missing site returns revision 0; a deleted site returns its retained tombstone revision. With operation, resolves that operation without writes: committed, pending, conflict, or unknown. A committed receipt may refer to a superseded revision.",
+        parameters: [{ name: "operation", in: "query", required: false, schema: { type: "string", format: "uuid" } }],
         security: [{ bearerAuth: [] }],
         responses: {
-          "200": { description: "site record" },
+          "200": { description: "site record or operation reconciliation state" },
           "401": { description: "missing or unknown token" },
           "404": { description: "no such site" },
         },
@@ -171,18 +177,34 @@ const SPEC = {
         operationId: "deleteSite",
         summary: "Unpublish a site",
         description:
-          "Removes the public pointer immediately, then deletes the record and " +
-          "the digest-addressed artifact objects.",
+          "Conditionally replaces the site head with a tombstone, preserving its revision " +
+          "and receipt. Shared artifact objects remain stored. Public caches may last 60 seconds.",
         security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: {
+          type: "object", required: ["operation"], additionalProperties: false,
+          properties: { operation: { $ref: "#/components/schemas/Operation" } },
+        } } } },
         responses: {
           "200": { description: "deleted" },
           "401": { description: "missing or unknown token" },
-          "404": { description: "no such site" },
+          "409": { description: "stale revision or conflicting operation ID" },
+          "428": { description: "versioned operation contract required" },
+          "502": { description: "storage outcome uncertain; reconcile the operation ID" },
         },
       },
     },
   },
   components: {
+    schemas: {
+      Operation: {
+        type: "object", additionalProperties: false, required: ["contract", "id", "expectedRevision"],
+        properties: {
+          contract: { const: "hraness.wordcell.hosted-operation.v1" },
+          id: { type: "string", pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+          expectedRevision: { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER - 1 },
+        },
+      },
+    },
     securitySchemes: {
       bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "wc_pub_" },
     },

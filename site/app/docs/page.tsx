@@ -3,10 +3,12 @@ import { AskAiAboutThis } from "@hraness/ui";
 
 import { publishedRelease } from "../publication";
 import { WordcellContentFooter } from "../site-footer";
-import { readmeHtml, readmeTitle, readmeVersion } from "../readme.generated";
+import { readmeVersion } from "../readme.generated";
+import { docCatalog, docQuadrants } from "./catalog";
 
-const docsTitle = `${readmeTitle} documentation`;
-const docsDescription = "Start with a local Markdown decision, connect your coding agent, compare alternatives, and publish selected notes.";
+const docsTitle = "Wordcell documentation";
+const docsDescription =
+  "Learn the loop on a first vault, finish a task, look up an exact interface, or read why the design works the way it does.";
 
 export const metadata: Metadata = {
   title: docsTitle,
@@ -26,19 +28,65 @@ export const metadata: Metadata = {
   },
 };
 
+const repository = "https://github.com/hraness/wordcell";
+
 export default function Docs() {
   return (
     <>
       <a className="skip-link" href="#main">Skip to content</a>
-      <main id="main" tabIndex={-1} className="document-page">
+      <main id="main" tabIndex={-1} className="document-page docs-index">
         <nav aria-label="Site" className="document-nav">
           <a href="/">Wordcell home</a>
-          <a href="https://github.com/hraness/wordcell">Source on GitHub</a>
-          <a href="https://github.com/hraness/wordcell/releases">Releases</a>
+          <a href="/developers">For developers</a>
+          <a href={repository}>Source on GitHub</a>
+          <a href={`${repository}/releases`}>Releases</a>
         </nav>
-        {publishedRelease === null && <p>Release preview: the installation examples below target the forthcoming Wordcell release. <a href="https://github.com/hraness/wordcell/releases">Check published releases before installing</a>.</p>}
-        {publishedRelease !== null && publishedRelease.version !== readmeVersion && <p className="release-preview">Documentation preview for v{readmeVersion}. Installation examples use verified v{publishedRelease.version}. Features introduced after that release require the newer version; <a href="https://github.com/hraness/wordcell/blob/main/CHANGELOG.md">check the release notes</a>.</p>}
-        <article dangerouslySetInnerHTML={{ __html: readmeHtml }} />
+        {publishedRelease === null && <p>Release preview: the installation examples below target the forthcoming Wordcell release. <a href={`${repository}/releases`}>Check published releases before installing</a>.</p>}
+        {publishedRelease !== null && publishedRelease.version !== readmeVersion && <p className="release-preview">These docs describe v{readmeVersion}. The install commands use v{publishedRelease.version}, the newest release this site has verified. Features added after v{publishedRelease.version} need the newer version; see the <a href={`${repository}/blob/main/CHANGELOG.md`}>release notes</a>.</p>}
+
+        <h1>Wordcell documentation</h1>
+        <p>
+          Start with the tutorial if you are new to Wordcell. How-to guides each
+          finish one task, the reference lists exact commands, formats, and
+          limits, and the explanation pages cover the design and what was
+          measured. The <a href="/docs/overview">product overview</a> has
+          everything on one page.
+        </p>
+
+        <section aria-labelledby="install" className="docs-install">
+          <h2 id="install">Install</h2>
+          {publishedRelease === null ? (
+            <p className="install-note">
+              The first Wordcell release under this name is in preparation.{" "}
+              <a href={`${repository}/releases`}>Check published releases</a>.
+            </p>
+          ) : (
+            <>
+              <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v${publishedRelease.version}/hraness-wordcell-${publishedRelease.version}.tgz
+wordcell --help`}</code></pre>
+              <p className="install-note">
+                Requires <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git.{" "}
+                <a href="/docs/getting-started">Walk through the first vault</a> or{" "}
+                <a href="/docs/reference">read the installation reference</a>.
+              </p>
+            </>
+          )}
+        </section>
+
+        {docQuadrants.map((quadrant) => (
+          <section aria-labelledby={`docs-${quadrant.id}`} key={quadrant.id}>
+            <h2 id={`docs-${quadrant.id}`}>{quadrant.label}</h2>
+            <p className="docs-quadrant-hint">{quadrant.hint}</p>
+            <ul className="docs-list">
+              {docCatalog.filter((entry) => entry.quadrant === quadrant.id).map((entry) => (
+                <li key={entry.slug}>
+                  <a href={`/docs/${entry.slug}`}>{entry.title}</a>
+                  <p>{entry.summary}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </main>
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />
       <WordcellContentFooter />

@@ -1,67 +1,68 @@
 #!/usr/bin/env bun
 // @bun
 import {
+  describeUsageError,
   main,
   parseArguments,
   runExecutable,
   usage
-} from "./index-bg7g0bta.js";
-import"./index-bcknqxrq.js";
-import"./index-054mb7d3.js";
-import"./index-bqtqeak3.js";
+} from "./index-vtwbapjr.js";
+import"./index-0eacgvpv.js";
+import"./index-qfqjfxaa.js";
+import"./index-r4qs6vq4.js";
 import"./index-j4zgmzjr.js";
-import"./index-de2w8crk.js";
+import"./index-2fmnttca.js";
 import"./index-6jcz0m1c.js";
-import"./index-f984hw45.js";
-import"./index-fc4dr114.js";
+import"./index-k86wepd8.js";
+import"./index-nwrehke7.js";
 import"./index-5n05se68.js";
-import"./index-g5vsqmdy.js";
-import"./index-hgve9rh2.js";
+import"./index-xwxy71ew.js";
+import"./index-cd75vky9.js";
 import"./index-2gv8y733.js";
 import"./index-w2zc0vwa.js";
 import"./index-e5fbsywq.js";
-import"./index-dfag79p7.js";
+import"./index-byz4kzww.js";
 import"./index-gh719d91.js";
 import"./index-npg9z1a4.js";
 import"./index-mxxxytys.js";
 import"./index-23z4zxgg.js";
 import"./index-pj501bh1.js";
 import"./index-9rf81m0p.js";
-import"./index-1k595z6v.js";
-import"./index-q7tbg07z.js";
+import"./index-mnq2wy34.js";
+import"./index-tvd2sqrx.js";
 import"./index-adx6khj5.js";
-import"./index-rr9kzq4n.js";
+import"./index-fp732bgg.js";
 import"./index-4j3tt0c3.js";
 import"./index-j70m75wd.js";
 import"./index-b88v3vtm.js";
-import"./index-djrcc1yf.js";
-import"./index-jk1sgx36.js";
-import"./index-xv80vzfp.js";
-import"./index-tf4wzjew.js";
+import"./index-tcaq1c7f.js";
+import"./index-bdwcjvr4.js";
+import"./index-1er88ckw.js";
+import"./index-pgtm2nhf.js";
 import"./index-1gwbassd.js";
-import"./index-vnybgywh.js";
+import"./index-ahyhryb8.js";
 import"./index-1xxnjn0d.js";
-import"./index-hmw17zaa.js";
-import"./index-233z9wmn.js";
+import"./index-r0m5taz2.js";
+import"./index-1s8mc4hz.js";
 import"./index-d13v9ckt.js";
 import"./index-48pz4jpc.js";
 import"./index-06c9ctr6.js";
 import"./index-4knsp9qj.js";
 import"./index-66pshdtx.js";
-import"./index-3agn8scn.js";
+import"./index-23m6bbjt.js";
 import"./index-hya40gb2.js";
 import"./index-5vwpzb5a.js";
 import"./index-x3fthpsc.js";
-import"./index-a2rp0wt3.js";
+import"./index-b0khj0h5.js";
 import"./index-3rm7cz6h.js";
-import"./index-qbssx940.js";
+import"./index-jvb7w0gg.js";
 import {
   __require
 } from "./index-z1w83f81.js";
 
 // src/cli.ts
 if (import.meta.main) {
-  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-6mydytyr.js");
+  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-c8hy7qfa.js");
   const env = standaloneSupportEnvironment();
   const args = process.argv.slice(2);
   if (args[0] === "support") {
@@ -77,5 +78,6 @@ export {
   usage,
   runExecutable,
   parseArguments,
-  main
+  main,
+  describeUsageError
 };

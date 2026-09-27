@@ -59,7 +59,7 @@ describe("Wordcell site source contract", () => {
       read("app/docs/page.tsx"),
       read("app/readme.generated.ts"),
     ]);
-    expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.16"');
+    expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.18"');
     expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.22.0"');
     expect(home).toContain('import { AskAiAboutThis } from "@hraness/ui"');
     expect(home).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io" />');
@@ -72,7 +72,7 @@ describe("Wordcell site source contract", () => {
     const globals = await read("app/globals.css");
     expect(globals).toContain('@import "@hraness/design-kit/fonts.css"');
     expect(globals).toContain('@import "@hraness/design-kit/product-marketing.css"');
-    expect(globals).toContain('@import "../vendor/paper-theme/paper-theme.css"');
+    expect(globals).toContain('@import "../wordcell/wordcell-theme.css"');
     expect(globals).not.toMatch(/Georgia|Times New Roman/u);
   });
 
@@ -80,6 +80,12 @@ describe("Wordcell site source contract", () => {
     const [sitemap, robots] = await Promise.all([read("public/sitemap.xml"), read("public/robots.txt")]);
     expect(sitemap).toContain("<loc>https://wordcell.io/</loc>");
     expect(sitemap).toContain("<loc>https://wordcell.io/docs</loc>");
+    expect(sitemap).toContain("<loc>https://wordcell.io/developers</loc>");
+    expect(sitemap).toContain("<loc>https://wordcell.io/docs/overview</loc>");
+    const { docCatalog } = await import("../app/docs/catalog");
+    for (const entry of docCatalog) {
+      expect(sitemap).toContain(`<loc>https://wordcell.io/docs/${entry.slug}</loc>`);
+    }
     expect(robots).toContain("Sitemap: https://wordcell.io/sitemap.xml");
   });
 });
@@ -114,7 +120,7 @@ test("registers the footer layer after UI layers in one stylesheet", async () =>
   expect(layout).not.toContain('import "@hraness/site-footer/styles.css"');
 });
 
-test("adopts the shared palette contract with Paper as the default appearance", async () => {
+test("adopts the shared palette contract with Gruvbox as the default appearance", async () => {
   const [layout, home, bootstrap, css, packageJson] = await Promise.all([
     read("app/layout.tsx"),
     read("app/page.tsx"),
@@ -122,20 +128,40 @@ test("adopts the shared palette contract with Paper as the default appearance", 
     read("app/globals.css"),
     read("package.json"),
   ]);
-  expect(layout).toContain('data-palette="paper"');
-  expect(layout).toContain('getDesignPaletteTheme("paper", "light")');
+  expect(layout).toContain('data-palette="gruvbox"');
+  expect(layout).toContain('getDesignPaletteTheme("gruvbox", "light")');
   expect(layout).toContain('src="/theme-bootstrap.js"');
-  expect(layout).toContain('<DesignPaletteProvider defaultPreference={{ palette: "paper", mode: "system" }}>');
+  expect(layout).toContain('<DesignPaletteProvider defaultPreference={{ palette: "gruvbox", mode: "system" }}>');
   expect(layout).toContain("suppressHydrationWarning");
   // The single appearance control sits at the rightmost header action.
   expect(home).toContain('trailing={<ThemeMenuButton aria-label="Appearance" />}');
-  // The blocking bootstrap keeps Paper as the system-following default.
+  // The blocking bootstrap keeps Gruvbox as the system-following default.
   expect(bootstrap).toContain("initDesignPalette");
-  expect(bootstrap).toContain('palette: "paper", mode: "system"');
-  // Palette themes and the semantic bridge load before the vendored theme.
+  expect(bootstrap).toContain('palette: "gruvbox", mode: "system"');
+  // Palette themes and the semantic bridge load before the product theme.
   expect(css).toContain('@import "@hraness/design-kit/palettes.css";');
-  expect(css.indexOf('palettes.css')).toBeLessThan(css.indexOf("vendor/paper-theme"));
+  expect(css.indexOf('palettes.css')).toBeLessThan(css.indexOf("wordcell/wordcell-theme"));
   expect(packageJson).toContain('"build:theme"');
+});
+
+test("adopts the wordcell product theme on the shared foundations", async () => {
+  const [layout, theme, components] = await Promise.all([
+    read("app/layout.tsx"),
+    read("wordcell/wordcell-theme.css"),
+    read("wordcell/wordcell.css"),
+  ]);
+  expect(layout).toContain('data-hraness-theme="wordcell"');
+  // The theme owns the complete standalone token surface for the default
+  // paper path, like the shared themes it sits beside.
+  expect(theme).toContain('[data-hraness-theme="wordcell"]');
+  expect(theme).toContain("--ui-foreground: var(--foreground)");
+  expect(theme).toContain("--ui-ring: var(--focus)");
+  expect(theme).toContain("forced-colors: active");
+  expect(theme).toContain("color-scheme");
+  // Component motion stays decorative: pointer-transparent and collapsible.
+  expect(components).toContain("prefers-reduced-motion: reduce");
+  expect(components).toContain("forced-colors: active");
+  expect(components).toContain("pointer-events: none");
 });
 
 test("pins the shared footer release and leaves attribution to the package", async () => {
@@ -146,7 +172,7 @@ test("pins the shared footer release and leaves attribution to the package", asy
     read("app/docs/page.tsx"),
     read("app/globals.css"),
   ]);
-  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.15.0"');
+  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.19.2"');
   expect(layout).toContain('import { HranessSiteFooter } from "@hraness/site-footer/react"');
   expect(layout).toMatch(/<HranessSiteFooter\b[^>]*placement="flow"/u);
   for (const source of [home, docs, css]) {

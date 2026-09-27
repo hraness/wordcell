@@ -1,5 +1,5 @@
-const REPOSITORY_BLOB_ROOT = "https://github.com/hraness/wordcell/blob/main/";
-const REPOSITORY_RAW_ROOT = "https://raw.githubusercontent.com/hraness/wordcell/main/";
+export const REPOSITORY_BLOB_ROOT = "https://github.com/hraness/wordcell/blob/main/";
+export const REPOSITORY_RAW_ROOT = "https://raw.githubusercontent.com/hraness/wordcell/main/";
 
 export const LANDING_START = "<!-- hraness:wordcell-landing:start -->";
 export const LANDING_END = "<!-- hraness:wordcell-landing:end -->";
@@ -28,23 +28,57 @@ function assertSafeTarget(encodedTarget: string): void {
   }
 }
 
-function rewriteRelativeTargets(html: string): string {
+/**
+ * Rewrites a repository-relative path to its public URL. The `target` handed to
+ * a resolver is always normalized against the repository root, so `docs/x.md`
+ * linked from `docs/` and from `../docs/x.md` elsewhere resolve identically.
+ * Returning null leaves the attribute untouched.
+ */
+export type RelativeTargetResolver = (name: "href" | "src", target: string) => string | null;
+
+export function resolveRepositoryPath(base: string, target: string): string {
+  const parts = `${base}/${target}`.split("/").filter((part) => part !== "" && part !== ".");
+  const resolved: string[] = [];
+  for (const part of parts) {
+    if (part === "..") {
+      if (resolved.pop() === undefined) {
+        throw new Error(`Link target escapes the repository: ${JSON.stringify(target)}`);
+      }
+    } else {
+      resolved.push(part);
+    }
+  }
+  return resolved.join("/");
+}
+
+const githubResolver: RelativeTargetResolver = (name, target) => {
+  const root = name === "src" ? REPOSITORY_RAW_ROOT : REPOSITORY_BLOB_ROOT;
+  return `${root}${target}`;
+};
+
+function rewriteRelativeTargets(html: string, base: string, resolve: RelativeTargetResolver): string {
   return html.replace(/(href|src)="([^"]*)"/gu, (
     attribute,
     name: "href" | "src",
     target: string,
   ) => {
     assertSafeTarget(target);
-    if (
-      target === ""
-      || target.startsWith("#")
-      || target.startsWith("/")
-      || /^[a-z][a-z0-9+.-]*:/iu.test(decodeCharacterReferences(target).trim())
-    ) {
+    if (target === "" || target.startsWith("#") || target.startsWith("/")) {
       return attribute;
     }
-    const root = name === "src" ? REPOSITORY_RAW_ROOT : REPOSITORY_BLOB_ROOT;
-    return `${name}="${root}${target}"`;
+    // An absolute link to a blob on main is equivalent to a repository-relative
+    // path and routes through the same resolver.
+    let path = target;
+    let effectiveBase = base;
+    if (target.startsWith(REPOSITORY_BLOB_ROOT)) {
+      path = target.slice(REPOSITORY_BLOB_ROOT.length);
+      effectiveBase = "";
+    } else if (/^[a-z][a-z0-9+.-]*:/iu.test(decodeCharacterReferences(target).trim())) {
+      return attribute;
+    }
+    const rewritten = resolve(name, resolveRepositoryPath(effectiveBase, path));
+    if (rewritten === null) return attribute;
+    return `${name}="${rewritten}"`;
   });
 }
 
@@ -100,10 +134,17 @@ function assertFragmentsResolve(html: string): void {
   }
 }
 
-export function renderReadmeHtml(source: string): string {
-  const document = source.replaceAll(LANDING_START, "").replaceAll(LANDING_END, "")
-    .replace(/^\[!\[Agent Skill\]\([^)]+\)\]\(([^)]+)\)[\t ]*$/mu, "[Install the Agent Skill]($1)");
-  const html = Bun.markdown.html(document, {
+/** Every `id` emitted on a rendered element, used to validate cross-page fragments. */
+export function renderedFragmentIds(html: string): ReadonlySet<string> {
+  return new Set(Array.from(html.matchAll(/\sid="([^"]+)"/gu), ([, id]) => id));
+}
+
+export function renderMarkdownHtml(
+  source: string,
+  resolve: RelativeTargetResolver = githubResolver,
+  base = "",
+): string {
+  const html = Bun.markdown.html(source, {
     noHtmlBlocks: true,
     noHtmlSpans: true,
     tagFilter: true,
@@ -112,9 +153,18 @@ export function renderReadmeHtml(source: string): string {
     const target = match[1];
     if (target !== undefined) assertSafeTarget(target);
   }
-  const rendered = rewriteRelativeTargets(addHeadingIds(html));
+  const rendered = rewriteRelativeTargets(addHeadingIds(html), base, resolve);
   assertFragmentsResolve(rendered);
   return rendered;
+}
+
+export function renderReadmeHtml(
+  source: string,
+  resolve: RelativeTargetResolver = githubResolver,
+): string {
+  const document = source.replaceAll(LANDING_START, "").replaceAll(LANDING_END, "")
+    .replace(/^\[!\[Agent Skill\]\([^)]+\)\]\(([^)]+)\)[\t ]*$/mu, "[Install the Agent Skill]($1)");
+  return renderMarkdownHtml(document, resolve);
 }
 
 /** The README landing block between the shared Hraness markers, without its heading. */

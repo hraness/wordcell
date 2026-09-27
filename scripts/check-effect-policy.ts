@@ -12,6 +12,7 @@ const findings = inspectEffectArchitecture(createArchitectureProgram(resolve(roo
     "src/authoring-platform.ts",
     "src/authoring-program.ts",
     "src/authoring-runtime.ts",
+    "src/authoring-import.ts",
   ],
   // Native callback admission, filesystem operations and Promise settlement.
   adapters: ["src/workflow-platform.ts", "src/authoring-platform.ts"],

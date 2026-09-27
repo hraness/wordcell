@@ -3,32 +3,48 @@
 
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
-A local knowledge base for coding agents. Save decisions in Markdown and recover
-the context behind your code. Give the next session only the context it needs.
+Wordcell keeps decisions, plans, and sources as Markdown files beside your
+code. Coding agents find them by exact words, by meaning with an optional
+local model, or from the file they are about to change.
 
-Your files stay yours: read them in Obsidian or any editor, review changes in
-Git, and rebuild every index from the Markdown. Exact search and graph queries
-run on your machine with no account or model. Web capture, hosted agents, and
-optional remote reranking have [separate privacy boundaries](#privacy-and-boundaries).
+A new coding-agent session can read your code, but not the decisions that
+stayed in the last session's chat. Wordcell keeps those decisions as Markdown
+files beside the repository, with the plans that depend on them and the web
+pages and PDFs that informed them. Tie a note to the paths it explains, and an
+agent about to change that code runs one command to get the notes and plans
+for that path. Exact search, backlinks, and Git history run on your machine
+with no account or model, and every index rebuilds from files you can read in
+any editor. Wordcell is free and open source.
+
+Web capture, optional hosted reranking, and your agent's provider reach other
+services; [Privacy and boundaries](#privacy-and-boundaries) says what each one
+sends.
 
 [Documentation](https://wordcell.io/docs) · [Comparisons](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md) · [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md) · [Changelog](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md)
 
 ## Why Wordcell
 
-- **Keep decisions with the work.** Link a plan to the notes that explain it,
-  attach those notes to a code path, and recover their Git history on request.
-  Only context you save becomes part of the record.
-- **Read what matters.** Start with a code path, search result, or linked note.
-  Get a limited set of summaries and open the sources you need, instead of
-  loading the whole vault into an agent conversation.
-- **Keep control of your knowledge.** Markdown and Git are the source of truth.
-  Use local search, export selected notes as a static site, and keep using the
-  files even without Wordcell.
+- **Keep what you learn in files you own.** Write decisions, sources, and plans
+  in Markdown. Obsidian, Git, and Wordcell read the same record, and every
+  index rebuilds from the files.
+- **Find it by words or by meaning.** Exact search needs no model or account.
+  Optional local semantic search joins each match to current metadata, links,
+  and history instead of returning isolated text.
+- **Author the connections.** Wikilinks and typed relationships turn notes into
+  a graph you can query. Backlinks and graph queries use only what you wrote,
+  and `wordcell percolate` suggests missing links for you to review without
+  writing them into your notes.
+- **Give coding agents the reasons behind the code.** Tie notes to repository
+  paths, list the commits behind a note, and let the next session start from
+  the notes for the file it is changing. Only context you save becomes part of
+  the record.
 
 Plain Markdown may be enough for a small set of notes. QMD is a good fit for
 local document retrieval and also supplies Wordcell's optional semantic search.
 Wordcell adds a connected workflow for repository context, authored relationships,
 Git evidence, and selective publishing. [Compare the tradeoffs](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md).
+
+Wordcell keeps the record in Markdown files you own, rebuilds every index from those files, and lets the next session start from the notes for the file it is changing: the design every Hraness project shares. [The thread through hraness](https://hraness.com/writing/the-thread-through-hraness) follows that design across the projects, and the [ALGAL vision](https://algal.computer/docs/vision/) states the bet behind it.
 
 ## Install
 
@@ -36,14 +52,14 @@ Git evidence, and selective publishing. [Compare the tradeoffs](https://github.c
 The CLI and TypeScript SDK run with Bun. Install the versioned GitHub archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
 wordcell --help
 ```
 
 Prefer npm? The same release is [mirrored there](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.22.0
+npm install --global --ignore-scripts @hraness/wordcell@0.23.0
 wordcell --help
 ```
 
@@ -85,7 +101,7 @@ After trying the CLI, install the public Agent Skill into a compatible agent,
 such as Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.22.0 --skill wordcell
+bunx skills add hraness/wordcell#v0.23.0 --skill wordcell
 ```
 
 Then ask:
@@ -167,6 +183,8 @@ provider failure retains the baseline order with a diagnostic. See the
 | Check the vault | `wordcell check --root kb` | Reports structural and attachment problems without editing files. |
 | Publish selected notes | `wordcell publish --root kb --out site/ --include notes/parser-contract --dry-run --json` | Previews a static site selection locally; remove `--dry-run` to build it. |
 | Preview a site | `wordcell serve --root site --port 8080` | Serves a published site on a loopback static file server with the emitted `404.html` fallback. |
+| Connect an MCP client | `wordcell mcp --root kb` | Serves this vault to a local MCP client over standard input and output; `--read-only` removes the write tools. |
+| Import from Supermemory | `wordcell import supermemory documents.json --root kb` | Turns saved Supermemory API responses into Markdown notes and reports local edits as conflicts on later imports. |
 
 Use `--json` for structured output and `wordcell --help` for the complete command
 surface. [Full command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md#command-surface).
@@ -206,6 +224,27 @@ selection digest. They keep note bodies out of the agent's context. Use
 prose and attachments still need review before sharing: selection is not secret
 redaction. [Selection recipes and hosting guide](https://github.com/hraness/wordcell/blob/main/docs/publish.md).
 
+## Use a vault as agent memory
+
+`wordcell mcp --root kb` serves a vault to a local MCP client, such as Claude
+Code, Claude Desktop, Cursor, or Codex, over standard input and output. The
+client can search, list, and read notes, follow links, create notes, update a
+note body at a known revision, and add typed relations. `--read-only` removes
+the write tools. [Connect a client](https://github.com/hraness/wordcell/blob/main/docs/reference.md#connect-a-client)
+shows the setup for each host.
+
+With the Agent Skill, ask your agent to save the session. It writes a dated
+session note, links it to the notes it changed, and keeps a profile note for
+you or your project. Wordcell extracts no facts and writes no note on its own.
+[Session memory and profiles](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md#session-memory-and-profiles).
+
+To move from Supermemory, `wordcell import supermemory` turns saved Supermemory
+API responses into Markdown notes. The [migration guide](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md)
+covers export, import, and what does not transfer, and the
+[Supermemory comparison](https://wordcell.io/compare/supermemory) lists when to
+choose Supermemory instead. [Sync with Git](https://github.com/hraness/wordcell/blob/main/docs/sync.md)
+keeps one vault current on several machines.
+
 ## Evidence and comparisons
 
 In a four-query example over a seven-note public vault, packed search snippets
@@ -226,9 +265,17 @@ does not claim to beat QMD's retrieval quality or every Markdown workflow.
 [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md)
 shows a reproducible public-vault example, with the inputs, output sizes, and
 limits beside each result. [The comparison guide](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md)
-covers Markdown alone, QMD, Basic Memory, Obsidian, and static publishing tools
-using their own documentation. Choose the smallest workflow that meets your
-needs.
+covers Markdown alone, QMD, Basic Memory, Obsidian, static publishing tools,
+Supermemory, Mem0, and Zep using their own documentation. Choose the smallest
+workflow that meets your needs.
+
+The [benchmarks page](https://wordcell.io/benchmarks) shows the payload and
+SciFact results beside the published results of Oh, the embedded memory
+framework, each with its source data and limits. On all 500 LongMemEval-S
+questions, Oh semantic retrieval scored 88.87% and BM25 86.13% with the same
+reader and budget; on the measure Oh named before the run, its interval does
+not rule out a tie. Oh's scores measure its own memory-retrieval path, not a
+Wordcell vault.
 
 ## How the files fit together
 
@@ -248,13 +295,25 @@ Markdown, YAML frontmatter, explicit wikilinks, and Git hold the record. Open
 the same files in Obsidian, a text editor, or ordinary file-search tools.
 Application code does not need to import Wordcell or its vault.
 
-QMD supplies optional local search. [Oh](https://oh.computer), the Hraness
-record and memory kernel ([source](https://github.com/hraness/oh)), is embedded
-as a derived graph authority behind an engine-neutral port: only an explicit
+Wordcell is the Markdown knowledge base. [Oh](https://oh.computer) is the
+embedded memory framework that backs its named graph queries and source proofs.
+Markdown and Git remain authoritative. Query the graph immediately without an
+Oh account, service, or persisted database:
+
+```sh
+wordcell graph query --program backlinks --note notes/parser-contract --root kb --json
+```
+
+The result traces each returned link to its source note and revision. Only an explicit
 `wordcell graph rebuild --root kb` writes `.wordcell/oh.sqlite`, the file stays
 ignored and rebuildable, and nothing flows from the projection back into notes.
 Backlinks and typed relationships come from authored links. Percolation
 suggests connections for review and does not add inferred edges to notes.
+
+Wordcell search combines its own exact matching with optional QMD local search
+and optional hosted Jev reranking. Oh also offers memory retrieval for applications;
+its conversation-memory benchmark scores measure that separate path. They do not
+establish Wordcell's retrieval or answer quality. [How the integration works](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md#how-wordcell-and-oh-fit-together).
 
 Graph proofs explain a supported derivation from a specific source revision.
 They do not prove that a note is true or that a missing relationship cannot
@@ -265,7 +324,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph
@@ -289,14 +348,22 @@ show the public imports and lifecycle.
 
 ## Documentation
 
+The documentation follows the Diataxis split: a tutorial to learn the loop,
+how-to guides for tasks, reference for exact interfaces, and explanation for
+the design. Browse it on the [documentation index](https://wordcell.io/docs).
+
 | Read next | Purpose |
 | --- | --- |
+| [Get started](https://github.com/hraness/wordcell/blob/main/docs/getting-started.md) | Learn the full loop on a first vault: save, find, connect, and publish one note. |
 | [Agent workflow](https://github.com/hraness/wordcell/blob/main/docs/agent-workflow.md) | Set up, query, maintain, and revise repository memory. |
+| [Local MCP server](https://github.com/hraness/wordcell/blob/main/docs/reference.md#local-mcp-server) | Connect Claude Code, Claude Desktop, Cursor, or Codex to a vault and review the write tools. |
 | [Installation and command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md) | Exact interfaces, SDK imports, optional adapters, and troubleshooting prerequisites. |
 | [Web capture](https://github.com/hraness/wordcell/blob/main/docs/capture.md) and [PDF capture](https://github.com/hraness/wordcell/blob/main/docs/pdf.md) | Save sources with provenance, assets, and explicit completeness limits. |
 | [Publish selected notes](https://github.com/hraness/wordcell/blob/main/docs/publish.md) | Preview a slice, build a static site, and choose how to host it. |
 | [Graph guide](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md) | Named queries, proofs, revisions, resource limits, and cache recovery. |
 | [Portfolio federation](https://github.com/hraness/wordcell/blob/main/docs/portfolio.md) | Search only selected, authorized vaults. |
+| [Sync with Git](https://github.com/hraness/wordcell/blob/main/docs/sync.md) | Keep one vault current on several machines with a private repository. |
+| [Migrate from Supermemory](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md) | Export documents and memory entries, import them as notes, and replace connectors. |
 | [Design](https://github.com/hraness/wordcell/blob/main/docs/design.md) and [memory rationale](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md) | File contracts, design choices, and evaluation context. |
 | [Release verification](https://github.com/hraness/wordcell/blob/main/docs/publishing.md#verify-a-published-release) | Verify archive identity, signatures, and provenance. |
 

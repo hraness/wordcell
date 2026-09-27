@@ -1,0 +1,2320 @@
+{
+  "protocol": "oh.memory.evolution-study-summary.v9",
+  "status": "complete",
+  "mode": "explicit-selection-descriptive",
+  "design": {
+    "dataset": "locomo",
+    "candidate": {
+      "id": "semantic-24k",
+      "system": "oh-semantic",
+      "budget": {
+        "topK": 100,
+        "contextBytes": 24000
+      }
+    },
+    "control": {
+      "id": "window-24k",
+      "system": "bm25-window",
+      "budget": {
+        "topK": 100,
+        "contextBytes": 24000
+      }
+    },
+    "readers": [
+      "gpt5-nano-calibration-only-v1-reader",
+      "gpt5-mini-calibration-only-v1-reader"
+    ],
+    "judge": "gpt4o-mini-locomo-j-judge-v1",
+    "rubricSha256": "fbdb3c740e50aeb0224b22dd51f2db02d9b942a8e9bd59023e099a94542dd227",
+    "repeats": 1,
+    "judgeRepeats": 1,
+    "readerDatePolicy": "final-session-date",
+    "candidatePresentation": "retrieval-order",
+    "repeatPolicy": "predeclared-full-matrix-indexed-repeats",
+    "shardPolicy": "one-cluster-per-shard",
+    "derivedRecordsPinSha256": null,
+    "categoryNames": {
+      "locomo:1": "multi-hop",
+      "locomo:2": "temporal",
+      "locomo:3": "open-domain",
+      "locomo:4": "single-hop",
+      "locomo:5": "adversarial"
+    }
+  },
+  "scope": {
+    "releaseQuestions": 1986,
+    "selectedQuestions": 1540,
+    "declaredGroups": 10,
+    "declaredHistories": 10,
+    "connectedDeclaredClusters": 10,
+    "partiallySelectedClusters": 10,
+    "logicalReaderCases": 6160,
+    "logicalJudgeCases": 6160,
+    "shards": 10,
+    "strata": [
+      {
+        "partition": "closed",
+        "exposure": "evaluated",
+        "questions": 1226,
+        "groups": 8
+      },
+      {
+        "partition": "development",
+        "exposure": "development",
+        "questions": 314,
+        "groups": 2
+      }
+    ]
+  },
+  "pins": {
+    "studySha256": "85a94e5553fa99ce8ac3554e4357138f1cfa74bd37a022aa10ad84a12808e9b7",
+    "scopeSha256": "42db17faa25f745ad3d0bda9c67ece9fb97b41a581c13ac301457231cfe82b37",
+    "scopeFileSha256": "d94ee022970d35f99d224fb6520be799cea2ee3e60c51133367a255b4445ff7f",
+    "manifestSha256": "40c46fecdcd3e04770a8a8a561268cda4d781037b08ab1dcf4248e23de1907bd",
+    "sourceSha256": "79fa87e90f04081343b8c8debecb80a9a6842b76a7aa537dc9fdf651ea698ff4",
+    "campaignFileSha256": "cc472be6763321055b5b97029347148e8781be9395c105136ffc0cb77f035935",
+    "campaignSha256": "d05ab483aaa425c948cc44251340e6fbf6722f0c232339cb3d2ab4ee0219b232",
+    "retrievalSourceSha256": "fdff485ef927562cd0cda79728ffae9ddb3a878162425fddf2738535813cd915",
+    "reports": [
+      {
+        "shardId": "shard-001",
+        "reportFileSha256": "049689214dfab8fa425ebc7434eb529bcb9a0249eae4e186256ce1e2c91cb4d9"
+      },
+      {
+        "shardId": "shard-002",
+        "reportFileSha256": "d4f5c54a6c1033dd4ee590fc191b7146385d33146da5591264005f8710447f90"
+      },
+      {
+        "shardId": "shard-003",
+        "reportFileSha256": "43708703c214f8855bacde6b7cb1d0ea5d469c1ae56833d2b2162d8f5337379f"
+      },
+      {
+        "shardId": "shard-004",
+        "reportFileSha256": "b772c51d6102f8826ff256eca2ae971a70d63562ecf1c478c78538c608a8301b"
+      },
+      {
+        "shardId": "shard-005",
+        "reportFileSha256": "d5c2907f8855be114fcee35db07056e86f9475dba831920706d959e3e3418cc3"
+      },
+      {
+        "shardId": "shard-006",
+        "reportFileSha256": "8e716c2e4ebebcc11aeb096847078afc66b0f7efe101995c5ae816916f87871c"
+      },
+      {
+        "shardId": "shard-007",
+        "reportFileSha256": "99a37668ff163fc09366334c3fffe6e8ff3324ba8e665f830e7df8c84534bd4d"
+      },
+      {
+        "shardId": "shard-008",
+        "reportFileSha256": "59c25871c7306a23602336411ff4405785ada49c71d0769f50b3f4e20ddd641e"
+      },
+      {
+        "shardId": "shard-009",
+        "reportFileSha256": "32d135d0db90c7bb8a6a8d8f2d6799c724443163d77d8b69320ffb2c45e94499"
+      },
+      {
+        "shardId": "shard-010",
+        "reportFileSha256": "8da3bfcb99cc7b320781d253ead54523c51938adcb0adc92e3509afb0abe3c08"
+      }
+    ]
+  },
+  "arms": [
+    {
+      "variantId": "window-24k",
+      "reader": "gpt5-nano-calibration-only-v1-reader",
+      "readerFailures": 0,
+      "judgeFailures": 0,
+      "metrics": [
+        {
+          "metric": "judge-mean",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.7811688311688312,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.6382978723404256,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.7601246105919003,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.46875,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8727705112960761,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.7789559543230016,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.7898089171974523,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "locomo-f1",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.516420737489225,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.34140778491220014,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5474490549256912,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.25776766846852156,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5927872741784117,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5142662578999105,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.524832813847507,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-recall",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.8481053714307029,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.6013957228122959,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8938213914849428,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.5744158335270868,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9433214427269124,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.8454994034650896,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.858328784218877,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-all",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.7838541666666666,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.3333333333333333,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8722741433021807,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.4782608695652174,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9346016646848989,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.7843137254901961,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.782051282051282,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        }
+      ],
+      "byCell": [
+        {
+          "repeat": 0,
+          "judgeRepeat": 0,
+          "cases": 1540,
+          "scored": 1540,
+          "unscored": 0,
+          "failed": 0,
+          "mean": 0.7811688311688312,
+          "declaredGroups": 10,
+          "declaredHistories": 10
+        }
+      ]
+    },
+    {
+      "variantId": "window-24k",
+      "reader": "gpt5-mini-calibration-only-v1-reader",
+      "readerFailures": 0,
+      "judgeFailures": 0,
+      "metrics": [
+        {
+          "metric": "judge-mean",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.8162337662337662,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.6914893617021277,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8037383177570093,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.4791666666666667,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.901307966706302,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8132137030995106,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8280254777070064,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "locomo-f1",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.5647828456041764,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.42014501899721973,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.583312892332039,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.286856932472804,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.6379345813522505,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5650960056828175,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5635601250423485,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-recall",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.8481053714307029,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.6013957228122959,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8938213914849428,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.5744158335270868,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9433214427269124,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.8454994034650896,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.858328784218877,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-all",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.7838541666666666,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.3333333333333333,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8722741433021807,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.4782608695652174,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9346016646848989,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.7843137254901961,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.782051282051282,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        }
+      ],
+      "byCell": [
+        {
+          "repeat": 0,
+          "judgeRepeat": 0,
+          "cases": 1540,
+          "scored": 1540,
+          "unscored": 0,
+          "failed": 0,
+          "mean": 0.8162337662337662,
+          "declaredGroups": 10,
+          "declaredHistories": 10
+        }
+      ]
+    },
+    {
+      "variantId": "semantic-24k",
+      "reader": "gpt5-nano-calibration-only-v1-reader",
+      "readerFailures": 0,
+      "judgeFailures": 0,
+      "metrics": [
+        {
+          "metric": "judge-mean",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.8103896103896104,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.7624113475177305,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.7725856697819314,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8763376932223543,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8123980424143556,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.802547770700637,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "locomo-f1",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.5412830134998932,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.4052116756584921,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5794553404366497,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.2605173766061181,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.6043891983588507,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.550242128655653,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5063025192930153,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-recall",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.9132163702988665,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.820378335425928,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9405503634475596,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.7674310237929163,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9498612762584225,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.9140522875816993,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.909937002496987,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-all",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.8541666666666666,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5886524822695035,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9252336448598131,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.6304347826086957,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9405469678953626,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.8611111111111112,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.8269230769230769,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        }
+      ],
+      "byCell": [
+        {
+          "repeat": 0,
+          "judgeRepeat": 0,
+          "cases": 1540,
+          "scored": 1540,
+          "unscored": 0,
+          "failed": 0,
+          "mean": 0.8103896103896104,
+          "declaredGroups": 10,
+          "declaredHistories": 10
+        }
+      ]
+    },
+    {
+      "variantId": "semantic-24k",
+      "reader": "gpt5-mini-calibration-only-v1-reader",
+      "readerFailures": 0,
+      "judgeFailures": 0,
+      "metrics": [
+        {
+          "metric": "judge-mean",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.8441558441558441,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.7907801418439716,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8130841121495327,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9131985731272295,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8450244698205547,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.8407643312101911,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "locomo-f1",
+          "overall": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "failed": 0,
+            "mean": 0.5856574694442099,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.510599284548519,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5896706226644598,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.29158828852326885,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.6428617825539568,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5866560789287228,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5817584400556378,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-recall",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.9132163702988665,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.820378335425928,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9405503634475596,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.7674310237929163,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9498612762584225,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.9140522875816993,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.909937002496987,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-all",
+          "overall": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "failed": 0,
+            "mean": 0.8541666666666666,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.5886524822695035,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9252336448598131,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "failed": 0,
+              "mean": 0.6304347826086957,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "failed": 0,
+              "mean": 0.9405469678953626,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.8611111111111112,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "failed": 0,
+              "mean": 0.8269230769230769,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        }
+      ],
+      "byCell": [
+        {
+          "repeat": 0,
+          "judgeRepeat": 0,
+          "cases": 1540,
+          "scored": 1540,
+          "unscored": 0,
+          "failed": 0,
+          "mean": 0.8441558441558441,
+          "declaredGroups": 10,
+          "declaredHistories": 10
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "candidateVariantId": "semantic-24k",
+      "controlVariantId": "window-24k",
+      "reader": "gpt5-nano-calibration-only-v1-reader",
+      "metrics": [
+        {
+          "metric": "judge-mean",
+          "paired": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "wins": 169,
+            "losses": 124,
+            "ties": 1247,
+            "meanDelta": 0.02922077922077922,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 67,
+              "losses": 32,
+              "ties": 183,
+              "meanDelta": 0.12411347517730496,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 34,
+              "losses": 30,
+              "ties": 257,
+              "meanDelta": 0.012461059190031152,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "wins": 11,
+              "losses": 8,
+              "ties": 77,
+              "meanDelta": 0.03125,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 57,
+              "losses": 54,
+              "ties": 730,
+              "meanDelta": 0.0035671819262782403,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "wins": 137,
+              "losses": 96,
+              "ties": 993,
+              "meanDelta": 0.033442088091353996,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "wins": 32,
+              "losses": 28,
+              "ties": 254,
+              "meanDelta": 0.012738853503184714,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "locomo-f1",
+          "paired": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "wins": 534,
+            "losses": 447,
+            "ties": 559,
+            "meanDelta": 0.024862276010669117,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 125,
+              "losses": 82,
+              "ties": 75,
+              "meanDelta": 0.06380389074629175,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 97,
+              "losses": 79,
+              "ties": 145,
+              "meanDelta": 0.0320062855109584,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "wins": 19,
+              "losses": 23,
+              "ties": 54,
+              "meanDelta": 0.002749708137596644,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 293,
+              "losses": 263,
+              "ties": 285,
+              "meanDelta": 0.011601924180438974,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "wins": 440,
+              "losses": 343,
+              "ties": 443,
+              "meanDelta": 0.035975870755743024,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "wins": 94,
+              "losses": 104,
+              "ties": 116,
+              "meanDelta": -0.018530294554492066,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-recall",
+          "paired": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "wins": 247,
+            "losses": 95,
+            "ties": 1194,
+            "meanDelta": 0.06511099886816434,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 139,
+              "losses": 34,
+              "ties": 109,
+              "meanDelta": 0.21898261261363164,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 34,
+              "losses": 16,
+              "ties": 271,
+              "meanDelta": 0.04672897196261683,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "wins": 34,
+              "losses": 11,
+              "ties": 47,
+              "meanDelta": 0.19301519026582967,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 40,
+              "losses": 34,
+              "ties": 767,
+              "meanDelta": 0.006539833531510107,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "wins": 194,
+              "losses": 66,
+              "ties": 964,
+              "meanDelta": 0.06855288411660959,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "wins": 53,
+              "losses": 29,
+              "ties": 230,
+              "meanDelta": 0.051608218278109894,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-all",
+          "paired": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "wins": 190,
+            "losses": 82,
+            "ties": 1264,
+            "meanDelta": 0.0703125,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 97,
+              "losses": 25,
+              "ties": 160,
+              "meanDelta": 0.2553191489361702,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 33,
+              "losses": 16,
+              "ties": 272,
+              "meanDelta": 0.0529595015576324,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "wins": 21,
+              "losses": 7,
+              "ties": 64,
+              "meanDelta": 0.15217391304347827,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 39,
+              "losses": 34,
+              "ties": 768,
+              "meanDelta": 0.005945303210463734,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "wins": 152,
+              "losses": 58,
+              "ties": 1014,
+              "meanDelta": 0.07679738562091504,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "wins": 38,
+              "losses": 24,
+              "ties": 250,
+              "meanDelta": 0.04487179487179487,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        }
+      ],
+      "byCell": [
+        {
+          "repeat": 0,
+          "judgeRepeat": 0,
+          "cases": 1540,
+          "scored": 1540,
+          "unscored": 0,
+          "wins": 169,
+          "losses": 124,
+          "ties": 1247,
+          "meanDelta": 0.02922077922077922,
+          "declaredGroups": 10,
+          "declaredHistories": 10
+        }
+      ]
+    },
+    {
+      "candidateVariantId": "semantic-24k",
+      "controlVariantId": "window-24k",
+      "reader": "gpt5-mini-calibration-only-v1-reader",
+      "metrics": [
+        {
+          "metric": "judge-mean",
+          "paired": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "wins": 126,
+            "losses": 83,
+            "ties": 1331,
+            "meanDelta": 0.02792207792207792,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 50,
+              "losses": 22,
+              "ties": 210,
+              "meanDelta": 0.09929078014184398,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 27,
+              "losses": 24,
+              "ties": 270,
+              "meanDelta": 0.009345794392523364,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "wins": 12,
+              "losses": 10,
+              "ties": 74,
+              "meanDelta": 0.020833333333333332,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 37,
+              "losses": 27,
+              "ties": 777,
+              "meanDelta": 0.011890606420927468,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "wins": 103,
+              "losses": 64,
+              "ties": 1059,
+              "meanDelta": 0.03181076672104405,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "wins": 23,
+              "losses": 19,
+              "ties": 272,
+              "meanDelta": 0.012738853503184714,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "locomo-f1",
+          "paired": {
+            "cases": 1540,
+            "scored": 1540,
+            "unscored": 0,
+            "wins": 379,
+            "losses": 337,
+            "ties": 824,
+            "meanDelta": 0.020874623840034495,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 120,
+              "losses": 59,
+              "ties": 103,
+              "meanDelta": 0.09045426555129958,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 47,
+              "losses": 52,
+              "ties": 222,
+              "meanDelta": 0.00635773033242101,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 96,
+              "unscored": 0,
+              "wins": 16,
+              "losses": 24,
+              "ties": 56,
+              "meanDelta": 0.004731356050464715,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 196,
+              "losses": 202,
+              "ties": 443,
+              "meanDelta": 0.004927201201706169,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1226,
+              "unscored": 0,
+              "wins": 301,
+              "losses": 265,
+              "ties": 660,
+              "meanDelta": 0.02156007324590557,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 314,
+              "unscored": 0,
+              "wins": 78,
+              "losses": 72,
+              "ties": 164,
+              "meanDelta": 0.018198315013289515,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-recall",
+          "paired": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "wins": 247,
+            "losses": 95,
+            "ties": 1194,
+            "meanDelta": 0.06511099886816434,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 139,
+              "losses": 34,
+              "ties": 109,
+              "meanDelta": 0.21898261261363164,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 34,
+              "losses": 16,
+              "ties": 271,
+              "meanDelta": 0.04672897196261683,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "wins": 34,
+              "losses": 11,
+              "ties": 47,
+              "meanDelta": 0.19301519026582967,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 40,
+              "losses": 34,
+              "ties": 767,
+              "meanDelta": 0.006539833531510107,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "wins": 194,
+              "losses": 66,
+              "ties": 964,
+              "meanDelta": 0.06855288411660959,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "wins": 53,
+              "losses": 29,
+              "ties": 230,
+              "meanDelta": 0.051608218278109894,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        },
+        {
+          "metric": "evidence-all",
+          "paired": {
+            "cases": 1540,
+            "scored": 1536,
+            "unscored": 4,
+            "wins": 190,
+            "losses": 82,
+            "ties": 1264,
+            "meanDelta": 0.0703125,
+            "declaredGroups": 10,
+            "declaredHistories": 10
+          },
+          "byCategory": [
+            {
+              "id": "locomo:1",
+              "cases": 282,
+              "scored": 282,
+              "unscored": 0,
+              "wins": 97,
+              "losses": 25,
+              "ties": 160,
+              "meanDelta": 0.2553191489361702,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:2",
+              "cases": 321,
+              "scored": 321,
+              "unscored": 0,
+              "wins": 33,
+              "losses": 16,
+              "ties": 272,
+              "meanDelta": 0.0529595015576324,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            },
+            {
+              "id": "locomo:3",
+              "cases": 96,
+              "scored": 92,
+              "unscored": 4,
+              "wins": 21,
+              "losses": 7,
+              "ties": 64,
+              "meanDelta": 0.15217391304347827,
+              "declaredGroups": 9,
+              "declaredHistories": 9
+            },
+            {
+              "id": "locomo:4",
+              "cases": 841,
+              "scored": 841,
+              "unscored": 0,
+              "wins": 39,
+              "losses": 34,
+              "ties": 768,
+              "meanDelta": 0.005945303210463734,
+              "declaredGroups": 10,
+              "declaredHistories": 10
+            }
+          ],
+          "byExposureStratum": [
+            {
+              "partition": "closed",
+              "exposure": "evaluated",
+              "cases": 1226,
+              "scored": 1224,
+              "unscored": 2,
+              "wins": 152,
+              "losses": 58,
+              "ties": 1014,
+              "meanDelta": 0.07679738562091504,
+              "declaredGroups": 8,
+              "declaredHistories": 8
+            },
+            {
+              "partition": "development",
+              "exposure": "development",
+              "cases": 314,
+              "scored": 312,
+              "unscored": 2,
+              "wins": 38,
+              "losses": 24,
+              "ties": 250,
+              "meanDelta": 0.04487179487179487,
+              "declaredGroups": 2,
+              "declaredHistories": 2
+            }
+          ]
+        }
+      ],
+      "byCell": [
+        {
+          "repeat": 0,
+          "judgeRepeat": 0,
+          "cases": 1540,
+          "scored": 1540,
+          "unscored": 0,
+          "wins": 126,
+          "losses": 83,
+          "ties": 1331,
+          "meanDelta": 0.02792207792207792,
+          "declaredGroups": 10,
+          "declaredHistories": 10
+        }
+      ]
+    }
+  ],
+  "cost": {
+    "occupiedJobs": 11065,
+    "physicalJobs": 11065,
+    "unknownDispatches": 0,
+    "knownUsageMicros": 11815654,
+    "unresolvedReservationMicros": 0,
+    "accountedMicros": 11815654,
+    "usageCoverage": {
+      "knownRequests": 11065,
+      "unknownRequests": 0
+    },
+    "shardAttributedOccurrences": 11065,
+    "crossShardReusedOccurrences": 0,
+    "phases": [
+      {
+        "phase": "reader",
+        "occupiedJobs": 6116,
+        "physicalJobs": 6116,
+        "unknownDispatches": 0,
+        "knownUsageMicros": 11415099,
+        "unresolvedReservationMicros": 0,
+        "accountedMicros": 11415099,
+        "usageCoverage": {
+          "knownRequests": 6116,
+          "unknownRequests": 0
+        }
+      },
+      {
+        "phase": "judge",
+        "occupiedJobs": 4949,
+        "physicalJobs": 4949,
+        "unknownDispatches": 0,
+        "knownUsageMicros": 400555,
+        "unresolvedReservationMicros": 0,
+        "accountedMicros": 400555,
+        "usageCoverage": {
+          "knownRequests": 4949,
+          "unknownRequests": 0
+        }
+      }
+    ],
+    "qualification": "Each distinct (request, repeat) job is counted once across shards only when its complete first-evidence projection is identical. Known usage plus unresolved full reservations is conservative attributed exposure, not incremental campaign spending or a provider invoice."
+  },
+  "latency": {
+    "occupiedJobs": 11065,
+    "physicalJobs": 11065,
+    "unknownDispatches": 0,
+    "measuredJobs": 11065,
+    "totalMs": 52011524.030072995,
+    "p50Ms": 2861.077333000023,
+    "p95Ms": 14553.249416999985,
+    "phases": [
+      {
+        "phase": "reader",
+        "occupiedJobs": 6116,
+        "physicalJobs": 6116,
+        "unknownDispatches": 0,
+        "measuredJobs": 6116,
+        "totalMs": 45046024.143079154,
+        "p50Ms": 5782.081542,
+        "p95Ms": 17324.853667000003
+      },
+      {
+        "phase": "judge",
+        "occupiedJobs": 4949,
+        "physicalJobs": 4949,
+        "unknownDispatches": 0,
+        "measuredJobs": 4949,
+        "totalMs": 6965499.886993986,
+        "p50Ms": 1242.4777919999979,
+        "p95Ms": 2382.335665999999
+      }
+    ],
+    "qualification": "Distinct original physical service durations, including reused captures. No summed wall-time, cache-hit latency or end-to-end throughput claim."
+  },
+  "qualification": [
+    "Explicit-selection descriptive coverage with the original exposure dispositions. Prior adaptive development and evaluated or unknown exposure remain disclosed; neither means unseen.",
+    "Every planned question remains in each arm and each declared repeat; reader and judge failures are separate and score zero. The per-question judge mean averages every (reader repeat, judge repeat) cell. Evidence eligibility is independent of answer failure; unlabeled evidence is unscored.",
+    "Declared families, histories and clusters are not proven independent. These paired, category, exposure and per-cell summaries do not establish fresh confirmation, statistical superiority or benchmark saturation; repeats average reader and judge noise, not question sampling.",
+    "LoCoMo J under the Packer/Mem0/Zep CORRECT-WRONG prompt on the Gateway gpt-4o-mini alias over categories 1-4; the official F1 is a diagnostic that underestimates abstention. Not a pinned-snapshot reproduction of any leaderboard harness.",
+    "Caller authenticates original study/scope/report file bytes. Shard reporters authenticate source and raw responses. This pure reducer checks the ID-only projection and aggregate consistency; it does not independently map outcomes to physical responses or reauthenticate raw/source bytes."
+  ],
+  "summarySha256": "eacdc663dda48606154750bcd1bc80c0174f34dc1dbc857c62416488a4d5c7cd"
+}

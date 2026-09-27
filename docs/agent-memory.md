@@ -10,13 +10,13 @@ Coding agents lose useful context when a session ends. The next agent can search
 
 Search alone cannot preserve agent memory. The system also needs a write path into inspectable files under version control: evidence can be captured, current understanding can be revised, plans can accumulate outcomes, and mandatory edit rules can move onto the instruction path. Search indexes, graph views, and embeddings used for meaning-based similarity should remain derived and replaceable.
 
-[hraness/wordcell](<https://wordcell.io>) implements that split as repository-adjacent Markdown and Git. Exact lookup, metadata filters, local search, explicit links, and Git provenance help an agent find and inspect the files without making application code depend on the knowledge system.
+[Wordcell](<https://wordcell.io>) implements that split as repository-adjacent Markdown and Git. Exact lookup, metadata filters, local search, explicit links, and Git provenance help an agent find and inspect the files without making application code depend on the knowledge system.
 
 ### The pattern converged across agent tools
 
 [Devin's 2024 release history](<https://docs.devin.ai/release-notes/2024>) records Knowledge that could be recalled across future sessions and Repo Knowledge produced by scanning repositories. Its [2025 release history](<https://docs.devin.ai/release-notes/2025>) records DeepWiki in April, codebase intelligence inside Devin in May, and a DeepWiki Model Context Protocol server later that month.
 
-In April 2026, Andrej Karpathy published an [LLM Wiki proposal](<https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f>) with immutable raw sources, an agent-maintained interlinked Markdown wiki, and an instruction schema. Its operations are ingest, query, and lint, with QMD as an optional search layer when a simple index stops being enough. These systems converged on durable agent-readable knowledge. The sequence does not establish direct lineage between them or hraness/wordcell.
+In April 2026, Andrej Karpathy published an [LLM Wiki proposal](<https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f>) with immutable raw sources, an agent-maintained interlinked Markdown wiki, and an instruction schema. Its operations are ingest, query, and lint, with QMD as an optional search layer when a simple index stops being enough. These systems converged on durable agent-readable knowledge. The sequence does not establish direct lineage between them or Wordcell.
 
 ### Separate rules from explanations
 
@@ -43,7 +43,7 @@ repository/
 
 ### Keep the implementation small and the files authoritative
 
-hraness/wordcell packages the pattern as a small file contract. A useful vault can begin with Markdown, Git, `index.md`, and standard file search. Source capture, metadata queries, repository-path context, QMD, typed relationships, graph traversal, and TypeScript sessions are layers to add when the simpler setup stops answering the repository's questions. Application code need not import Wordcell, and no hosted service or graph database owns its records.
+Wordcell packages the pattern as a small file contract. A useful vault can begin with Markdown, Git, `index.md`, and standard file search. Source capture, metadata queries, repository-path context, QMD, typed relationships, graph traversal, and TypeScript sessions are layers to add when the simpler setup stops answering the repository's questions. Application code need not import Wordcell, and no hosted service or graph database owns its records.
 
 Captured sources preserve evidence, notes hold current explanations, and plans retain decisions and outcomes. YAML frontmatter adds queryable metadata without requiring one domain schema for every vault. A code-related record may declare a few exact repository-relative `repository_scopes` so an agent can recover it from the path it is about. The declaration stays in the record instead of a central project database, which lets parallel agents update unrelated memory without sharing a generated file.
 
@@ -85,6 +85,14 @@ wordcell pdf "/absolute/path/to/document.pdf" --output articles
 The resulting bundle is evidence, not final interpretation. A maintained note can cite several captures, record disagreement, and change when later evidence warrants it. The sources stay available for audit. This prevents an agent from silently replacing what a page said with what it now believes the page meant.
 
 The `wordcell` Agent Skill routes vault planning requests to a focused durable-plan workflow. It creates a normal Markdown file under `kb/plans/` with an outcome, status, area, repository scopes, assumptions, dependencies, decisions, and verification method. The file grows during execution as agents record deviations, review findings, and reproducible evidence. Closeout adds a compact result and durable-memory disposition: each reusable conclusion links to the maintained note, guide, code contract, or runbook that now owns it, or says that no promotion was needed. Completed plans remain in Git as the history of the work. When a finding becomes a rule whose omission would make a future edit wrong, move that rule into the applicable `AGENTS.md` and retain the plan as its rationale.
+
+### Session memory and profiles
+
+A conversation can settle a decision that no note records. On request, or at a session close that you or the vault instructions ask for, the [session-memory reference](../skills/wordcell/references/session-memory.md) of the `wordcell` Agent Skill has the agent save what the session settled as a dated `type: session` note whose `repository_scopes` name the paths it touched. The agent links that note to the notes it changed with authored relations and keeps one `type: profile` note with Stable and Recent sections. Wordcell extracts no facts and writes no note on its own.
+
+On recall and resume requests, the skill [reads the profile and the latest session notes first](../skills/wordcell/references/query.md#read-the-profile-first). `wordcell context` does not list session or profile notes, so list recent sessions directly with `wordcell list --root kb --where type=session --sort date --order desc --limit 5`.
+
+An MCP client connected through [`wordcell mcp`](reference.md#local-mcp-server) follows the same steps with the `search`, `list_notes`, `get_note`, `create_note`, `update_note_body`, and `add_relation` tools. `create_note` writes only the title, type, tags, and a generated `document_id` in the frontmatter and creates no directories, so a session note written only through MCP has no `date` or `repository_scopes` until someone edits its frontmatter.
 
 ### Search and connect with bounded signals
 

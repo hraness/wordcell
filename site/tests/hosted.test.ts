@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { parseSiteDocsV1, parseSiteNoteV1 } from "@hraness/wordcell/publish-model";
+import "./hosted-operations.test";
 
 import { isTokenShape, newToken, tokenDigest } from "../lib/hosted/auth";
 import {
@@ -132,6 +134,36 @@ describe("contentTypeFor", () => {
 });
 
 describe("projectHostedVault", () => {
+  test("the installed renderer keeps citations navigable and search excerpts readable", async () => {
+    const { root, cleanup } = await materializeVault(new Map([
+      ["index.md", enc("# Index\n\n[[citations]]\n")],
+      ["citations.md", enc("# Evidence note\n\nFirst claim.[^source]\n\nSecond claim.[^source] Missing.[^missing]\n\n[^source]: Retained fixture evidence.\n")],
+    ]));
+    try {
+      const projected = await projectHostedVault(root, {
+        basePath: "/p/abcd1234/citations/", baseUrl: "https://wordcell.io",
+      });
+      const page = projected.files.get("n/citations/index.html");
+      expect(page).toBeDefined();
+      const html = new TextDecoder().decode(page);
+      expect(html.match(/role="doc-noteref"/gu)).toHaveLength(2);
+      expect(html.match(/role="doc-backlink"/gu)).toHaveLength(2);
+      expect(html.match(/id="wordcell:footnote:1"/gu)).toHaveLength(1);
+      for (const occurrence of [1, 2]) {
+        expect(html).toContain(`id="wordcell:footnote-ref:1:${occurrence}"`);
+        expect(html).toContain(`href="#wordcell:footnote-ref:1:${occurrence}"`);
+      }
+      expect(html).toContain('aria-label="Unresolved footnote"');
+      expect(html).toContain("[^missing]");
+      expect(html).toContain("Retained fixture evidence.");
+      const docs = parseSiteDocsV1(JSON.parse(new TextDecoder().decode(projected.files.get("index/docs.json"))));
+      expect(docs.docs.find(doc => doc.s === "citations")?.p).toBe("First claim.");
+      const note = parseSiteNoteV1(JSON.parse(new TextDecoder().decode(projected.files.get("n/citations.json"))));
+      expect(note.text).toContain("second claim. missing.[^missing]");
+      expect(note.text).not.toContain("[^source]");
+    } finally { await cleanup(); }
+  });
+
   test("emits the v1 artifact from a materialized request vault", async () => {
     const { root, cleanup } = await materializeVault(
       new Map([
@@ -216,7 +248,7 @@ describe("mcp adapter", () => {
     const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list" });
     const { tools } = (await list.json() as { result: { tools: Array<{ name: string }> } }).result;
     expect(tools.map((tool) => tool.name).sort()).toEqual([
-      "create_token", "delete_site", "list_sites", "publish_site",
+      "create_token", "delete_site", "get_site", "list_sites", "publish_site",
     ]);
   });
 

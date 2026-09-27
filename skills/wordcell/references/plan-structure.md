@@ -80,7 +80,7 @@ Add these when execution starts:
 ```md
 ## Execution evidence
 
-- YYYY-MM-DD — Result, command or artifact, and what it proved.
+- YYYY-MM-DD: result, command or artifact, and what it proved.
 
 ## Review findings
 

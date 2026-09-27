@@ -82,7 +82,9 @@ describe("Rust metadata search provider", () => {
     const fixture = executable(SUCCESS_SCRIPT);
     const provider = createRustMetadataSearchProvider({ binaryPath: fixture.path });
 
-    const outcome = await provider({ query: "quoted source", maxResults: 2, timeoutMs: 1_000 });
+    // Result ordering is independent of native process startup latency; deadline
+    // and cancellation behavior are exercised by the next test.
+    const outcome = await provider({ query: "quoted source", maxResults: 2, timeoutMs: 10_000 });
 
     expect(outcome.status).toBe("success");
     if (outcome.status !== "success") return;
@@ -145,6 +147,8 @@ await Bun.sleep(10_000);`);
   }, 15_000);
 
   test("categorizes malformed JSON and schema violations as protocol failures", async () => {
+    // Two sequential native fixtures can exceed the runner's 5-second default;
+    // protocol classification must not depend on aggregate-suite startup load.
     const malformed = executable(String.raw`
 await Bun.stdin.text();
 process.stdout.write("{not-json");`);
@@ -166,7 +170,7 @@ process.stdout.write(JSON.stringify({
       query: "unknown field",
     });
     expectFailure(unknownOutcome, "protocol");
-  });
+  }, 15_000);
 
   test("categorizes nonzero exit without exposing the query, URL, or raw stderr", async () => {
     const fixture = executable(String.raw`

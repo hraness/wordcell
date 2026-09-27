@@ -1,6 +1,7 @@
 import { canonicalJson } from "@hraness/oh";
 
 import type { Note } from "./graph.js";
+import { projectMarkdownText } from "./publish-markdown.js";
 import {
   WORDCELL_SITE_DOCS_FORMAT_V1,
   WORDCELL_SITE_LIMITS_V1,
@@ -38,8 +39,8 @@ function bounded(value: string, maximumBytes: number): { text: string; truncated
 }
 
 function previewText(note: Note): string {
-  const basis = note.summary !== "" ? note.summary : note.searchableText;
-  const collapsed = basis.replace(/\s+/gu, " ").trim();
+  const display = projectMarkdownText(note.content, note.properties["description"]);
+  const collapsed = display.preview.replace(/\s+/gu, " ").trim();
   return bounded(collapsed, WORDCELL_SITE_LIMITS_V1.docPreviewBytes).text;
 }
 

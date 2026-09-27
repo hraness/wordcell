@@ -1,0 +1,741 @@
+/* wordcell component layer — the vault field and note language. Ships with the
+ * wordcell theme (or any layer that defines the --wordcell-* tokens).
+ * The field sits absolutely behind the hero: notes stay muted while a focus
+ * point follows the pointer when one is near — --hraness-hero-proximity (0..1, set by field.tsx) lifts each card into focus.
+ * All motion is decorative: pointer-transparent, reduced-motion aware,
+ * and removable without losing content. */
+
+.hraness-material-wall {
+  position: relative;
+}
+
+.wordcell-field {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Paper texture under the notes. */
+.wordcell-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    url("../vendor/hraness-marketing/marketing-assets/grain.svg");
+  background-size: 64px 64px;
+  background-position: center;
+  opacity: .3;
+  pointer-events: none;
+}
+
+/* Edge fade: the vault continues beyond the header. */
+.wordcell-field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, var(--background), transparent 12%, transparent 88%, var(--background)),
+    linear-gradient(to bottom, var(--background), transparent 18%, transparent 82%, var(--background));
+  pointer-events: none;
+}
+
+/* The hero copy stays readable: a soft paper scrim over the field behind it,
+ * plus z-lift above the notes. */
+.wordcell-marketing-hero {
+  position: relative;
+  z-index: 1;
+}
+
+.wordcell-marketing-hero::before {
+  content: "";
+  position: absolute;
+  inset: -2rem -4rem;
+  z-index: -1;
+  background: radial-gradient(ellipse 72% 68% at 32% 46%,
+    color-mix(in srgb, var(--background) 94%, transparent) 0%,
+    color-mix(in srgb, var(--background) 76%, transparent) 55%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+.wordcell-edges {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.wordcell-edge {
+  fill: none;
+  stroke: var(--wordcell-edge);
+  stroke-width: 1.1;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+  opacity: calc(.38 + var(--hraness-hero-proximity, 0) * .62);
+  transition: opacity .45s ease;
+}
+
+.wordcell-edge--pulse {
+  stroke-dasharray: 5 55;
+}
+
+
+.wordcell-edge-label {
+  position: absolute;
+  translate: -50% -50%;
+  padding: .12rem .4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wordcell-note-surface) 78%, transparent);
+  color: var(--wordcell-edge-ink);
+  font-family: var(--font-mono);
+  font-size: .5625rem;
+  font-style: italic;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  opacity: calc(.28 + var(--hraness-hero-proximity, 0) * .72);
+  transition: opacity .45s ease;
+}
+
+.wordcell-note {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  inline-size: var(--w);
+  padding: .8rem .95rem .9rem;
+  border: 0;
+  border-radius: var(--wordcell-note-radius, .8rem);
+  background: var(--wordcell-note-surface);
+  box-shadow: var(--wordcell-note-shadow);
+  translate: -50% -50%;
+  rotate: var(--r, 0deg);
+  pointer-events: none;
+  opacity: calc(.46 + var(--hraness-hero-proximity, 0) * .54);
+  filter: blur(calc((1 - var(--hraness-hero-proximity, 0)) * 1.3px));
+  transition: opacity .45s ease, filter .45s ease;
+
+}
+
+
+.wordcell-note-type {
+  display: inline-block;
+  margin-block-end: .45rem;
+  padding: .1rem .42rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wordcell-type-accent, var(--primary)) 12%, transparent);
+  color: var(--wordcell-type-accent, var(--primary));
+  font-size: .5625rem;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+/* Quiet per-type accents: people are warm clay, sources moss, plans ochre,
+ * questions slate — everything else keeps the vault green. */
+.wordcell-note[data-type="person"] { --wordcell-type-accent: var(--wordcell-type-person, #8a5a3c); }
+.wordcell-note[data-type="book"],
+.wordcell-note[data-type="source"] { --wordcell-type-accent: var(--wordcell-type-source, #4d6f3e); }
+.wordcell-note[data-type="meeting"] { --wordcell-type-accent: var(--wordcell-type-meeting, #6d5a8a); }
+.wordcell-note[data-type="plan"] { --wordcell-type-accent: var(--wordcell-type-plan, #8a6d2f); }
+.wordcell-note[data-type="question"] { --wordcell-type-accent: var(--wordcell-type-question, #5a6a75); }
+.wordcell-note[data-type="idea"] { --wordcell-type-accent: var(--wordcell-type-idea, #4a7a78); }
+
+.wordcell-note-title {
+  margin: 0 0 .3rem;
+  font-family: var(--font-heading);
+  font-size: .8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.005em;
+}
+
+/* Person notes carry a small initials chip, like a contact card. */
+.wordcell-note-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin-inline-end: .35rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--wordcell-type-person, #8a5a3c) 16%, transparent);
+  color: var(--wordcell-type-person, #8a5a3c);
+  font-size: .5rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  vertical-align: .08em;
+}
+
+.wordcell-note-body {
+  margin: 0;
+  color: var(--muted);
+  font-size: .6875rem;
+  line-height: 1.5;
+}
+
+.wordcell-note-link {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.wordcell-note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .45rem;
+  margin-block-start: .55rem;
+}
+
+.wordcell-note-tags span {
+  color: var(--wordcell-tag-ink, var(--muted));
+  font-family: var(--font-mono);
+  font-size: .5625rem;
+  letter-spacing: .02em;
+}
+
+/* Benchmark strip: let the numbers carry it. Display serif on the values,
+ * quiet one-line details, a hairline frame. */
+.hraness-marketing-stats__list > div {
+  padding-block: 1.6rem;
+}
+.hraness-marketing-stats__value {
+  font-family: var(--hraness-marketing-display-font);
+  font-size: clamp(2rem, 4.5vw, 2.9rem);
+  line-height: 1.05;
+  letter-spacing: -.01em;
+}
+.hraness-marketing-stats dt {
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.hraness-marketing-stats dd {
+  font-size: .8rem;
+  line-height: 1.55;
+}
+.hraness-marketing-stats__source {
+  font-size: .8rem;
+}
+
+/* The byte comparison renders as real proportional bars, not two big numbers. */
+.wordcell-bytes {
+  display: grid;
+  gap: 1.1rem;
+  width: 100%;
+}
+
+.wordcell-bytes-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9.5rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wordcell-bytes-track {
+  position: relative;
+  block-size: 2.4rem;
+  border-radius: var(--radius-sm, .5rem);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  overflow: clip;
+}
+
+.wordcell-bytes-bar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+.wordcell-bytes-bar--primary {
+  background: var(--primary);
+}
+
+.wordcell-bytes-meta {
+  margin: 0;
+  line-height: 1.3;
+}
+
+.wordcell-bytes-meta strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: .95rem;
+  font-weight: 600;
+}
+
+.wordcell-bytes-meta span {
+  display: block;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.wordcell-bytes-bar {
+  animation: wordcell-bytes-grow .9s cubic-bezier(.22, 1, .36, 1) .1s both;
+  transform-origin: left;
+}
+
+@keyframes wordcell-bytes-grow {
+  from { transform: scaleX(0); }
+}
+
+.wordcell-benchmark {
+  display: grid;
+  gap: 1rem;
+  max-inline-size: 48rem;
+  min-inline-size: 0;
+}
+
+.wordcell-benchmark h3 {
+  margin: 0;
+  font-family: var(--hraness-type-h3-font);
+  font-size: var(--hraness-type-h3-size);
+  font-weight: var(--hraness-type-h3-weight);
+  text-wrap: balance;
+}
+
+.wordcell-benchmark-caption,
+.wordcell-benchmark-scope,
+.wordcell-seam-copy {
+  margin: 0;
+  max-inline-size: 70ch;
+}
+
+.wordcell-benchmark-caption,
+.wordcell-benchmark-scope {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__label,
+.wordcell-benchmark .hraness-design-chart-row__value {
+  font-size: 1rem;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__value {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.wordcell-benchmark .hraness-design-chart-row__detail {
+  font-family: var(--font-text);
+  font-size: .85rem;
+}
+
+.wordcell-benchmark .hraness-design-bar-list-chart__bar {
+  background: var(--hraness-design-chart-color);
+  box-shadow: none;
+  animation: none;
+}
+
+.wordcell-benchmark-method {
+  border-block: 1px solid var(--wordcell-note-line);
+  padding-block: .4rem;
+}
+
+.wordcell-benchmark-method summary {
+  align-content: center;
+  min-block-size: 2.75rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.wordcell-benchmark-method summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.wordcell-benchmark-method dl {
+  display: grid;
+  gap: .8rem;
+  margin-block: .6rem 1rem;
+}
+
+.wordcell-benchmark-method dl > div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: .3rem 1rem;
+}
+
+.wordcell-benchmark-method dt {
+  font-weight: 500;
+}
+
+.wordcell-benchmark-method dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.wordcell-benchmark-method p {
+  max-inline-size: 70ch;
+}
+
+#oh .install-command {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 30rem) {
+  .wordcell-benchmark .hraness-design-chart-row__heading {
+    flex-wrap: wrap;
+    gap: .3rem .75rem;
+  }
+
+  .wordcell-benchmark .hraness-design-chart-row__label {
+    flex: 1 1 12rem;
+  }
+
+  .wordcell-benchmark .hraness-design-chart-row__value {
+    margin-inline-start: auto;
+  }
+
+  .wordcell-benchmark-method dl > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Guided steps and the transcript pane: quiet note-surface cards, the same
+ * paper the vault field is drawn on. */
+.wordcell-step,
+.wordcell-pane {
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--wordcell-note-surface);
+  box-shadow: var(--wordcell-note-shadow);
+}
+
+.wordcell-step {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  margin: 0;
+  padding: .85rem 1.1rem 1.1rem;
+}
+
+.wordcell-step + .wordcell-step {
+  margin-block-start: .75rem;
+}
+
+.wordcell-step figcaption {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-block-end: .6rem;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 600;
+}
+
+.wordcell-step figcaption span {
+  display: grid;
+  place-items: center;
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 13%, transparent);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.wordcell-step .install-command {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  font-size: .875rem;
+  overflow-x: auto;
+}
+
+/* A step's prerequisite sits above its commands, and its result below. */
+.wordcell-step .wordcell-step__lead {
+  margin-block: 0 .6rem;
+}
+
+.wordcell-step .install-command + .install-note {
+  margin-block: .6rem 0;
+}
+
+/* Agent setup: the prompt wraps instead of scrolling, because it is prose
+ * that a reader checks before copying it. */
+.wordcell-setup {
+  display: grid;
+  gap: .85rem;
+  max-inline-size: 48rem;
+  min-inline-size: 0;
+}
+
+.wordcell-setup__prompt {
+  max-block-size: 22rem;
+  margin: 0;
+  padding: 1rem 1.1rem;
+  overflow: auto;
+  border-radius: var(--radius-md);
+  background: var(--wordcell-note-surface);
+  box-shadow: var(--wordcell-note-shadow);
+  font-size: .82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wordcell-setup__prompt:focus-visible,
+.wordcell-copy__button:focus-visible {
+  outline: 2px solid var(--hraness-site-accent);
+  outline-offset: 3px;
+}
+
+.wordcell-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+}
+
+.wordcell-copy__button {
+  min-block-size: 2.5rem;
+  padding: .5rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--foreground);
+  color: var(--background);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wordcell-copy__status {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.wordcell-setup__links {
+  display: grid;
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wordcell-setup__links li {
+  display: grid;
+  gap: .125rem;
+  justify-items: start;
+}
+
+.wordcell-setup__links a {
+  font-weight: 600;
+}
+
+.wordcell-setup__links span {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+@media (forced-colors: active) {
+  .wordcell-setup__prompt { border: 1px solid CanvasText; box-shadow: none; }
+  .wordcell-copy__button { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
+}
+
+/* Launch pages: limit lists and table captions beside the evidence. */
+.wordcell-limits-title {
+  margin: .5rem 0 0;
+  font-size: 1rem;
+}
+
+.wordcell-limits {
+  display: grid;
+  gap: .45rem;
+  max-inline-size: 48rem;
+  margin: 0;
+  padding-inline-start: 1.2rem;
+  line-height: 1.55;
+}
+
+.wordcell-table-caption {
+  padding-block-end: .5rem;
+  color: var(--muted);
+  font-size: .85rem;
+  text-align: start;
+  caption-side: top;
+}
+
+/* Tailwind's preflight gives links the surrounding text's color and decoration.
+ * Source links in the launch tables and lists are body copy, so they stay
+ * underlined like the .record-link links in globals.css. */
+.wordcell-comparison :is(th, td) a,
+.wordcell-limits a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--foreground) 35%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.wordcell-comparison :is(th, td) a:hover,
+.wordcell-limits a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Geist Mono's contextual ligatures draw "--" in one cell, so " --" reads as
+ * joined to the word before it. Commands must show every character. */
+code,
+kbd,
+samp,
+pre {
+  font-variant-ligatures: none;
+}
+
+/* On narrow screens a stacked table shows each row as a block, and each cell
+ * repeats its column header from data-label, so no column hides offscreen.
+ * The doubled class outranks the .wordcell-comparison rules in globals.css. */
+@media (max-width: 40rem) {
+  .wordcell-comparison.wordcell-stack table {
+    min-width: 0;
+  }
+
+  .wordcell-comparison.wordcell-stack thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .wordcell-comparison.wordcell-stack tbody tr {
+    display: block;
+    padding-block: .85rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .wordcell-comparison.wordcell-stack tbody th,
+  .wordcell-comparison.wordcell-stack tbody td {
+    display: block;
+    padding: .2rem 0;
+    border-bottom: 0;
+    white-space: normal;
+  }
+
+  .wordcell-comparison.wordcell-stack tbody td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+}
+
+/* A long install command scrolls inside its step. Without this the install
+ * panel's grid column grows to the command's width and clips the notes
+ * beside it on narrow screens. */
+[data-hraness-marketing-preset] .hraness-marketing-install__commands {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.wordcell-pane {
+  padding: 1.05rem 1.2rem;
+}
+
+.wordcell-pane .transcript {
+  margin: 0;
+  font-size: .82rem;
+  line-height: 1.7;
+}
+
+.wordcell-pane-note {
+  margin: .75rem 0 0;
+  max-inline-size: 62ch;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1.55;
+}
+
+@media (width < 34rem) {
+  .wordcell-bytes-row {
+    grid-template-columns: 1fr;
+    gap: .4rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .wordcell-bytes-track {
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+  .wordcell-bytes-bar {
+    background: CanvasText;
+  }
+  .wordcell-bytes-bar--primary {
+    background: Highlight;
+  }
+}
+
+@media (width < 45rem) {
+  .wordcell-note:nth-of-type(n + 12) {
+    display: none;
+  }
+}
+
+@media print {
+  .wordcell-field,
+  .wordcell-note {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordcell-bytes-bar {
+    animation: none;
+  }
+  .wordcell-note,
+  .wordcell-edge--pulse {
+    animation: none;
+  }
+  .wordcell-note,
+  .wordcell-edge,
+  .wordcell-edge-label {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .wordcell-field {
+    background: Canvas;
+  }
+  .wordcell-field::before,
+  .wordcell-edge--pulse {
+    display: none;
+  }
+
+  .wordcell-note {
+    border-color: CanvasText;
+    box-shadow: none;
+    opacity: 1;
+    filter: none;
+  }
+  .wordcell-note-type,
+  .wordcell-note-avatar {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+  .wordcell-edge {
+    stroke: CanvasText;
+  }
+  .wordcell-edge-label {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    opacity: 1;
+  }
+}
+
+/* Pointer motion is bounded and paused by the shared hero controller. */
+.wordcell-note, .wordcell-note--bloom { animation: none; transform: translate(var(--hraness-hero-drift-x, 0px), var(--hraness-hero-drift-y, 0px)); }

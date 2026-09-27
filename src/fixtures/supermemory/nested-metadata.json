@@ -1,0 +1,27 @@
+{
+  "memories": [
+    {
+      "id": "Nm1kkkkkkkkkkkkkkkkkkk",
+      "connectionId": null,
+      "customId": null,
+      "title": "Nested metadata",
+      "summary": "Metadata with values that do not fit flat frontmatter.",
+      "filepath": null,
+      "metadata": {
+        "source": "slack",
+        "priority": 2,
+        "pinned": false,
+        "nothing": null,
+        "author": { "name": "Ada" },
+        "labels": ["a", "b"],
+        "bad key": "spaces are not allowed",
+        "channel.id": "C024BE91L"
+      },
+      "status": "done",
+      "type": "text",
+      "createdAt": "2025-03-20T08:00:00Z",
+      "updatedAt": "2025-03-20T08:00:00Z"
+    }
+  ],
+  "pagination": { "currentPage": 1, "limit": 10, "totalItems": 1, "totalPages": 1 }
+}

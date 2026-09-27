@@ -808,6 +808,20 @@ function absoluteSource(value: unknown, label: string, allowLocalPdf: boolean): 
   return normalizedPublicUrl(value, label);
 }
 
+/**
+ * Why `url-metadata` would refuse `value` as the `source` of a saved article
+ * note, or `undefined` when it accepts it. Other writers of `source` use this
+ * so the saved-URL inventory keeps working.
+ */
+export function savedSourceProblem(value: string): string | undefined {
+  try {
+    absoluteSource(value, "source", false);
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
+
 function confined(root: string, path: string, label: string): void {
   const pathFromRoot = relative(root, path);
   if (pathFromRoot === "" || pathFromRoot === ".." || pathFromRoot.startsWith(`..${sep}`) || pathFromRoot.includes(`\0`)) {

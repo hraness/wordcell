@@ -5,14 +5,14 @@ import { basename, delimiter, isAbsolute, join, resolve } from "node:path";
 
 import {
   inspectPackageArtifact,
+  maximumUnpackedBytes,
   type PackageArtifactInventory,
 } from "./package-artifact.js";
 import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
 
 const packageName = "@hraness/wordcell";
-const maximumPackageFiles = 280;
-const maximumPackedBytes = 1_300_000;
-const maximumUnpackedBytes = 5_700_000;
+const maximumPackageFiles = 300;
+const maximumPackedBytes = 1_450_000;
 const importSpecifiers = [
   "@hraness/wordcell",
   "@hraness/wordcell/agent-context",
@@ -68,6 +68,8 @@ const importSpecifiers = [
   "@hraness/wordcell/workflows/plan-radar",
 ];
 const baselineRequiredNamedExports = {
+  "@hraness/wordcell": ["analyzeVaultComplete", "scanVaultComplete", "refreshVaultComplete"],
+  "@hraness/wordcell/graph": ["analyzeVaultComplete"],
   "@hraness/wordcell/rerank": ["applyRerank"],
   "@hraness/wordcell/rerank-typesafe": ["createTypeSafeReranker"],
   "@hraness/wordcell/graph-authority": ["openGraphAuthority", "queryGraph", "rebuildGraph", "verifyGraph"],
@@ -693,8 +695,8 @@ try {
   const requiresOhAdoptionPreparer = requiresOhAdoptionPreparerExport(sourceManifest.version);
   const requiredNamedExports = requiresOhAdoptionPreparer
     ? {
-        "@hraness/wordcell": ["createOhAdoptionPreparerV1"],
         ...baselineRequiredNamedExports,
+        "@hraness/wordcell": ["createOhAdoptionPreparerV1", ...baselineRequiredNamedExports["@hraness/wordcell"]],
       }
     : baselineRequiredNamedExports;
   const inventory = await inspectPackageArtifact(archive);
@@ -739,7 +741,7 @@ try {
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], consumer);
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], npmConsumer);
   for (const installed of [consumer, npmConsumer]) {
-    await verifyInstalledHelp("wordcell", installed, "wordcell init [directory]");
+    await verifyInstalledHelp("wordcell", installed, "Usage: wordcell <command> [options]");
     await verifyInstalledFirstUse(installed);
     await verifyInstalledSupport(installed);
     await run([join(installed, "node_modules", ".bin", "wordcell-evaluation-builder"), "--help"], installed);

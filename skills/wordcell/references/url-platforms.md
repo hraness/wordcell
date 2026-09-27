@@ -2,7 +2,7 @@
 
 Use the strongest available read route, then describe exactly what it retained. Every route is bounded by item count, tree depth, time, HTML bytes, per-asset bytes, and aggregate asset bytes.
 
-| Surface | Preferred route | Conversation behavior | Honest limit |
+| Surface | Preferred route | Conversation behavior | Limit |
 | --- | --- | --- | --- |
 | Generic articles and papers | Structured data or HTTP + Defuddle; rendered browser fallback | Captures the page body and any comments present in that representation | JavaScript-only or unusual layouts can remain partial |
 | X | Defuddle X extraction plus rendered text; public profile metadata as a separate reviewed surface; current tab or profile for signed-in views | Preserves the complete visible root post or long-form article, quote context, visible metrics, localized post media, and loaded replies while keeping author, continuation, and reply boundaries distinct | Virtualized or unloaded replies and missing trustworthy item trees remain partial; profile bios and links are never inferred from post prose |

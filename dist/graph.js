@@ -6,10 +6,12 @@ import {
   MAX_MENTION_PAIRS,
   VaultAnalysisBudgetError,
   analyzeVault,
+  analyzeVaultComplete,
   catalogEnd,
   catalogStart,
   isCanonicalNoteId,
   isCanonicalRelationPredicate,
+  isMetadataNumber,
   lookupNote,
   metadataValueFromUnknown,
   normalizeVaultPath,
@@ -18,7 +20,7 @@ import {
   replaceCatalog,
   searchableMarkdown,
   wikiLinks
-} from "./index-qbssx940.js";
+} from "./index-jvb7w0gg.js";
 import"./index-z1w83f81.js";
 export {
   wikiLinks,
@@ -29,10 +31,12 @@ export {
   normalizeVaultPath,
   metadataValueFromUnknown,
   lookupNote,
+  isMetadataNumber,
   isCanonicalRelationPredicate,
   isCanonicalNoteId,
   catalogStart,
   catalogEnd,
+  analyzeVaultComplete,
   analyzeVault,
   VaultAnalysisBudgetError,
   MAX_MENTION_PAIRS,

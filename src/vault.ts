@@ -13,6 +13,7 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
 import {
   analyzeVault,
+  analyzeVaultComplete,
   isCanonicalNoteId,
   lookupNote,
   MAX_ANALYZED_NOTES,
@@ -21,6 +22,7 @@ import {
   renderCatalog,
   replaceCatalog,
   type AnalyzeVaultOptions,
+  type CompleteAnalyzeVaultOptions,
   type Note,
   type VaultAnalysis,
 } from "./graph.js";
@@ -89,6 +91,8 @@ export type ScanVaultOptions = Omit<AnalyzeVaultOptions, "mentionScope"> & {
    */
   readonly mentionScope?: string | false;
 };
+
+export type CompleteScanVaultOptions = ScanVaultOptions & Pick<CompleteAnalyzeVaultOptions, "mentionIndexLimits">;
 
 export async function markdownFiles(
   directory: string,
@@ -520,8 +524,9 @@ async function atomicReplace(
 
 async function snapshot(
   rootInput: string,
-  options: ScanVaultOptions,
+  options: CompleteScanVaultOptions,
   writeIndex: boolean,
+  completeMentions = false,
 ): Promise<VaultSnapshot> {
   const requestedRoot = resolve(rootInput);
   const root = await realpath(requestedRoot);
@@ -613,7 +618,7 @@ async function snapshot(
     catalogMode,
     index,
     notes,
-    analysis: analyzeVault(notes, {
+    analysis: (completeMentions ? analyzeVaultComplete : analyzeVault)(notes, {
       catalogNoteId,
       ...(options.includeInSuggestions === undefined
         ? {}
@@ -631,6 +636,9 @@ async function snapshot(
       ...(options.maxMentions === undefined
         ? {}
         : { maxMentions: options.maxMentions }),
+      ...(!completeMentions || options.mentionIndexLimits === undefined
+        ? {}
+        : { mentionIndexLimits: options.mentionIndexLimits }),
     }),
   };
 }
@@ -647,4 +655,20 @@ export async function refreshVault(
   options: ScanVaultOptions = {},
 ): Promise<VaultSnapshot> {
   return snapshot(root, options, true);
+}
+
+/** Read every admitted note and compute the full graph through the phrase index. */
+export async function scanVaultComplete(
+  root = ".",
+  options: CompleteScanVaultOptions = {},
+): Promise<VaultSnapshot> {
+  return snapshot(root, options, false, true);
+}
+
+/** Refresh the configured catalog while retaining complete indexed analysis. */
+export async function refreshVaultComplete(
+  root = ".",
+  options: CompleteScanVaultOptions = {},
+): Promise<VaultSnapshot> {
+  return snapshot(root, options, true, true);
 }

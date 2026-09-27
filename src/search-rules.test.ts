@@ -22,11 +22,11 @@ const configuredRules = () => parseSearchRules({
   },
   priorityRules: [
     {
-      id: "active-hra-plan",
+      id: "active-product-plan",
       tier: 1,
       pathPrefix: "plans/",
-      tagsAll: ["priority", "HRA"],
-      repositoryScope: "projects/hra",
+      tagsAll: ["priority", "WIDGET"],
+      repositoryScope: "projects/widget",
       metadata: [{ kind: "equals", path: "status", value: "active" }],
       vaultId: "hraness/jungle",
     },
@@ -51,7 +51,7 @@ describe("search rules schema", () => {
       repositoryScopes: ["packages/kb"],
     });
     expect(rules.priorityRules.map(({ id, tier }) => ({ id, tier }))).toEqual([
-      { id: "active-hra-plan", tier: 1 },
+      { id: "active-product-plan", tier: 1 },
       { id: "maintained-note", tier: 2 },
     ]);
     expect(Object.isFrozen(rules)).toBe(true);
@@ -169,9 +169,9 @@ describe("search priority rules", () => {
     const first = hit("first", "notes/first.md", {
       metadata: { record: { role: "maintained" } },
     });
-    const promoted = hit("promoted", "plans/hra.md", {
-      tags: ["Priority", "hra"],
-      metadata: { status: "ACTIVE", repository_scopes: ["projects/hra"] },
+    const promoted = hit("promoted", "plans/widget.md", {
+      tags: ["Priority", "widget"],
+      metadata: { status: "ACTIVE", repository_scopes: ["projects/widget"] },
     });
     const ordinary = hit("ordinary", "notes/ordinary.md");
     const identity = hit("identity", "plans/exact.md", { identity: true });
@@ -184,7 +184,7 @@ describe("search priority rules", () => {
     expect(new Set(result.hits)).toEqual(new Set(supplied));
     expect(result.trace).toEqual([
       { id: "identity", relevanceRank: 4, matchedRuleIds: [], tier: null },
-      { id: "promoted", relevanceRank: 2, matchedRuleIds: ["active-hra-plan"], tier: 1 },
+      { id: "promoted", relevanceRank: 2, matchedRuleIds: ["active-product-plan"], tier: 1 },
       { id: "first", relevanceRank: 1, matchedRuleIds: ["maintained-note"], tier: 2 },
       { id: "ordinary", relevanceRank: 3, matchedRuleIds: [], tier: null },
     ]);

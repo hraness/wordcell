@@ -184,12 +184,17 @@ describe("authored graph snapshots", () => {
     ])))).toBe("budget");
   });
 
-  test("bounds graph atom bytes using UTF-8 and refuses a complete oversized fact edition", () => {
+  test("bounds graph atom bytes using UTF-8", () => {
     const note = parseNote("alpha.md", `# ${"é".repeat(GRAPH_LIMITS.atomBytes / 2 + 1)}\n`);
     expect(codeOf(() => createGraphSnapshot(snapshot([note])))).toBe("budget");
+  });
+
+  test("refuses a complete oversized fact edition", () => {
     const tags = Array.from({ length: 100 }, (_, index) => `tag-${index}`).join(", ");
-    const notes = Array.from({ length: 1_000 }, (_, index) => parseNote(`note-${index}.md`,
-      `---\ntags: [${tags}]\n---\n# Note\n`));
+    const template = parseNote("template.md", `---\ntags: [${tags}]\n---\n# Note\n`);
+    // The authority reparses all source bytes. Avoid parsing the same YAML a
+    // thousand extra times in setup while preserving the real 100,000-fact cap.
+    const notes = Array.from({ length: 1_000 }, (_, index) => ({ ...template, id: `note-${index}`, path: `note-${index}.md` }));
     expect(codeOf(() => createGraphSnapshot(snapshot(notes)))).toBe("budget");
   });
 

@@ -47,7 +47,7 @@ export const WORDCELL_SITE_LIMITS_V1 = Object.freeze({
    * exact lane's substring semantics; larger corpora use postings shards.
    */
   inlineTotalBytes: 2 * 1_024 * 1_024,
-  /** Normalized content text retained per note payload for hydration. */
+  /** Normalized readable content retained per note payload for snippet hydration. */
   noteTextBytes: 32 * 1_024,
   /** Site title and description. */
   titleBytes: 512,
@@ -185,7 +185,7 @@ export type WordcellSiteNoteV1 = {
   readonly type?: string;
   readonly tags: readonly string[];
   readonly summary: string;
-  /** Bounded normalized content text for search hydration. */
+  /** Bounded normalized readable content for snippet hydration, not ranking. */
   readonly text: string;
   readonly textTruncated: boolean;
   readonly links: readonly WordcellSiteNoteLinkV1[];

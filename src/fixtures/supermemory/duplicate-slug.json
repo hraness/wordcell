@@ -1,0 +1,44 @@
+{
+  "memories": [
+    {
+      "id": "Ds1lllllllllllllllllll",
+      "connectionId": null,
+      "customId": null,
+      "title": "Meeting notes",
+      "summary": "Monday standup.",
+      "filepath": null,
+      "metadata": null,
+      "status": "done",
+      "type": "text",
+      "createdAt": "2025-08-04T09:00:00Z",
+      "updatedAt": "2025-08-04T09:00:00Z"
+    },
+    {
+      "id": "Ds2mmmmmmmmmmmmmmmmmmm",
+      "connectionId": null,
+      "customId": null,
+      "title": "Meeting Notes!",
+      "summary": "Tuesday standup.",
+      "filepath": null,
+      "metadata": null,
+      "status": "done",
+      "type": "text",
+      "createdAt": "2025-08-05T09:00:00Z",
+      "updatedAt": "2025-08-05T09:00:00Z"
+    },
+    {
+      "id": "Ds3nnnnnnnnnnnnnnnnnnn",
+      "connectionId": null,
+      "customId": "meeting-notes",
+      "title": "Wednesday",
+      "summary": "Wednesday standup.",
+      "filepath": null,
+      "metadata": null,
+      "status": "done",
+      "type": "text",
+      "createdAt": "2025-08-06T09:00:00Z",
+      "updatedAt": "2025-08-06T09:00:00Z"
+    }
+  ],
+  "pagination": { "currentPage": 1, "limit": 10, "totalItems": 3, "totalPages": 1 }
+}

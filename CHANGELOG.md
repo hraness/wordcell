@@ -1,5 +1,141 @@
 # Changelog
 
+## Unreleased
+
+- The [benchmarks page](https://wordcell.io/benchmarks) now leads with Oh's
+  500-question LongMemEval-S study, where Oh semantic retrieval scored 88.87%
+  and BM25 86.13%; on the measure Oh named before the run, its interval does
+  not rule out a tie. Oh's smaller Supermemory pilot remains the only matched
+  comparison with Supermemory.
+
+## 0.23.0
+
+Wordcell can serve a vault to local Model Context Protocol clients and import
+notes exported from Supermemory. Its Agent Skill can save a conversation as a
+session note and keep a profile note. New guides cover moving from Supermemory
+and syncing a vault with Git. Help and error messages are shorter, and first-run
+commands name the next step.
+
+- `wordcell mcp --root <vault>` serves a vault to local Model Context Protocol
+  clients, such as Claude Code, Claude Desktop, Cursor, and Codex, over
+  standard input and output. Its tools search, list, and read notes, follow
+  links, and, with `--repo`, return repository context. Write tools create
+  notes, update a note body at a known revision, and add typed relations
+  through the existing authoring checks; `--read-only` removes them. Standard
+  output carries only protocol messages.
+- `wordcell import supermemory <export.json>...` turns documents and memory
+  entries saved from the Supermemory API into Markdown notes. Documents with a
+  public web URL or a type other than text land under `articles/`, other
+  documents under `notes/imported/`, and memory versions under
+  `notes/imported/memories/`, linked newest to oldest by `supersedes`
+  relations. Each note records its Supermemory ID and an import digest, so a
+  later import updates unedited notes, skips unchanged ones, and reports
+  locally edited notes as conflicts without changing them. `--dry-run` writes
+  nothing, and `--json` prints one report object.
+- `wordcell note create --body-file -` reads the note body from standard input.
+- The `wordcell` Agent Skill has a session-memory reference. When the user
+  asks, an agent saves what a conversation settled as a dated `type: session`
+  note with exact `repository_scopes`, links it to the notes it changed with
+  authored relations, and keeps a `type: profile` note with Stable and Recent
+  sections. On recall and resume requests, the agent reads the profile and
+  recent sessions first. Wordcell itself extracts no facts and writes no note
+  on its own. The
+  [agent memory guide](https://wordcell.io/docs/agent-memory#session-memory-and-profiles)
+  explains how to list session notes, which `wordcell context` does not show.
+- [Migrate from Supermemory](https://wordcell.io/docs/migration-from-supermemory)
+  exports Supermemory documents and memory entries, imports them as notes, and
+  lists what does not transfer.
+  [Sync a vault with Git](https://wordcell.io/docs/sync) keeps one vault current
+  on several machines with a private repository and a scheduled commit and push.
+  The [comparison guide](https://wordcell.io/docs/comparisons) now covers
+  Supermemory, Mem0, and Zep.
+- The [benchmarks page](https://wordcell.io/benchmarks) on wordcell.io shows
+  Wordcell's payload and SciFact results beside the published results of Oh,
+  the embedded memory framework, each with its source data and limits. New
+  pages compare Wordcell with
+  [Supermemory](https://wordcell.io/compare/supermemory),
+  [Basic Memory](https://wordcell.io/compare/basic-memory), and
+  [Mem0](https://wordcell.io/compare/mem0), and the
+  [migration page](https://wordcell.io/migrate/supermemory) walks through a
+  move from Supermemory. The home page and the migration page offer a setup
+  prompt for ChatGPT, Grok, and Cursor, and commands that register the MCP
+  server in Claude Code and Codex.
+- A launch post,
+  [Agent memory should be free, local, and yours](https://wordcell.io/blog/free-local-agent-memory),
+  covers the local MCP server, the Supermemory importer, and the evidence with
+  its limits.
+- Help is shorter and easier to scan. Bare `wordcell` shows what it is and the
+  first four commands. `wordcell --help` groups everyday commands, and
+  maintainer commands move to `wordcell help advanced`. Every command answers
+  `--help`, `-h`, and `wordcell help <command>` with its own page and an
+  example.
+- `wordcell --version` (also `-V`, `-v`, and `version`) prints the version.
+- Before reading Chrome, Arc, Brave, Chromium, or Edge cookies on a Mac,
+  `wordcell clip --cookie-source` explains the keychain dialog that names
+  `security`. A denied request, a locked keychain, or Safari cookies without
+  Full Disk Access now say what happened and how to fix it, instead of "no
+  matching cookies".
+- `wordcell init` names the next command. Until a vault has an index,
+  `wordcell search` without `--mode` matches exact words and says how to build
+  the index, instead of returning no results. `wordcell index` says when it
+  will download the search model.
+- Mistakes print one line saying what was wrong, with a suggestion for a
+  likely typo, and one command to run next, instead of the full usage.
+
+## 0.22.5
+
+`wordcell check` and `wordcell refresh` find unlinked mentions through a phrase
+index, so sparse vaults can grow beyond the previous all-pairs limit.
+
+- `wordcell check` and `wordcell refresh` scan the whole vault through the
+  phrase index. Results keep the same phrase selection, ordering, and line
+  numbers as before.
+- A complete scan enforces explicit limits on input size, index size, work, and
+  matches. When a vault exceeds one, the command fails and names the limit
+  instead of returning partial results.
+- SDK callers can opt in with `analyzeVaultComplete`, `scanVaultComplete`, and
+  `refreshVaultComplete`. `analyzeVault`, `scanVault`, and `refreshVault` keep
+  their current limits.
+
+## 0.22.4
+
+Published search excerpts show readable article text and link labels, with
+resolved citation markers and Markdown formatting removed. Eager previews and
+hydrated excerpts share the article's citation rules; unresolved references and
+code remain literal. Unicode excerpts stay within their byte limit without
+splitting characters. Search matching and ranking retain their existing inputs.
+Republish an existing site to update its excerpts.
+
+## 0.22.3
+
+Published Markdown now renders numbered footnotes with links back to each
+citation. Footnotes work without JavaScript, use accessible link labels, and
+preserve unresolved references visibly. Code, comments, and unsafe HTML or URLs
+keep their existing safety boundaries. Existing vaults need no migration.
+
+## 0.22.2
+
+Updates the embedded Oh dependency to immutable release 0.12.0. Named graph
+queries, source proofs, and Markdown authority retain their existing contracts.
+
+Clarifies how Wordcell uses Oh for derived graph queries and source proofs while
+Markdown and Git remain authoritative. The graph guide includes a complete
+authored-link example that queries without creating a persisted cache.
+
+The website compares Wordcell exact search and hosted Jev reranking on the same
+300-query SciFact study, with source-backed values, methods, exposure, and limits.
+Oh conversation-memory scores are linked separately, and the context-payload
+measurement no longer implies equal answer quality.
+
+## 0.22.1
+
+Adds `updateNoteBody` to the authoring SDK. It replaces an existing note's prose
+at a required content revision while preserving frontmatter bytes, stable
+identity, and typed relations. Concurrent edits fail with the existing conflict
+and recovery results; an unchanged body leaves the file in place.
+
+The package also includes the reviewed Oh 0.11.0 dependency update.
+
 ## 0.22.0
 
 Publish any selected slice of a Markdown vault as a static website, then preview it with `wordcell serve`. Select notes by ID, directory, glob, metadata, or explicit graph neighborhood. Preview counts, a bounded list of selected IDs, and a Markdown digest before writing; publishing needs no model or hosted service. Pages include navigation, backlinks, browser-local search, and a graph.

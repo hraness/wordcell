@@ -2,6 +2,7 @@ import { lstatSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { redactSensitiveText } from "../clip/persist.js";
+import { renderFailure, sentence, stderrStyle, terminalOutput } from "../cli-style.js";
 import { sanitizeTerminalLine, sanitizeTerminalText } from "../clip/terminal.js";
 import { parsePdfArguments, pdfUsage } from "./args.js";
 import { runPdfCapture } from "./capture.js";
@@ -19,10 +20,10 @@ export type PdfCliOutput = {
   readonly stderr: (value: string) => void;
 };
 
-const defaultOutput: PdfCliOutput = {
+const defaultOutput: PdfCliOutput = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value),
-};
+});
 
 export type PdfCliDependencies = {
   readonly runPdfCapture?: typeof runPdfCapture;
@@ -89,7 +90,7 @@ export async function main(
 ): Promise<number> {
   const parsed = parsePdfArguments(rawArguments, environment);
   if (!parsed.ok) {
-    output.stderr(`error: ${safe(parsed.message)}\n\n${sanitizeTerminalText(pdfUsage)}`);
+    output.stderr(renderFailure(sentence(safe(parsed.message)), "wordcell pdf --help", stderrStyle(environment, output)));
     return 2;
   }
   const arguments_ = parsed.value;
@@ -149,7 +150,7 @@ export async function main(
   } catch (error) {
     const message = safe(error instanceof Error ? error.message : String(error));
     if (arguments_.json) output.stdout(terminalSafeJson({ ok: false, error: message }));
-    else output.stderr(`error: ${message}\n`);
+    else output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
   } finally {
     preparedSource?.dispose();

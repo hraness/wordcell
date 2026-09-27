@@ -159,6 +159,29 @@ over the contract's node limit publish the same page with the static note
 index instead of the live canvas, and the prerendered index below the map
 keeps the page useful without JavaScript at any size.
 
+### Footnotes
+
+Use `[^label]` in prose and a top-level `[^label]: Source or explanation`
+definition to publish a numbered footnote. Each citation links to its footnote;
+each footnote links back to every place that cites it. These links work without
+JavaScript. Definitions can contain ordinary links and inline formatting.
+Indent continuation lines by four spaces or one tab. Nested footnote references
+inside definitions remain literal, and supported explicit links take precedence over
+footnote syntax in their labels.
+
+```md
+The measured result is consistent with the earlier study.[^study]
+
+[^study]: [Read the study](https://example.com/study).
+```
+
+Labels allow Unicode letters, marks, and numbers plus `._:-`; they are
+case-sensitive and normalized to Unicode NFC. Keep labels within
+128 UTF-8 bytes and definitions within 32 lines and 8,192 UTF-8 bytes. A page
+supports 256 definitions and 2,048 linked citations. Missing, duplicated,
+invalid, and over-limit references remain visibly unresolved; their authored
+definitions remain visible. Footnote syntax in code or comments stays inert.
+
 ### Appearance
 
 The reader supports the shared Hraness palette contract: the `wordcell`
@@ -209,6 +232,18 @@ Filters combine with free text. `tag:public path:docs migration` searches
 everything that matches. Unknown or malformed `name:` tokens stay in the
 free-text query. Matched terms render with `<mark>` highlighting built from
 DOM text nodes, never injected HTML.
+
+Search excerpts show readable article text and link labels. Resolved footnote
+markers and Markdown formatting are omitted; code, escaped text, and unresolved
+references remain literal. The full Markdown is interpreted before excerpts are
+clipped, so a definition later in the note still resolves its citation. Snippets
+keep complete Unicode characters within their byte limit.
+
+For custom readers, `docs.json` stores the eager preview in `p` and the inline
+search basis in `x`. Hydrated note `text` holds bounded readable content,
+normalized to NFC and lowercase for snippet matching. Use the document table
+and content postings for ranking; hydration supplies display text. Existing
+published artifacts keep their original excerpts until republished.
 
 ### Safety
 
@@ -267,6 +302,11 @@ curl -s -X POST https://wordcell.io/api/v1/tokens -d '{"label":"my agent"}'
 
 curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
   -H "Authorization: Bearer wc_pub_…" -H "content-type: application/json" -d '{
+    "operation": {
+      "contract": "hraness.wordcell.hosted-operation.v1",
+      "id": "32d708ac-782d-4ca0-8c34-3e89ad0ed02a",
+      "expectedRevision": 0
+    },
     "title": "Team Handbook",
     "files": {
       "index.md": "# Handbook\n\nStart with [[onboarding]].\n",
@@ -284,40 +324,59 @@ curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
   flow at this stage.
 - **Files** map vault-relative paths to a UTF-8 string, `{"base64": "…"}`, or
   `{"upload": "<id>"}`. Uploads come from `POST /api/v1/uploads`, which mints a
-  short-lived presigned PUT (≤32 MiB); unreferenced uploads expire after a day.
+  short-lived, write-once presigned PUT (≤32 MiB); uploads expire after a day.
   Inline bytes are capped at 4 MiB per request, 256 files per request.
 - **Options** (`title`, `description`, `index`, `noindex`, `indexContent`,
   `selection`) mirror the CLI flags; `selection` accepts the same
   includes/excludes/globs/tags/repositoryScopes/filters/from shape. `index`
   selects the vault's index note path when it is not `index.md`.
-- **Idempotent and atomic.** Emitted bytes are stored under a content digest;
-  republishing identical output is a no-op. The public slug pointer moves only
-  after every artifact object is durable, so a failed publish never leaves a
-  half-updated site. `GET` returns the site record; `DELETE` unpublishes it and
-  removes the artifact objects. Public reads are CDN-cached for up to 60
-  seconds, so a republish or delete can take that long to become visible.
+- **Conditional writes and recovery.** Read the current revision with `GET`
+  before a write. PUT and DELETE require a unique operation ID and the revision
+  they expect to replace. Exact retries return the original receipt. Resolve
+  uncertain outcomes with `GET ?operation=<id>`. One conditional site-head
+  write changes the record and public visibility after all artifact bytes are
+  durable. DELETE retains a tombstone and receipts; shared artifact bytes stay
+  stored. See the [hosted operation contract](hosted-publication.md) for request
+  shapes, conflict handling, and recovery. Public reads can remain cached for
+  up to 60 seconds.
 - **Bounds.** Hosted publication accepts ≤256 files per request, applies the
   contract's per-note and per-asset byte caps, and rejects projected output
-  over 3,500 files or 256 MiB. Tokens get 60 publishes and 50 live sites per
-  day-scale quota; addresses get 8 token mints and 120 publishes per day.
+  over 3,500 files or 256 MiB. Tokens get 60 publishes per day and 50 distinct
+  reserved slugs, including deletions and interrupted operations; addresses get 8 token mints and
+  120 publishes per day.
   Public reads carry no quota beyond ordinary CDN caching.
 - **Data.** The request vault is materialized to a temporary directory for the
   projection and deleted when the request ends; only the emitted artifact
   persists. Quota counters expire within two days; token digests, site records,
-  and slug pointers persist until the site is deleted. Published sites are
+  namespace reservations, operation receipts, and tombstones persist. Published sites are
   public by contract — never publish private content.
 
 `GET /api/v1/openapi.json` returns the OpenAPI 3.1 description;
 `GET /api/v1/health` reports service and storage health. MCP clients can use
 the streamable-HTTP endpoint `POST /api/v1/mcp` instead of REST: it exposes
-`create_token`, `publish_site`, `list_sites`, and `delete_site` tools that
+`create_token`, `get_site`, `publish_site`, `list_sites`, and `delete_site` tools that
 dispatch to the identical route logic — send the `wc_pub_` Bearer token as on
 REST, and `create_token` stays unauthenticated so an MCP-only client can
 onboard itself. The storage layer is
 a private Cloudflare R2 bucket behind the `wordcell-sites` worker — object
-reads and writes are HMAC-signed, and the public `/p/` path resolves the slug
-pointer to immutable artifact bytes with directory-index and `404.html`
+reads and writes are HMAC-signed, and the public `/p/` path resolves the site
+head to immutable artifact bytes with directory-index and `404.html`
 semantics identical to `wordcell serve`.
+
+Hosted directory pages use a trailing slash so their relative navigation and
+reader assets stay inside the edition. A slashless request redirects only
+after the Worker finds that directory's index; files and missing paths do not
+acquire a slash. The site proxy preserves `/p/` paths and keeps other site
+pages on their usual slashless URLs.
+
+When introducing this routing policy, deploy the site first and verify that a
+hosted directory URL returns its published HTML and keeps its slash, then deploy
+the Worker redirect. The Vercel configuration has a separate trailing-slash
+rewrite before the slashless rule; both must forward the original path form.
+Verify root and nested published pages on the preview deployment before merging.
+The local Next server does not exercise Vercel's external rewrites. Reversing
+that order creates a redirect loop with the older site. Roll back the Worker
+before restoring the older site policy. Existing stored artifacts need no rewrite.
 
 ## Programmatic use
 

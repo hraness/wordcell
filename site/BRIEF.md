@@ -20,7 +20,9 @@ images or runtime package dependency.
 
 ## STORY
 
-Lead with the decisions behind a code change, then show a complete local
+Lead with the decisions behind a code change: the heading gives coding agents
+the decisions behind your code, and the summary places them as Markdown beside
+the repository, one command away. Then show a complete local
 save-and-find journey. Put the verified install before advanced features.
 Explain existing-vault adoption, show measured context payload bytes with their
 limits, compare adjacent tools fairly, and preview a selected-note publication.
@@ -29,9 +31,9 @@ actions. Use the shared footer as the sole builder credit.
 
 ## FIRST VIEWPORT
 
-One header identity leads into the existing benefit heading, README lead,
-actions, and real command example. The field covers the hero and its proof
-frame. Code remains selectable and keyboard-scrollable.
+One header identity leads into the canonical heading, hero summary, actions,
+and real command example. The field covers the hero and its proof frame. Code
+remains selectable and keyboard-scrollable.
 
 ## FORM
 

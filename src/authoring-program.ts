@@ -3,13 +3,13 @@ import { Effect, Exit } from "effect";
 import {
   MAX_NOTE_BYTES, NoteRevisionConflictError, addRelationToParts, assertCompatibleCreate,
   assertExpected, canonicalNoteId, canonicalRelationTarget, checkedExpectedRevision,
-  frontmatter, isErrno, normalizeRelationPredicate, noteResult, pathFor, relationsFromParts,
-  removeRelationFromParts, renderCreatedNote, renderFrontmatter, revisionFor,
-  sameQuarantinedSnapshot, sameSnapshot, withRecoveryPath,
+  existingDocumentId, frontmatter, isErrno, normalizeRelationPredicate, noteResult, pathFor, relationsFromParts,
+  removeRelationFromParts, renderCreatedNote, renderFrontmatter, renderUpdatedNoteBodyAndFields, requireRevision, revisionFor,
+  sameQuarantinedSnapshot, sameSnapshot, validateFrontmatterFieldUpdates, validateFrontmatterFields, withRecoveryPath,
 } from "./authoring-model.js";
 import type {
   AuthoringDependencies, AuthoringInstallContext, AuthoringOptions, CreateNoteInput,
-  DirectoryIdentity, NoteAuthoringResult, NoteRevision, NoteSnapshot, RecoveryLocation, Vault,
+  DirectoryIdentity, FrontmatterFieldUpdates, FrontmatterFields, NoteAuthoringResult, NoteRevision, NoteSnapshot, RecoveryLocation, UpdateNoteBodyOptions, Vault,
 } from "./authoring-model.js";
 import type { NoteLock } from "./note-lock.js";
 import { parseDocumentId } from "./portfolio-identity.js";
@@ -211,12 +211,18 @@ function installNote(
   });
 }
 
+/**
+ * `fields` is internal: extra top-level frontmatter keys owned by an importer.
+ * The public `createNote` never passes it.
+ */
 export function createNoteProgram(
   platform: AuthoringPlatform, root: string, input: CreateNoteInput, options: AuthoringOptions,
+  fields?: FrontmatterFields,
 ): Effect.Effect<NoteAuthoringResult, AuthoringFailure> {
   return Effect.gen(function*() {
     const vault = yield* authoringNative(() => platform.resolveVault(root));
     const id = yield* authoringSync(() => canonicalNoteId(input.id));
+    const extra = yield* authoringSync(() => validateFrontmatterFields(fields));
     const requestedDocumentId = yield* authoringSync(() => input.documentId === undefined ? undefined : parseDocumentId(input.documentId));
     const expected = yield* authoringSync(() => checkedExpectedRevision(options));
     const dependencies = yield* authoringSync(() => platform.dependenciesFor(options.dependencies));
@@ -227,12 +233,12 @@ export function createNoteProgram(
         const existing = yield* authoringNative(() => platform.readOptionalSnapshot(vault, id));
         if (existing !== null) {
           yield* authoringSync(() => assertExpected(existing, expected));
-          const compatible = yield* authoringSync(() => assertCompatibleCreate(existing, input, requestedDocumentId));
+          const compatible = yield* authoringSync(() => assertCompatibleCreate(existing, input, requestedDocumentId, extra));
           return yield* authoringSync(() => noteResult(existing, compatible.relations, false, compatible.documentId));
         }
         if (expected !== undefined) return yield* fail(new NoteRevisionConflictError(`${id}.md`, expected, null));
         const documentId = yield* authoringSync(() => requestedDocumentId ?? parseDocumentId(dependencies.documentId()));
-        const content = yield* authoringSync(() => renderCreatedNote(input, documentId));
+        const content = yield* authoringSync(() => renderCreatedNote(input, documentId, extra));
         const revision = yield* installNote(platform, vault, id, content, null, lock, dependencies);
         return { changed: true, path: `${id}.md`, revision, relations: [], documentId };
       }),
@@ -271,6 +277,47 @@ export function editNoteRelationProgram(
         const relations = yield* authoringSync(() => relationsFromParts(frontmatter(content, source.relativePath), source.relativePath));
         const revision = yield* installNote(platform, vault, sourceId, content, source, lock, dependencies);
         return { changed: true, path: source.relativePath, revision, relations };
+      }),
+      (lock) => authoringNative(() => lock.release()),
+    );
+  });
+}
+
+/**
+ * `fields` is internal: top-level frontmatter keys (and `title`) set in the
+ * same atomic write, where `null` deletes a key. The public `updateNoteBody`
+ * never passes it, so the authored frontmatter bytes stay untouched there.
+ */
+export function updateNoteBodyProgram(
+  platform: AuthoringPlatform, root: string, idInput: string, body: string,
+  options: UpdateNoteBodyOptions, fields?: FrontmatterFieldUpdates,
+): Effect.Effect<NoteAuthoringResult, AuthoringFailure> {
+  return Effect.gen(function*() {
+    const id = yield* authoringSync(() => canonicalNoteId(idInput));
+    const updates = yield* authoringSync(() => validateFrontmatterFieldUpdates(fields));
+    const expected = yield* authoringSync(() => {
+      if (typeof options?.expectedRevision !== "string") {
+        throw new TypeError("expectedRevision is required for a note body update");
+      }
+      return requireRevision(options.expectedRevision);
+    });
+    const vault = yield* authoringNative(() => platform.resolveVault(root));
+    const dependencies = yield* authoringSync(() => platform.dependenciesFor(options.dependencies));
+    return yield* authoringResource(
+      authoringNative(() => platform.acquireNoteLock(vault.root, id, options.lock)),
+      (lock) => Effect.gen(function*() {
+        yield* authoringNative(() => platform.recoverInterruptedAuthoring(vault, id, lock));
+        const source = yield* authoringNative(() => platform.readSnapshot(vault, id));
+        yield* authoringSync(() => assertExpected(source, expected));
+        const parts = yield* authoringSync(() => frontmatter(source.content, source.relativePath));
+        const identity = yield* authoringSync(() => existingDocumentId(parts));
+        if (identity.kind === "invalid") return yield* fail(new TypeError("the note has an invalid document_id"));
+        const documentId = identity.kind === "valid" ? identity.documentId : undefined;
+        const relations = yield* authoringSync(() => relationsFromParts(parts, source.relativePath));
+        const content = yield* authoringSync(() => renderUpdatedNoteBodyAndFields(source, parts, body, updates));
+        if (content === source.content) return yield* authoringSync(() => noteResult(source, relations, false, documentId));
+        const revision = yield* installNote(platform, vault, id, content, source, lock, dependencies);
+        return yield* authoringSync(() => noteResult({ relativePath: source.relativePath, revision }, relations, true, documentId));
       }),
       (lock) => authoringNative(() => lock.release()),
     );

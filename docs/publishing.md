@@ -1,4 +1,7 @@
-# Publish Wordcell
+# Release and verify Wordcell
+
+This page covers how maintainers cut a Wordcell release and how you can verify
+a release you downloaded; see [Verify a published release](#verify-a-published-release).
 
 The canonical artifact contract starts at `0.19.4`; that first attempt stopped
 with a retained partial draft. Each successful release contains
@@ -22,7 +25,11 @@ procedure is preserved in
 1. Merge the intended source and a strictly increasing stable version through
    a current-head pull request. Resolve review threads and require `Required`
    CI. Stable components are canonical decimal integers bounded by
-   `Number.MAX_SAFE_INTEGER`.
+   `Number.MAX_SAFE_INTEGER`. In the same pull request, rename
+   `## Unreleased` in `CHANGELOG.md` to the version (`## 0.23.0`, optionally
+   `## 0.23.0 - 2026-09-30`) and start a new empty `## Unreleased` section
+   above it only when there is more work to record. See
+   [Release notes](#release-notes).
 2. Run the required local source gate with Bun `1.3.14`, Node `24`, and npm
    `11.19.0`:
 
@@ -97,6 +104,55 @@ attempt. If its exact original evidence cannot be proved, stop with its
 release/run identity and reconcile that state. Retry the original authorized
 operation only after inspecting uncertain provider results.
 
+## Release notes
+
+The GitHub Release is titled `Wordcell v<version>`. Its body follows the
+[Hraness release page standard](https://github.com/hraness/.github/blob/main/RELEASES.md):
+
+1. The summary: the paragraph or paragraphs of the version's `CHANGELOG.md`
+   section before its first bullet.
+2. `## Changes`: that section's bullet list, copied byte for byte.
+3. `## Install`: the versioned Bun command for the GitHub Release archive, then
+   the versioned npm command.
+4. `## Verify`: the `SHA256SUMS` asset, the archive SHA-256, the full source
+   commit, and a link to this page pinned to the tag.
+5. The identity record, an HTML comment that forms the final bytes of the
+   body:
+
+   ```text
+   <!-- hraness-github-release-v1
+   Package: @hraness/wordcell@<version>
+   Source commit: <40-hex tagged commit>
+   Workflow run: <run ID>
+   Workflow attempt: <run attempt>
+   Archive SHA-256: <64-hex archive digest>
+   -->
+   ```
+
+The notes come from `CHANGELOG.md` in the tagged commit. A section holds a
+summary and then only bullets; continuation lines are indented two spaces.
+`scripts/github-release.ts prepare` renders the body during source
+verification, so the run stops before attestation or any release exists when
+the section is missing, empty, repeated, still says `Unreleased`, contains a
+heading, or lacks a summary or bullets. `## Unreleased` itself is never read.
+The workflow never uses GitHub's generated notes.
+
+Every release readback, retry, and the `download` verifier parse the identity
+from the last `<!-- hraness-github-release-v1` marker, require the body to end
+with `-->`, require the record to match the signed manifest, and require the
+notes above it to be byte-identical to the rendered tagged changelog section
+plus the generated Install and Verify sections. A hand edit to a published page
+fails that check.
+
+Versions through 0.22.5 were published before this standard with a visible
+identity paragraph. For those versions the verifier admits that exact legacy
+body, or a backfilled standard page whose generated Install and Verify
+sections and trailing identity record are exact; their notes are not bound to
+the tagged changelog. To print the body for a downloaded release, run
+`node scripts/github-release.ts body <directory-with-release-manifest.json>`
+from a clone that contains the tagged commit, optionally naming another full
+commit whose `CHANGELOG.md` supplies the notes.
+
 ## Verify a published release
 
 Resolve a published immutable version before installation. A `latest` URL is
@@ -110,7 +166,9 @@ VERIFIED_SOURCE_SHA=<exact-tag-commit> \
   node scripts/github-release.ts download <new-directory> <version>
 ```
 
-The verifier binds release metadata, the annotated tag, packing receipt,
+Run it from a clone that contains the tagged commit, because the verifier reads
+that commit's `CHANGELOG.md` to check the release notes. The verifier binds
+release metadata and notes, the annotated tag, packing receipt,
 archive SHA-256/SHA-512, exact checksum file, complete asset inventory, and
 signed provenance. It invokes `gh attestation verify` with exact repository,
 signer workflow, signer digest, source digest, source ref, hosted-runner

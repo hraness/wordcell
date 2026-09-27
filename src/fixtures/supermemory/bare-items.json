@@ -1,0 +1,29 @@
+[
+  {
+    "id": "Bi1ccccccccccccccccccc",
+    "connectionId": null,
+    "customId": "bare-one",
+    "title": "Bare item one",
+    "summary": "A document row without its page wrapper.",
+    "filepath": null,
+    "metadata": null,
+    "status": "done",
+    "type": "text",
+    "createdAt": "2025-02-01T12:00:00Z",
+    "updatedAt": "2025-02-01T12:00:00Z"
+  },
+  {
+    "id": "Bi2ddddddddddddddddddd",
+    "connectionId": null,
+    "customId": null,
+    "title": "Bare webpage",
+    "summary": "A saved web page.",
+    "filepath": null,
+    "metadata": null,
+    "status": "done",
+    "type": "webpage",
+    "url": "https://example.com/articles/memory-layers",
+    "createdAt": "2025-02-02T12:00:00Z",
+    "updatedAt": "2025-02-03T12:00:00Z"
+  }
+]

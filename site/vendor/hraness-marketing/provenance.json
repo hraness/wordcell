@@ -3,13 +3,13 @@
   "contractVersion": 1,
   "source": {
     "repository": "https://github.com/hraness/design-kit",
-    "commit": "0e089bc18f9a0409f0e74b1fb7192f468956e386",
+    "commit": "8937fceab35ae5bf591202bde3d641d48cec7f46",
     "export": "@hraness/design-kit/product-marketing-preset.css"
   },
   "files": {
     "product-marketing-preset.css": {
       "path": "src/product-marketing-preset.css",
-      "sha256": "221fd555f9c9c15e26fc8d7d8ad3a536e3dfb138df699b449adb9c45919e66cb"
+      "sha256": "279d8878f8e233e355202c9e0a19797a32ea7999486e711dae7836497879a1e6"
     },
     "fonts/instrument-serif/instrument-serif-latin-400.woff2": {
       "path": "src/fonts/instrument-serif/instrument-serif-latin-400.woff2",
@@ -29,11 +29,11 @@
     },
     "marketing-assets/cells.svg": {
       "path": "src/marketing-assets/cells.svg",
-      "sha256": "be9b12eefeae91772f024ed24ccda5be6173fb626921374b7e5270c298611b01"
+      "sha256": "2391e9b3ee964e1178fedc55c766d12ac43bfeda92cfa44aab16c64a15f9d712"
     },
     "marketing-assets/UPSTREAM.md": {
       "path": "src/marketing-assets/UPSTREAM.md",
-      "sha256": "5fbdca290a6ff79cb4457c954fbfcc7da9baad0f976bd330c87106f45fd907d7"
+      "sha256": "0dbb9211a0d33e71797b7818e9fd7c7c35b641a56656e81fab5f7c68586d9b26"
     },
     "check.mjs": {
       "path": "scripts/check-marketing-snapshot.mjs",

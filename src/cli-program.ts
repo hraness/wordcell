@@ -1,5 +1,18 @@
 import { terminalIntro } from "./cli-intro.js";
-import { open } from "node:fs/promises";
+import {
+  advancedHelp,
+  closestMatch,
+  commandHelpText,
+  commandWordCount,
+  knownCommandWords,
+  optionNames,
+  resolveCommandId,
+  rootHelp,
+  startHelp,
+  valueOptions,
+} from "./cli-help.js";
+import { detectAudience, renderFailure, sentence, symbol, terminalOutput, terminalStyle, type TerminalEnvironment } from "./cli-style.js";
+import { open, realpath, stat } from "node:fs/promises";
 import { cpus, release, totalmem } from "node:os";
 import { relative, resolve } from "node:path";
 import { format } from "node:util";
@@ -104,6 +117,10 @@ import {
   type PublishSelectionInput,
 } from "./publish.js";
 import { serveSite } from "./serve.js";
+import { resolveVault } from "./authoring-platform.js";
+import { guardStdout, runMcpServer, serverVersion } from "./mcp-server.js";
+import { importSupermemory, MAX_IMPORT_FILES, normalizePrefix, type ImportReport } from "./import-supermemory.js";
+import { createToolCatalog, serverInstructions, type ContextBuilder } from "./mcp-tools.js";
 import {
   MAX_AUTHORIZED_VAULTS,
   loadPortfolioRegistry,
@@ -142,6 +159,7 @@ import {
   qmdIndexerVersion,
   recommendedEmbeddingModel,
   recommendedEmbeddingModelSha256,
+  semanticDatabasePath,
   sha256EmbeddingModelFile,
   type SemanticIndexResult,
 } from "./semantic.js";
@@ -162,7 +180,9 @@ import { MAX_RERANK_CANDIDATES, type SearchReranker } from "./rerank.js";
 import { createCliTypeSafeReranker } from "./rerank-credentials.js";
 import {
   refreshVault,
+  refreshVaultComplete,
   scanVault,
+  scanVaultComplete,
   type ScanVaultOptions,
   type VaultSnapshot,
 } from "./vault.js";
@@ -178,10 +198,46 @@ type Output = {
   readonly stderr: (value: string) => void;
 };
 
-const defaultOutput: Output = {
+const defaultOutput: Output = terminalOutput({
   stdout: (value) => process.stdout.write(value),
   stderr: (value) => process.stderr.write(value),
-};
+});
+
+/** Read standard input as fatal UTF-8, stopping as soon as it passes `maximumBytes`. */
+async function readBoundedStdinUtf8(
+  source: StdinSource,
+  maximumBytes: number,
+  label: string,
+): Promise<string> {
+  if (source.isTTY) {
+    throw new Error(
+      "--body-file - reads the note body from standard input, but standard input is a terminal; pipe the body in or name a file",
+    );
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for await (const chunk of source.chunks) {
+    total += chunk.byteLength;
+    if (total > maximumBytes) {
+      throw new Error(`${label} exceeds the ${maximumBytes}-byte limit`);
+    }
+    chunks.push(chunk);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  let text: string;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (error) {
+    throw new Error(`${label} is not valid UTF-8`, { cause: error });
+  }
+  if (text.trim() === "") throw new Error(`${label} from standard input is empty`);
+  return text;
+}
 
 async function readBoundedUtf8(
   path: string,
@@ -230,73 +286,15 @@ async function loadSearchRulesFile(path: string): Promise<SearchRulesV1> {
   return parseSearchRules(input);
 }
 
-export const usage = `wordcell — a local knowledge base for coding agents
-
-Start here (no account or model needed):
-  wordcell init kb
-  wordcell note create notes/decision --title "A decision" --body "Keep retries bounded." --root kb
-  wordcell search "retries" --root kb --mode exact
-
-Already have Markdown? Search it with --root <your-notes-directory>.
-Use --mode exact for model-free search; optional hybrid search needs a local index.
-Quick start and examples: https://wordcell.io/docs
-
-Usage:
-  wordcell init [directory] [--json]
-  wordcell clip <url|current> [capture options]
-  wordcell capture show <bundle> [--verify-assets] [--include-source-html] [--json]
-  wordcell capture verify <bundle> [--verify-assets] [--json]
-  wordcell capture diff <bundle> [--repo <repository>] [--ref <ref>] [--json]
-  wordcell url-metadata tool <build|check>
-  wordcell url-metadata backfill [metadata options]
-  wordcell inspect <url> [capture options]
-  wordcell pdf <file-or-url> [PDF options]
-  wordcell refresh [--root <directory>] [--index <path>] [--json]
-  wordcell check [--root <directory>] [--index <path>] [--no-catalog] [--repo <repository>] [--json]
-  wordcell catalog [--root <directory>] [--index <path>] [--json]
-  wordcell graph [--root <directory>] [--index <path>] [--json]
-  wordcell graph rebuild [--fresh] [--root <directory>] [--index <path>] [--json]
-  wordcell graph verify [--root <directory>] [--index <path>] [--json]
-  wordcell graph query --program <backlinks|reachability|scope-route|relation-closure|shared-tags|shared-concepts> [--note <id> | --scope <path>] [--predicate <predicate>] [--depth <count>] [--limit <count>] [--persisted] [--root <directory>] [--index <path>] [--json]
-  wordcell backlinks <note> [--root <directory>] [--index <path>] [--json]
-  wordcell links <note> [--root <directory>] [--direction <in|out|both>] [--depth <count>] [--limit <count>] [--json]
-  wordcell note create <id> --title <title> [--type <type>] [--tag <tag>] [--body <markdown> | --body-file <path>] [--root <directory>] [--json]
-  wordcell relation add <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
-  wordcell relation remove <source> <predicate> <target> [--root <directory>] [--expected-revision <sha256:...>] [--json]
-  wordcell relation list <note> [--root <directory>] [--json]
-  wordcell percolate [note] [--proofs] [--root <directory>] [--min-support <count>] [--limit <count>] [--json]
-  wordcell list [--root <directory>] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--sort <field>] [--order <asc|desc>] [--limit <count>] [--json]
-  wordcell index [--root <directory>] [--database <path>] [--force] [--json]
-  wordcell search <query> [--root <directory>] [--repo <repository>] [--database <path>] [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--where <path=value>] [--has <path>] [--tag <tag>] [--scope <repository-path>] [--related <note>] [--graph-depth <1|2>] [--no-graph] [--history | --no-history | --require-history] [--limit <count>] [--candidate-limit <count>] [--min-score <score>] [--rerank <typesafe>] [--rerank-limit <2..25>] [--json]
-  wordcell history <note> [--root <directory>] [--repo <repository>] [--limit <count>] [--cochanged-limit <count>] [--json]
-  wordcell history search <query-or-path> [--root <directory>] [--repo <repository>] [--limit <count>] [--commit-limit <count>] [--cochanged-limit <count>] [--json]
-  wordcell evaluate <manifest.json> [--root <directory>] [--repo <repository>] [--database <path>] [--retriever <id>] [--split <development|test|all>] [--limit <count>] [--cutoff <count>] [--timeout <milliseconds>] [--baseline <id>] [--model-file <path>] [--cache-state <cold|mixed|warm>] [--json]
-  wordcell portfolio search <query> --registry <file> --workspace <directory> (--shared | --vault <owner/id>...) [--mode <hybrid|exact|keyword|semantic>] [--rules <file>] [--priority] [--limit <count>] [--require-all] [--json]
-  wordcell portfolio audit --registry <file> --workspace <directory> (--all | --shared | --vault <owner/id>...) [--strict] [--json]
-  wordcell publish --out <directory> [--root <directory>] [--index <path>] [--include <path>]... [--exclude <path>]... [--include-glob <pattern>]... [--exclude-glob <pattern>]... [--where <path=value>]... [--has <path>]... [--tag <tag>]... [--scope <repository-path>]... [--from <note> [--depth <count>] [--direction <in|out|both>]] [--title <title>] [--description <text>] [--base-path <path>] [--base-url <url>] [--noindex] [--no-index-content] [--deterministic] [--dry-run] [--list-limit <0-1000>] [--force] [--json]
-  wordcell serve --root <directory> [--host <host>] [--port <port>] [--json]
-  wordcell inbox [--root <directory>] [--source-prefix <directory>] [--limit <count>] [--json]
-  wordcell context <repository-path> [--root <vault>] [--repo <repository>] [--kind <auto|file|directory>] [--json]
-  wordcell agents identity <repository-scope> [--json]
-  wordcell agents check [--root <vault>] [--repo <repository>] [--json]
-  wordcell agents audit [--root <vault>] [--repo <repository>] [--json]
-  wordcell doctor [--json]
-  wordcell adapters [--json]
-  wordcell support [--json | protocol --json | offer --json | shown <id> | release <id> | dismiss | snooze | enable | status --json]
-
-Optional support uses separate local preferences. HRANESS_SUPPORT=off or
-HRANESS_SUPPORT_AUDIENCE=off keeps invitations quiet; explicit support remains available.
-Agents receive discovery on stderr after useful standalone work. Human mode requires
-HRANESS_SUPPORT_AUDIENCE=human and an interactive stderr. No command signs up or pays.
-
-Run \`wordcell clip --help\` for web capture options or \`wordcell pdf --help\` for PDF conversion options.
-`;
+/** Grouped root help printed by `wordcell --help`. */
+export const usage = rootHelp();
 
 type VaultCommand = "refresh" | "check" | "graph" | "backlinks" | "links";
 
 type ParsedCommand =
   | GraphCliCommand
-  | { readonly kind: "help" }
+  | { readonly kind: "help"; readonly topic?: string }
+  | { readonly kind: "version"; readonly json: boolean }
   | { readonly kind: "clip"; readonly arguments: readonly string[] }
   | {
       readonly kind: "capture-bundle";
@@ -459,6 +457,15 @@ type ParsedCommand =
       readonly json: boolean;
     }
   | {
+      readonly kind: "import-supermemory";
+      readonly root: string;
+      /** Export file paths as given, read relative to the working directory. */
+      readonly files: readonly string[];
+      readonly prefix?: string;
+      readonly dryRun: boolean;
+      readonly json: boolean;
+    }
+  | {
       readonly kind: "relation";
       readonly action: "add" | "remove" | "list";
       readonly root: string;
@@ -501,13 +508,19 @@ type ParsedCommand =
       readonly host: string;
       readonly port: number;
       readonly json: boolean;
+    }
+  | {
+      readonly kind: "mcp";
+      readonly root: string;
+      readonly repository?: string;
+      readonly readOnly: boolean;
     };
 
 type ParseResult =
   | { readonly ok: true; readonly value: ParsedCommand }
   | { readonly ok: false; readonly message: string };
 
-type CliDependencies = GraphCliDependencies & {
+export type CliDependencies = GraphCliDependencies & {
   readonly runClipCommand?: typeof runClipCommand;
   readonly readCaptureBundle?: typeof readCaptureBundle;
   readonly verifyCaptureBundle?: typeof verifyCaptureBundle;
@@ -522,6 +535,8 @@ type CliDependencies = GraphCliDependencies & {
   readonly refreshVault?: typeof refreshVault;
   readonly indexSemanticVault?: typeof indexSemanticVault;
   readonly openKnowledgeBase?: typeof openKnowledgeBase;
+  /** Whether a local search index exists for a vault root; injected in tests. */
+  readonly semanticIndexExists?: (root: string) => Promise<boolean>;
   readonly openKnowledgeBaseEvaluation?: typeof openKnowledgeBaseEvaluation;
   /** Test seam; production wiring builds the TypeSafe reranker lazily per flag. */
   readonly rerankers?: readonly SearchReranker[];
@@ -539,6 +554,31 @@ type CliDependencies = GraphCliDependencies & {
   readonly validateMarkdownAttachments?: typeof validateMarkdownAttachments;
   readonly publishVault?: typeof publishVault;
   readonly serveSite?: typeof serveSite;
+  /** Test seam: serve MCP frames over these streams instead of guarding the process stdout. */
+  readonly mcp?: McpStreams;
+  /** Test seam: the standard input that `note create --body-file -` reads. */
+  readonly stdin?: StdinSource;
+  readonly importSupermemory?: typeof importSupermemory;
+  /** Test seam: the clock for the provenance line of `import supermemory`. */
+  readonly importNow?: () => Date;
+  /** Test seam: terminal facts for symbols, color, and the help intro. */
+  readonly terminal?: CliTerminal;
+  /** Test seam: the version `--version` and bare invocation print. */
+  readonly packageVersion?: () => Promise<string>;
+};
+
+export type StdinSource = {
+  readonly isTTY: boolean;
+  readonly chunks: AsyncIterable<Uint8Array>;
+};
+
+function processStdin(): StdinSource {
+  return { isTTY: process.stdin.isTTY === true, chunks: process.stdin };
+}
+
+type McpStreams = {
+  readonly input: AsyncIterable<Uint8Array>;
+  readonly writeFrame: (line: string) => Promise<void>;
 };
 
 function safe(value: string): string {
@@ -1122,6 +1162,38 @@ function parseServeCommand(arguments_: readonly string[]): ParseResult {
   }
   if (root === undefined) return { ok: false, message: "serve requires --root <directory>" };
   return { ok: true, value: { kind: "serve", root, host, port, json } };
+}
+
+/** No `--json`: stdout carries only protocol frames. */
+function parseMcpCommand(arguments_: readonly string[]): ParseResult {
+  let root: string | undefined;
+  let repository: string | undefined;
+  let readOnly = false;
+  for (let cursor = 0; cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined) continue;
+    if (argument === "--read-only") { readOnly = true; continue; }
+    if (argument === "--root" || argument === "--repo") {
+      const value = readValue(arguments_, cursor);
+      // An empty directory would resolve to the working directory of whatever launched the server.
+      if (value === null || value === "") return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root") root = value;
+      else repository = value;
+      cursor += 1;
+      continue;
+    }
+    return {
+      ok: false,
+      message: argument.startsWith("--")
+        ? "unknown mcp option"
+        : "mcp does not accept positional arguments",
+    };
+  }
+  if (root === undefined) return { ok: false, message: "mcp requires --root <vault>" };
+  return {
+    ok: true,
+    value: { kind: "mcp", root, ...(repository === undefined ? {} : { repository }), readOnly },
+  };
 }
 
 function parseInboxCommand(arguments_: readonly string[]): ParseResult {
@@ -1891,6 +1963,53 @@ function parseNoteCommand(arguments_: readonly string[]): ParseResult {
   };
 }
 
+function parseImportCommand(arguments_: readonly string[]): ParseResult {
+  if (arguments_[0] !== "supermemory") return { ok: false, message: "import requires supermemory" };
+  let root = ".";
+  let prefix: string | undefined;
+  let dryRun = false;
+  let json = false;
+  const files: string[] = [];
+  for (let cursor = 1; cursor < arguments_.length; cursor += 1) {
+    const argument = arguments_[cursor];
+    if (argument === undefined) continue;
+    if (argument === "--json") { json = true; continue; }
+    if (argument === "--dry-run") { dryRun = true; continue; }
+    if (argument === "--root" || argument === "--prefix") {
+      const value = readValue(arguments_, cursor);
+      if (value === null || value === "") return { ok: false, message: `${argument} requires a value` };
+      if (argument === "--root") root = value;
+      else prefix = value;
+      cursor += 1;
+      continue;
+    }
+    if (argument.startsWith("--")) return { ok: false, message: "unknown import supermemory option" };
+    files.push(argument);
+  }
+  if (files.length === 0) return { ok: false, message: "import supermemory requires at least one export file" };
+  if (files.length > MAX_IMPORT_FILES) {
+    return { ok: false, message: `import supermemory accepts at most ${MAX_IMPORT_FILES} export files` };
+  }
+  if (prefix !== undefined) {
+    try {
+      prefix = normalizePrefix(prefix);
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : String(error) };
+    }
+  }
+  return {
+    ok: true,
+    value: {
+      kind: "import-supermemory",
+      root,
+      files,
+      ...(prefix === undefined ? {} : { prefix }),
+      dryRun,
+      json,
+    },
+  };
+}
+
 function isNoteRevision(value: string): value is `sha256:${string}` {
   return /^sha256:[0-9a-f]{64}$/u.test(value);
 }
@@ -2154,11 +2273,72 @@ function parsePortfolioCommand(arguments_: readonly string[]): ParseResult {
   };
 }
 
+function isHelpFlag(argument: string | undefined): boolean {
+  return argument === "--help" || argument === "-h";
+}
+
+/** True for the help request a delegated parser answers itself. */
+function isDelegatedHelp(command: ParsedCommand): boolean {
+  if (command.kind === "clip") return command.arguments.length === 1 && command.arguments[0] === "help";
+  if (command.kind === "pdf" || command.kind === "url-metadata") {
+    return command.arguments.length === 1 && command.arguments[0] === "--help";
+  }
+  return false;
+}
+
+/** Help for delegated commands comes from their own parsers. */
+function delegatedHelp(first: string): ParsedCommand | undefined {
+  if (first === "clip" || first === "inspect") return { kind: "clip", arguments: ["help"] };
+  if (first === "pdf") return { kind: "pdf", arguments: ["--help"] };
+  if (first === "url-metadata") return { kind: "url-metadata", arguments: ["--help"] };
+  return undefined;
+}
+
+/** `help`, `help advanced`, and `help <command...>`. */
+function parseHelpTopic(words: readonly string[]): ParseResult {
+  const topic = words.filter((word) => !isHelpFlag(word) && word !== "--json");
+  if (topic.length === 0) return { ok: true, value: { kind: "help" } };
+  if (topic.length === 1 && topic[0] === "advanced") return { ok: true, value: { kind: "help", topic: "advanced" } };
+  const delegated = delegatedHelp(topic[0] ?? "");
+  if (delegated !== undefined) return { ok: true, value: delegated };
+  const id = resolveCommandId(topic);
+  if (id === undefined) return { ok: false, message: "unknown help topic" };
+  return { ok: true, value: { kind: "help", topic: id } };
+}
+
+/**
+ * `<command> --help` anywhere a person would type it: right after the command
+ * words, or as the last argument when it is not the value of an option.
+ */
+function embeddedHelp(arguments_: readonly string[]): ParseResult | undefined {
+  const separator = arguments_.indexOf("--");
+  const end = separator === -1 ? arguments_.length : separator;
+  const index = arguments_.slice(0, end).findIndex(isHelpFlag);
+  if (index <= 0) return undefined;
+  const delegated = delegatedHelp(arguments_[0] ?? "");
+  if (delegated !== undefined) {
+    return index === 1 || index === end - 1 ? { ok: true, value: delegated } : undefined;
+  }
+  const id = resolveCommandId(arguments_.slice(0, index).filter((word) => !word.startsWith("-")));
+  if (id === undefined) return undefined;
+  const words = commandWordCount(id);
+  const previous = arguments_[index - 1] ?? "";
+  // `--help` is never an option value; `-h` could be one, as in `--body -h`.
+  const flag = arguments_[index];
+  const lastArgument = index === end - 1 && (flag === "--help" || !valueOptions(id).has(previous));
+  if (index !== words && !lastArgument) return undefined;
+  return { ok: true, value: { kind: "help", topic: id } };
+}
+
 export function parseArguments(arguments_: readonly string[]): ParseResult {
   const command = arguments_[0];
-  if (command === undefined || command === "help" || command === "--help" || command === "-h") {
-    return { ok: true, value: { kind: "help" } };
+  if (command === undefined) return { ok: true, value: { kind: "help", topic: "start" } };
+  if (command === "help" || isHelpFlag(command)) return parseHelpTopic(arguments_.slice(1));
+  if (command === "--version" || command === "-V" || command === "-v" || command === "version") {
+    return { ok: true, value: { kind: "version", json: arguments_.includes("--json") } };
   }
+  const help = embeddedHelp(arguments_);
+  if (help !== undefined) return help;
   if (command === "capture" && arguments_[1] === "diff") {
     return parseCaptureDiffCommand(arguments_.slice(2));
   }
@@ -2214,10 +2394,12 @@ export function parseArguments(arguments_: readonly string[]): ParseResult {
   if (command === "context") return parseContextCommand(arguments_.slice(1));
   if (command === "agents") return parseAgentsCommand(arguments_.slice(1));
   if (command === "note") return parseNoteCommand(arguments_.slice(1));
+  if (command === "import") return parseImportCommand(arguments_.slice(1));
   if (command === "relation") return parseRelationCommand(arguments_.slice(1));
   if (command === "percolate") return parsePercolateCommand(arguments_.slice(1));
   if (command === "publish") return parsePublishCommand(arguments_.slice(1));
   if (command === "serve") return parseServeCommand(arguments_.slice(1));
+  if (command === "mcp") return parseMcpCommand(arguments_.slice(1));
   return { ok: false, message: "unknown command" };
 }
 
@@ -2285,7 +2467,14 @@ async function runSemantic(
   output: Output,
   dependencies: CliDependencies,
 ): Promise<number> {
+  const terminal = dependencies.terminal ?? processTerminal();
+  const person = !command.json && speaksToPerson(terminal);
   if (command.kind === "index") {
+    if (person) {
+      const style = terminalStyle(terminal.env, terminal.stderrIsTTY);
+      output.stderr(`${symbol("progress", style)} Indexing ${safe(command.root)}. `
+        + "The first run downloads a search model of about 300 MB and can take a few minutes.\n");
+    }
     const result = await (dependencies.indexSemanticVault ?? indexSemanticVault)({
       root: command.root,
       ...(command.database === undefined ? {} : { database: command.database }),
@@ -2294,6 +2483,17 @@ async function runSemantic(
     output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderSemanticIndex(result)));
     return 0;
   }
+  // With no mode and no index, meaning-based search has nothing to rank, so
+  // search the words instead and say how to turn on the rest. This applies to
+  // the real store only; an injected knowledge base keeps its default.
+  const indexExists = dependencies.semanticIndexExists
+    ?? (dependencies.openKnowledgeBase === undefined ? defaultSemanticIndexExists : undefined);
+  // Score thresholds and reranking only apply to ranked modes, so a search
+  // that asks for them keeps the default mode and its own error.
+  const withoutIndex = command.mode === undefined && command.database === undefined
+    && command.minScore === undefined && command.rerank === undefined
+    && indexExists !== undefined && !await indexExists(command.root);
+  const mode = withoutIndex ? "exact" as const : command.mode;
   const searchRules = command.rulesPath === undefined
     ? undefined
     : await loadSearchRulesFile(command.rulesPath);
@@ -2311,7 +2511,7 @@ async function runSemantic(
   try {
     const result = await kb.search({
       query: command.query,
-      ...(command.mode === undefined ? {} : { mode: command.mode }),
+      ...(mode === undefined ? {} : { mode }),
       ordering: command.ordering,
       filters: command.filters,
       tags: command.tags,
@@ -2333,6 +2533,11 @@ async function runSemantic(
     output.stdout(command.json
       ? terminalSafeJson(result)
       : sanitizeTerminalText(renderKnowledgeBaseSearch(result)));
+    if (withoutIndex && person) {
+      output.stderr("Searched without an index, so only exact words matched. "
+        + `For meaning-based search, run wordcell index --root ${safe(shellWord(command.root))} `
+        + "(downloads about 300 MB once).\n");
+    }
     return 0;
   } finally {
     await kb.close();
@@ -2965,7 +3170,9 @@ async function runNoteCreate(
   const body = command.body ?? (
     command.bodyFile === undefined
       ? undefined
-      : await readBoundedUtf8(command.bodyFile, 16 * 1024 * 1024, "note body")
+      : command.bodyFile === "-"
+        ? await readBoundedStdinUtf8(dependencies.stdin ?? processStdin(), 16 * 1024 * 1024, "note body")
+        : await readBoundedUtf8(command.bodyFile, 16 * 1024 * 1024, "note body")
   );
   const result = await (dependencies.createNote ?? createNote)(
     command.root,
@@ -2978,6 +3185,67 @@ async function runNoteCreate(
     ? terminalSafeJson(result)
     : sanitizeTerminalText(renderAuthoringResult("Created", result)));
   return 0;
+}
+
+function countOf(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+function shellWord(value: string): string {
+  return /^[A-Za-z0-9_./:@%+=,-]+$/u.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+function renderImportReport(report: ImportReport): string {
+  const { counts } = report;
+  const tally = `created ${counts.created}, updated ${counts.updated}, skipped ${counts.skipped}, `
+    + `conflicts ${counts.conflicts}, rejected ${counts.rejected}`;
+  const scope = `${countOf(report.items.length, "item")} from ${countOf(report.files, "file")}`;
+  const lines = [report.dryRun
+    ? `Dry run of ${scope}: ${tally}. Nothing was written.`
+    : `Imported ${scope}: ${tally}.`];
+  const location = (item: ImportReport["items"][number]) => item.note === undefined
+    ? `${item.file}#${item.pointer}`
+    : `${item.note} from ${item.file}#${item.pointer}`;
+  for (const item of report.items) {
+    if (item.outcome !== "conflict" && item.outcome !== "rejected") continue;
+    const external = item.externalId === undefined ? "" : ` (${item.externalId})`;
+    lines.push(`${item.outcome}: ${safe(location(item))}${safe(external)}: ${safe(item.reason ?? "no reason given")}`);
+  }
+  const added = report.relations.filter((relation) => relation.outcome === "added").length;
+  if (added > 0) {
+    lines.push(`${report.dryRun ? "Would add" : "Added"} ${countOf(added, "supersedes relation")}.`);
+  }
+  for (const relation of report.relations) {
+    if (relation.outcome !== "failed" && relation.outcome !== "omitted") continue;
+    lines.push(`relation ${relation.outcome}: ${safe(relation.source)} supersedes ${safe(relation.target)}: ${safe(relation.reason ?? "no reason given")}`);
+  }
+  for (const diagnostic of report.diagnostics) lines.push(`diagnostic: ${safe(diagnostic)}`);
+  for (const item of report.items) {
+    for (const diagnostic of item.diagnostics ?? []) {
+      lines.push(`diagnostic: ${safe(item.note ?? `${item.file}#${item.pointer}`)}: ${safe(diagnostic)}`);
+    }
+  }
+  if (!report.dryRun && counts.created + counts.updated + added > 0) {
+    const root = safe(shellWord(report.root));
+    lines.push(`Next: wordcell refresh --root ${root}, then wordcell check --root ${root}.`);
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+async function runImportSupermemory(
+  command: Extract<ParsedCommand, { readonly kind: "import-supermemory" }>,
+  output: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  const report = await (dependencies.importSupermemory ?? importSupermemory)({
+    root: command.root,
+    files: command.files,
+    ...(command.prefix === undefined ? {} : { prefix: command.prefix }),
+    dryRun: command.dryRun,
+    ...(dependencies.importNow === undefined ? {} : { now: dependencies.importNow() }),
+  });
+  output.stdout(command.json ? terminalSafeJson(report) : sanitizeTerminalText(renderImportReport(report)));
+  return report.ok ? 0 : 1;
 }
 
 async function runRelation(
@@ -3246,6 +3514,73 @@ async function runServe(
   return 0;
 }
 
+/** The `context` tool's payload, identical to `wordcell context --json`. */
+function mcpContextBuilder(dependencies: CliDependencies): ContextBuilder {
+  return async (snapshot, request) => {
+    const inspection = await (
+      dependencies.inspectAgentContextRepository ?? inspectAgentContextRepository
+    )(snapshot.notes, request);
+    const memory = await (
+      dependencies.buildRepositoryMemoryContext ?? buildRepositoryMemoryContext
+    )(snapshot.notes, { repositoryRoot: request.repositoryRoot, target: inspection.target });
+    return contextPayload(inspection, snapshot, memory);
+  };
+}
+
+async function resolveMcpDirectories(
+  command: Extract<ParsedCommand, { readonly kind: "mcp" }>,
+): Promise<{ readonly root: string; readonly repository?: string }> {
+  const { root } = await resolveVault(command.root);
+  if (command.repository === undefined) return { root };
+  const repository = await realpath(resolve(command.repository));
+  if (!(await stat(repository)).isDirectory()) throw new Error(`--repo is not a directory: ${repository}`);
+  return { root, repository };
+}
+
+async function runMcp(
+  command: Extract<ParsedCommand, { readonly kind: "mcp" }>,
+  output: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  let directories: Awaited<ReturnType<typeof resolveMcpDirectories>>;
+  try {
+    directories = await resolveMcpDirectories(command);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const terminal = dependencies.terminal ?? processTerminal();
+    output.stderr(renderFailure(safe(message), "wordcell mcp --help", terminalStyle(terminal.env, terminal.stderrIsTTY)));
+    return 2;
+  }
+  const version = await serverVersion();
+  const catalog = createToolCatalog({
+    ...directories,
+    readOnly: command.readOnly,
+    context: mcpContextBuilder(dependencies),
+    warn: (message) => output.stderr(`${safe(message)}\n`),
+  });
+  const instructions = serverInstructions({ root: directories.root, readOnly: command.readOnly });
+  const streams = mcpStreams(dependencies);
+  try {
+    return await runMcpServer({
+      catalog,
+      instructions,
+      version,
+      input: streams.input,
+      writeFrame: streams.writeFrame,
+      stderr: (text) => output.stderr(text),
+    });
+  } finally {
+    streams.restore();
+  }
+}
+
+/** Process stdio with stdout held for frames, unless a test supplies its own streams. */
+function mcpStreams(dependencies: CliDependencies): McpStreams & { readonly restore: () => void } {
+  if (dependencies.mcp !== undefined) return { ...dependencies.mcp, restore: () => undefined };
+  const guard = guardStdout();
+  return { input: process.stdin, writeFrame: guard.writeFrame, restore: guard.restore };
+}
+
 async function runCatalog(
   command: Extract<ParsedCommand, { readonly kind: "catalog" }>,
   output: Output,
@@ -3286,18 +3621,35 @@ async function runInbox(
   return 0;
 }
 
+function speaksToPerson(terminal: CliTerminal): boolean {
+  return detectAudience(terminal.env, terminal.stderrIsTTY) === "human";
+}
+
 async function runInit(
   command: Extract<ParsedCommand, { readonly kind: "init" }>,
   output: Output,
   initialize: typeof initVault,
+  terminal: CliTerminal,
 ): Promise<number> {
   const result: InitVaultResult = await initialize(command.directory);
   if (command.json) output.stdout(terminalSafeJson(result));
   else {
     const relativeRoot = relative(process.cwd(), result.root) || ".";
     output.stdout(`Initialized ${safe(relativeRoot)} with ${result.files.length} files.\n`);
+    if (speaksToPerson(terminal)) {
+      output.stderr(`Next: wordcell search "your question" --root ${safe(shellWord(relativeRoot))}\n`);
+    }
   }
   return 0;
+}
+
+async function defaultSemanticIndexExists(root: string): Promise<boolean> {
+  try {
+    await stat(semanticDatabasePath(await realpath(root)));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function runCaptureBundle(
@@ -3871,8 +4223,8 @@ async function runVault(
   dependencies: CliDependencies,
 ): Promise<number> {
   const snapshot = command.kind === "refresh"
-    ? await (dependencies.refreshVault ?? refreshVault)(command.root, command.options)
-    : await (dependencies.scanVault ?? scanVault)(command.root, command.options);
+    ? await (dependencies.refreshVault ?? refreshVaultComplete)(command.root, command.options)
+    : await (dependencies.scanVault ?? (command.kind === "check" ? scanVaultComplete : scanVault))(command.root, command.options);
 
   if (command.kind === "refresh" || command.kind === "check") {
     const noCatalog = command.kind === "check" && command.noCatalog === true;
@@ -3948,30 +4300,165 @@ async function runVault(
   return 0;
 }
 
+/** `mcp` owns stdout for protocol frames, so it never takes a `--json` path and its failures go to stderr. */
+function machineJsonRequested(rawArguments: readonly string[]): boolean {
+  return rawArguments[0] !== "mcp" && rawArguments.includes("--json");
+}
+
+/** Terminal facts the human renderer needs; injectable for golden tests. */
+export type CliTerminal = {
+  readonly env: TerminalEnvironment;
+  readonly stdoutIsTTY: boolean;
+  readonly stderrIsTTY: boolean;
+  readonly columns: number | undefined;
+};
+
+function processTerminal(): CliTerminal {
+  return {
+    env: process.env,
+    stdoutIsTTY: process.stdout.isTTY === true,
+    stderrIsTTY: process.stderr.isTTY === true,
+    columns: process.stdout.columns,
+  };
+}
+
+const SAFE_WORD = /^[A-Za-z][A-Za-z0-9-]{0,39}$/u;
+const SAFE_OPTION = /^--?[A-Za-z][A-Za-z0-9-]{0,39}$/u;
+
+/**
+ * The first option the parser rejected, found by parsing growing prefixes of
+ * the arguments. Only the option name is returned, never an `=value` part.
+ */
+function rejectedOption(rawArguments: readonly string[], message: string): string | undefined {
+  for (let index = 1; index < rawArguments.length; index += 1) {
+    const token = rawArguments[index] ?? "";
+    if (token === "--") return undefined;
+    if (!token.startsWith("-")) continue;
+    const through = parseArguments(rawArguments.slice(0, index + 1));
+    if (through.ok || through.message !== message) continue;
+    const before = parseArguments(rawArguments.slice(0, index));
+    if (!before.ok && before.message === message) return undefined;
+    const name = token.split("=")[0] ?? "";
+    return SAFE_OPTION.test(name) ? name : undefined;
+  }
+  return undefined;
+}
+
+type UsageFailure = { readonly text: string; readonly next: string };
+
+/** One sentence saying what was wrong with the command line, and one next command. */
+export function describeUsageError(rawArguments: readonly string[], message: string): UsageFailure {
+  const first = rawArguments[0] ?? "";
+  if (message === "unknown command") {
+    const known = knownCommandWords();
+    const suggestion = SAFE_WORD.test(first) ? closestMatch(first, known) : undefined;
+    const text = SAFE_WORD.test(first)
+      ? `Unknown command "${first}".${suggestion === undefined ? "" : ` Did you mean "${suggestion}"?`}`
+      : "Unknown command.";
+    return { text, next: "wordcell --help" };
+  }
+  if (message === "unknown help topic") {
+    const suggestion = SAFE_WORD.test(rawArguments[1] ?? "") ? closestMatch(rawArguments[1] ?? "", knownCommandWords()) : undefined;
+    return {
+      text: `There is no help for that command.${suggestion === undefined ? "" : ` Did you mean "${suggestion}"?`}`,
+      next: "wordcell --help",
+    };
+  }
+  const id = resolveCommandId(rawArguments.filter((word) => !word.startsWith("-")));
+  const next = id === undefined ? "wordcell --help" : `wordcell ${id} --help`;
+  if (/^unknown .*option/u.test(message) && id !== undefined) {
+    const option = rejectedOption(rawArguments, message);
+    if (option !== undefined) {
+      const suggestion = closestMatch(option, optionNames(id));
+      return {
+        text: `Unknown option "${option}" for ${id}.${suggestion === undefined ? "" : ` Did you mean "${suggestion}"?`}`,
+        next,
+      };
+    }
+  }
+  return { text: sentence(safe(message)), next };
+}
+
+function runtimeNext(rawArguments: readonly string[]): string {
+  const id = resolveCommandId(rawArguments.filter((word) => !word.startsWith("-")));
+  return id === undefined ? "wordcell --help" : `wordcell ${id} --help`;
+}
+
+async function renderHelp(
+  command: Extract<ParsedCommand, { readonly kind: "help" }>,
+  output: Output,
+  terminal: CliTerminal,
+  readVersion: () => Promise<string>,
+  showIntro: boolean,
+): Promise<number> {
+  const intro = showIntro
+    ? terminalIntro({ isTTY: terminal.stdoutIsTTY, columns: terminal.columns, term: terminal.env.TERM })
+    : "";
+  if (command.topic === undefined) {
+    output.stdout(intro + sanitizeTerminalText(usage));
+    return 0;
+  }
+  if (command.topic === "start") {
+    const version = await readVersion().catch(() => undefined);
+    output.stdout(intro + sanitizeTerminalText(startHelp(version)));
+    return 0;
+  }
+  if (command.topic === "advanced") {
+    output.stdout(sanitizeTerminalText(advancedHelp()));
+    return 0;
+  }
+  output.stdout(sanitizeTerminalText(commandHelpText(command.topic) ?? usage));
+  return 0;
+}
+
 /** Stable CLI entry point with injectable filesystem and capture boundaries. */
 export async function main(
   rawArguments: readonly string[] = process.argv.slice(2),
   output: Output = defaultOutput,
   dependencies: CliDependencies = {},
 ): Promise<number> {
-  const jsonRequested = rawArguments.includes("--json");
+  const jsonRequested = machineJsonRequested(rawArguments);
+  const terminal = dependencies.terminal ?? processTerminal();
+  const errorStyle = terminalStyle(terminal.env, terminal.stderrIsTTY);
+  const readVersion = dependencies.packageVersion ?? (() => serverVersion());
   const parsed = parseArguments(rawArguments);
   if (!parsed.ok) {
+    const failure = describeUsageError(rawArguments, parsed.message);
     if (jsonRequested) {
       output.stdout(terminalSafeJson({
         ok: false,
-        error: { kind: "parse", message: parsed.message },
+        error: { kind: "parse", code: "usage", message: parsed.message, next: failure.next },
       }));
     } else {
-      output.stderr(`error: ${safe(parsed.message)}\n\n${sanitizeTerminalText(usage)}`);
+      output.stderr(renderFailure(failure.text, failure.next, errorStyle));
     }
     return 2;
   }
   const command = parsed.value;
-  if (command.kind === "help") {
-    if (output === defaultOutput && !jsonRequested) output.stdout(terminalIntro({ isTTY: process.stdout.isTTY, columns: process.stdout.columns, term: process.env.TERM }));
-    output.stdout(sanitizeTerminalText(usage));
+  if (command.kind === "version") {
+    const version = await readVersion();
+    output.stdout(command.json || jsonRequested
+      ? terminalSafeJson({ name: "wordcell", version })
+      : `wordcell ${version}\n`);
     return 0;
+  }
+  if (command.kind === "help") {
+    if (jsonRequested) {
+      const text: string[] = [];
+      await renderHelp(command, { stdout: (value) => text.push(value), stderr: output.stderr }, terminal, readVersion, false);
+      output.stdout(terminalSafeJson({ kind: "help", text: text.join("") }));
+      return 0;
+    }
+    return renderHelp(command, output, terminal, readVersion, output === defaultOutput);
+  }
+  if (jsonRequested && isDelegatedHelp(command)) {
+    const text: string[] = [];
+    const code = await main([command.kind === "clip" ? "clip" : command.kind, "--help"], {
+      stdout: (value) => text.push(value),
+      stderr: output.stderr,
+    }, dependencies);
+    output.stdout(terminalSafeJson({ kind: "help", text: text.join("") }));
+    return code;
   }
   try {
     if (command.kind === "clip") {
@@ -3988,7 +4475,7 @@ export async function main(
       return await (dependencies.runPdfCommand ?? runPdfCommand)(command.arguments, process.env, output);
     }
     if (command.kind === "init") {
-      return await runInit(command, output, dependencies.initVault ?? initVault);
+      return await runInit(command, output, dependencies.initVault ?? initVault, dependencies.terminal ?? processTerminal());
     }
     if (command.kind === "index" || command.kind === "search") {
       return await runSemantic(command, output, dependencies);
@@ -3999,6 +4486,7 @@ export async function main(
     if (command.kind === "agent-identity") return runAgentIdentity(command, output);
     if (command.kind === "agents") return await runAgents(command, output, dependencies);
     if (command.kind === "note-create") return await runNoteCreate(command, output, dependencies);
+    if (command.kind === "import-supermemory") return await runImportSupermemory(command, output, dependencies);
     if (command.kind === "relation") return await runRelation(command, output, dependencies);
     if (command.kind === "graph-rebuild" || command.kind === "graph-verify" || command.kind === "graph-query") {
       const result = await executeGraphCommand(command, dependencies);
@@ -4009,18 +4497,23 @@ export async function main(
     if (command.kind === "list") return await runList(command, output, dependencies);
     if (command.kind === "publish") return await runPublish(command, output, dependencies);
     if (command.kind === "serve") return await runServe(command, output, dependencies);
+    if (command.kind === "mcp") return await runMcp(command, output, dependencies);
     if (command.kind === "inbox") return await runInbox(command, output, dependencies);
     if (command.kind === "catalog") return await runCatalog(command, output, dependencies);
     return await runVault(command, output, dependencies);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const next = runtimeNext(rawArguments);
     if (jsonRequested) {
       output.stdout(terminalSafeJson({
         ok: false,
-        error: { kind: "runtime", message },
+        error: { kind: "runtime", message, next },
       }));
     } else {
-      output.stderr(`error: ${safe(message)}\n`);
+      output.stderr(renderFailure(safe(message), next, errorStyle));
+      if (terminal.env.HRANESS_DEBUG === "1" && error instanceof Error && error.stack !== undefined) {
+        output.stderr(`${sanitizeTerminalText(redactSensitiveText(error.stack))}\n`);
+      }
     }
     return 1;
   }
@@ -4059,7 +4552,7 @@ export async function runExecutable(
   rawArguments: readonly string[] = process.argv.slice(2),
   dependencies: CliDependencies = {},
 ): Promise<number> {
-  if (!rawArguments.includes("--json")) {
+  if (!machineJsonRequested(rawArguments)) {
     return main(rawArguments, defaultOutput, dependencies);
   }
   return serializeStrictJson(async () => {

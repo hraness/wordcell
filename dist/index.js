@@ -15,7 +15,7 @@ import {
   createSyntheticRankFusionFixture,
   evaluateRanking,
   evaluateRetrievalBenchmark
-} from "./index-n386evxj.js";
+} from "./index-nn67kzwa.js";
 import {
   initVault
 } from "./index-23z4zxgg.js";
@@ -37,7 +37,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-1k595z6v.js";
+} from "./index-mnq2wy34.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -50,7 +50,7 @@ import {
   packUntrustedSearchContext,
   searchEvidenceRank,
   validateKnowledgeBaseSearchHistory
-} from "./index-q7tbg07z.js";
+} from "./index-tvd2sqrx.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -67,7 +67,7 @@ import {
   searchSemanticVault,
   semanticDatabasePath,
   sha256EmbeddingModelFile
-} from "./index-rr9kzq4n.js";
+} from "./index-fp732bgg.js";
 import"./index-4j3tt0c3.js";
 import {
   MAX_RERANK_CANDIDATES,
@@ -94,7 +94,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-djrcc1yf.js";
+} from "./index-tcaq1c7f.js";
 import {
   DEFAULT_PERCOLATION_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
@@ -115,19 +115,19 @@ import {
   parsePercolationResultV1,
   parsePercolationResultV2,
   percolateVault
-} from "./index-jk1sgx36.js";
+} from "./index-bdwcjvr4.js";
 import {
   createGraphSnapshot,
   openGraphAuthority,
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-xv80vzfp.js";
+} from "./index-1er88ckw.js";
 import {
   GRAPH_LIMITS,
   GraphAuthorityError,
   validateGraphQueryRequest
-} from "./index-tf4wzjew.js";
+} from "./index-pgtm2nhf.js";
 import {
   GitHistoryError,
   MAX_GIT_HISTORY_COMMITS,
@@ -154,7 +154,7 @@ import {
   fuseRankedCandidates,
   searchExactVault,
   validateSearchQuery
-} from "./index-vnybgywh.js";
+} from "./index-ahyhryb8.js";
 import"./index-1xxnjn0d.js";
 import {
   DEFAULT_PUBLISH_LIST_LIMIT,
@@ -167,7 +167,7 @@ import {
   publishVault,
   renderPublishReportText,
   serializeSiteFile
-} from "./index-hmw17zaa.js";
+} from "./index-r0m5taz2.js";
 import {
   MAX_NOTE_UTF8_BYTES,
   MAX_SCANNED_NOTES,
@@ -177,8 +177,10 @@ import {
   markdownFiles,
   readVaultNotes,
   refreshVault,
-  scanVault
-} from "./index-233z9wmn.js";
+  refreshVaultComplete,
+  scanVault,
+  scanVaultComplete
+} from "./index-1s8mc4hz.js";
 import {
   MAX_NAVIGATION_INDEXED_CONNECTIONS,
   MAX_NAVIGATION_RETURNED_CONNECTIONS,
@@ -245,7 +247,7 @@ import {
   parseSitePostingsV1,
   parseSiteTermsV1
 } from "./index-66pshdtx.js";
-import"./index-3agn8scn.js";
+import"./index-23m6bbjt.js";
 import {
   auditAgentGuideRepository,
   auditAgentGuideSource,
@@ -293,8 +295,9 @@ import {
   listNoteRelations,
   normalizeRelationPredicate,
   noteRevision,
-  removeNoteRelation
-} from "./index-a2rp0wt3.js";
+  removeNoteRelation,
+  updateNoteBody
+} from "./index-b0khj0h5.js";
 import"./index-3rm7cz6h.js";
 import {
   MAX_ANALYZED_NOTES,
@@ -303,10 +306,12 @@ import {
   MAX_MENTION_PAIRS,
   VaultAnalysisBudgetError,
   analyzeVault,
+  analyzeVaultComplete,
   catalogEnd,
   catalogStart,
   isCanonicalNoteId,
   isCanonicalRelationPredicate,
+  isMetadataNumber,
   lookupNote,
   metadataValueFromUnknown,
   normalizeVaultPath,
@@ -315,7 +320,7 @@ import {
   replaceCatalog,
   searchableMarkdown,
   wikiLinks
-} from "./index-qbssx940.js";
+} from "./index-jvb7w0gg.js";
 import"./index-z1w83f81.js";
 // src/oh-adoption.ts
 import { createHash } from "crypto";
@@ -756,6 +761,7 @@ export {
   validateGitHistoryForNotesRequest,
   validateGitHistoryForNotesOptions,
   validateAttachmentReferences,
+  updateNoteBody,
   terminalPlanStatuses,
   sourceInbox,
   sha256EmbeddingModelFile,
@@ -766,6 +772,7 @@ export {
   searchGitHistory,
   searchExactVault,
   searchEvidenceRank,
+  scanVaultComplete,
   scanVault,
   runWorkflow,
   runRetrievalEvaluation,
@@ -777,6 +784,7 @@ export {
   renderPublishReportText,
   renderCatalog,
   removeNoteRelation,
+  refreshVaultComplete,
   refreshVault,
   recommendedEmbeddingModelSha256,
   recommendedEmbeddingModel,
@@ -830,6 +838,7 @@ export {
   knowledgeBaseEvaluationRetrieverIds,
   isTerminalPlanStatus,
   isPlanStatus,
+  isMetadataNumber,
   isCanonicalRelationPredicate,
   isCanonicalNoteId,
   isActivePlanStatus,
@@ -873,6 +882,7 @@ export {
   auditAgentGuideRepository,
   attestSemanticWarmCache,
   applyRerank,
+  analyzeVaultComplete,
   analyzeVault,
   analyzeAuthoredRepositoryScopes,
   analyzeAgentContexts,

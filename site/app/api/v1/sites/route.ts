@@ -6,7 +6,8 @@ import {
 } from "../../../../lib/hosted/errors";
 import { authenticate } from "../../../../lib/hosted/auth";
 import { ObjectStore } from "../../../../lib/hosted/store";
-import type { SiteRecord } from "../../../../lib/hosted/records";
+import { liveSite, OPERATION_CONTRACT } from "../../../../lib/hosted/records";
+import { readSite } from "../../../../lib/hosted/operations";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +24,13 @@ export async function GET(request: Request): Promise<Response> {
       retryable: false,
     }, 401);
   }
-  const { keys } = await store.list(`sites/${token.key8}/`, 256);
+  const { keys, truncated } = await store.list(`sites/${token.key8}/`, 256);
   const sites: Record<string, unknown>[] = [];
   for (const key of keys) {
-    const record = await store.getJson<SiteRecord>(key);
-    if (record === null || record.v !== 1) continue;
+    const slug = key.slice(`sites/${token.key8}/`.length, -".json".length);
+    if (!/^[a-z0-9][a-z0-9-]{0,62}$/u.test(slug) || key !== `sites/${token.key8}/${slug}.json`) continue;
+    const record = liveSite((await readSite(store, token, slug)).head);
+    if (record === null) continue;
     sites.push({
       slug: record.slug,
       url: `${config.siteOrigin}/p/${token.key8}/${record.slug}/`,
@@ -39,5 +42,5 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
   sites.sort((a, b) => String(a.slug).localeCompare(String(b.slug)));
-  return apiOk({ sites });
+  return apiOk({ contract: OPERATION_CONTRACT, sites, truncated });
 }

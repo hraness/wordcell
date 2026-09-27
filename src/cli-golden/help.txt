@@ -1,0 +1,54 @@
+Usage: wordcell <command> [options]
+
+Wordcell keeps decisions, plans, and sources as Markdown beside your code,
+so coding agents can find them from the file they are about to change.
+
+Start here
+  init [directory]            Create a knowledge base folder (default: kb)
+  note create <id>            Write one new Markdown note
+  search <query>              Search notes by words or meaning
+  check                       Check links, metadata, and attachments
+
+Notes and links
+  list                        List notes by metadata or tag
+  links <note>                Follow links into and out of a note
+  backlinks <note>            Show the notes that link to a note
+  relation add|remove|list    Edit a note's typed links
+  refresh                     Update the catalog in index.md
+  catalog                     Print a catalog of every note
+  import supermemory <file>   Import a Supermemory export as notes
+
+Search
+  index                       Build the local index for meaning-based search
+  context <path>              Find notes and AGENTS.md files for a code path
+  history <note>              Show the Git commits that changed a note
+  inbox                       List saved sources no note links to yet
+
+Capture
+  clip <url|current>          Save a web page as Markdown
+  inspect <url>               Preview a capture
+  pdf <file-or-url>           Save a PDF as Markdown
+  capture show|verify|diff    Read, check, or compare a saved capture
+
+Publish and serve
+  publish --out <directory>   Build a static website from your notes
+  serve --root <directory>    Preview a published site on this computer
+  mcp --root <vault>          Serve your notes to AI apps over MCP
+
+Agents
+  agents check                Check AGENTS.md context notes against the code
+  agents audit                Find long or repeated AGENTS.md rules
+
+Diagnostics
+  doctor                      Check optional tools for capture and search
+  adapters                    List the sites and platforms clip supports
+  graph                       Show the link graph and broken links
+
+Options
+  -h, --help            Show help. Also: wordcell help <command>
+  -V, --version         Print the version
+  --root <directory>    Knowledge base folder (default: current directory)
+  --json                Print machine-readable output
+
+More commands: wordcell help advanced · Docs: https://wordcell.io/docs
+Optional support: wordcell support · Turn off: HRANESS_SUPPORT=off

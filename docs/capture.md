@@ -181,6 +181,8 @@ wordcell clip https://example.com/member/article --cookies-file "$KB_COOKIES_FIL
 
 Choose at most one browser session and one cookie input. A browser session may use a separate cookie input for later asset or media downloads because attached browser state is not exported.
 
+On a Mac, reading Chrome, Arc, Brave, Chromium, or Edge cookies asks the keychain for that browser's "Safe Storage" key. The dialog names `security`, the macOS tool Wordcell uses to read it, so Wordcell prints a note first that says why. Enter your Mac password if asked, then choose Always Allow so macOS doesn't ask again. Wordcell never stores the key. If you deny the request, Wordcell says so and suggests `--cookies-file`. Safari cookies need Full Disk Access for your terminal app, because macOS doesn't ask for it. Turn it on in System Settings › Privacy & Security › Full Disk Access.
+
 Current-tab capture issues no navigation, click, form, typing, upload, or submit command. URL-based browser capture may navigate and scroll within fixed work limits, taking bounded observations as content is rendered. Both routes are ingestion-only: they do not post, like, follow, send, delete, or submit.
 
 ## Interpret status and counts

@@ -4,32 +4,31 @@ import {
   socialImageSize as size,
 } from "@hraness/web-discovery/social-image";
 
-export const alt = "Wordcell: local knowledge for coding agents";
+import { siteDescription } from "./site-description";
+
+export const alt = "Wordcell: Give the next session what this one learned";
 export { contentType, size };
 
 function WordcellMark() {
   return (
     <svg aria-label="Wordcell mark" height="42" role="img" viewBox="0 0 42 42" width="42">
-      <rect fill="none" height="14" stroke="currentColor" strokeWidth="3" width="14" x="5" y="5" />
-      <rect fill="currentColor" height="14" width="14" x="23" y="5" />
-      <rect fill="currentColor" height="14" width="14" x="5" y="23" />
-      <rect fill="none" height="14" stroke="currentColor" strokeWidth="3" width="14" x="23" y="23" />
+      <rect fill="none" height="28" rx="8" stroke="currentColor" strokeWidth="5" width="28" x="7" y="7" />
     </svg>
   );
 }
 
 export default function OpengraphImage() {
   return createSocialImageResponse({
-    description: "Save decisions in Markdown. Find the notes behind a code change. Give the next session the context it needs.",
+    description: siteDescription,
     domain: "wordcell.io",
     eyebrow: "Wordcell",
     mark: <WordcellMark />,
     theme: {
-      accent: "#356A54",
-      background: "#F8F7F4",
-      foreground: "#1C1A18",
-      muted: "#6A655E",
+      accent: "#065968",
+      background: "#FBF1C7",
+      foreground: "#393533",
+      muted: "#584F48",
     },
-    title: "Local knowledge for coding agents",
+    title: "Give the next session what this one learned",
   });
 }

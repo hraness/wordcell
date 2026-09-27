@@ -1,0 +1,650 @@
+# init
+Usage: wordcell init [directory] [--json]
+
+Create a knowledge base folder (default: kb). It never merges into an existing
+folder.
+
+Options
+  --json  Print machine-readable output
+
+Example
+  wordcell init kb
+
+# note create
+Usage: wordcell note create <id> --title <title> [options]
+
+Write one new Markdown note.
+
+Options
+  --title <title>       Note title (required)
+  --type <type>         Note type, such as decision or concept
+  --tag <tag>           Add a tag (repeatable)
+  --body <markdown>     Note body
+  --body-file <path|->  Read the body from a file, or from piped input with -
+  --root <directory>    Knowledge base folder (default: current directory)
+  --json                Print machine-readable output
+
+Example
+  wordcell note create notes/first --title "First note" --body "Keep retries bounded." --root kb
+
+# search
+Usage: wordcell search <query> [options]
+
+Search notes by words or meaning.
+Exact mode needs no index or model. Keyword, semantic, and hybrid modes
+use the local index from `wordcell index`.
+
+Options
+  --root <directory>            Knowledge base folder (default: current
+                                directory)
+  --mode <hybrid|exact|keyword|semantic>
+                                Match exact words, the keyword index, meaning,
+                                or keywords and meaning together
+  --limit <count>               Show at most this many results
+  --where <path=value>          Keep notes whose metadata field has this value
+  --has <path>                  Keep notes that set this metadata field
+  --tag <tag>                   Keep notes with this tag
+  --scope <repository-path>     Keep notes about this code path
+  --related <note>              Also show notes linked to this note
+  --graph-depth <1|2>           How far to follow links for context
+  --no-graph                    Skip link context
+  --history                     Add recent Git history when available
+  --no-history                  Skip Git history (default)
+  --require-history             Fail when Git history is unavailable
+  --repo <repository>           Git repository the notes describe
+  --database <path>             Use this search index file
+  --rules <file>                Apply reviewed search aliases from a JSON file
+  --priority                    Order results by the rules file first
+  --candidate-limit <count>     How many candidates to rank before trimming
+  --min-score <score>           Drop results scoring below this (0 to 1)
+  --rerank <typesafe>           Rerank results with the hosted TypeSafe service
+  --rerank-limit <2..25>        How many results the reranker sees
+  --json                        Print machine-readable output
+
+Examples
+  wordcell search "retries" --root kb --mode exact
+  wordcell search "retry policy" --root kb --limit 5
+
+# check
+Usage: wordcell check [options]
+
+Check links, metadata, and attachments. It changes no files.
+
+Options
+  --root <directory>   Knowledge base folder (default: current directory)
+  --index <path>       Catalog note to use (default: index.md)
+  --no-catalog         Skip the catalog check
+  --repo <repository>  Also report notes whose code paths no longer exist
+  --json               Print machine-readable output
+
+Examples
+  wordcell check --root kb
+  wordcell check --root kb --repo .
+
+# list
+Usage: wordcell list [options]
+
+List notes by metadata or tag. Also: wordcell notes.
+
+Options
+  --root <directory>         Knowledge base folder (default: current directory)
+  --index <path>             Catalog note to use (default: index.md)
+  --where <path=value>       Keep notes whose metadata field has this value
+  --has <path>               Keep notes that set this metadata field
+  --tag <tag>                Keep notes with this tag
+  --scope <repository-path>  Keep notes about this code path
+  --sort <field>             Sort by a metadata field, title, path, or link
+                             counts
+  --order <asc|desc>         Sort direction
+  --limit <count>            Show at most this many notes
+  --json                     Print machine-readable output
+
+Examples
+  wordcell list --root kb --tag decision
+  wordcell list --root kb --where status=active
+
+# links
+Usage: wordcell links <note> [options]
+
+Follow links into and out of a note.
+
+Options
+  --root <directory>         Knowledge base folder (default: current directory)
+  --index <path>             Catalog note to use (default: index.md)
+  --direction <in|out|both>  Follow incoming links, outgoing links, or both
+  --depth <count>            How many links to follow (1 to 10)
+  --limit <count>            Show at most this many notes
+  --json                     Print machine-readable output
+
+Example
+  wordcell links notes/first --root kb --direction both --depth 2
+
+# backlinks
+Usage: wordcell backlinks <note> [options]
+
+Show the notes that link to a note.
+
+Options
+  --root <directory>  Knowledge base folder (default: current directory)
+  --index <path>      Catalog note to use (default: index.md)
+  --json              Print machine-readable output
+
+Example
+  wordcell backlinks notes/first --root kb
+
+# relation
+Usage: wordcell relation <add|remove|list> ...
+
+Edit a note's typed links. They live in its frontmatter.
+Run `wordcell relation add --help` for each action.
+
+Commands
+  relation add <source> <predicate> <target>
+                              Add a typed link from one note to another
+  relation remove <source> <predicate> <target>
+                              Remove a typed link from a note
+  relation list <note>        List a note's typed links in both directions
+
+Example
+  wordcell relation add notes/first supersedes notes/old --root kb
+
+# relation add
+Usage: wordcell relation add <source> <predicate> <target> [options]
+
+Add a typed link from one note to another. Running it twice changes nothing.
+
+Options
+  --root <directory>            Knowledge base folder (default: current
+                                directory)
+  --expected-revision <sha256:...>
+                                Only write if the note is still at this revision
+  --json                        Print machine-readable output
+
+Example
+  wordcell relation add notes/first supersedes notes/old --root kb
+
+# relation remove
+Usage: wordcell relation remove <source> <predicate> <target> [options]
+
+Remove a typed link from a note.
+
+Options
+  --root <directory>            Knowledge base folder (default: current
+                                directory)
+  --expected-revision <sha256:...>
+                                Only write if the note is still at this revision
+  --json                        Print machine-readable output
+
+Example
+  wordcell relation remove notes/first supersedes notes/old --root kb
+
+# relation list
+Usage: wordcell relation list <note> [options]
+
+List a note's typed links in both directions.
+
+Options
+  --root <directory>  Knowledge base folder (default: current directory)
+  --json              Print machine-readable output
+
+Example
+  wordcell relation list notes/first --root kb
+
+# refresh
+Usage: wordcell refresh [options]
+
+Update the catalog in index.md. It also reports link problems.
+
+Options
+  --root <directory>  Knowledge base folder (default: current directory)
+  --index <path>      Catalog note to use (default: index.md)
+  --json              Print machine-readable output
+
+Example
+  wordcell refresh --root kb
+
+# catalog
+Usage: wordcell catalog [options]
+
+Print a catalog of every note. It writes nothing.
+
+Options
+  --root <directory>  Knowledge base folder (default: current directory)
+  --index <path>      Catalog note to use (default: index.md)
+  --json              Print machine-readable output
+
+Example
+  wordcell catalog --root kb
+
+# import supermemory
+Usage: wordcell import supermemory <export.json>... [options]
+
+Import a Supermemory export as notes.
+
+Options
+  --root <directory>    Knowledge base folder (default: current directory)
+  --prefix <directory>  Put every imported note in this folder
+  --dry-run             Show what would be written without writing
+  --json                Print machine-readable output
+
+Example
+  wordcell import supermemory export.json --root kb --dry-run
+
+# index
+Usage: wordcell index [options]
+
+Build the local index for meaning-based search.
+The first run downloads a local embedding model (about 300 MB) once.
+
+Options
+  --root <directory>  Knowledge base folder (default: current directory)
+  --database <path>   Use this search index file
+  --force             Rebuild the index from scratch
+  --json              Print machine-readable output
+
+Example
+  wordcell index --root kb
+
+# context
+Usage: wordcell context <repository-path> [options]
+
+Find notes and AGENTS.md files for a code path.
+
+Options
+  --root <vault>                Knowledge base folder (default: current
+                                directory)
+  --repo <repository>           Git repository the notes describe
+  --kind <auto|file|directory>  Treat the path as a file or a folder
+  --json                        Print machine-readable output
+
+Example
+  wordcell context src/index.ts --root kb --repo .
+
+# history
+Usage: wordcell history <note> [options]
+
+Show the Git commits that changed a note. Also: wordcell history search <query>.
+
+Commands
+  history search <query>      Search commit messages and changed paths in the
+                              repository
+
+Options
+  --root <directory>         Knowledge base folder (default: current directory)
+  --repo <repository>        Git repository the notes describe
+  --limit <count>            Show at most this many commits
+  --cochanged-limit <count>  Show at most this many files changed alongside
+  --json                     Print machine-readable output
+
+Example
+  wordcell history notes/first --root kb --repo .
+
+# history search
+Usage: wordcell history search <query-or-path> [options]
+
+Search commit messages and changed paths in the repository.
+
+Options
+  --root <directory>         Knowledge base folder (default: current directory)
+  --repo <repository>        Git repository the notes describe
+  --limit <count>            Show at most this many results
+  --commit-limit <count>     Read at most this many commits
+  --cochanged-limit <count>  Show at most this many files changed alongside
+  --json                     Print machine-readable output
+
+Example
+  wordcell history search "retry" --root kb --repo .
+
+# inbox
+Usage: wordcell inbox [options]
+
+List saved sources no note links to yet. Also: wordcell source-inbox.
+
+Options
+  --root <directory>           Knowledge base folder (default: current
+                               directory)
+  --index <path>               Catalog note to use (default: index.md)
+  --source-prefix <directory>  Look for sources in this folder (repeatable)
+  --limit <count>              Show at most this many sources
+  --json                       Print machine-readable output
+
+Example
+  wordcell inbox --root kb
+
+# capture show
+Usage: wordcell capture show <bundle> [options]
+
+Print a saved capture as plain text.
+
+Options
+  --verify-assets        Also check saved images and files
+  --include-source-html  Include the original page HTML
+  --json                 Print machine-readable output
+
+Example
+  wordcell capture show kb/articles/example
+
+# capture verify
+Usage: wordcell capture verify <bundle> [options]
+
+Check that a saved capture still matches its recorded hashes.
+
+Options
+  --verify-assets  Also check saved images and files
+  --json           Print machine-readable output
+
+Example
+  wordcell capture verify kb/articles/example --verify-assets
+
+# capture diff
+Usage: wordcell capture diff <bundle> [options]
+
+Compare a saved capture with an earlier Git version.
+
+Options
+  --repo <repository>  Git repository the notes describe
+  --ref <ref>          Git version to compare with (default: HEAD)
+  --json               Print machine-readable output
+
+Example
+  wordcell capture diff kb/articles/example --repo . --ref main
+
+# publish
+Usage: wordcell publish --out <directory> [options]
+
+Build a static website from your notes.
+
+Options
+  --out <directory>          Folder to write the site to (required)
+  --root <directory>         Knowledge base folder (default: current directory)
+  --index <path>             Catalog note to use (default: index.md)
+  --include <path>           Publish only these notes or folders (repeatable)
+  --exclude <path>           Leave out these notes or folders (repeatable)
+  --include-glob <pattern>   Publish notes matching a pattern (repeatable)
+  --exclude-glob <pattern>   Leave out notes matching a pattern (repeatable)
+  --where <path=value>       Keep notes whose metadata field has this value
+  --has <path>               Keep notes that set this metadata field
+  --tag <tag>                Keep notes with this tag
+  --scope <repository-path>  Keep notes about this code path
+  --from <note>              Publish the notes linked from this note
+  --depth <count>            How many links to follow (1 to 10)
+  --direction <in|out|both>  Follow incoming links, outgoing links, or both
+  --title <title>            Site title
+  --description <text>       Site description
+  --base-path <path>         Serve the site under this path
+  --base-url <url>           Public address of the site
+  --noindex                  Ask search engines not to index the site
+  --no-index-content         Leave note text out of the site search
+  --deterministic            Omit the build time so builds match byte for byte
+  --dry-run                  Show what would be published without writing
+  --list-limit <0-1000>      How many paths to list in the report
+  --force                    Replace an existing output folder
+  --json                     Print machine-readable output
+
+Examples
+  wordcell publish --root kb --out site
+  wordcell publish --root kb --out site --tag public
+
+# serve
+Usage: wordcell serve --root <directory> [options]
+
+Preview a published site on this computer.
+
+Options
+  --root <directory>  Published site folder (required)
+  --host <host>       Address to listen on (default: 127.0.0.1)
+  --port <port>       Port to listen on
+  --json              Print machine-readable output
+
+Example
+  wordcell serve --root site --port 8080
+
+# mcp
+Usage: wordcell mcp --root <vault> [options]
+
+Serve your notes to AI apps over MCP.
+MCP (Model Context Protocol) is how AI apps such as Claude call local tools.
+
+Options
+  --root <vault>       Knowledge base folder (required)
+  --repo <repository>  Git repository the notes describe
+  --read-only          Offer only the read tools
+
+Example
+  wordcell mcp --root /absolute/path/to/kb --read-only
+
+# agents
+Usage: wordcell agents <check|audit|identity> ...
+
+Check the notes that give coding agents context for each code folder.
+Run `wordcell agents check --help` for each action.
+
+Commands
+  agents check                Check AGENTS.md context notes against the code
+  agents audit                Find long or repeated AGENTS.md rules
+  agents identity <scope>     Print the context note name and marker for a code
+                              folder, without writing
+
+Example
+  wordcell agents check --root kb --repo .
+
+# agents check
+Usage: wordcell agents check [options]
+
+Check AGENTS.md context notes against the code.
+
+Options
+  --root <vault>       Knowledge base folder
+  --repo <repository>  Git repository the notes describe
+  --json               Print machine-readable output
+
+Example
+  wordcell agents check --root kb --repo .
+
+# agents audit
+Usage: wordcell agents audit [options]
+
+Find long or repeated AGENTS.md rules. It runs agents check first.
+
+Options
+  --root <vault>       Knowledge base folder
+  --repo <repository>  Git repository the notes describe
+  --json               Print machine-readable output
+
+Example
+  wordcell agents audit --root kb --repo .
+
+# doctor
+Usage: wordcell doctor [--json]
+
+Check optional tools for capture and search. It changes nothing.
+
+Options
+  --json  Print machine-readable output
+
+Example
+  wordcell doctor
+
+# adapters
+Usage: wordcell adapters [--json]
+
+List the sites and platforms clip supports.
+
+Options
+  --json  Print machine-readable output
+
+Example
+  wordcell adapters
+
+# graph
+Usage: wordcell graph [options]
+
+Show the link graph and broken links. Unlinked notes are listed too.
+See `wordcell help advanced` for graph rebuild, verify, and query.
+
+Commands
+  graph rebuild               Rebuild the local graph cache from the Markdown
+                              files
+  graph verify                Check that the local graph cache matches the
+                              Markdown files
+  graph query --program <name>
+                              Run a built-in graph query, with proof of each
+                              answer
+
+Options
+  --root <directory>  Knowledge base folder (default: current directory)
+  --index <path>      Catalog note to use (default: index.md)
+  --json              Print machine-readable output
+
+Example
+  wordcell graph --root kb
+
+# agents identity
+Usage: wordcell agents identity <repository-scope> [--json]
+
+Print the context note name and marker for a code folder, without writing.
+
+Options
+  --json  Print machine-readable output
+
+Example
+  wordcell agents identity packages/parser
+
+# graph rebuild
+Usage: wordcell graph rebuild [options]
+
+Rebuild the local graph cache from the Markdown files.
+
+Options
+  --fresh             Discard the old cache first
+  --root <directory>  Knowledge base folder (default: current directory)
+  --index <path>      Catalog note to use (default: index.md)
+  --json              Print machine-readable output
+
+Example
+  wordcell graph rebuild --root kb
+
+# graph verify
+Usage: wordcell graph verify [options]
+
+Check that the local graph cache matches the Markdown files.
+
+Options
+  --root <directory>  Knowledge base folder (default: current directory)
+  --index <path>      Catalog note to use (default: index.md)
+  --json              Print machine-readable output
+
+Example
+  wordcell graph verify --root kb
+
+# graph query
+Usage: wordcell graph query --program <name> [options]
+
+Run a built-in graph query, with proof of each answer.
+
+Options
+  --program <name>         backlinks, reachability, scope-route,
+                           relation-closure, shared-tags, or shared-concepts
+  --note <id>              Start from this note
+  --scope <path>           Start from this code path
+  --predicate <predicate>  Follow only this typed link
+  --depth <count>          How many links to follow (1 to 10)
+  --limit <count>          Show at most this many results
+  --persisted              Read the saved graph cache
+  --root <directory>       Knowledge base folder (default: current directory)
+  --index <path>           Catalog note to use (default: index.md)
+  --json                   Print machine-readable output
+
+Example
+  wordcell graph query --program backlinks --note notes/first --root kb
+
+# percolate
+Usage: wordcell percolate [note] [options]
+
+Suggest recurring concepts and missing links, with evidence. Writes nothing.
+
+Options
+  --proofs               Show the evidence for one note
+  --min-support <count>  Require this many supporting notes
+  --limit <count>        Show at most this many suggestions
+  --root <directory>     Knowledge base folder (default: current directory)
+  --json                 Print machine-readable output
+
+Example
+  wordcell percolate --root kb
+
+# portfolio search
+Usage: wordcell portfolio search <query> --registry <file> --workspace <directory> [options]
+
+Search several knowledge bases you list in a registry file.
+
+Options
+  --registry <file>             Registry of knowledge bases (required)
+  --workspace <directory>       Folder that holds their checkouts (required)
+  --shared                      Search every shared entry
+  --vault <owner/id>            Search this entry (repeatable)
+  --mode <hybrid|exact|keyword|semantic>
+                                Match exact words, the keyword index, meaning,
+                                or keywords and meaning together
+  --rules <file>                Apply reviewed search aliases from a JSON file
+  --priority                    Order results by the rules file first
+  --limit <count>               Show at most this many results
+  --require-all                 Fail when any selected knowledge base is missing
+  --json                        Print machine-readable output
+
+Example
+  wordcell portfolio search "retries" --registry kb-portfolio.json --workspace .. --shared
+
+# portfolio audit
+Usage: wordcell portfolio audit --registry <file> --workspace <directory> [options]
+
+Check several knowledge bases for broken links, duplicates, and missing files.
+
+Options
+  --registry <file>        Registry of knowledge bases (required)
+  --workspace <directory>  Folder that holds their checkouts (required)
+  --all                    Audit every entry
+  --shared                 Audit every shared entry
+  --vault <owner/id>       Audit this entry (repeatable)
+  --strict                 Fail on warnings
+  --json                   Print machine-readable output
+
+Example
+  wordcell portfolio audit --registry kb-portfolio.json --workspace .. --all
+
+# evaluate
+Usage: wordcell evaluate <manifest.json> [options]
+
+Measure how well each search method finds the right notes in a frozen test set.
+
+Options
+  --root <directory>            Knowledge base folder (default: current
+                                directory)
+  --repo <repository>           Git repository the notes describe
+  --database <path>             Use this search index file
+  --retriever <id>              Run only this search method (repeatable)
+  --split <development|test|all>
+                                Which questions to run
+  --limit <count>               Results to keep per question
+  --cutoff <count>              Rank cutoff for the scores
+  --timeout <milliseconds>      Time limit per question
+  --baseline <id>               Compare every method with this one
+  --model-file <path>           Record the embedding model file used
+  --cache-state <cold|mixed|warm>
+                                Record how warm the caches were
+  --json                        Print machine-readable output
+
+Example
+  wordcell evaluate eval/manifest.json --root kb --repo .
+
+# support
+Usage: wordcell support [status | enable | dismiss | snooze] [--json]
+
+Optional support settings. No command signs you up or charges you.
+Set HRANESS_SUPPORT=off to turn off support invitations.
+
+Options
+  --json  Print machine-readable output
+
+Example
+  wordcell support status
