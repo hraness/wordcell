@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The [benchmarks page](https://wordcell.io/benchmarks) now leads with Oh's
+  500-question LongMemEval-S study, where Oh semantic retrieval scored 88.87%
+  and BM25 86.13%; on the measure Oh named before the run, its interval does
+  not rule out a tie. Oh's smaller Supermemory pilot remains the only matched
+  comparison with Supermemory.
+
+## 0.23.0
+
 Wordcell can serve a vault to local Model Context Protocol clients and import
 notes exported from Supermemory. Its Agent Skill can save a conversation as a
 session note and keep a profile note. New guides cover moving from Supermemory
@@ -43,10 +51,8 @@ commands name the next step.
   Supermemory, Mem0, and Zep.
 - The [benchmarks page](https://wordcell.io/benchmarks) on wordcell.io shows
   Wordcell's payload and SciFact results beside the published results of Oh,
-  the embedded memory framework, each with its source data and limits. It
-  leads with Oh's 500-question LongMemEval-S study, where Oh semantic
-  retrieval scored 88.87% and BM25 86.13%; on the measure Oh named before the
-  run, its interval does not rule out a tie. New pages compare Wordcell with
+  the embedded memory framework, each with its source data and limits. New
+  pages compare Wordcell with
   [Supermemory](https://wordcell.io/compare/supermemory),
   [Basic Memory](https://wordcell.io/compare/basic-memory), and
   [Mem0](https://wordcell.io/compare/mem0), and the

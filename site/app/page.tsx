@@ -24,6 +24,7 @@ import { siteDescription } from "./site-description";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactDetails, scifactStudy } from "../wordcell/benchmark-evidence";
 import { SetupLinks } from "../wordcell/setup-links";
+import { AGENT_MEMORY_RELEASE } from "../wordcell/setup-prompt";
 
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
@@ -295,7 +296,7 @@ wordcell note create notes/parser-contract \\
             summary="Wordcell’s local MCP server serves a vault to an agent such as Claude Code, Codex, or Cursor over standard input and output. Each note the agent adds or edits is a Markdown file you review in Git."
           >
             <p className="install-note">
-              <code>wordcell mcp</code> and <code>wordcell import supermemory</code> are available from source until the next release. The prompt below installs Wordcell from a checkout.
+              <code>wordcell mcp</code> and <code>wordcell import supermemory</code> need Wordcell {AGENT_MEMORY_RELEASE} or later. The prompt below installs Wordcell v{releaseVersion}.
             </p>
             <SetupLinks />
             <p className="install-note">

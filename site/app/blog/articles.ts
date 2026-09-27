@@ -47,6 +47,7 @@ export interface BlogArticle {
 
 const checked = "2026-09-24" as const;
 const launchChecked = "2026-09-26" as const;
+const edited = "2026-09-26" as const;
 
 /** Every file and page the launch post cites, each opened again on launchChecked. Oh links match ohLinks in wordcell/oh-evidence.ts. */
 const launchSources = [
@@ -78,6 +79,7 @@ export const blogArticles = [
     dek: "Wordcell keeps your notes as Markdown files and builds search and a link graph over them, so an agent can find a decision and trace it back to the file that says it.",
     eyebrow: "Release",
     published: "2026-09-24",
+    updated: edited,
     tags: ["wordcell", "markdown", "knowledge-base", "coding-agents", "obsidian"],
     sources: [
       { title: "Wordcell README", href: wordcellSource("README.md"), checkedOn: checked },
@@ -115,6 +117,7 @@ export const blogArticles = [
       observations: [
         "The published release record (site/published-release.json, 0.22.4) trails package.json (0.22.5) on main at 7b6cb5e, so a version typed from package.json or the README install line would claim a release the site has not recorded.",
         "The Oh adoption preparer in src/oh-adoption.ts always returns status \"prepared\" and renders Markdown that calls itself a review candidate; nothing in that path opens a vault or writes a note, so outside memory can only enter Wordcell through a person authoring Markdown.",
+        "2026-09-26 editorial pass: reordered the post to lead with the claim and moved the release status and KB rename history next to what they qualify; no fact, command, link, or version changed. By then site/published-release.json recorded 0.22.5, so the gap in the first observation had closed, and npm still lists @hraness/kb only through 0.19.2.",
       ],
       scores: {
         readerUtility: 2,
@@ -126,7 +129,7 @@ export const blogArticles = [
       },
       owner: "Hraness",
       drafting: "ai-from-source",
-      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: "2026-09-24" },
+      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: edited },
       humanReview: null,
       reassessOn: "2026-11-05",
       harmIfWrong: "A reader could install Wordcell expecting a guarantee it does not make, such as answers written for them, unlimited graph size, or capture that works behind a login wall.",
@@ -147,6 +150,7 @@ export const blogArticles = [
     dek: "Wordcell stores your links as Oh records, so every graph answer carries a proof back to the Markdown files that support it.",
     eyebrow: "Integration",
     published: "2026-09-24",
+    updated: edited,
     tags: ["wordcell", "oh", "markdown", "knowledge-graph", "proofs"],
     sources: [
       { title: "Query the derived graph", href: wordcellSource("docs/graph-authority.md"), checkedOn: checked },
@@ -160,6 +164,7 @@ export const blogArticles = [
       { title: "Oh and Wordcell", publisher: "Oh", href: ohSource("docs/wordcell.md"), checkedOn: checked },
       { title: "Canonical JSON and digests V1", publisher: "Oh", href: ohSource("spec/v1/canonical-json.md"), checkedOn: checked },
       { title: "Oh canonical Rust parity test", publisher: "Oh", href: ohSource("src/canonical-rust-parity.test.ts"), checkedOn: checked },
+      { title: "Oh holds its Rust encoder to the TypeScript reference byte for byte", publisher: "Oh", href: "https://oh.computer/blog/oh-rust-typescript-parity", checkedOn: edited },
     ],
     admission: {
       href: "/blog/how-wordcell-uses-oh",
@@ -184,10 +189,12 @@ export const blogArticles = [
         { title: "Oh and Wordcell", url: ohSource("docs/wordcell.md"), checkedOn: checked },
         { title: "Canonical JSON and digests V1", url: ohSource("spec/v1/canonical-json.md"), checkedOn: checked },
         { title: "Oh canonical Rust parity test", url: ohSource("src/canonical-rust-parity.test.ts"), checkedOn: checked },
+        { title: "Oh holds its Rust encoder to the TypeScript reference byte for byte", url: "https://oh.computer/blog/oh-rust-typescript-parity", checkedOn: edited },
       ],
       observations: [
         "In Wordcell the Rust canonical encoder is called only by the Oh adoption preparer (src/oh-adoption.ts); graph snapshots and fact keys are fingerprinted with Oh's TypeScript canonicalJson and canonicalSha256 (src/oh/snapshot.ts), and the graph path's Rust preference applies to query evaluation (src/oh/projection-rust.ts).",
         "A note's own fingerprint is a SHA-256 of the note's text (src/graph-facts.ts), not canonical JSON, so editing whitespace or front matter formatting in a note changes its proof even when no link changed.",
+        "2026-09-26 editorial pass: the post named Oh's parity post by a working title that no longer matches the live page; it now links https://oh.computer/blog/oh-rust-typescript-parity under its published title. Sections were retitled and the limits gathered next to what they limit; no fact, command, or limit changed.",
       ],
       scores: {
         readerUtility: 2,
@@ -199,7 +206,7 @@ export const blogArticles = [
       },
       owner: "Hraness",
       drafting: "ai-from-source",
-      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: "2026-09-24" },
+      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: edited },
       humanReview: null,
       reassessOn: "2026-11-05",
       harmIfWrong: "A reader could treat a graph proof as proof that a note is correct, or believe Wordcell keeps agent memory in Oh.",
@@ -215,8 +222,8 @@ export const blogArticles = [
   },
   {
     slug: "free-local-agent-memory",
-    title: "Agent memory should be free, local, and yours",
-    dek: "A source build of Wordcell serves a Markdown vault to local MCP clients and imports Supermemory exports, so agent memory stays in files you can read and commit.",
+    title: "Free local agent memory in Markdown files you own",
+    dek: "Wordcell serves a Markdown vault to local MCP clients and imports Supermemory exports, so agent memory stays in files you can read and commit.",
     eyebrow: "Launch",
     published: launchChecked,
     tags: ["wordcell", "agent-memory", "mcp", "supermemory", "markdown"],
@@ -237,7 +244,9 @@ export const blogArticles = [
       sources: launchSources.map(({ title, href }) => ({ title, url: href, checkedOn: launchChecked })),
       observations: [
         "Supermemory's self-hosted edition is also free and open source, so price alone does not separate it from Wordcell; the post argues from who writes the memory and where it lives.",
-        "Neither the launch commands nor the skill's session-memory workflow is in the published 0.22.5 release, so the post cannot point to an npm install or the release-pinned skill for them and sends readers to the source install and the main-branch skill instead.",
+        "When the post was first reviewed, neither the launch commands nor the skill's session-memory workflow was in the published 0.22.5 release, so the post sent readers to the source install and the main-branch skill.",
+        "2026-09-26 editorial pass: retitled to name the query it answers, led with what the launch adds, stated each study's limits beside that study, and cut a closing paragraph that stated a goal rather than a fact; no figure, link, quotation, or status changed.",
+        "2026-09-26 release update: Wordcell 0.23.0 carries the launch commands and the session-memory reference, so the opening sentence, the dek, and the status paragraph drop the source-build wording and point to the release install and the release-pinned skill; no figure or quotation changed.",
       ],
       // The review's accuracy, sourcing, and style reports raised no problem that sets any score to zero, and the
       // separate verification review on 2026-09-26 scored the fixed post independently and gave these same six scores.
@@ -256,7 +265,7 @@ export const blogArticles = [
       reassessOn: "2026-11-07",
       harmIfWrong: "A reader could cite Oh's LoCoMo or LongMemEval-S figures as Wordcell's results, read Oh's lead over BM25 as settled when its interval reaches zero, or switch from Supermemory expecting hosted extraction and connectors.",
       refreshTriggers: [
-        "A release that includes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",
+        "A release that changes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",
         "A change to a vendored evidence file under docs/ or to the evidence modules under site/wordcell/",
         "A matched run of a Wordcell vault against Supermemory",
         "A change to a cited Supermemory documentation page",

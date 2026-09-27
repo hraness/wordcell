@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.22.5",
+  "version": "0.23.0",
   "description": "Wordcell keeps decisions, plans, and sources as Markdown beside your code, so coding agents can find them from the file they are about to change.",
   "license": "MIT",
   "type": "module",
@@ -487,8 +487,8 @@
     "check": "bun run check:worker && bun run check:effect && bun run check:workflows && bun run check:portfolio-inventory && bun run check:installed-command-docs && bun run typecheck && bun run build && bun run test:package && bun run test && bun run url-metadata:tool:check",
     "prepack": "bun run check",
     "check:effect": "bun run scripts/check-effect-policy.ts",
-    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz wordcell search --root kb --mode exact --rerank typesafe --rerank-limit 25",
-    "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz wordcell search --root kb --mode exact",
+    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz wordcell search --root kb --mode exact --rerank typesafe --rerank-limit 25",
+    "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz wordcell search --root kb --mode exact",
     "check:worker": "tsc -p worker/tsconfig.json --noEmit"
   },
   "dependencies": {

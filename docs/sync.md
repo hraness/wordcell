@@ -68,7 +68,7 @@ uses it.
 
 A running [`wordcell mcp`](reference.md#local-mcp-server) server reads edits
 from an editor or Git on its next call, so you do not need to restart it after
-a pull. `wordcell mcp` is available from source until the next release.
+a pull.
 
 ## Commit and push on a schedule
 
@@ -199,8 +199,7 @@ If you import from Supermemory, run
 [`wordcell import supermemory`](reference.md#import-again) on one machine and
 let its notes sync like any other file. A later import on any machine reports a
 note that was edited after the last import as a `conflict` and leaves it
-unchanged. `wordcell import supermemory` is available from source until the
-next release.
+unchanged.
 
 ## Search several vaults instead of syncing them
 

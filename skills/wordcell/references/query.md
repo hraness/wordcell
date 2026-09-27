@@ -36,8 +36,8 @@ one saved over MCP alone, after every dated session, so a `--limit` can hide
 it. When the vault may hold such notes, list sessions again without `--sort`
 or `--limit`.
 
-The local MCP server that `wordcell mcp --root "$KB_ROOT"` starts is available
-from source until the next release. Over it, call `list_notes` with
+Over the local MCP server that `wordcell mcp --root "$KB_ROOT"` starts, call
+`list_notes` with
 `"where": [{"path": "type", "value": "profile"}]`, then `get_note`. For recent
 sessions, pass `"where": [{"path": "type", "value": "session"}]`,
 `"sort": "metadata.date"`, and `"order": "desc"`.

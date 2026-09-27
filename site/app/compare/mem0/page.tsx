@@ -6,9 +6,9 @@ import { longDate } from "../../../wordcell/format";
 import { mem0CheckedOn, mem0Pages } from "../../../wordcell/mem0-sources";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
 
-const pageTitle = "Wordcell and Mem0 compared";
+const pageTitle = "Wordcell vs Mem0: agent notes or per-user app memory";
 const pageDescription =
-  "Compare Mem0’s extracted per-user memory service with a Wordcell vault of Markdown notes: where memory lives, how it forms, and who it serves.";
+  "Mem0 vs Wordcell: Mem0 extracts and stores facts about each user of your app; Wordcell keeps your own agents’ memory as Markdown notes you own.";
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -66,7 +66,7 @@ const differences: readonly Difference[] = [
   {
     topic: "Agent access",
     mem0: <>Python and TypeScript SDKs, a REST API, and a <a href={mem0Pages.mcp}>hosted MCP server</a> at <code>mcp.mem0.ai</code> behind OAuth or an API key.</>,
-    wordcell: <><code>wordcell mcp</code> serves a vault to local MCP clients over standard input and output. It is available from source until the next release.</>,
+    wordcell: <><code>wordcell mcp</code> serves a vault to local MCP clients over standard input and output.</>,
   },
 ];
 
@@ -114,7 +114,7 @@ export default function CompareMem0() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Which to choose"
+        heading="Who should pick which"
         headingId="choose-title"
         id="choose"
         summary="The deciding question is whose memory you keep: the users of your product, or yourself and your agents."
@@ -135,7 +135,7 @@ export default function CompareMem0() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Moving memories"
+        heading="Moving from Mem0 means writing notes"
         headingId="moving-title"
         id="moving"
         summary="Mem0 memories are extracted facts behind an API, not files you already have. There is no importer."
@@ -148,7 +148,7 @@ export default function CompareMem0() {
       </MarketingSection>
 
       <MarketingSection
-        heading="Evidence"
+        heading="What has been measured"
         headingId="evidence-title"
         id="evidence"
         summary="Wordcell has published no head-to-head comparison with Mem0 of retrieval quality or speed."

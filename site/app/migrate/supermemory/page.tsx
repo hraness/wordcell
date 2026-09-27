@@ -11,10 +11,11 @@ import {
 } from "../../../wordcell/migration-steps";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
 import { SetupLinks } from "../../../wordcell/setup-links";
+import { AGENT_MEMORY_RELEASE } from "../../../wordcell/setup-prompt";
 
 const pageTitle = "Migrate from Supermemory to Wordcell";
 const pageDescription =
-  "Export your Supermemory documents and memory entries, import them into a Wordcell vault as Markdown notes, and verify the result.";
+  "Migrate from Supermemory: export documents and memory entries with its API, import them as Markdown notes with one Wordcell command, and verify the result.";
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -42,7 +43,7 @@ export default function MigrateSupermemory() {
       <ProductHero
         backdrop={false}
         align="start"
-        boundary={`Import from Supermemory and the local MCP server are available from source until the next release. Supermemory’s features were checked on ${longDate(supermemoryFeaturesCheckedOn)}.`}
+        boundary={`Import from Supermemory and the local MCP server need Wordcell ${AGENT_MEMORY_RELEASE} or later. Supermemory’s features were checked on ${longDate(supermemoryFeaturesCheckedOn)}.`}
         className="wordcell-marketing-hero"
         eyebrow="Migrate"
         heading="Move your Supermemory documents and memories into Markdown notes."
@@ -83,7 +84,7 @@ export default function MigrateSupermemory() {
         heading="Install, export, import, and verify"
         headingId="steps-title"
         id="steps"
-        summary="Work in a directory outside the Wordcell checkout and outside any vault, so that the export files are never committed."
+        summary="Work in a directory outside any vault, so that the export files are never committed."
       >
         {migrationSteps.map((step, index) => (
           <figure className="wordcell-step" id={step.id} key={step.id}>

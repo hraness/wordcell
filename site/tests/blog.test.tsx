@@ -229,7 +229,11 @@ describe("Wordcell blog", () => {
     expect(blogHtml[launchSlug]).not.toContain("93.07");
     expect(blogHtml[launchSlug]).toContain("does not rule out a tie");
     expect(source.match(/Latest release: /gu)?.length).toBe(1);
-    expect(source.match(/available from source until the next release/gu)?.length).toBe(1);
+    // The launch commands shipped in a release, so the post points to the release install and the release-pinned skill.
+    expect(source).not.toMatch(/from source|source build|source install|until the next release|main branch/iu);
+    expect(source).toContain("`bunx skills add hraness/wordcell#v{{release.version}} --skill wordcell`");
+    const article = blogArticles.find((candidate) => candidate.slug === launchSlug);
+    expect(article?.dek).not.toMatch(/source build/iu);
     for (const banned of [/\bSOTA\b/iu, /state of the art/iu, /CLONEMEM/iu, /\bwe\b/iu, /\bour\b/iu, /honest/iu, /\bthe first\b/iu, /\bthe only\b/iu]) {
       expect(source, String(banned)).not.toMatch(banned);
     }

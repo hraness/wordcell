@@ -52,14 +52,14 @@ Wordcell keeps the record in Markdown files you own, rebuilds every index from t
 The CLI and TypeScript SDK run with Bun. Install the versioned GitHub archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
 wordcell --help
 ```
 
 Prefer npm? The same release is [mirrored there](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.22.5
+npm install --global --ignore-scripts @hraness/wordcell@0.23.0
 wordcell --help
 ```
 
@@ -101,7 +101,7 @@ After trying the CLI, install the public Agent Skill into a compatible agent,
 such as Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.22.5 --skill wordcell
+bunx skills add hraness/wordcell#v0.23.0 --skill wordcell
 ```
 
 Then ask:
@@ -183,8 +183,8 @@ provider failure retains the baseline order with a diagnostic. See the
 | Check the vault | `wordcell check --root kb` | Reports structural and attachment problems without editing files. |
 | Publish selected notes | `wordcell publish --root kb --out site/ --include notes/parser-contract --dry-run --json` | Previews a static site selection locally; remove `--dry-run` to build it. |
 | Preview a site | `wordcell serve --root site --port 8080` | Serves a published site on a loopback static file server with the emitted `404.html` fallback. |
-| Connect an MCP client | `wordcell mcp --root kb` | Serves this vault to a local MCP client over standard input and output; `--read-only` removes the write tools. Available from source until the next release. |
-| Import from Supermemory | `wordcell import supermemory documents.json --root kb` | Turns saved Supermemory API responses into Markdown notes and reports local edits as conflicts on later imports. Available from source until the next release. |
+| Connect an MCP client | `wordcell mcp --root kb` | Serves this vault to a local MCP client over standard input and output; `--read-only` removes the write tools. |
+| Import from Supermemory | `wordcell import supermemory documents.json --root kb` | Turns saved Supermemory API responses into Markdown notes and reports local edits as conflicts on later imports. |
 
 Use `--json` for structured output and `wordcell --help` for the complete command
 surface. [Full command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md#command-surface).
@@ -225,13 +225,6 @@ prose and attachments still need review before sharing: selection is not secret
 redaction. [Selection recipes and hosting guide](https://github.com/hraness/wordcell/blob/main/docs/publish.md).
 
 ## Use a vault as agent memory
-
-The MCP server, the Supermemory importer, and the skill's session-memory
-workflow described here are available from source until the next release. To
-use them before that release, install the CLI from a checkout as the
-[installation reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md#installation-reference)
-shows, and add the skill from the main branch with
-`bunx skills add hraness/wordcell --skill wordcell`.
 
 `wordcell mcp --root kb` serves a vault to a local MCP client, such as Claude
 Code, Claude Desktop, Cursor, or Codex, over standard input and output. The
@@ -331,7 +324,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.22.5/hraness-wordcell-0.22.5.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph
@@ -363,14 +356,14 @@ the design. Browse it on the [documentation index](https://wordcell.io/docs).
 | --- | --- |
 | [Get started](https://github.com/hraness/wordcell/blob/main/docs/getting-started.md) | Learn the full loop on a first vault: save, find, connect, and publish one note. |
 | [Agent workflow](https://github.com/hraness/wordcell/blob/main/docs/agent-workflow.md) | Set up, query, maintain, and revise repository memory. |
-| [Local MCP server](https://github.com/hraness/wordcell/blob/main/docs/reference.md#local-mcp-server) | Connect Claude Code, Claude Desktop, Cursor, or Codex to a vault and review the write tools. Available from source until the next release. |
+| [Local MCP server](https://github.com/hraness/wordcell/blob/main/docs/reference.md#local-mcp-server) | Connect Claude Code, Claude Desktop, Cursor, or Codex to a vault and review the write tools. |
 | [Installation and command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md) | Exact interfaces, SDK imports, optional adapters, and troubleshooting prerequisites. |
 | [Web capture](https://github.com/hraness/wordcell/blob/main/docs/capture.md) and [PDF capture](https://github.com/hraness/wordcell/blob/main/docs/pdf.md) | Save sources with provenance, assets, and explicit completeness limits. |
 | [Publish selected notes](https://github.com/hraness/wordcell/blob/main/docs/publish.md) | Preview a slice, build a static site, and choose how to host it. |
 | [Graph guide](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md) | Named queries, proofs, revisions, resource limits, and cache recovery. |
 | [Portfolio federation](https://github.com/hraness/wordcell/blob/main/docs/portfolio.md) | Search only selected, authorized vaults. |
 | [Sync with Git](https://github.com/hraness/wordcell/blob/main/docs/sync.md) | Keep one vault current on several machines with a private repository. |
-| [Migrate from Supermemory](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md) | Export documents and memory entries, import them as notes, and replace connectors. The importer is available from source until the next release. |
+| [Migrate from Supermemory](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md) | Export documents and memory entries, import them as notes, and replace connectors. |
 | [Design](https://github.com/hraness/wordcell/blob/main/docs/design.md) and [memory rationale](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md) | File contracts, design choices, and evaluation context. |
 | [Release verification](https://github.com/hraness/wordcell/blob/main/docs/publishing.md#verify-a-published-release) | Verify archive identity, signatures, and provenance. |
 

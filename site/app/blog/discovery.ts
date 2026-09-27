@@ -32,7 +32,12 @@ export const site = {
   title: "Wordcell",
 } as const satisfies SearchSite;
 
-export const hraness = { kind: "Organization", name: "Hraness" } as const satisfies ArticleParty;
+export const hraness = {
+  kind: "Organization",
+  name: "Hraness",
+  sameAs: ["https://github.com/hraness"],
+  url: "https://hraness.com",
+} as const satisfies ArticleParty;
 
 /** The site's social card, reused as each post's representative image. */
 const socialImage = {
