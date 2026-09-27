@@ -288,3 +288,12 @@ a { text-underline-offset: 0.2em; }
 @media (forced-colors: active) {
   .document-page pre, .docs-list li, .release-preview { border: 1px solid CanvasText; box-shadow: none; }
 }
+
+/* Header links and appearance controls keep full phone-sized hit areas. */
+@media (max-width: 600px) {
+  header a, header button, header summary {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
+  header a { display: inline-flex; align-items: center; }
+}

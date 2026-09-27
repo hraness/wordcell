@@ -67,7 +67,7 @@ try {
             heading: document.querySelector("h1")?.textContent?.trim(),
             theme: document.documentElement.dataset.theme,
             footerPositions: [footer, footer?.querySelector(".hraness-site-footer__inner")].map(element => element ? getComputedStyle(element).position : null),
-            smallHeaderTargets: innerWidth > 600 ? [] : [...document.querySelectorAll("header a, header button")].filter(element => { const box = element.getBoundingClientRect(); return box.width > 0 && box.height > 0 && (box.width < 43.5 || box.height < 43.5); }).map(element => ({ label: element.textContent?.trim() || element.getAttribute("aria-label"), width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height })),
+            smallHeaderTargets: innerWidth > 600 ? [] : [...document.querySelectorAll("header a, header button, header summary")].filter(element => { const box = element.getBoundingClientRect(); return box.width > 0 && box.height > 0 && (box.width < 43.5 || box.height < 43.5); }).map(element => ({ label: element.textContent?.trim() || element.getAttribute("aria-label"), width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height })),
           };
         });
         const name = `${width}-${theme}-${route === "/" ? "home" : route.slice(1).replaceAll("/", "_")}`;
@@ -75,7 +75,7 @@ try {
         await writeFile(resolve(artifacts, `${name}.json`), JSON.stringify({ route, state, errors }, null, 2));
         assert.ok(!state.overflow, `${route}: horizontal overflow at ${width}`);
         assert.ok(state.heading || config.minimalRoutes?.includes(route), `${route}: missing heading`);
-        assert.equal(state.theme, theme, `${route}: system appearance`);
+        assert.equal(state.theme, config.forcedTheme ?? theme, `${route}: system appearance`);
         assert.ok(state.footerPositions.every(position => position === null || position === "static" || position === "relative"), `${route}: footer not in normal flow`);
         assert.ok(state.footerPositions[0] || config.minimalRoutes?.includes(route), `${route}: footer missing`);
         assert.deepEqual(state.smallHeaderTargets, [], `${route}: phone targets below 44px`);
@@ -83,9 +83,12 @@ try {
         results.push({ route, width, theme });
       }
       await page.goto(origin);
-      await page.getByRole("button", { name: /^Appearance/u }).click();
-      const targetTheme = theme === "light" ? "dark" : "light";
-      await page.getByRole("menuitemradio", { name: new RegExp(`^${targetTheme}$`, "iu") }).click();
+      const targetTheme = config.forcedTheme ?? (theme === "light" ? "dark" : "light");
+      if (config.appearance !== "forced") {
+        const trigger = config.appearance === "palette" ? "summary" : "button";
+        await page.locator(`[data-hraness-appearance-menu][data-ready="true"] ${trigger}`).first().click();
+        await page.getByRole(config.appearance === "palette" ? "radio" : "menuitemradio", { name: new RegExp(`^${targetTheme}$`, "iu") }).click();
+      }
       await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
       await page.reload();
       await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
@@ -93,6 +96,7 @@ try {
       assert.ok(destination, "Header has no internal navigation link");
       await page.locator(`header a[href=${JSON.stringify(destination)}]`).first().click();
       await page.waitForURL(url => url.pathname === new URL(destination, origin).pathname);
+      await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
       assert.deepEqual(errors, [], "Browser errors after appearance and navigation");
     } finally { await context.close(); }
   }
