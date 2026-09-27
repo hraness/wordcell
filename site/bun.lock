@@ -8,7 +8,7 @@
         "@hraness/design-kit": "github:hraness/design-kit#v0.21.0",
         "@hraness/site-footer": "github:hraness/site-footer#v0.19.2",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
-        "@hraness/web-discovery": "github:hraness/web-discovery#v0.8.0",
+        "@hraness/web-discovery": "github:hraness/web-discovery#v0.9.0",
         "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz",
         "next": "16.3.3",
         "react": "19.2.6",
@@ -99,7 +99,7 @@
 
     "@hraness/ui": ["@hraness/ui@github:hraness/ui#1d43aa9", { "dependencies": { "@hugeicons/core-free-icons": "4.2.3", "@hugeicons/react": "^1.1.9", "@stylexjs/stylex": "0.19.0", "clsx": "^2.1.1", "parse5": "8.0.1", "react-aria": "3.50.0", "react-aria-components": "1.19.0" }, "peerDependencies": { "@babel/core": "7.29.7", "@stylexjs/babel-plugin": "0.19.0", "@types/babel__core": "7.20.5", "@types/bun": "1.3.14", "@types/node": "^20.19.0 || >=22.12.0", "lightningcss": "1.33.0", "next": "16.2.12 || 16.3.3", "react": ">=18 <20", "react-dom": ">=18 <20", "typescript": "6.0.3", "vite": "7.3.6 || 8.2.1" }, "optionalPeers": ["@babel/core", "@stylexjs/babel-plugin", "@types/babel__core", "@types/bun", "@types/node", "lightningcss", "next", "typescript", "vite"] }, "hraness-ui-1d43aa9", "sha512-KH4pv6P1/DoG1moNhSj4ekFtpPMilqgPzFGOWKL2I0gWVJgfXwDnoJLj3FIjWLItTMvSfm1B8Yt8pg77/a1vmg=="],
 
-    "@hraness/web-discovery": ["@hraness/web-discovery@github:hraness/web-discovery#c1b817a", { "dependencies": { "@hraness/design-kit": "github:hraness/design-kit#v0.5.0" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.0.0 <20.0.0" } }, "hraness-web-discovery-c1b817a", "sha512-TU4bf80GLzOUmRAiivEk45rEA2v4XxpLJvFhOruJj4lLpkZszvsNfpFYuol5a/8WRtGxHgkin4lIFrkGgQwCcQ=="],
+    "@hraness/web-discovery": ["@hraness/web-discovery@github:hraness/web-discovery#c50a2b0", { "dependencies": { "@hraness/design-kit": "github:hraness/design-kit#v0.5.0" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.0.0 <20.0.0" } }, "hraness-web-discovery-c50a2b0", "sha512-r/ZxtWzBM3nGDX3RbW6VPkdqaOVJG7qo3Cs9ohi/0H5l3jU8DReoJHwL7qrAJH6OHLdFcIdNENzyi4rkfLVBBw=="],
 
     "@hraness/wordcell": ["@hraness/wordcell@https://github.com/hraness/wordcell/releases/download/v0.22.4/hraness-wordcell-0.22.4.tgz", { "dependencies": { "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0", "@steipete/sweet-cookie": "0.4.3", "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c", "agent-browser": "0.32.3", "defuddle": "0.19.1", "effect": "3.22.1", "yaml": "^2.9.0", "zod": "^4.4.3" }, "bin": { "wordcell": "./dist/cli.js", "wordcell-evaluation-builder": "./dist/evaluation-builder.js" } }, "sha512-PpL/yry+otN0sARQriXgp8zvcO5y5g99XD5Z87If/UbPcmJi5+xm9Xh9zJsFHmou70FdMYA+dbBxxTN+PnVcNQ=="],
 
