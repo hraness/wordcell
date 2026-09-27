@@ -50,7 +50,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-hraness-theme="wordcell"
-      data-hraness-material="lantern" data-hraness-pattern="weave"
+      data-hraness-material="lantern" data-hraness-pattern="none"
       data-palette="gruvbox"
       className={initialPalette.className}
       suppressHydrationWarning

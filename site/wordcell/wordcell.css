@@ -1,200 +1,77 @@
-/* wordcell component layer — the vault field and note language. Ships with the
- * wordcell theme (or any layer that defines the --wordcell-* tokens).
- * The field sits absolutely behind the hero: notes stay muted while a focus
- * point follows the pointer when one is near — --hraness-hero-proximity (0..1, set by field.tsx) lifts each card into focus.
- * All motion is decorative: pointer-transparent, reduced-motion aware,
- * and removable without losing content. */
+/* wordcell component layer — quiet marketing composition on the shared
+ * foundations. Flat palette background, opaque content surfaces separated by
+ * hairlines, the sans display role for headings, and mono only for code and
+ * small eyebrows. No hero artwork, textures, or pointer-driven light. */
 
-.hraness-material-wall {
-  position: relative;
+/* Headings use the sans display role instead of the preset's serif. The
+ * preset declares these tokens inside a cascade layer, so this unlayered
+ * rule wins without editing the vendored snapshot. */
+[data-hraness-marketing-preset="editorial"] {
+  --hraness-marketing-display-font: var(--font-text);
+  --hraness-marketing-display-weight: 550;
+  --hraness-marketing-h1-size: clamp(2.375rem, 1.55rem + 3.3vw, 4.25rem);
+  --hraness-marketing-h1-leading: 1.04;
+  --hraness-marketing-h1-tracking: -.035em;
+  --hraness-marketing-h2-size: clamp(1.75rem, 1.35rem + 1.5vw, 2.5rem);
+  --hraness-marketing-h2-leading: 1.12;
+  --hraness-marketing-h2-tracking: -.025em;
+  --hraness-marketing-h3-size: clamp(1.25rem, 1.12rem + .5vw, 1.5rem);
+  --hraness-marketing-h3-leading: 1.2;
+  --hraness-marketing-story-space: clamp(3.5rem, 7vw, 5.5rem);
+  --hraness-marketing-hero-space: clamp(3.5rem, 7vw, 6rem) clamp(2.5rem, 5vw, 3.5rem);
+  --hraness-marketing-field-images: none;
 }
 
-.wordcell-field {
-  position: absolute;
-  inset: 0;
-  overflow: clip;
-  pointer-events: none;
-  z-index: 0;
+/* Flat surfaces: the material keeps its opaque planes, but lifts, bevels,
+ * and inset shading become a single hairline. */
+:root[data-hraness-material="lantern"] {
+  --hraness-material-edge: transparent;
+  --hraness-material-rest: 0 0 0 1px var(--wordcell-hairline);
+  --hraness-material-lift: 0 0 0 1px var(--wordcell-hairline);
+  --hraness-material-inset: 0 0 0 1px var(--wordcell-hairline);
+  --hraness-marketing-terminal-shadow: 0 0 0 1px var(--wordcell-hairline);
+  --wordcell-hairline: color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 
-/* Paper texture under the notes. */
-.wordcell-field::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    url("../vendor/hraness-marketing/marketing-assets/grain.svg");
-  background-size: 64px 64px;
-  background-position: center;
-  opacity: .3;
-  pointer-events: none;
+/* Hero: eyebrow, heading, lede, one primary action and one text link. */
+.wordcell-hero .hraness-marketing-hero__heading {
+  max-inline-size: 18ch;
 }
-
-/* Edge fade: the vault continues beyond the header. */
-.wordcell-field::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to right, var(--background), transparent 12%, transparent 88%, var(--background)),
-    linear-gradient(to bottom, var(--background), transparent 18%, transparent 82%, var(--background));
-  pointer-events: none;
+.wordcell-hero .hraness-marketing-hero__summary {
+  max-inline-size: 42rem;
 }
-
-/* The hero copy stays readable: a soft paper scrim over the field behind it,
- * plus z-lift above the notes. */
-.wordcell-marketing-hero {
-  position: relative;
-  z-index: 1;
-}
-
-.wordcell-marketing-hero::before {
-  content: "";
-  position: absolute;
-  inset: -2rem -4rem;
-  z-index: -1;
-  background: radial-gradient(ellipse 72% 68% at 32% 46%,
-    color-mix(in srgb, var(--background) 94%, transparent) 0%,
-    color-mix(in srgb, var(--background) 76%, transparent) 55%,
-    transparent 100%);
-  pointer-events: none;
-}
-
-.wordcell-edges {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-}
-
-.wordcell-edge {
-  fill: none;
-  stroke: var(--wordcell-edge);
-  stroke-width: 1.1;
-  stroke-dasharray: 3 4;
-  vector-effect: non-scaling-stroke;
-  opacity: calc(.38 + var(--hraness-hero-proximity, 0) * .62);
-  transition: opacity .45s ease;
-}
-
-.wordcell-edge--pulse {
-  stroke-dasharray: 5 55;
-}
-
-
-.wordcell-edge-label {
-  position: absolute;
-  translate: -50% -50%;
-  padding: .12rem .4rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--wordcell-note-surface) 78%, transparent);
-  color: var(--wordcell-edge-ink);
-  font-family: var(--font-mono);
-  font-size: .5625rem;
-  font-style: italic;
-  letter-spacing: .02em;
-  white-space: nowrap;
-  opacity: calc(.28 + var(--hraness-hero-proximity, 0) * .72);
-  transition: opacity .45s ease;
-}
-
-.wordcell-note {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  inline-size: var(--w);
-  padding: .8rem .95rem .9rem;
+[data-hraness-marketing-preset="editorial"] .wordcell-hero .hraness-marketing-hero__eyebrow {
+  padding: 0;
   border: 0;
-  border-radius: var(--wordcell-note-radius, .8rem);
-  background: var(--wordcell-note-surface);
-  box-shadow: var(--wordcell-note-shadow);
-  translate: -50% -50%;
-  rotate: var(--r, 0deg);
-  pointer-events: none;
-  opacity: calc(.46 + var(--hraness-hero-proximity, 0) * .54);
-  filter: blur(calc((1 - var(--hraness-hero-proximity, 0)) * 1.3px));
-  transition: opacity .45s ease, filter .45s ease;
-
-}
-
-
-.wordcell-note-type {
-  display: inline-block;
-  margin-block-end: .45rem;
-  padding: .1rem .42rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--wordcell-type-accent, var(--primary)) 12%, transparent);
-  color: var(--wordcell-type-accent, var(--primary));
-  font-size: .5625rem;
-  font-weight: 600;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-}
-
-/* Quiet per-type accents: people are warm clay, sources moss, plans ochre,
- * questions slate — everything else keeps the vault green. */
-.wordcell-note[data-type="person"] { --wordcell-type-accent: var(--wordcell-type-person, #8a5a3c); }
-.wordcell-note[data-type="book"],
-.wordcell-note[data-type="source"] { --wordcell-type-accent: var(--wordcell-type-source, #4d6f3e); }
-.wordcell-note[data-type="meeting"] { --wordcell-type-accent: var(--wordcell-type-meeting, #6d5a8a); }
-.wordcell-note[data-type="plan"] { --wordcell-type-accent: var(--wordcell-type-plan, #8a6d2f); }
-.wordcell-note[data-type="question"] { --wordcell-type-accent: var(--wordcell-type-question, #5a6a75); }
-.wordcell-note[data-type="idea"] { --wordcell-type-accent: var(--wordcell-type-idea, #4a7a78); }
-
-.wordcell-note-title {
-  margin: 0 0 .3rem;
-  font-family: var(--font-heading);
-  font-size: .8125rem;
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -.005em;
-}
-
-/* Person notes carry a small initials chip, like a contact card. */
-.wordcell-note-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 1.15rem;
-  block-size: 1.15rem;
-  margin-inline-end: .35rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--wordcell-type-person, #8a5a3c) 16%, transparent);
-  color: var(--wordcell-type-person, #8a5a3c);
-  font-size: .5rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  vertical-align: .08em;
-}
-
-.wordcell-note-body {
-  margin: 0;
-  color: var(--muted);
-  font-size: .6875rem;
-  line-height: 1.5;
-}
-
-.wordcell-note-link {
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   color: var(--primary);
-  font-weight: 500;
-}
-
-.wordcell-note-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .3rem .45rem;
-  margin-block-start: .55rem;
-}
-
-.wordcell-note-tags span {
-  color: var(--wordcell-tag-ink, var(--muted));
   font-family: var(--font-mono);
-  font-size: .5625rem;
+  font-size: .8125rem;
+  font-weight: 500;
   letter-spacing: .02em;
 }
+.wordcell-hero .hraness-marketing-hero__actions > :nth-child(2) {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: .2em;
+}
+.wordcell-hero .hraness-marketing-hero__boundary {
+  color: var(--muted);
+  font-size: .875rem;
+}
 
-/* Benchmark strip: let the numbers carry it. Display serif on the values,
- * quiet one-line details, a hairline frame. */
+/* Sections read as one column separated by hairline rules. */
+[data-hraness-marketing-preset="editorial"] .hraness-marketing-page > :where(section) {
+  border-block-start: 1px solid var(--wordcell-hairline);
+}
+
+/* Benchmark strip: let the numbers carry it, with quiet one-line details. */
 .hraness-marketing-stats__list > div {
   padding-block: 1.6rem;
 }
@@ -399,8 +276,7 @@
   }
 }
 
-/* Guided steps and the transcript pane: quiet note-surface cards, the same
- * paper the vault field is drawn on. */
+/* Guided steps and the transcript pane: opaque surfaces with a hairline. */
 .wordcell-step,
 .wordcell-pane {
   border: 0;
@@ -677,65 +553,8 @@ pre {
   }
 }
 
-@media (width < 45rem) {
-  .wordcell-note:nth-of-type(n + 12) {
-    display: none;
-  }
-}
-
-@media print {
-  .wordcell-field,
-  .wordcell-note {
-    display: none !important;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .wordcell-bytes-bar {
     animation: none;
   }
-  .wordcell-note,
-  .wordcell-edge--pulse {
-    animation: none;
-  }
-  .wordcell-note,
-  .wordcell-edge,
-  .wordcell-edge-label {
-    transition: none;
-  }
 }
-
-@media (forced-colors: active) {
-  .wordcell-field {
-    background: Canvas;
-  }
-  .wordcell-field::before,
-  .wordcell-edge--pulse {
-    display: none;
-  }
-
-  .wordcell-note {
-    border-color: CanvasText;
-    box-shadow: none;
-    opacity: 1;
-    filter: none;
-  }
-  .wordcell-note-type,
-  .wordcell-note-avatar {
-    border: 1px solid CanvasText;
-    background: Canvas;
-    color: CanvasText;
-  }
-  .wordcell-edge {
-    stroke: CanvasText;
-  }
-  .wordcell-edge-label {
-    border: 1px solid CanvasText;
-    background: Canvas;
-    color: CanvasText;
-    opacity: 1;
-  }
-}
-
-/* Pointer motion is bounded and paused by the shared hero controller. */
-.wordcell-note, .wordcell-note--bloom { animation: none; transform: translate(var(--hraness-hero-drift-x, 0px), var(--hraness-hero-drift-y, 0px)); }

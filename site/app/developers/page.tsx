@@ -20,7 +20,6 @@ function TopicIcon({ slug }: Readonly<{ slug: WordcellIconName }>) {
   return <WordcellIcon className="wordcell-topic-icon" name={slug} />;
 }
 
-import { DEVELOPER_EDGES, DEVELOPER_NOTES, WordcellField } from "../../wordcell/field";
 import { WordcellIcon, type WordcellIconName } from "../../wordcell/icons";
 import { publishedRelease } from "../publication";
 import { WordcellContentFooter } from "../site-footer";
@@ -163,7 +162,6 @@ export default function Developers() {
       <main id="main" tabIndex={-1}>
         <MarketingPage>
           <div className="hraness-material-wall">
-          <WordcellField edges={DEVELOPER_EDGES} notes={DEVELOPER_NOTES} />
           <ProductHero
             backdrop={false}
             align="start"
@@ -172,7 +170,7 @@ export default function Developers() {
               { href: "/docs/agent-workflow", label: "Read the agent workflow" },
             ]}
             boundary={footnote}
-            className="wordcell-marketing-hero"
+            className="wordcell-hero"
             eyebrow="For coding agents"
             heading={heading}
             headingId="hero-title"

@@ -25,8 +25,8 @@
     "sync:icons": "bun scripts/sync-icons.ts"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.22.0",
-    "@hraness/site-footer": "github:hraness/site-footer#v0.19.3",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.23.0",
+    "@hraness/site-footer": "github:hraness/site-footer#v0.20.0",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.9.0",
     "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz",

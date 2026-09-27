@@ -222,7 +222,7 @@ test("the overview page renders the README with its installation anchor", async 
   expect(html).toContain("wordcell --help");
 });
 
-test("scopes the editorial preset to the homepage header and the living vault field", () => {
+test("scopes the editorial preset to the homepage header and a quiet CLI-first hero", () => {
   const html = renderToStaticMarkup(<Home />);
   const elements: string[] = [];
   new HTMLRewriter()
@@ -233,10 +233,10 @@ test("scopes the editorial preset to the homepage header and the living vault fi
       element() { elements.push("field"); },
     })
     .transform(html);
-  expect(elements).toEqual(["header", "field"]);
+  expect(elements).toEqual(["header"]);
   expect(html).toContain('wordcell search &quot;parser retries&quot; --root kb --mode exact');
-  expect(html).toContain("wordcell-note");
-  expect(html).toContain("wordcell-edge");
+  expect(html).not.toContain("wordcell-note");
+  expect(html).not.toContain("wordcell-edge");
 });
 
 

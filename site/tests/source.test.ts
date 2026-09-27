@@ -60,7 +60,7 @@ describe("Wordcell site source contract", () => {
       read("app/readme.generated.ts"),
     ]);
     expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.18"');
-    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.22.0"');
+    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.23.0"');
     expect(home).toContain('import { AskAiAboutThis } from "@hraness/ui"');
     expect(home).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io" />');
     expect(docs).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />');
@@ -158,10 +158,10 @@ test("adopts the wordcell product theme on the shared foundations", async () => 
   expect(theme).toContain("--ui-ring: var(--focus)");
   expect(theme).toContain("forced-colors: active");
   expect(theme).toContain("color-scheme");
-  // Component motion stays decorative: pointer-transparent and collapsible.
+  // Remaining interaction styles respect user preferences.
   expect(components).toContain("prefers-reduced-motion: reduce");
   expect(components).toContain("forced-colors: active");
-  expect(components).toContain("pointer-events: none");
+  expect(components).toContain("--hraness-marketing-field-images: none");
 });
 
 test("pins the shared footer release and leaves attribution to the package", async () => {
@@ -172,7 +172,7 @@ test("pins the shared footer release and leaves attribution to the package", asy
     read("app/docs/page.tsx"),
     read("app/globals.css"),
   ]);
-  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.19.3"');
+  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.20.0"');
   expect(layout).toContain('import { HranessSiteFooter } from "@hraness/site-footer/react"');
   expect(layout).toMatch(/<HranessSiteFooter\b[^>]*placement="flow"/u);
   for (const source of [home, docs, css]) {

@@ -18,7 +18,6 @@ import { AskAiAboutThis } from "@hraness/ui";
 
 import { publishedRelease } from "./publication";
 import { WordcellContentFooter } from "./site-footer";
-import { WordcellField } from "../wordcell/field";
 import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { siteDescription } from "./site-description";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
@@ -230,7 +229,6 @@ export default function Home() {
       <main id="main" tabIndex={-1}>
         <MarketingPage>
           <div className="hraness-material-wall">
-          <WordcellField />
           <ProductHero
             backdrop={false}
             align="start"
@@ -239,7 +237,7 @@ export default function Home() {
               { href: "/docs/getting-started", label: "See a note work" },
             ]}
             boundary={footnote}
-            className="wordcell-marketing-hero"
+            className="wordcell-hero"
             eyebrow="Markdown knowledge base"
             heading={heading}
             headingId="hero-title"
