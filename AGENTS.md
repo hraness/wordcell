@@ -16,7 +16,7 @@
 - `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `LICENSE` – public usage, project policy, threat model, and terms.
 - `package.json`, `tsconfig.json`, and `bun.lock` – standalone package and frozen verification configuration.
 
-# Search repository knowledge
+**Search repository knowledge**
 
 Use `bun run kb:search "question" --json` for ordinary questions about this
 repository's `kb/`. It pins Wordcell 0.23.0 and enables hosted TypeSafe
@@ -115,7 +115,7 @@ Existing catalog, context, and maintenance commands retain their own roles.
 <!-- hraness-delivery:end -->
 
 <!-- algal-skills:start -->
-## ALGAL skills
+**ALGAL skills**
 
 - Prefer the globally installed `algal-*` skills for bounded git state, diffs, repository survey/search, test and release gates, CI polling, and web fetches instead of repeated raw tool output.
 - At session start, if the `algal` skill is unavailable, install the current skill pack for Claude Code, Codex, and Devin for Terminal with `bunx skills add 0thernet/algal-skills --global --agent claude-code codex devin --skill '*' --copy --yes`.

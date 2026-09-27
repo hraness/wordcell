@@ -2,6 +2,12 @@ name: CI
 
 on:
   workflow_dispatch:
+    inputs:
+      production:
+        description: Also verify the fixed public production site
+        type: boolean
+        required: false
+        default: false
   pull_request:
   push:
     branches: [main]
@@ -77,6 +83,25 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run check
       - run: git diff --exit-code -- app/readme.generated.ts app/docs/docs.generated.ts lib/hosted/reader.generated.ts bun.lock
+      - name: Install Chromium for public-page evidence
+        run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Verify public pages at phone and desktop sizes
+        env:
+          SITE_BROWSER_ARTIFACTS: ${{ runner.temp }}/public-site-candidate
+        run: node scripts/verify-public-site-browser.mjs
+      - name: Verify the fixed public production site
+        if: github.event_name == 'workflow_dispatch' && inputs.production
+        env:
+          SITE_BROWSER_ARTIFACTS: ${{ runner.temp }}/public-site-production
+        run: node scripts/verify-public-site-browser.mjs --production
+      - name: Save public-page browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: public-site-browser
+          path: ${{ runner.temp }}/public-site-*
+          if-no-files-found: error
+          retention-days: 7
 
   required:
     name: Required
