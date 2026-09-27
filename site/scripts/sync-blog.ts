@@ -8,7 +8,19 @@ import { scifactStudy } from "../wordcell/benchmark-evidence.ts";
 import { grouped, longDate, prose, signed } from "../wordcell/format.ts";
 import { formatBytes, handoffEvidence } from "../wordcell/handoff-evidence.ts";
 import { isLaunchRoute } from "../wordcell/launch-routes.ts";
-import { locomoArms, locomoFacts, locomoLimitQuotes, ohAttribution, ohLinks, pilotArms, pilotInterval, pilotStudy } from "../wordcell/oh-evidence.ts";
+import {
+  locomoArms,
+  locomoFacts,
+  locomoLimitQuotes,
+  longMemEvalArms,
+  longMemEvalComparison,
+  longMemEvalFacts,
+  ohAttribution,
+  ohLinks,
+  pilotArms,
+  pilotInterval,
+  pilotStudy,
+} from "../wordcell/oh-evidence.ts";
 import { renderMarkdownHtml, type RelativeTargetResolver } from "./readme-html.ts";
 import pilotJson from "../../docs/evaluations/oh/memory-framework-pilot-v1.json";
 import scifactJson from "../../docs/evaluations/wordcell-scifact-20260919.json";
@@ -97,6 +109,15 @@ export const evidenceFigures = {
   "oh-locomo.attribution": ohAttribution,
   "oh-locomo.limit": locomoLimitQuotes[0],
   "oh-locomo.url": ohLinks.locomoResult,
+  "oh-longmemeval.questions": grouped(longMemEvalFacts.questions),
+  "oh-longmemeval.completed": longDate(longMemEvalFacts.completed),
+  "oh-longmemeval.semantic": percentText(pick(longMemEvalArms, "oh-semantic-96k").percent, 2),
+  "oh-longmemeval.bm25": percentText(pick(longMemEvalArms, "bm25-96k").percent, 2),
+  "oh-longmemeval.estimate": signed(longMemEvalComparison.primary.difference, 1),
+  "oh-longmemeval.lower": signed(longMemEvalComparison.primary.lower, 1),
+  "oh-longmemeval.upper": signed(longMemEvalComparison.primary.upper, 1),
+  "oh-longmemeval.level": longMemEvalComparison.primary.level,
+  "oh-longmemeval.url": ohLinks.longMemEvalResult,
   "oh-pilot.questions": grouped(pilotStudy.sampleSize),
   "oh-pilot.date": longDate(pilotStudy.measuredAt),
   "oh-pilot.supermemory": percentText(pick(pilotArms, "supermemory").percent, 2),

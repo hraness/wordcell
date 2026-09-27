@@ -8,6 +8,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BenchmarkComparison, type BenchmarkStudy } from "../wordcell/benchmark-comparison";
 import { scifactStudy } from "../wordcell/benchmark-evidence";
 import {
+  longMemEvalArms,
+  longMemEvalComparison,
+  longMemEvalFacts,
+  longMemEvalLabPipeline,
+  longMemEvalLimitQuotes,
+  longMemEvalStudy,
+  longMemEvalTypes,
   locomoArms,
   locomoCategories,
   locomoFacts,
@@ -16,6 +23,7 @@ import {
   locomoStudy,
   ohAttribution,
   ohLinks,
+  ohLongMemEvalPost,
   ohSources,
   pilotArms,
   pilotInterval,
@@ -76,7 +84,7 @@ describe("vendored Oh artifacts", () => {
     expect(manifest.schema).toBe("wordcell.vendored-sources.v1");
     const artifacts = manifest.artifacts;
     if (!Array.isArray(artifacts)) throw new TypeError("sources.json artifacts must be an array.");
-    expect(artifacts.length).toBe(2);
+    expect(artifacts.length).toBe(3);
     for (const [index, entry] of artifacts.entries()) {
       const artifact = record(entry, `artifacts[${index}]`);
       const file = text(artifact.file, "file");
@@ -183,6 +191,70 @@ describe("Oh LoCoMo evidence", () => {
   });
 });
 
+describe("Oh LongMemEval-S 500 evidence", () => {
+  test("matched arms, the frozen interval, and question types match the vendored result", async () => {
+    const raw = await vendoredJson("memory-longmemeval-s-500-v1.json");
+    const systems = raw.systems as readonly Readonly<Record<string, unknown>>[];
+    const system = (id: string) => record(systems.find((entry) => entry.id === id), id);
+    expect(longMemEvalArms.map((arm) => [arm.system, arm.percent, arm.correctAnswers, arm.answers, arm.majorityCorrect])).toEqual([
+      ["Oh semantic retrieval", "88.87", 1333, 1500, 445],
+      ["BM25 retrieval", "86.13", 1292, 1500, 431],
+    ]);
+    for (const arm of longMemEvalArms) {
+      const entry = system(arm.id);
+      expect(arm.percent).toBe((entry.percent as number).toFixed(2));
+      expect(arm.correctAnswers).toBe(entry.correctAnswers as number);
+    }
+    expect(longMemEvalStudy.rows.map((row) => row.detail)).toEqual(["1,333 of 1,500 answers", "1,292 of 1,500 answers"]);
+    expect(longMemEvalStudy.rows.map((row) => row.id)).not.toContain("oh-reading-pipeline");
+    expect(longMemEvalStudy.comparability).toBe("same-run");
+    expect(longMemEvalStudy.sampleSize).toBe(500);
+    expect(longMemEvalStudy.measuredAt).toBe(raw.completed as string);
+    expect(longMemEvalComparison.primary).toEqual({ difference: 2.8, lower: 0, upper: 5.6, level: "95%" });
+    expect(longMemEvalComparison.mean).toEqual({ difference: 2.73, lower: 0.53, upper: 5.07, level: "95%" });
+    const comparison = record((raw.comparisons as readonly unknown[]).find((entry) => record(entry, "comparison").left === "oh-semantic-96k"), "comparison");
+    expect(record(comparison.correctInTwoOrThreeRuns, "primary").interval95).toEqual([longMemEvalComparison.primary.lower, longMemEvalComparison.primary.upper]);
+    expect(record(comparison.meanOfThreeRuns, "mean").interval95).toEqual([longMemEvalComparison.mean.lower, longMemEvalComparison.mean.upper]);
+    expect(longMemEvalComparison.tieNotRuledOut).toBe(true);
+    expect([longMemEvalComparison.gained, longMemEvalComparison.lost]).toEqual([31, 17]);
+    expect(longMemEvalTypes.map((type) => [type.id, type.questions, ...type.percents])).toEqual([
+      ["knowledge-update", 78, "91.03", "92.74"],
+      ["multi-session", 133, "84.21", "74.94"],
+      ["single-session-assistant", 56, "95.24", "94.64"],
+      ["single-session-preference", 30, "63.33", "65.56"],
+      ["single-session-user", 70, "95.24", "97.62"],
+      ["temporal-reasoning", 133, "91.98", "88.47"],
+      ["abstention", 30, "91.11", "90.00"],
+    ]);
+    expect(longMemEvalFacts.matchedSupermemoryRun).toBe(false);
+    expect(record(raw.supermemory, "supermemory").matchedFullRun).toBe(false);
+  });
+
+  test("the lab pipeline stays framed as in-sample and outside the Oh package", async () => {
+    const raw = await vendoredJson("memory-longmemeval-s-500-v1.json");
+    expect(longMemEvalLabPipeline).toMatchObject({ percent: "93.07", majorityCorrect: 474, inSample: true, inOhPackage: false });
+    expect(record(raw.packageBoundary, "packageBoundary").labPublished).toBe(false);
+    expect(record(raw.exposure, "exposure").inSample).toBe(true);
+    const markup = renderToStaticMarkup(<Benchmarks />);
+    const text = pageText(markup);
+    // The in-sample figure appears once, inside the sentence that says it is not Oh's or Wordcell's score.
+    expect(text.split("93.07").length - 1).toBe(1);
+    expect(text).toMatch(/lab reading pipeline that scored 93\.07% on the mean of three runs and answered 474 of 500 questions correctly in at least two\. It is not charted here and is not Oh’s or Wordcell’s score/);
+    expect(text).toContain("is not Oh’s or Wordcell’s score");
+    expect(text).toContain("the figure is in-sample");
+    expect(text).toContain("are not part of the Oh package");
+  });
+
+  test("quoted limits are verbatim", async () => {
+    const raw = await vendoredJson("memory-longmemeval-s-500-v1.json");
+    const statements = [...(raw.limitations as readonly string[]), text(record(raw.exposure, "exposure").priorStudies, "priorStudies")];
+    for (const quote of Object.values(longMemEvalLimitQuotes)) {
+      expect(statements.some((statement) => statement.includes(quote))).toBe(true);
+      expect(quote).not.toMatch(notSota);
+    }
+  });
+});
+
 describe("Oh LongMemEval pilot evidence", () => {
   test("arm rates and the interval match the vendored pilot result", async () => {
     const raw = await vendoredJson("memory-framework-pilot-v1.json");
@@ -235,10 +307,17 @@ describe("Oh evidence provenance and rendering", () => {
     expect(ohSources.map((source) => source.href)).toEqual([
       "https://github.com/hraness/oh/blob/3add170ca8d931603e68dee07f3cbdcf9c08c706/benchmarks/results/memory-evolution-locomo-sealed-1540-v1.json",
       "https://github.com/hraness/oh/blob/9edd9f1bc18d0f4c15b040add10caad26e782275/benchmarks/results/memory-framework-pilot-v1.json",
+      "https://github.com/hraness/oh/blob/21c500cf38928ab610c15c438557fbed5227ca4b/benchmarks/results/memory-longmemeval-s-500-v1.json",
     ]);
+    const pinned = [
+      "https://github.com/hraness/oh/blob/9edd9f1bc18d0f4c15b040add10caad26e782275/benchmarks/",
+      "https://github.com/hraness/oh/blob/21c500cf38928ab610c15c438557fbed5227ca4b/benchmarks/",
+    ];
     for (const href of Object.values(ohLinks)) {
-      expect(href).toStartWith("https://github.com/hraness/oh/blob/9edd9f1bc18d0f4c15b040add10caad26e782275/benchmarks/");
+      expect(pinned.some((prefix) => href.startsWith(prefix)), href).toBe(true);
     }
+    expect(ohLinks.longMemEvalResult).toStartWith(pinned[1] ?? "");
+    expect(ohLongMemEvalPost).toBe("https://oh.computer/blog/longmemeval-s-user-log");
   });
 
   test("both studies render as same-run charts with their derived figures and no SOTA claim", () => {
@@ -416,6 +495,18 @@ describe("/benchmarks", () => {
       for (const value of [paired.better, paired.worse, paired.tied]) expect(text).toContain(grouped(value));
     }
     for (const arm of pilotArms) expect(text).toContain(`${arm.percent}%`);
+    for (const arm of longMemEvalArms) expect(text).toContain(`${arm.percent}%`);
+    for (const type of longMemEvalTypes) {
+      expect(text).toContain(`${type.name} ${grouped(type.questions)} ${type.percents.map((percent) => `${percent}%`).join(" ")}`);
+    }
+    expect(text).toContain("That is +2.8 percentage points, with a 95% interval from 0.0 to +5.6.");
+    expect(text).toContain("does not rule out a tie");
+    expect(text).toContain("it includes no matched run of Supermemory or any other memory framework");
+    expect(text).toContain("the only matched run of Oh against Supermemory");
+    for (const quote of Object.values(longMemEvalLimitQuotes)) expect(text).toContain(quote);
+    expect(markup).toContain(`href="${ohLongMemEvalPost}"`);
+    expect(text.indexOf("all 500 LongMemEval-S questions")).toBeLessThan(text.indexOf("Answers judged correct on LoCoMo"));
+    expect(text.indexOf("Answers judged correct on LoCoMo")).toBeLessThan(text.indexOf("smaller, earlier LongMemEval pilot"));
     for (const interval of [pilotInterval, pilotSecondaryInterval]) {
       expect(text).toContain(`${signed(interval.estimate)} percentage points, with a 95% interval from ${signed(interval.lower)} to ${signed(interval.upper)}`);
     }
@@ -442,6 +533,25 @@ describe("/benchmarks", () => {
     expect(text).not.toMatch(notSota);
     expect(text).not.toContain("89.8%");
     expect(text).not.toContain("\u2014");
+  });
+
+  test("prose surfaces cite the LongMemEval-S figures derived from the vendored result, never the in-sample pipeline", async () => {
+    const [semantic, bm25] = longMemEvalArms;
+    const read = async (...path: string[]) => (await readFile(join(repository, ...path), "utf8")).replace(/\s+/g, " ");
+    for (const path of [["README.md"], ["CHANGELOG.md"]]) {
+      const prose = await read(...path);
+      expect(prose, path.join("/")).toContain(`${semantic?.percent}% and BM25 ${bm25?.percent}%`);
+      expect(prose, path.join("/")).toContain("on the measure Oh named before the run, its interval does not rule out a tie");
+    }
+    for (const path of [["docs", "evidence.md"], ["site", "public", "llms.txt"]]) {
+      expect(await read(...path), path.join("/")).toContain(`${longMemEvalFacts.questions}-question LongMemEval-S`);
+    }
+    for (const path of [["README.md"], ["CHANGELOG.md"], ["docs", "evidence.md"], ["docs", "comparisons.md"], ["site", "public", "llms.txt"]]) {
+      const prose = await read(...path);
+      expect(prose, path.join("/")).not.toContain(longMemEvalLabPipeline.percent);
+      // Oh's older, unmatched GPT-5 mini figure; the launch plan's claims check keeps it off every surface.
+      expect(prose, path.join("/")).not.toContain("89.8");
+    }
   });
 
   test("metadata has a canonical path and a description of 110 to 160 characters", () => {
@@ -522,6 +632,9 @@ describe("/compare/supermemory", () => {
     expect(text).toContain("It is Oh’s result, not Wordcell’s");
     expect(text).toContain("Wordcell has published no head-to-head comparison with Supermemory");
     if (pilotInterval.crossesZero) expect(text).toContain("it does not separate Oh from Supermemory");
+    expect(text).toContain("Oh’s later 500-question LongMemEval-S study compares Oh with BM25 only, so this pilot remains the only matched comparison with Supermemory.");
+    expect(text).not.toContain("88.87");
+    expect(text).not.toContain(longMemEvalLabPipeline.percent);
     expect(markup).toContain('href="/migrate/supermemory"');
     expect(markup).toContain('href="/benchmarks#comparisons"');
     expect(await expectDocLinksResolve(markup)).toBeGreaterThanOrEqual(4);
@@ -717,7 +830,7 @@ describe("discovery files", () => {
 
 describe("stacked tables", () => {
   const pages = [
-    { name: "/benchmarks", markup: () => renderToStaticMarkup(<Benchmarks />), tables: 2 },
+    { name: "/benchmarks", markup: () => renderToStaticMarkup(<Benchmarks />), tables: 3 },
     { name: "/compare/basic-memory", markup: () => renderToStaticMarkup(<CompareBasicMemory />), tables: 1 },
     { name: "/compare/mem0", markup: () => renderToStaticMarkup(<CompareMem0 />), tables: 1 },
     { name: "/compare/supermemory", markup: () => renderToStaticMarkup(<CompareSupermemory />), tables: 3 },

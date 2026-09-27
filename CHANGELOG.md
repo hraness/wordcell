@@ -43,8 +43,10 @@ commands name the next step.
   Supermemory, Mem0, and Zep.
 - The [benchmarks page](https://wordcell.io/benchmarks) on wordcell.io shows
   Wordcell's payload and SciFact results beside the published results of Oh,
-  the embedded memory framework, each with its source data and limits. New
-  pages compare Wordcell with
+  the embedded memory framework, each with its source data and limits. It
+  leads with Oh's 500-question LongMemEval-S study, where Oh semantic
+  retrieval scored 88.87% and BM25 86.13%; on the measure Oh named before the
+  run, its interval does not rule out a tie. New pages compare Wordcell with
   [Supermemory](https://wordcell.io/compare/supermemory),
   [Basic Memory](https://wordcell.io/compare/basic-memory), and
   [Mem0](https://wordcell.io/compare/mem0), and the

@@ -1,0 +1,1316 @@
+{
+  "protocol": "oh.longmemeval-s-500-public-result.v1",
+  "completed": "2026-09-26",
+  "report": "benchmarks/LONGMEMEVAL_S_500_RESULT_V1.md",
+  "dataset": {
+    "name": "LongMemEval-S",
+    "paper": "https://arxiv.org/abs/2410.10813",
+    "file": "longmemeval_s_cleaned.json",
+    "repository": "xiaowu0162/longmemeval-cleaned",
+    "revision": "98d7416c24c778c2fee6e6f3006e7a073259d48f",
+    "sha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442",
+    "bytes": 277383467,
+    "questions": 500,
+    "questionTypes": {
+      "knowledge-update": 78,
+      "multi-session": 133,
+      "single-session-assistant": 56,
+      "single-session-preference": 30,
+      "single-session-user": 70,
+      "temporal-reasoning": 133
+    },
+    "abstentionQuestions": 30,
+    "historiesWithEverySessionOnOneDay": 94,
+    "histories": {
+      "meanSessions": 47.71,
+      "meanUserMessages": 244.83,
+      "meanUserBytes": 61536,
+      "meanAssistantBytes": 428022,
+      "assistantShareOfBytes": 0.8743
+    },
+    "evidenceSpeakers": {
+      "userOnly": 425,
+      "assistantOnly": 51,
+      "both": 3,
+      "noneMarked": 21
+    }
+  },
+  "exposure": {
+    "priorStudies": "earlier Oh studies scored all 500 questions and read some of them one by one",
+    "allQuestionsOpened": "2026-09-25",
+    "split": {
+      "seed": 17,
+      "developmentQuestions": 100,
+      "otherQuestions": 400,
+      "use": "order of work only; every idea ran on the development questions first"
+    },
+    "inSample": true
+  },
+  "reader": {
+    "model": "openai/gpt-5-mini",
+    "transport": "Vercel AI Gateway",
+    "identity": "gateway-alias",
+    "snapshotPinned": false,
+    "reasoningEffort": "medium",
+    "maxOutputTokens": 8192,
+    "profile": "gpt5-mini-explicit-abstention-composition-v1-reader",
+    "profileSha256": "ad71aadff7f96ef5c206f2ecdc40a3030ecf6adf0a91df0afc8800223c0b279a"
+  },
+  "judge": {
+    "model": "openai/gpt-4o",
+    "transport": "Vercel AI Gateway",
+    "identity": "gateway-alias",
+    "snapshotPinned": false,
+    "temperature": 0,
+    "maxOutputTokens": 16,
+    "profile": "gpt4o-gateway-native-rubric-16-judge-v1",
+    "profileSha256": "b7ca5dbb946b3555ae590b91c3c53d5567f7e7f6dc067fb11bb3f0848d3e2dfd",
+    "prompts": "benchmarks/profiles/longmemeval-judge-v1.json",
+    "officialScriptCommit": "9e0b455f",
+    "parsing": "exact yes/no",
+    "paperJudge": "gpt-4o-2024-08-06"
+  },
+  "runs": {
+    "repeatsPerQuestion": 3,
+    "attempts": "first attempt only; a missing or failed answer counts as incorrect",
+    "callStates": {
+      "pipelineFirstPassReader": {
+        "completed": 1500
+      },
+      "pipelineReReadReader": {
+        "completed": 501
+      },
+      "ohSemanticReader": {
+        "completed": 1500
+      },
+      "bm25Reader": {
+        "completed": 1500
+      },
+      "judge": "every judge call completed on its first attempt"
+    },
+    "emptyAnswers": 0,
+    "answersCutOffByOutputLimit": 0
+  },
+  "scoring": {
+    "headline": "mean of three runs: correct answers out of 1,500",
+    "secondary": "questions answered correctly in at least two of three runs",
+    "freezePrimary": "questions answered correctly in at least two of three runs",
+    "reason": "the protocol card scores the per-question mean, and for the pipeline it is the lower of the two measures"
+  },
+  "systems": [
+    {
+      "id": "oh-reading-pipeline",
+      "label": "Oh reading pipeline",
+      "protocol": "user log and fused retrieval, then four rule-chosen re-reads",
+      "runs": "confirmation run: a fresh run of the frozen design on all 500 questions, 2026-09-26",
+      "answers": 1500,
+      "correctAnswers": 1396,
+      "percent": 93.07,
+      "questionsCorrectInTwoOrThreeRuns": 474,
+      "correctPerRun": [
+        459,
+        469,
+        468
+      ],
+      "typeAveragePercent": 93.69,
+      "byType": [
+        {
+          "questionType": "knowledge-update",
+          "questions": 78,
+          "answers": 234,
+          "correctAnswers": 218,
+          "percent": 93.16,
+          "questionsCorrectInTwoOrThreeRuns": 73
+        },
+        {
+          "questionType": "multi-session",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 346,
+          "percent": 86.72,
+          "questionsCorrectInTwoOrThreeRuns": 118
+        },
+        {
+          "questionType": "single-session-assistant",
+          "questions": 56,
+          "answers": 168,
+          "correctAnswers": 164,
+          "percent": 97.62,
+          "questionsCorrectInTwoOrThreeRuns": 55
+        },
+        {
+          "questionType": "single-session-preference",
+          "questions": 30,
+          "answers": 90,
+          "correctAnswers": 83,
+          "percent": 92.22,
+          "questionsCorrectInTwoOrThreeRuns": 30
+        },
+        {
+          "questionType": "single-session-user",
+          "questions": 70,
+          "answers": 210,
+          "correctAnswers": 203,
+          "percent": 96.67,
+          "questionsCorrectInTwoOrThreeRuns": 69
+        },
+        {
+          "questionType": "temporal-reasoning",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 382,
+          "percent": 95.74,
+          "questionsCorrectInTwoOrThreeRuns": 129
+        }
+      ],
+      "abstention": {
+        "questions": 30,
+        "answers": 90,
+        "correctAnswers": 80,
+        "percent": 88.89,
+        "questionsCorrectInTwoOrThreeRuns": 27
+      },
+      "developmentQuestions": {
+        "questions": 100,
+        "answers": 300,
+        "correctAnswers": 283,
+        "percent": 94.33,
+        "questionsCorrectInTwoOrThreeRuns": 98
+      },
+      "otherQuestions": {
+        "questions": 400,
+        "answers": 1200,
+        "correctAnswers": 1113,
+        "percent": 92.75,
+        "questionsCorrectInTwoOrThreeRuns": 376
+      },
+      "memoryBytes": {
+        "firstPassMean": 168265,
+        "firstPassMedian": 168794.5,
+        "firstPassMax": 179997,
+        "firstPassMin": 108816,
+        "firstPassBudget": 180000,
+        "reReadViewBudget": 100000
+      }
+    },
+    {
+      "id": "first-pass-only",
+      "label": "First pass only",
+      "protocol": "user log and fused retrieval, one reader call",
+      "runs": "the confirmation run before any re-read",
+      "answers": 1500,
+      "correctAnswers": 1368,
+      "percent": 91.2,
+      "questionsCorrectInTwoOrThreeRuns": 458,
+      "correctPerRun": [
+        450,
+        459,
+        459
+      ],
+      "typeAveragePercent": 89.35,
+      "byType": [
+        {
+          "questionType": "knowledge-update",
+          "questions": 78,
+          "answers": 234,
+          "correctAnswers": 217,
+          "percent": 92.74,
+          "questionsCorrectInTwoOrThreeRuns": 72
+        },
+        {
+          "questionType": "multi-session",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 342,
+          "percent": 85.71,
+          "questionsCorrectInTwoOrThreeRuns": 114
+        },
+        {
+          "questionType": "single-session-assistant",
+          "questions": 56,
+          "answers": 168,
+          "correctAnswers": 160,
+          "percent": 95.24,
+          "questionsCorrectInTwoOrThreeRuns": 53
+        },
+        {
+          "questionType": "single-session-preference",
+          "questions": 30,
+          "answers": 90,
+          "correctAnswers": 63,
+          "percent": 70.0,
+          "questionsCorrectInTwoOrThreeRuns": 21
+        },
+        {
+          "questionType": "single-session-user",
+          "questions": 70,
+          "answers": 210,
+          "correctAnswers": 202,
+          "percent": 96.19,
+          "questionsCorrectInTwoOrThreeRuns": 69
+        },
+        {
+          "questionType": "temporal-reasoning",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 384,
+          "percent": 96.24,
+          "questionsCorrectInTwoOrThreeRuns": 129
+        }
+      ],
+      "abstention": {
+        "questions": 30,
+        "answers": 90,
+        "correctAnswers": 81,
+        "percent": 90.0,
+        "questionsCorrectInTwoOrThreeRuns": 27
+      },
+      "developmentQuestions": {
+        "questions": 100,
+        "answers": 300,
+        "correctAnswers": 276,
+        "percent": 92.0,
+        "questionsCorrectInTwoOrThreeRuns": 94
+      },
+      "otherQuestions": {
+        "questions": 400,
+        "answers": 1200,
+        "correctAnswers": 1092,
+        "percent": 91.0,
+        "questionsCorrectInTwoOrThreeRuns": 364
+      },
+      "memoryBytes": {
+        "mean": 168265,
+        "median": 168794.5,
+        "max": 179997,
+        "min": 108816,
+        "budget": 180000
+      }
+    },
+    {
+      "id": "oh-semantic-96k",
+      "label": "Oh semantic retrieval",
+      "protocol": "protocol card: top 100 turns within 96,000 bytes, one reader call",
+      "runs": "development questions from the 2026-09-25 baseline run; the other 400 from a run frozen at 2026-09-26T08:28:30Z",
+      "answers": 1500,
+      "correctAnswers": 1333,
+      "percent": 88.87,
+      "questionsCorrectInTwoOrThreeRuns": 445,
+      "correctPerRun": [
+        445,
+        442,
+        446
+      ],
+      "typeAveragePercent": 86.84,
+      "byType": [
+        {
+          "questionType": "knowledge-update",
+          "questions": 78,
+          "answers": 234,
+          "correctAnswers": 213,
+          "percent": 91.03,
+          "questionsCorrectInTwoOrThreeRuns": 71
+        },
+        {
+          "questionType": "multi-session",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 336,
+          "percent": 84.21,
+          "questionsCorrectInTwoOrThreeRuns": 112
+        },
+        {
+          "questionType": "single-session-assistant",
+          "questions": 56,
+          "answers": 168,
+          "correctAnswers": 160,
+          "percent": 95.24,
+          "questionsCorrectInTwoOrThreeRuns": 53
+        },
+        {
+          "questionType": "single-session-preference",
+          "questions": 30,
+          "answers": 90,
+          "correctAnswers": 57,
+          "percent": 63.33,
+          "questionsCorrectInTwoOrThreeRuns": 19
+        },
+        {
+          "questionType": "single-session-user",
+          "questions": 70,
+          "answers": 210,
+          "correctAnswers": 200,
+          "percent": 95.24,
+          "questionsCorrectInTwoOrThreeRuns": 67
+        },
+        {
+          "questionType": "temporal-reasoning",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 367,
+          "percent": 91.98,
+          "questionsCorrectInTwoOrThreeRuns": 123
+        }
+      ],
+      "abstention": {
+        "questions": 30,
+        "answers": 90,
+        "correctAnswers": 82,
+        "percent": 91.11,
+        "questionsCorrectInTwoOrThreeRuns": 27
+      },
+      "developmentQuestions": {
+        "questions": 100,
+        "answers": 300,
+        "correctAnswers": 270,
+        "percent": 90.0,
+        "questionsCorrectInTwoOrThreeRuns": 91
+      },
+      "otherQuestions": {
+        "questions": 400,
+        "answers": 1200,
+        "correctAnswers": 1063,
+        "percent": 88.58,
+        "questionsCorrectInTwoOrThreeRuns": 354
+      },
+      "memoryBytes": {
+        "mean": 83058,
+        "median": 88520,
+        "max": 96000,
+        "min": 32980,
+        "budget": 96000
+      }
+    },
+    {
+      "id": "bm25-96k",
+      "label": "BM25 retrieval",
+      "protocol": "protocol card: top 100 turns within 96,000 bytes, one reader call",
+      "runs": "full-500 baseline run",
+      "answers": 1500,
+      "correctAnswers": 1292,
+      "percent": 86.13,
+      "questionsCorrectInTwoOrThreeRuns": 431,
+      "correctPerRun": [
+        429,
+        433,
+        430
+      ],
+      "typeAveragePercent": 85.66,
+      "byType": [
+        {
+          "questionType": "knowledge-update",
+          "questions": 78,
+          "answers": 234,
+          "correctAnswers": 217,
+          "percent": 92.74,
+          "questionsCorrectInTwoOrThreeRuns": 72
+        },
+        {
+          "questionType": "multi-session",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 299,
+          "percent": 74.94,
+          "questionsCorrectInTwoOrThreeRuns": 101
+        },
+        {
+          "questionType": "single-session-assistant",
+          "questions": 56,
+          "answers": 168,
+          "correctAnswers": 159,
+          "percent": 94.64,
+          "questionsCorrectInTwoOrThreeRuns": 53
+        },
+        {
+          "questionType": "single-session-preference",
+          "questions": 30,
+          "answers": 90,
+          "correctAnswers": 59,
+          "percent": 65.56,
+          "questionsCorrectInTwoOrThreeRuns": 20
+        },
+        {
+          "questionType": "single-session-user",
+          "questions": 70,
+          "answers": 210,
+          "correctAnswers": 205,
+          "percent": 97.62,
+          "questionsCorrectInTwoOrThreeRuns": 68
+        },
+        {
+          "questionType": "temporal-reasoning",
+          "questions": 133,
+          "answers": 399,
+          "correctAnswers": 353,
+          "percent": 88.47,
+          "questionsCorrectInTwoOrThreeRuns": 117
+        }
+      ],
+      "abstention": {
+        "questions": 30,
+        "answers": 90,
+        "correctAnswers": 81,
+        "percent": 90.0,
+        "questionsCorrectInTwoOrThreeRuns": 27
+      },
+      "developmentQuestions": {
+        "questions": 100,
+        "answers": 300,
+        "correctAnswers": 255,
+        "percent": 85.0,
+        "questionsCorrectInTwoOrThreeRuns": 85
+      },
+      "otherQuestions": {
+        "questions": 400,
+        "answers": 1200,
+        "correctAnswers": 1037,
+        "percent": 86.42,
+        "questionsCorrectInTwoOrThreeRuns": 346
+      },
+      "memoryBytes": {
+        "mean": 92042,
+        "median": 95965,
+        "max": 96000,
+        "min": 8844,
+        "budget": 96000
+      }
+    }
+  ],
+  "reReads": {
+    "order": [
+      "advice",
+      "first-decline",
+      "second-decline",
+      "recall"
+    ],
+    "answersReReadAtLeastOnce": 378,
+    "answersReReadOnce": 261,
+    "answersReReadTwice": 111,
+    "answersReReadThreeTimes": 6,
+    "questionsWithAReRead": 136,
+    "maximumReReadsPerAnswer": 3,
+    "designMaximumReReadsPerAnswer": 4,
+    "failedReReadKeepsEarlierAnswer": true,
+    "rulesSee": "question text or current answer text only; never the question type or reference answer",
+    "wholeSessionView": {
+      "budgetBytes": 100000,
+      "messageCharacterCap": 12000,
+      "steps": [
+        "up to four sessions dated within three days of a date the question refers to (skipped when every session is dated the same calendar day)",
+        "the three sessions whose messages contain the most question content words, scaled for session length",
+        "sessions in fused retrieval order until the budget is full"
+      ]
+    }
+  },
+  "stages": [
+    {
+      "step": "first-pass",
+      "memory": "first-pass memory",
+      "correctAnswers": 1368,
+      "percent": 91.2,
+      "questionsCorrectInTwoOrThreeRuns": 458
+    },
+    {
+      "step": "advice",
+      "memory": "first-pass memory",
+      "correctAnswers": 1388,
+      "percent": 92.53,
+      "questionsCorrectInTwoOrThreeRuns": 467,
+      "questionsChosen": 30,
+      "answersReRead": 90,
+      "answersFixed": 24,
+      "answersBroken": 4
+    },
+    {
+      "step": "first-decline",
+      "memory": "whole sessions",
+      "correctAnswers": 1393,
+      "percent": 92.87,
+      "questionsCorrectInTwoOrThreeRuns": 469,
+      "questionsChosen": 53,
+      "answersReRead": 128,
+      "answersFixed": 11,
+      "answersBroken": 6,
+      "viewMeanBytes": 98879
+    },
+    {
+      "step": "second-decline",
+      "memory": "whole sessions",
+      "correctAnswers": 1393,
+      "percent": 92.87,
+      "questionsCorrectInTwoOrThreeRuns": 473,
+      "questionsChosen": 45,
+      "answersReRead": 115,
+      "answersFixed": 6,
+      "answersBroken": 6,
+      "viewMeanBytes": 98854
+    },
+    {
+      "step": "recall",
+      "memory": "whole sessions",
+      "correctAnswers": 1396,
+      "percent": 93.07,
+      "questionsCorrectInTwoOrThreeRuns": 474,
+      "questionsChosen": 56,
+      "answersReRead": 168,
+      "answersFixed": 3,
+      "answersBroken": 0,
+      "viewMeanBytes": 98898
+    }
+  ],
+  "comparisons": [
+    {
+      "left": "oh-reading-pipeline",
+      "right": "bm25-96k",
+      "pairedQuestions": 500,
+      "meanOfThreeRuns": {
+        "differencePoints": 6.93,
+        "interval95": [
+          4.6,
+          9.4
+        ],
+        "questionsWithMoreCorrectRuns": 70,
+        "questionsWithFewerCorrectRuns": 26,
+        "questionsEqual": 404
+      },
+      "correctInTwoOrThreeRuns": {
+        "differencePoints": 8.6,
+        "interval95": [
+          5.8,
+          11.6
+        ],
+        "questionsGained": 51,
+        "questionsLost": 8,
+        "questionsEqual": 441
+      }
+    },
+    {
+      "left": "oh-semantic-96k",
+      "right": "bm25-96k",
+      "pairedQuestions": 500,
+      "meanOfThreeRuns": {
+        "differencePoints": 2.73,
+        "interval95": [
+          0.53,
+          5.07
+        ],
+        "questionsWithMoreCorrectRuns": 47,
+        "questionsWithFewerCorrectRuns": 37,
+        "questionsEqual": 416
+      },
+      "correctInTwoOrThreeRuns": {
+        "differencePoints": 2.8,
+        "interval95": [
+          0.0,
+          5.6
+        ],
+        "questionsGained": 31,
+        "questionsLost": 17,
+        "questionsEqual": 452
+      }
+    },
+    {
+      "left": "oh-reading-pipeline",
+      "right": "first-pass-only",
+      "pairedQuestions": 500,
+      "meanOfThreeRuns": {
+        "differencePoints": 1.87,
+        "interval95": [
+          0.87,
+          3.0
+        ],
+        "questionsWithMoreCorrectRuns": 21,
+        "questionsWithFewerCorrectRuns": 7,
+        "questionsEqual": 472
+      },
+      "correctInTwoOrThreeRuns": {
+        "differencePoints": 3.2,
+        "interval95": [
+          1.8,
+          4.8
+        ],
+        "questionsGained": 16,
+        "questionsLost": 0,
+        "questionsEqual": 484
+      }
+    },
+    {
+      "left": "first-pass-only",
+      "right": "bm25-96k",
+      "pairedQuestions": 500,
+      "meanOfThreeRuns": {
+        "differencePoints": 5.07,
+        "interval95": [
+          2.8,
+          7.4
+        ],
+        "questionsWithMoreCorrectRuns": 58,
+        "questionsWithFewerCorrectRuns": 29,
+        "questionsEqual": 413
+      },
+      "correctInTwoOrThreeRuns": {
+        "differencePoints": 5.4,
+        "interval95": [
+          2.6,
+          8.2
+        ],
+        "questionsGained": 39,
+        "questionsLost": 12,
+        "questionsEqual": 449
+      }
+    },
+    {
+      "left": "oh-reading-pipeline",
+      "right": "oh-semantic-96k",
+      "pairedQuestions": 500,
+      "meanOfThreeRuns": {
+        "differencePoints": 4.2,
+        "interval95": [
+          2.47,
+          6.0
+        ],
+        "questionsWithMoreCorrectRuns": 49,
+        "questionsWithFewerCorrectRuns": 20,
+        "questionsEqual": 431
+      },
+      "correctInTwoOrThreeRuns": {
+        "differencePoints": 5.8,
+        "interval95": [
+          3.6,
+          8.0
+        ],
+        "questionsGained": 33,
+        "questionsLost": 4,
+        "questionsEqual": 463
+      }
+    },
+    {
+      "left": "first-pass-only",
+      "right": "oh-semantic-96k",
+      "pairedQuestions": 500,
+      "meanOfThreeRuns": {
+        "differencePoints": 2.33,
+        "interval95": [
+          0.8,
+          3.93
+        ],
+        "questionsWithMoreCorrectRuns": 42,
+        "questionsWithFewerCorrectRuns": 21,
+        "questionsEqual": 437
+      },
+      "correctInTwoOrThreeRuns": {
+        "differencePoints": 2.6,
+        "interval95": [
+          0.6,
+          4.6
+        ],
+        "questionsGained": 20,
+        "questionsLost": 7,
+        "questionsEqual": 473
+      }
+    }
+  ],
+  "comparisonMethod": "paired by question; 95% intervals from 10,000 bootstrap resamples of questions within each type, seed 20260926",
+  "firstPassMemory": {
+    "userLogBytes": {
+      "mean": 74836,
+      "median": 73510.5,
+      "max": 130657,
+      "min": 56086
+    },
+    "meanUserMessages": 244.83,
+    "meanSessions": 47.71,
+    "meanResolvedDateLines": 24.09,
+    "retrievedReplies": {
+      "meanBytes": 93241,
+      "meanReplies": 50.48,
+      "capBytes": 96000
+    },
+    "fusion": "reciprocal rank fusion of BM25 and Oh semantic top-100 lists, k = 60; user messages dropped"
+  },
+  "questionRuleFit": {
+    "advice": {
+      "questionsChosen": 30,
+      "byType": {
+        "single-session-preference": 30
+      }
+    },
+    "recall": {
+      "questionsChosen": 56,
+      "byType": {
+        "single-session-assistant": 55,
+        "temporal-reasoning": 1
+      }
+    },
+    "note": "rules read only question text but were written after reading all 500 questions"
+  },
+  "instructions": {
+    "base": {
+      "id": "explicit-abstention-composition-v1",
+      "source": "scripts/benchmarks/evolution-reader-contracts.ts",
+      "sha256": "77fdcac530792b977f41e7e436ad7f7a2953f542cfa57e49790f5a9583dbe0b0",
+      "characters": 1794
+    },
+    "join": "base instruction, then each listed paragraph, separated by single spaces",
+    "digest": "SHA-256 of the instruction encoded as a JSON string",
+    "paragraphs": {
+      "userLog": "The memory has two parts. First, the complete log of the user's own messages from every session of the conversation history, verbatim and in chronological order, grouped by session with the session date and its distance from the question date; lines beginning with \"Resolved dates\" give absolute dates computed by the system for the relative time expressions in the preceding message (exact unless marked ≈; an ambiguous expression lists both readings). Second, retrieved assistant replies that best match the question, verbatim, only a subset of the history; each names the user message it answered. Enumerate and count across sessions using the user log, determine current state from the latest dated message, and use the retrieved assistant replies for what the assistant said, suggested or explained. Treat a question as unanswerable only when neither part contains the asked-about fact or event.",
+      "calibration": "Report a computed result as the direct value (for example \"$315\"), not as an inequality or a hedge, even when an input was approximate; at most add a brief note after the value. Interpret a time window in the question loosely: when the only matching events fall within a few days of the literal window, use them and mention their dates rather than declining. When the memory covers the subject of the question but a qualifier in the question (such as first, last, or a period) is not stated explicitly, answer under the most natural reading of the evidence and add that assumption in a few words. Decline only when no observation or turn addresses the subject of the question at all. For a recommendation, propose options consistent with the remembered preferences and avoid options the user said they dislike or want to move beyond.",
+      "answerFormat": "Begin the response with the answer itself: never open with a heading, a list of facts, or a restatement of the evidence. When the question presupposes an event (for example the first order from a service) and the memory records exactly one event matching the description, treat that event as the one meant and answer from it. When the memory notes that session timestamps are unreliable, date and order events by the dates stated inside the messages and by their tense, and count an event described as already having happened as having happened even if its stated date is later than the session timestamp. When an answer depends on an unstated detail such as a birthday or an exact day, give the single most likely value rather than a range.",
+      "advice": "This question asks for advice or recommendations for the user. Never decline and never say the conversation lacks information: the answer is advice, not a remembered fact. First, search the memory for everything about the user that bears on this request: what they own or already use, what they have done or tried, their plans, constraints, stated likes and dislikes, and what they said they want to try next or move beyond. Then answer concisely with tailored suggestions that explicitly build on those specifics (for example \"since you already have …\" or \"building on your …\"), put first the options that match what they said they want, and avoid anything they said they dislike, already have, or want to move away from. Do not pad the answer with generic advice or long lists copied from earlier assistant replies; a few well-targeted suggestions are better.",
+      "wholeSessions": "The memory contains the complete text, user and assistant messages verbatim, of the sessions of the conversation history most relevant to the question, including sessions dated near any time the question refers to; other sessions are not shown. Read every message carefully, including details the user mentions in passing inside longer messages, and the assistant's own earlier answers. If these sessions contain the asked-about fact or event, answer the question directly from them. Before answering, check that the question's premise matches the memory: if the question names a role, item, person, place, date or event that differs from what was actually said (for example a different job title, product, or relative), the conversation does not contain the answer, so reply with the decline sentence.",
+      "recall": "This question asks what the assistant said, listed, or created earlier. The full text of the relevant sessions is in the memory, including the assistant's own messages verbatim. Find the assistant's content and answer with it directly — reproduce names, lists, progressions or details exactly as the assistant gave them — never decline just because the answer is long, unusual, or inside an earlier assistant reply."
+    },
+    "steps": [
+      {
+        "step": "first-pass",
+        "id": "eac-userlog-v2n",
+        "paragraphs": [
+          "userLog",
+          "calibration",
+          "answerFormat"
+        ],
+        "sha256": "551f0c0de5df5642a732ecbee7c5fef9359bb6ce4cfa67526476b20c1719dd84",
+        "characters": 4271
+      },
+      {
+        "step": "advice",
+        "id": "eac-userlog-advice-v1",
+        "paragraphs": [
+          "userLog",
+          "answerFormat",
+          "advice"
+        ],
+        "sha256": "4c1404fa181fad5e1ae281aa462a87b9c5e1099ad6349a2d0cda289ed60d9616",
+        "characters": 4299
+      },
+      {
+        "step": "decline",
+        "id": "eac-zoom-v1",
+        "paragraphs": [
+          "wholeSessions",
+          "answerFormat"
+        ],
+        "sha256": "5058ea6c013da4dac2d933a6ba397ac7b6e36ab5c5cf78259d24c47528335bba",
+        "characters": 3339
+      },
+      {
+        "step": "recall",
+        "id": "eac-zoom-recall-v1",
+        "paragraphs": [
+          "wholeSessions",
+          "answerFormat",
+          "recall"
+        ],
+        "sha256": "6f055965d7594ef9bd7a4ac345b8b42d23335c371ba76578d0565a237b9c49de",
+        "characters": 3755
+      }
+    ],
+    "developmentFirstPass": {
+      "id": "eac-userlog-v2",
+      "sha256": "217105e1e917eed7fd01077406293d321fcce0f37ab3bc211e6e580ade639850",
+      "differsBy": "calibration example was a dollar amount that is the reference answer to one development question, in place of $315"
+    }
+  },
+  "rules": {
+    "flags": "case-insensitive",
+    "advice": {
+      "matches": "\\b(suggest|suggestions?|recommend|recommendations?|advice|tips|ideas|what do you think|do you think|should i|could there be a reason|what should i|which one to choose|not sure which|any thoughts)\\b",
+      "unless": "\\b(remind me|you (?:suggested|recommended|mentioned|told|said|gave|listed|provided)|did you|previous (?:conversation|chat)|last time|we (?:talked|discussed|spoke)|earlier conversation)\\b",
+      "reads": "question"
+    },
+    "decline": {
+      "matches": "does not contain enough information|not enough information|insufficient information|cannot determine|can.t determine|not specified in|not mentioned|no information about|does not (?:include|mention|contain|record)",
+      "reads": "current answer"
+    },
+    "recall": {
+      "matches": "\\b(remind me|you (?:suggested|recommended|mentioned|told|said|gave|listed|provided|created|wrote|made)|did you|previous (?:conversation|chat)|last time|we (?:talked|discussed|spoke)|earlier conversation|looking back at our previous)\\b",
+      "reads": "question"
+    }
+  },
+  "development": {
+    "developmentQuestionsCorrectInTwoOrThreeRuns": [
+      {
+        "memory": "BM25 retrieval, 96 KB",
+        "correct": 87
+      },
+      {
+        "memory": "Oh semantic retrieval, 96 KB",
+        "correct": 91
+      },
+      {
+        "memory": "BM25 retrieval with resolved-date lines",
+        "correct": 87
+      },
+      {
+        "memory": "notes extracted from the user’s messages by GPT-5 nano, with BM25 replies",
+        "correct": [
+          90,
+          91
+        ]
+      },
+      {
+        "memory": "complete user log with BM25 replies",
+        "correct": 94
+      },
+      {
+        "memory": "complete user log with fused replies and the answer-format paragraph",
+        "correct": 95
+      }
+    ],
+    "secondBm25RunOnDevelopmentQuestions": 85,
+    "fullEvaluations": [
+      {
+        "design": 1,
+        "description": "user log with BM25 replies, one pass",
+        "correctPerRun": [
+          458,
+          454,
+          454
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 459,
+        "kept": false
+      },
+      {
+        "design": 2,
+        "description": "user log with fused replies, one pass",
+        "correctPerRun": [
+          455,
+          456,
+          458
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 460,
+        "kept": true
+      },
+      {
+        "design": 3,
+        "description": "2 plus decline re-read",
+        "correctPerRun": [
+          457,
+          456,
+          458
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 459,
+        "kept": false
+      },
+      {
+        "design": 4,
+        "description": "2 plus advice re-read",
+        "correctPerRun": [
+          466,
+          465,
+          467
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 471,
+        "kept": false
+      },
+      {
+        "design": 5,
+        "description": "2 plus advice and decline re-reads",
+        "correctPerRun": [
+          470,
+          464,
+          471
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 474,
+        "kept": true
+      },
+      {
+        "design": 6,
+        "description": "5 plus a counting re-read",
+        "correctPerRun": [
+          469,
+          465,
+          468
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 471,
+        "kept": false
+      },
+      {
+        "design": 7,
+        "description": "5 plus an arbiter for questions whose runs disagreed",
+        "correctPerRun": [
+          455,
+          454,
+          454
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 454,
+        "kept": false
+      },
+      {
+        "design": 8,
+        "description": "instructions routed by question rule, one pass",
+        "correctPerRun": [
+          458,
+          466,
+          471
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 470,
+        "kept": false
+      },
+      {
+        "design": 9,
+        "description": "8 plus decline re-read",
+        "correctPerRun": [
+          457,
+          465,
+          467
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 468,
+        "kept": false
+      },
+      {
+        "design": 10,
+        "description": "5 plus a second decline re-read",
+        "correctPerRun": [
+          470,
+          465,
+          472
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 475,
+        "kept": true
+      },
+      {
+        "design": 11,
+        "description": "10 plus a current-state re-read",
+        "correctPerRun": [
+          468,
+          462,
+          468
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 472,
+        "kept": false
+      },
+      {
+        "design": 12,
+        "description": "10 plus the recall re-read",
+        "correctPerRun": [
+          472,
+          467,
+          472
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 476,
+        "kept": true
+      },
+      {
+        "design": 13,
+        "description": "12 plus a model-built ledger in place of the memory, for counting questions whose runs disagreed",
+        "correctPerRun": [
+          436,
+          431,
+          439
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 437,
+        "kept": false
+      },
+      {
+        "design": 14,
+        "description": "12 plus a current-state re-read on the first-pass memory",
+        "correctPerRun": [
+          472,
+          466,
+          470
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 474,
+        "kept": false
+      },
+      {
+        "design": 15,
+        "description": "12 plus the ledger appended to the user log, for the same questions as 13",
+        "correctPerRun": [
+          471,
+          466,
+          470
+        ],
+        "questionsCorrectInTwoOrThreeRuns": 474,
+        "kept": false
+      }
+    ],
+    "developmentOnlyDesigns": 10,
+    "champion": 12
+  },
+  "referenceAnswerScan": {
+    "when": "after the last development run",
+    "scope": "every instruction and rule",
+    "matching": "each reference answer as a whole word or phrase in the instruction and rule text",
+    "findings": [
+      {
+        "value": "a dollar amount that is the reference answer to one development question",
+        "where": "calibration paragraph example",
+        "questionsAffected": 1,
+        "split": "development",
+        "correctRunsWithIt": 3,
+        "correctRunsWithout": 3,
+        "action": "replaced by $315 in the confirmation run"
+      },
+      {
+        "value": "a place name",
+        "where": "an instruction used by designs 8 and 9, the second stage of design 14, and one development-only design",
+        "questionsAffected": 1,
+        "designs": [
+          8,
+          9,
+          14
+        ],
+        "developmentOnlyDesigns": 1,
+        "action": "all four designs dropped"
+      },
+      {
+        "value": "a number word that is the entire reference answer",
+        "where": "user-log paragraph, carried by the reported first pass and advice step",
+        "questionsAffected": 2,
+        "split": "test",
+        "effect": "BM25, Oh semantic retrieval and the pipeline answered both correctly in all three runs; comparisons unaffected"
+      },
+      {
+        "value": "a common two-word time phrase",
+        "where": "counting paragraph, used only by dropped design 6",
+        "questionsAffected": 3,
+        "split": "test",
+        "designs": [
+          6
+        ],
+        "effect": "design 6 re-read none of the three questions"
+      }
+    ]
+  },
+  "confirmation": {
+    "design": 12,
+    "frozenAt": "2026-09-26T08:10:52Z",
+    "commitment": "report whatever the run scores",
+    "freshCalls": "new reader and judge calls for every step",
+    "differencesFromDevelopmentRun": [
+      "calibration example, a dollar amount that is the reference answer to one development question, replaced by $315",
+      "the first decline re-read uses the whole-session view with the content-word step, which the development run did not have yet"
+    ],
+    "developmentRun": {
+      "correctAnswers": 1411,
+      "percent": 94.07,
+      "questionsCorrectInTwoOrThreeRuns": 476,
+      "correctPerRun": [
+        472,
+        467,
+        472
+      ],
+      "typeAveragePercent": 95.09
+    },
+    "confirmationRun": {
+      "correctAnswers": 1396,
+      "percent": 93.07,
+      "questionsCorrectInTwoOrThreeRuns": 474
+    },
+    "labSourceSha256": {
+      "chain-confirm.sh": "3366f9822ca9808cc21d14c2566dd741ce29a4ae3037d2d7a4096a88fe560113",
+      "contracts.ts": "dfd07097bc73a51901741bbfd5df2c9990d2afb1c3ea68e42f16400c1f0fed4d",
+      "programs.ts": "2266acd48ce205814a5a4775ed0387fd513440351c85d611de914eee133b0c0f",
+      "zoom.ts": "dd016c46ad83eb87d11ad024583c8e0a6acb1801f582aeb7f7d23ac0295b9c26",
+      "cascade.ts": "16d8f3dbf9c0b73ff574d2e02102e9bed55b207697b5a897eb89a784e9295945",
+      "reader.ts": "65ebec55c4ecd38798b4eb5a1d6f65f93c8896451e0bb8c430585eb7f200f364",
+      "judge.ts": "8504d9b926a38359b0f0d2e09d40c06ce316a848f3008551c58a843783a8bfda",
+      "lib.ts": "e8f8f42c5c2b0998840600112a6d209a510d1bf3842131248279560b01882cf9",
+      "combine.ts": "c6385bf936457e702dc995cd46ce84efaabef9eeddf8d7cd0ab431bfeb4baed7",
+      "compose-userlog.ts": "a0c501447f849bf760f2479ad4cebaf658ad6640574e47dcbf054e8cf3c1f38b",
+      "dates.ts": "a2c8f178ac0821143721db1f01d5e1e14176c75a2d3437c6d081a1f76dd738db",
+      "contexts.ts": "f93bb9cbc004cdd3e5676c9cd8ec47cd7ecf2fb97a0ad1c39e43505d94396d02"
+    },
+    "semanticRunFrozenAt": "2026-09-26T08:28:30Z"
+  },
+  "cost": {
+    "unit": "USD micros, as reported by Vercel AI Gateway per call",
+    "systems": [
+      {
+        "system": "oh-reading-pipeline",
+        "readerCalls": 2001,
+        "readerMicros": 16229249,
+        "firstPassReaderMicros": 13182312,
+        "reReadReaderMicros": 3046937,
+        "reReadCalls": 501,
+        "judgeCalls": 2001,
+        "judgeMicros": 915081,
+        "readerMicrosPerAnswer": 10819
+      },
+      {
+        "system": "oh-semantic-96k",
+        "readerCalls": 1500,
+        "readerMicros": 7306445,
+        "judgeCalls": 1500,
+        "judgeMicros": 644549,
+        "readerMicrosPerAnswer": 4871
+      },
+      {
+        "system": "bm25-96k",
+        "readerCalls": 1500,
+        "readerMicros": 7606804,
+        "judgeCalls": 1500,
+        "judgeMicros": 646032,
+        "readerMicrosPerAnswer": 5071
+      }
+    ],
+    "tokensPerReaderCall": {
+      "pipelineFirstPass": {
+        "meanInputTokens": 40944,
+        "meanCachedInputTokens": 14042,
+        "meanOutputTokens": 856,
+        "meanReasoningTokens": 804
+      },
+      "pipelineReRead": {
+        "meanInputTokens": 26222,
+        "meanCachedInputTokens": 10234,
+        "meanOutputTokens": 914,
+        "meanReasoningTokens": 822
+      },
+      "ohSemantic": {
+        "meanInputTokens": 20054,
+        "meanCachedInputTokens": 7077,
+        "meanOutputTokens": 725,
+        "meanReasoningTokens": 675
+      },
+      "bm25": {
+        "meanInputTokens": 21837,
+        "meanCachedInputTokens": 8037,
+        "meanOutputTokens": 710,
+        "meanReasoningTokens": 660
+      }
+    },
+    "studyTotal": {
+      "micros": 121829009,
+      "settledMicros": 121740715,
+      "heldMicros": 88294,
+      "byDay": {
+        "2026-09-25": 84510260,
+        "2026-09-26": 37318749
+      },
+      "scope": "every model call made for the study: development designs, the Supermemory attempts and the baselines"
+    }
+  },
+  "otherPublishedResults": {
+    "checked": "2026-09-26",
+    "note": "each chose its own answering model, judge, prompts and configuration, so those scores do not compare directly with these; not a ranking",
+    "results": [
+      {
+        "system": "Supermemory",
+        "reported": "97% with GPT-4o answering; 84.6% with GPT-5; 85.2% with Gemini 3 Pro",
+        "correctOf500": [
+          485,
+          423,
+          426
+        ],
+        "reader": "GPT-4o; GPT-5; Gemini 3 Pro",
+        "judge": "GPT-4o, LongMemEval prompts",
+        "source": "https://supermemory.ai/research/longmembench/",
+        "label": "the page also calls 97% its overall Recall@20 with aggregation, the retrieval configuration it names"
+      },
+      {
+        "system": "Mastra observational memory",
+        "reported": "94.87%, average of the six question types",
+        "correctOf500": 468,
+        "reader": "GPT-5 mini",
+        "judge": "GPT-4o, LongMemEval prompts",
+        "runBasis": "latest run; the only source here that states its run basis",
+        "source": "https://mastra.ai/research/observational-memory"
+      },
+      {
+        "system": "Mem0 platform",
+        "reported": "94.4% (top 200), 94.8% (top 50)",
+        "correctOf500": [
+          472,
+          474
+        ],
+        "reader": "not stated",
+        "judge": "not stated",
+        "source": "https://github.com/mem0ai/memory-benchmarks"
+      },
+      {
+        "system": "Hindsight 0.4.19",
+        "reported": "94.6%",
+        "correctOf500": 473,
+        "reader": "Gemini 3.1 Pro preview",
+        "judge": "Gemini 2.5 Flash Lite",
+        "source": "https://github.com/vectorize-io/agent-memory-benchmark"
+      },
+      {
+        "system": "Chronos",
+        "reported": "94.20%; also reports 95.60%",
+        "correctOf500": [
+          471,
+          478
+        ],
+        "reader": "GPT-5 mini",
+        "judge": "LongMemEval prompts; judge model not named",
+        "source": "https://arxiv.org/abs/2603.16862"
+      },
+      {
+        "system": "MemMachine",
+        "reported": "93.0%",
+        "correctOf500": 465,
+        "reader": "GPT-5 mini",
+        "judge": "GPT-4o mini",
+        "source": "https://arxiv.org/abs/2604.04853",
+        "configurationChoice": "about 12 variants scored on the same 500 questions"
+      },
+      {
+        "system": "Honcho",
+        "reported": "90.4%",
+        "correctOf500": 452,
+        "reader": "Claude Haiku 4.5",
+        "judge": "GPT-4o, LongMemEval prompts",
+        "source": "https://plasticlabs.ai/blog/research/Benchmarking-Honcho"
+      }
+    ]
+  },
+  "supermemory": {
+    "pilot": {
+      "report": "benchmarks/FRAMEWORK_PILOT_RESULT_V1.md",
+      "questions": 60,
+      "percent": {
+        "supermemory": 75.0,
+        "oh": 71.67,
+        "bm25": 68.33
+      }
+    },
+    "fullRun": "scored during this study and discarded; not reported",
+    "discardedRuns": [
+      {
+        "id": "m125-smarm-v1",
+        "questions": 125,
+        "createdAt": "2026-09-26T00:49Z"
+      },
+      {
+        "questions": 500
+      }
+    ],
+    "discardedRunCostsUsd": [
+      2.66,
+      2.76
+    ],
+    "discardedFor": "both runs used the same harness with the three departures below",
+    "departuresFromPilot": [
+      "stored each turn as its own document instead of one document per session",
+      "searched while Supermemory was still generating memories from those documents",
+      "kept only search results holding one whole stored turn, dropping every generated memory"
+    ],
+    "matchedFullRun": false
+  },
+  "packageBoundary": {
+    "inOh": [
+      "Oh semantic retrieval (EmbeddingGemma through the optional local QMD runtime)",
+      "BM25 over SQLite FTS5 in scripts/benchmarks/"
+    ],
+    "labOnly": [
+      "user-log builder",
+      "date rules",
+      "re-read rules",
+      "added instructions"
+    ],
+    "labPublished": false
+  },
+  "limitations": [
+    "In-sample: the added instructions and question rules were written after studying all 500 questions, and two rules match single question types on this benchmark.",
+    "The reader and judge are gateway aliases; the models behind them can change.",
+    "The user log fits because LongMemEval-S histories are short; longer histories, such as the 500-session M variant, are untested.",
+    "The pipeline reads up to 180,000 bytes and makes extra calls; the matched baselines read at most 96,000 bytes once.",
+    "There is no GPT-5 mini run with the full history as memory.",
+    "The lab harness is not published; the report gives its instructions and rules.",
+    "AI agents ran the study and wrote the report; no person or outside group has audited it."
+  ]
+}

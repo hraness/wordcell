@@ -17,8 +17,8 @@ export function longDate(isoDate: string): string {
   return dates.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
-/** Signed to two decimals with a real minus sign: "−3.33", "+6.67". */
-export function signed(value: number): string {
-  const magnitude = Math.abs(value).toFixed(2);
+/** Signed with a real minus sign, to two decimals unless told otherwise: "−3.33", "+6.67", "+2.8". */
+export function signed(value: number, digits: 1 | 2 = 2): string {
+  const magnitude = Math.abs(value).toFixed(digits);
   return value < 0 ? `−${magnitude}` : value > 0 ? `+${magnitude}` : magnitude;
 }

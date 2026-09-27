@@ -1,7 +1,9 @@
 import locomoJson from "../../docs/evaluations/oh/memory-evolution-locomo-sealed-1540-v1.json";
+import longMemEvalJson from "../../docs/evaluations/oh/memory-longmemeval-s-500-v1.json";
 import pilotJson from "../../docs/evaluations/oh/memory-framework-pilot-v1.json";
 import sourcesJson from "../../docs/evaluations/oh/sources.json";
 import type { BenchmarkStudy } from "./benchmark-comparison";
+import { signed } from "./format";
 
 // The vendored files are Oh's published bytes. They are read as `unknown`
 // through small readers that throw, so a changed shape fails the build instead
@@ -72,14 +74,21 @@ export function quoteFrom(statements: readonly string[], needle: string): string
   return needle;
 }
 
-// Pinned upstream pages, at the commit that also published the pilot result.
+// Pinned upstream pages: the LoCoMo and pilot pages at the commit that published
+// the pilot result, and the 500-question study at the commit that published it.
 const ohDocs = "https://github.com/hraness/oh/blob/9edd9f1bc18d0f4c15b040add10caad26e782275/benchmarks";
+export const ohLongMemEvalCommit = "21c500cf38928ab610c15c438557fbed5227ca4b";
+const ohLongMemEvalDocs = `https://github.com/hraness/oh/blob/${ohLongMemEvalCommit}/benchmarks`;
 
 export const ohLinks = {
+  longMemEvalResult: `${ohLongMemEvalDocs}/LONGMEMEVAL_S_500_RESULT_V1.md`,
   locomoResult: `${ohDocs}/EVOLUTION_RELEASE_RESULTS.md#matched-descriptive-comparison-on-locomo`,
   pilotResult: `${ohDocs}/FRAMEWORK_PILOT_RESULT_V1.md`,
-  benchmarks: `${ohDocs}/README.md`,
+  benchmarks: `${ohLongMemEvalDocs}/README.md`,
 } as const;
+
+/** Oh's own write-up of the 500-question study, for readers rather than reviewers. */
+export const ohLongMemEvalPost = "https://oh.computer/blog/longmemeval-s-user-log";
 
 /** docs/evidence.md carries the same two sentences with straight apostrophes; a test pins them together. */
 export const ohAttribution =
@@ -442,7 +451,7 @@ const incompleteSentence =
 
 export const pilotStudy = {
   id: "oh-pilot",
-  title: "Answers judged correct in a small LongMemEval pilot",
+  title: "Answers judged correct in a smaller, earlier LongMemEval pilot",
   dataset: pilotDataset,
   metric: "Answers judged correct",
   unit: "percent",
@@ -469,5 +478,284 @@ export const pilotStudy = {
     value: (100 * arm.correct) / arm.questions,
     detail: `${arm.correct} of ${arm.questions} questions`,
     color: pilotArmColors[arm.id],
+  })),
+} as const satisfies BenchmarkStudy;
+
+// LongMemEval-S, all 500 questions: Oh semantic retrieval against BM25 under
+// one protocol card, measured by Oh. The lab pipeline in the same file is
+// in-sample and outside the Oh package; it is described, never charted.
+
+const longMemEval = record(longMemEvalJson as unknown, "LongMemEval-S 500 result");
+if (longMemEval.protocol !== "oh.longmemeval-s-500-public-result.v1") throw new TypeError("Unexpected LongMemEval-S 500 result protocol.");
+const longMemEvalCompleted = text(longMemEval.completed, "completed");
+if (!/^\d{4}-\d{2}-\d{2}$/.test(longMemEvalCompleted)) throw new TypeError("The LongMemEval-S 500 completion date must be an ISO date.");
+
+const longMemEvalDataset = record(longMemEval.dataset, "dataset");
+if (text(longMemEvalDataset.name, "dataset.name") !== "LongMemEval-S") throw new TypeError("Unexpected LongMemEval-S dataset name.");
+const longMemEvalQuestions = count(longMemEvalDataset.questions, "dataset.questions");
+const longMemEvalTypeCounts = record(longMemEvalDataset.questionTypes, "dataset.questionTypes");
+if (Object.values(longMemEvalTypeCounts).reduce<number>((sum, value) => sum + count(value, "question type count"), 0) !== longMemEvalQuestions) {
+  throw new TypeError("LongMemEval-S question types must cover every question.");
+}
+
+const longMemEvalExposure = record(longMemEval.exposure, "exposure");
+if (longMemEvalExposure.inSample !== true) throw new TypeError("The LongMemEval-S 500 exposure record changed; update the page's exposure line.");
+const priorStudies = text(longMemEvalExposure.priorStudies, "exposure.priorStudies");
+
+const longMemEvalReader = record(longMemEval.reader, "reader");
+const longMemEvalJudge = record(longMemEval.judge, "judge");
+if (text(longMemEvalReader.model, "reader.model") !== "openai/gpt-5-mini") throw new TypeError("Unexpected LongMemEval-S reader.");
+if (text(longMemEvalJudge.model, "judge.model") !== "openai/gpt-4o") throw new TypeError("Unexpected LongMemEval-S judge.");
+if (longMemEvalReader.snapshotPinned !== false || longMemEvalJudge.snapshotPinned !== false) {
+  throw new TypeError("The LongMemEval-S reader or judge is now pinned; update the page's model lines.");
+}
+const paperJudge = text(longMemEvalJudge.paperJudge, "judge.paperJudge");
+
+const longMemEvalRuns = record(longMemEval.runs, "runs");
+const runsPerQuestion = count(longMemEvalRuns.repeatsPerQuestion, "runs.repeatsPerQuestion");
+if (runsPerQuestion !== 3) throw new TypeError("The two-of-three measure assumes three runs per question.");
+const longMemEvalScoring = record(longMemEval.scoring, "scoring");
+const frozenPrimary = text(longMemEvalScoring.freezePrimary, "scoring.freezePrimary");
+if (frozenPrimary !== "questions answered correctly in at least two of three runs") {
+  throw new TypeError("The pre-registered LongMemEval-S measure changed; update the page.");
+}
+
+function bounded(value: number, limit: number, label: string): number {
+  if (value > limit) throw new TypeError(`${label} counts more correct results than it has.`);
+  return value;
+}
+
+type TypeResult = Readonly<{ questionType: string; questions: number; correctAnswers: number; answers: number; percent: number }>;
+type LongMemEvalSystem = Readonly<{
+  id: string;
+  label: string;
+  protocol: string;
+  runs: string;
+  answers: number;
+  correctAnswers: number;
+  percent: number;
+  majorityCorrect: number;
+  budget: number;
+  byType: readonly TypeResult[];
+  abstention: TypeResult;
+}>;
+
+function typeResult(value: unknown, label: string, questionType: string): TypeResult {
+  const entry = record(value, label);
+  const questions = count(entry.questions, `${label}.questions`);
+  const answers = count(entry.answers, `${label}.answers`);
+  const correctAnswers = bounded(count(entry.correctAnswers, `${label}.correctAnswers`), answers, label);
+  if (answers !== questions * runsPerQuestion) throw new TypeError(`${label} must answer every question ${runsPerQuestion} times.`);
+  const stated = finite(entry.percent, `${label}.percent`);
+  if (Math.abs(stated - hundredths((100 * correctAnswers) / answers)) > 1e-9) throw new TypeError(`${label}.percent must equal its fraction.`);
+  return { questionType, questions, answers, correctAnswers, percent: stated };
+}
+
+const longMemEvalSystems: readonly LongMemEvalSystem[] = list(longMemEval.systems, "systems").map((entry, index) => {
+  const label = `systems[${index}]`;
+  const system = record(entry, label);
+  const answers = count(system.answers, `${label}.answers`);
+  if (answers !== longMemEvalQuestions * runsPerQuestion) throw new TypeError(`${label} must answer every question ${runsPerQuestion} times.`);
+  const correctAnswers = bounded(count(system.correctAnswers, `${label}.correctAnswers`), answers, label);
+  const perRun = list(system.correctPerRun, `${label}.correctPerRun`).map((value, run) => count(value, `${label}.correctPerRun[${run}]`));
+  if (perRun.length !== runsPerQuestion || perRun.reduce((sum, value) => sum + value, 0) !== correctAnswers) {
+    throw new TypeError(`${label} runs must add up to its correct answers.`);
+  }
+  const percentValue = finite(system.percent, `${label}.percent`);
+  if (Math.abs(percentValue - hundredths((100 * correctAnswers) / answers)) > 1e-9) throw new TypeError(`${label}.percent must equal its fraction.`);
+  const memory = record(system.memoryBytes, `${label}.memoryBytes`);
+  const byType = list(system.byType, `${label}.byType`).map((value, position) => {
+    const typeRecord = record(value, `${label}.byType[${position}]`);
+    const questionType = text(typeRecord.questionType, `${label}.byType[${position}].questionType`);
+    const result = typeResult(typeRecord, `${label}.byType[${position}]`, questionType);
+    if (result.questions !== count(longMemEvalTypeCounts[questionType], `dataset.questionTypes.${questionType}`)) {
+      throw new TypeError(`${label} ${questionType} must cover every question of that type.`);
+    }
+    return result;
+  });
+  if (new Set(byType.map((result) => result.questionType)).size !== Object.keys(longMemEvalTypeCounts).length || byType.length !== Object.keys(longMemEvalTypeCounts).length) {
+    throw new TypeError(`${label} must report each question type exactly once.`);
+  }
+  const abstention = typeResult(system.abstention, `${label}.abstention`, "abstention");
+  if (abstention.questions !== count(longMemEvalDataset.abstentionQuestions, "dataset.abstentionQuestions")) {
+    throw new TypeError(`${label} abstention must cover every abstention question.`);
+  }
+  return {
+    id: text(system.id, `${label}.id`),
+    label: text(system.label, `${label}.label`),
+    protocol: text(system.protocol, `${label}.protocol`),
+    runs: text(system.runs, `${label}.runs`),
+    answers,
+    correctAnswers,
+    percent: percentValue,
+    majorityCorrect: bounded(count(system.questionsCorrectInTwoOrThreeRuns, `${label}.questionsCorrectInTwoOrThreeRuns`), longMemEvalQuestions, label),
+    budget: count(memory.budget ?? memory.firstPassBudget, `${label}.memoryBytes budget`),
+    byType,
+    abstention,
+  };
+});
+
+const semanticSystem = one(longMemEvalSystems, (system) => system.id === "oh-semantic-96k", "Oh semantic retrieval system");
+const bm25System = one(longMemEvalSystems, (system) => system.id === "bm25-96k", "BM25 retrieval system");
+const pipelineSystem = one(longMemEvalSystems, (system) => system.id === "oh-reading-pipeline", "lab pipeline system");
+if (semanticSystem.protocol !== bm25System.protocol || semanticSystem.budget !== bm25System.budget) {
+  throw new TypeError("The matched LongMemEval-S baselines must share one protocol card and budget.");
+}
+const matchedBudget = semanticSystem.budget;
+const matchedTopTurns = /\btop (\d+) turns\b/u.exec(semanticSystem.protocol)?.[1];
+if (matchedTopTurns === undefined) throw new TypeError("The matched protocol card must name how many turns it packs.");
+
+type Interval = Readonly<{ difference: number; lower: number; upper: number; level: string }>;
+function pairedInterval(value: unknown, label: string): Interval {
+  const entry = record(value, label);
+  // The confidence level comes from the artifact's own field name, such as `interval95`.
+  const keys = Object.keys(entry).filter((key) => /^interval\d{2}$/u.test(key));
+  const [key] = keys;
+  if (keys.length !== 1 || key === undefined) throw new TypeError(`${label} must record exactly one interval.`);
+  const bounds = list(entry[key], `${label}.${key}`).map((bound, index) => finite(bound, `${label}.${key}[${index}]`));
+  const [lower, upper] = bounds;
+  if (bounds.length !== 2 || lower === undefined || upper === undefined || lower > upper) throw new TypeError(`${label} must have a two-sided interval.`);
+  const difference = finite(entry.differencePoints, `${label}.differencePoints`);
+  if (difference < lower || difference > upper) throw new TypeError(`${label} must lie inside its interval.`);
+  return { difference, lower, upper, level: `${key.slice("interval".length)}%` };
+}
+
+const semanticOverBm25 = one(
+  list(longMemEval.comparisons, "comparisons").map((entry, index) => record(entry, `comparisons[${index}]`)),
+  (entry) => entry.left === semanticSystem.id && entry.right === bm25System.id,
+  "Oh semantic over BM25 comparison",
+);
+if (count(semanticOverBm25.pairedQuestions, "pairedQuestions") !== longMemEvalQuestions) throw new TypeError("The comparison must pair every question.");
+const majorityComparison = record(semanticOverBm25.correctInTwoOrThreeRuns, "correctInTwoOrThreeRuns");
+const primaryInterval = pairedInterval(majorityComparison, "correctInTwoOrThreeRuns");
+
+/** Oh semantic retrieval minus BM25, in percentage points, on both of Oh's measures, with Oh's 95% bootstrap intervals. */
+export const longMemEvalComparison = {
+  left: semanticSystem.label,
+  right: bm25System.label,
+  pairedQuestions: longMemEvalQuestions,
+  method: text(longMemEval.comparisonMethod, "comparisonMethod"),
+  /** The measure Oh named before the run: questions correct in at least two of three runs. */
+  primary: primaryInterval,
+  gained: count(majorityComparison.questionsGained, "questionsGained"),
+  lost: count(majorityComparison.questionsLost, "questionsLost"),
+  mean: pairedInterval(semanticOverBm25.meanOfThreeRuns, "meanOfThreeRuns"),
+  /** True when the pre-registered interval reaches zero, so a tie is not ruled out. */
+  tieNotRuledOut: primaryInterval.lower <= 0 && primaryInterval.upper >= 0,
+} as const;
+
+export type LongMemEvalArm = Readonly<{ id: string; system: string; percent: string; correctAnswers: number; answers: number; majorityCorrect: number }>;
+
+const matchedSystems = [
+  { system: semanticSystem, color: "var(--primary)" },
+  { system: bm25System, color: "var(--muted)" },
+] as const;
+
+/** The two matched arms, Oh semantic retrieval first. */
+export const longMemEvalArms: readonly LongMemEvalArm[] = matchedSystems.map(({ system }) => ({
+  id: system.id,
+  system: system.label,
+  percent: system.percent.toFixed(2),
+  correctAnswers: system.correctAnswers,
+  answers: system.answers,
+  majorityCorrect: system.majorityCorrect,
+}));
+
+const typeNames: Readonly<Record<string, string>> = {
+  "knowledge-update": "Knowledge update",
+  "multi-session": "Multi-session",
+  "single-session-assistant": "Single-session assistant",
+  "single-session-preference": "Single-session preference",
+  "single-session-user": "Single-session user",
+  "temporal-reasoning": "Temporal reasoning",
+  abstention: "Abstention, across types",
+};
+
+export type LongMemEvalType = Readonly<{ id: string; name: string; questions: number; percents: readonly string[] }>;
+
+/** Accuracy by question type, mean of three runs; `percents` follows `longMemEvalArms` order. */
+export const longMemEvalTypes: readonly LongMemEvalType[] = [...Object.keys(longMemEvalTypeCounts), "abstention"].map((id) => {
+  const cells = matchedSystems.map(({ system }) =>
+    id === "abstention" ? system.abstention : one(system.byType, (result) => result.questionType === id, `${system.id} ${id} result`),
+  );
+  const questions = cells[0]?.questions ?? 0;
+  if (cells.some((cell) => cell.questions !== questions)) throw new TypeError(`${id} must have one question count across arms.`);
+  const name = typeNames[id];
+  if (name === undefined) throw new TypeError(`Unknown LongMemEval-S question type ${id}.`);
+  return { id, name, questions, percents: cells.map((cell) => cell.percent.toFixed(2)) };
+});
+
+const longMemEvalLimitations = list(longMemEval.limitations, "limitations").map((entry, index) => text(entry, `limitations[${index}]`));
+
+/** Verbatim sentences from Oh's own limits for the 500-question study. */
+export const longMemEvalLimitQuotes = {
+  aliases: quoteFrom(longMemEvalLimitations, "The reader and judge are gateway aliases; the models behind them can change."),
+  audit: quoteFrom(longMemEvalLimitations, "AI agents ran the study and wrote the report; no person or outside group has audited it."),
+  inSample: quoteFrom(longMemEvalLimitations, "In-sample: the added instructions and question rules were written after studying all 500 questions, and two rules match single question types on this benchmark."),
+  budget: quoteFrom(longMemEvalLimitations, "The pipeline reads up to 180,000 bytes and makes extra calls; the matched baselines read at most 96,000 bytes once."),
+  exposure: quoteFrom([priorStudies], "earlier Oh studies scored all 500 questions and read some of them one by one"),
+} as const;
+
+const packageBoundary = record(longMemEval.packageBoundary, "packageBoundary");
+const labOnly = list(packageBoundary.labOnly, "packageBoundary.labOnly").map((entry, index) => text(entry, `labOnly[${index}]`));
+if (labOnly.length === 0 || packageBoundary.labPublished !== false) throw new TypeError("The lab pipeline's package boundary changed; update the page.");
+const supermemoryRecord = record(longMemEval.supermemory, "supermemory");
+if (typeof supermemoryRecord.matchedFullRun !== "boolean") throw new TypeError("supermemory.matchedFullRun must be a boolean.");
+if (supermemoryRecord.matchedFullRun) throw new TypeError("Oh now reports a matched full Supermemory run; update the page.");
+const matchedSupermemoryRun: boolean = supermemoryRecord.matchedFullRun;
+
+/**
+ * The lab pipeline's result, for a clearly framed sentence only. It is
+ * in-sample and not part of the Oh package, so it never becomes a chart row or
+ * a headline figure.
+ */
+export const longMemEvalLabPipeline = {
+  label: pipelineSystem.label,
+  percent: pipelineSystem.percent.toFixed(2),
+  majorityCorrect: pipelineSystem.majorityCorrect,
+  questions: longMemEvalQuestions,
+  firstPassBudget: pipelineSystem.budget,
+  labOnly,
+  labOnlyText: sentenceList(labOnly),
+  inSample: true,
+  inOhPackage: false,
+} as const;
+
+export const longMemEvalFacts = {
+  completed: longMemEvalCompleted,
+  questions: longMemEvalQuestions,
+  runsPerQuestion,
+  matchedBudget,
+  semanticRuns: semanticSystem.runs,
+  paperJudge,
+  matchedSupermemoryRun,
+  sourceCommit: ohLongMemEvalCommit,
+} as const;
+
+export const longMemEvalStudy = {
+  id: "oh-longmemeval-500",
+  title: `Answers judged correct on all ${longMemEvalQuestions} LongMemEval-S questions`,
+  dataset: "LongMemEval-S",
+  metric: `Answers judged correct, mean of ${spelled(runsPerQuestion)} runs`,
+  unit: "percent",
+  sampleSize: longMemEvalQuestions,
+  sampleNoun: "questions",
+  scope: `Oh measured on its own, not through a Wordcell vault. On the measure Oh named before the run, Oh semantic retrieval minus BM25 is ${signed(primaryInterval.difference, 1)} points with a ${primaryInterval.level} interval from ${signed(primaryInterval.lower, 1)} to ${signed(primaryInterval.upper, 1)}${longMemEvalComparison.tieNotRuledOut ? ", which does not rule out a tie" : ""}.`,
+  measuredAt: longMemEvalCompleted,
+  dateLabel: "Completed",
+  valueDigits: 2,
+  model: `Oh semantic retrieval and BM25 keyword retrieval, each packing its top ${matchedTopTurns} turns into ${matchedBudget.toLocaleString("en-US")} bytes per question.`,
+  reader: `GPT-5 mini, answering every question ${spelled(runsPerQuestion)} times through an unpinned Vercel AI Gateway alias.`,
+  evaluator: `A GPT-4o judge with LongMemEval’s own grading prompts, through an unpinned gateway alias; the paper’s judge is the pinned ${paperJudge}. Each system answered ${(longMemEvalQuestions * runsPerQuestion).toLocaleString("en-US")} times in all, and every call completed.`,
+  contextBudget: `The same ${matchedBudget.toLocaleString("en-US")}-byte cap and one reader call per answer for both systems.`,
+  exposure: `${capitalized(priorStudies)}, so none is unseen. The Oh semantic row combines two runs: ${semanticSystem.runs}.`,
+  comparability: "same-run",
+  source: { label: "Oh’s published LongMemEval-S result", href: ohLinks.longMemEvalResult },
+  rows: matchedSystems.map(({ system, color }) => ({
+    id: system.id,
+    label: system.label,
+    value: (100 * system.correctAnswers) / system.answers,
+    detail: `${system.correctAnswers.toLocaleString("en-US")} of ${system.answers.toLocaleString("en-US")} answers`,
+    color,
   })),
 } as const satisfies BenchmarkStudy;

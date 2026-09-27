@@ -124,7 +124,10 @@ Jev reranking follow separate retrieval paths.
 
 Oh's conversation-memory benchmarks evaluate its own memory-retrieval API,
 reader models, and evaluation protocols. Those scores do not transfer to a
-Wordcell vault merely because it uses the same library. Wordcell's
+Wordcell vault merely because it uses the same library. The
+[benchmarks page](https://wordcell.io/benchmarks) reports Oh's 500-question
+LongMemEval-S study, its LoCoMo run, and its smaller pilot with Supermemory as
+Oh's results, each with its limits. Wordcell's
 [SciFact study](reranking.md#evidence-and-limits) compares exact search with
 hosted Jev reranking on the same public queries and candidate windows. It
 measures source ranking, without generating answers; this page measures only

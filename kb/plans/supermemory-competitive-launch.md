@@ -1047,6 +1047,19 @@ do not guess them.
   rebuilt; `bun run check` passed 1,928/0; `cd site && bun run check`
   passed 145/0 plus runtime 3/0; and the kb percolate, refresh, and check
   commands passed.
+- 2026-09-26 — After close-out, Oh published its 500-question LongMemEval-S
+  study (hraness/oh `21c500c`). Its result file is vendored under
+  docs/evaluations/oh/ and registered in sources.json, and
+  site/wordcell/oh-evidence.ts derives a same-run study from it that leads the
+  Oh section of /benchmarks, before LoCoMo. The matched arms, Oh semantic
+  retrieval and BM25 at one byte budget, are the only charted rows. The
+  frozen two-of-three measure's interval reaches zero, so every surface says
+  the study does not rule out a tie. The lab pipeline's figure is in-sample
+  and outside the Oh package: it appears once, on /benchmarks, inside the
+  sentence that says so, and nowhere else. The earlier pilot stays the only
+  matched Oh-and-Supermemory run. The README, changelog, docs/evidence.md,
+  llms.txt, /compare/supermemory, and the launch post (through new
+  `oh-longmemeval.*` evidence keys) follow.
 
 ## Result
 

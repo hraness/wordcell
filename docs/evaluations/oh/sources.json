@@ -20,6 +20,16 @@
       "gitBlobSha1": "49ca4a9a97125e824b66d524f757aa931bc65483",
       "sha256": "87cc50aa692e5a97bd949d8bf9d6c2c058eca0fbaa486726c98f64c8e32a0a97",
       "fetchedOn": "2026-09-26"
+    },
+    {
+      "file": "memory-longmemeval-s-500-v1.json",
+      "repository": "hraness/oh",
+      "commit": "21c500cf38928ab610c15c438557fbed5227ca4b",
+      "path": "benchmarks/results/memory-longmemeval-s-500-v1.json",
+      "bytes": 43551,
+      "gitBlobSha1": "696226da0134c9c97a5a7a53e301177a84bfd858",
+      "sha256": "c954d955a0b1c06f8e2b07a0206ad9c8a0ddab046ecd48913547b6bae6e1c44f",
+      "fetchedOn": "2026-09-26"
     }
   ]
 }

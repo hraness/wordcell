@@ -156,6 +156,9 @@ describe("Wordcell blog", () => {
     expect(evidenceFigures["oh-locomo.attribution"]).toBe(ohAttribution);
     expect(evidenceFigures["oh-locomo.url"]).toBe(ohLinks.locomoResult);
     expect(evidenceFigures["oh-pilot.url"]).toBe(ohLinks.pilotResult);
+    expect(evidenceFigures["oh-longmemeval.url"]).toBe(ohLinks.longMemEvalResult);
+    expect([evidenceFigures["oh-longmemeval.semantic"], evidenceFigures["oh-longmemeval.bm25"]]).toEqual(["88.87%", "86.13%"]);
+    expect([evidenceFigures["oh-longmemeval.estimate"], evidenceFigures["oh-longmemeval.lower"], evidenceFigures["oh-longmemeval.upper"], evidenceFigures["oh-longmemeval.level"]]).toEqual(["+2.8", "0.0", "+5.6", "95%"]);
     for (const [key, value] of Object.entries(evidenceFigures)) {
       expect(value, key).not.toBe("");
       expect(value, key).not.toContain("{{");
@@ -222,6 +225,9 @@ describe("Wordcell blog", () => {
   test("the launch post keeps Oh's results attributed, states its status once, and makes no ranking claim", async () => {
     const source = await read(`content/blog/${launchSlug}.md`);
     expect(blogHtml[launchSlug]).toContain(ohAttribution);
+    // The in-sample lab pipeline is never cited in the post, so its figure cannot read as a product score.
+    expect(blogHtml[launchSlug]).not.toContain("93.07");
+    expect(blogHtml[launchSlug]).toContain("does not rule out a tie");
     expect(source.match(/Latest release: /gu)?.length).toBe(1);
     expect(source.match(/available from source until the next release/gu)?.length).toBe(1);
     for (const banned of [/\bSOTA\b/iu, /state of the art/iu, /CLONEMEM/iu, /\bwe\b/iu, /\bour\b/iu, /honest/iu, /\bthe first\b/iu, /\bthe only\b/iu]) {
@@ -242,6 +248,7 @@ describe("Wordcell blog", () => {
     const ohHrefs = hrefs.filter((href) => href.startsWith("https://github.com/hraness/oh/"));
     expect(ohHrefs).toContain(ohLinks.locomoResult);
     expect(ohHrefs).toContain(ohLinks.pilotResult);
+    expect(ohHrefs).toContain(ohLinks.longMemEvalResult);
     const ohValues: string[] = Object.values(ohLinks);
     for (const href of ohHrefs) expect(ohValues).toContain(href);
     const sourceHrefs: string[] = article.sources.map((source) => source.href);

@@ -6,6 +6,13 @@ import { scifactDetails, scifactStudy } from "../../wordcell/benchmark-evidence"
 import { grouped, longDate, prose, signed } from "../../wordcell/format";
 import { formatBytes, handoffEvidence } from "../../wordcell/handoff-evidence";
 import {
+  longMemEvalArms,
+  longMemEvalComparison,
+  longMemEvalFacts,
+  longMemEvalLabPipeline,
+  longMemEvalLimitQuotes,
+  longMemEvalStudy,
+  longMemEvalTypes,
   locomoArms,
   locomoCategories,
   locomoFacts,
@@ -14,6 +21,7 @@ import {
   locomoStudy,
   ohAttribution,
   ohLinks,
+  ohLongMemEvalPost,
   ohSources,
   pilotInterval,
   pilotLimitQuotes,
@@ -26,7 +34,7 @@ import { publishedRelease } from "../publication";
 
 const pageTitle = "Wordcell and Oh benchmarks, with their limits";
 const pageDescription =
-  "See Wordcell’s own payload and reranking measurements and the Oh memory kernel’s published results, each with its source data and limits.";
+  `Wordcell’s payload and reranking measurements, and the Oh kernel’s ${longMemEvalFacts.questions}-question LongMemEval-S and LoCoMo results, each with source data and limits.`;
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -53,6 +61,10 @@ const status = publishedRelease === null
 const handoffShare = Math.round((handoffEvidence.packedBytes / handoffEvidence.fullNoteBytes) * 100);
 const [miniPaired, nanoPaired] = locomoPaired;
 const [locomoLimitSaturation, locomoLimitHarness, locomoLimitUnseen] = locomoLimitQuotes;
+const [semanticArm, bm25Arm] = longMemEvalArms;
+const primary = longMemEvalComparison.primary;
+const meanDifference = longMemEvalComparison.mean;
+
 const [pilotLimitSample, pilotLimitGranularity, pilotLimitProfile] = pilotLimitQuotes;
 
 function intervalSentence(interval: typeof pilotInterval): string {
@@ -61,6 +73,7 @@ function intervalSentence(interval: typeof pilotInterval): string {
 
 export default function Benchmarks() {
   if (miniPaired === undefined || nanoPaired === undefined) throw new TypeError("LoCoMo paired results need both readers.");
+  if (semanticArm === undefined || bm25Arm === undefined) throw new TypeError("LongMemEval-S results need both matched arms.");
   return (
     <WordcellPageChrome path="/benchmarks">
       <ProductHero
@@ -72,7 +85,7 @@ export default function Benchmarks() {
         heading="Each Wordcell and Oh result here links its raw data and states its limits."
         headingId="hero-title"
         name=""
-        summary="Wordcell’s own measurements cover the size of a context handoff and reranking quality. The Oh memory kernel that Wordcell embeds publishes its own memory benchmarks, reported here as Oh’s results, not Wordcell’s."
+        summary={`Wordcell’s own measurements cover the size of a context handoff and reranking quality. The Oh memory kernel that Wordcell embeds publishes its own memory benchmarks, reported here as Oh’s results, not Wordcell’s. On all ${grouped(longMemEvalFacts.questions)} LongMemEval-S questions, Oh semantic retrieval scored ${semanticArm?.percent}% and BM25 ${bm25Arm?.percent}%${longMemEvalComparison.tieNotRuledOut ? "; on the measure Oh named before the run, its interval does not rule out a tie" : ""}.`}
       />
 
       <MarketingSection
@@ -105,6 +118,47 @@ export default function Benchmarks() {
         id="oh"
         summary={ohAttribution}
       >
+        <BenchmarkComparison study={longMemEvalStudy}>
+          <p>On the measure Oh named before the run, questions answered correctly in at least two of {prose(longMemEvalFacts.runsPerQuestion)} runs, Oh semantic retrieval got {grouped(semanticArm.majorityCorrect)} of {grouped(longMemEvalFacts.questions)} and BM25 got {grouped(bm25Arm.majorityCorrect)}. That is {signed(primary.difference, 1)} percentage points, with a {primary.level} interval from {signed(primary.lower, 1)} to {signed(primary.upper, 1)}.{longMemEvalComparison.tieNotRuledOut ? " The interval reaches zero, so this result does not rule out a tie." : ""} Oh semantic retrieval gained {grouped(longMemEvalComparison.gained)} questions and lost {grouped(longMemEvalComparison.lost)}.</p>
+          <p>On the mean of {prose(longMemEvalFacts.runsPerQuestion)} runs shown in the chart, the difference is {signed(meanDifference.difference)} points, with a {meanDifference.level} interval from {signed(meanDifference.lower)} to {signed(meanDifference.upper)}. Oh’s intervals come from resampling questions within each question type.</p>
+          <p>This is Oh’s retrieval measured on its own. It is not a measurement of Wordcell search, and it includes no matched run of Supermemory or any other memory framework.</p>
+        </BenchmarkComparison>
+
+        <div aria-label="LongMemEval-S answers judged correct by question type" className="wordcell-comparison wordcell-stack" role="region" tabIndex={0}>
+          <table>
+            <caption className="wordcell-table-caption">LongMemEval-S answers judged correct by question type, mean of {prose(longMemEvalFacts.runsPerQuestion)} runs, in percent</caption>
+            <thead>
+              <tr>
+                <th scope="col">Question type</th>
+                <th scope="col">Questions</th>
+                {longMemEvalArms.map((arm) => <th key={arm.id} scope="col">{arm.system}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {longMemEvalTypes.map((type) => (
+                <tr key={type.id}>
+                  <th scope="row">{type.name}</th>
+                  <td data-label="Questions">{grouped(type.questions)}</td>
+                  {type.percents.map((percent, index) => {
+                    const arm = longMemEvalArms[index];
+                    return <td data-label={arm?.system} key={arm?.id ?? index}>{percent}%</td>;
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="install-note">Oh’s report also describes a lab reading pipeline that scored {longMemEvalLabPipeline.percent}% on the mean of {prose(longMemEvalFacts.runsPerQuestion)} runs and answered {grouped(longMemEvalLabPipeline.majorityCorrect)} of {grouped(longMemEvalLabPipeline.questions)} questions correctly in at least two. It is not charted here and is not Oh’s or Wordcell’s score: its instructions and rules were written after studying all {grouped(longMemEvalLabPipeline.questions)} questions, so the figure is in-sample, and its {longMemEvalLabPipeline.labOnlyText} are not part of the Oh package. <a href={ohLinks.longMemEvalResult}>Oh’s report</a> gives the details.</p>
+
+        <h3 className="wordcell-limits-title" id="longmemeval-limits">Limits</h3>
+        <ul className="wordcell-limits">
+          <li>Oh reports that “{longMemEvalLimitQuotes.exposure},” so none of the {grouped(longMemEvalFacts.questions)} questions is unseen.</li>
+          <li>Oh’s limits say: “{longMemEvalLimitQuotes.aliases}”</li>
+          <li>On the lab pipeline, Oh’s limits say: “{longMemEvalLimitQuotes.inSample}” They add: “{longMemEvalLimitQuotes.budget}”</li>
+          <li>Oh adds: “{longMemEvalLimitQuotes.audit}”</li>
+        </ul>
+
         <BenchmarkComparison study={locomoStudy}>
           <p>Paired by question with GPT-5 mini, Oh semantic retrieval was right where the BM25 window was wrong on {grouped(miniPaired.better)} questions, wrong where it was right on {grouped(miniPaired.worse)}, and matched it on {grouped(miniPaired.tied)}. With GPT-5 nano the counts were {grouped(nanoPaired.better)}, {grouped(nanoPaired.worse)}, and {grouped(nanoPaired.tied)}.</p>
         </BenchmarkComparison>
@@ -147,7 +201,7 @@ export default function Benchmarks() {
         heading="Matched and published comparisons"
         headingId="comparisons-title"
         id="comparisons"
-        summary="Oh ran one small pilot of Supermemory, Oh, and BM25 under one protocol; it is Oh’s result, not Wordcell’s. Figures that other memory systems publish use their own protocols, so they appear in a table, not a chart."
+        summary="Oh ran one small pilot of Supermemory, Oh, and BM25 under one protocol; it is Oh’s result, not Wordcell’s. It is smaller and earlier than the study above, it was a development pilot on previously seen questions, and it remains the only matched run of Oh against Supermemory. Figures that other memory systems publish use their own protocols, so they appear in a table, not a chart."
       >
         <BenchmarkComparison study={pilotStudy}>
           <p>{intervalSentence(pilotInterval)} {pilotInterval.crossesZero ? `The interval includes zero, so the pilot does not separate ${pilotInterval.left} from ${pilotInterval.right}.` : ""}</p>
@@ -200,6 +254,7 @@ export default function Benchmarks() {
         <ul className="wordcell-limits">
           <li><a href="/docs/evidence">Context handoff: method, raw results, and reproduction</a></li>
           <li><a href="/docs/reranking#evidence-and-limits">Reranking study: evidence and limits</a></li>
+          <li><a href={ohLinks.longMemEvalResult}>Oh’s LongMemEval-S result on all {grouped(longMemEvalFacts.questions)} questions</a> and <a href={ohLongMemEvalPost}>Oh’s write-up of it</a></li>
           <li><a href={ohLinks.locomoResult}>Oh’s LoCoMo result</a> and <a href={ohLinks.pilotResult}>Oh’s LongMemEval pilot result</a></li>
           <li><a href={ohLinks.benchmarks}>Oh’s benchmark guide</a></li>
           {ohSources.map((source) => (

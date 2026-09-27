@@ -63,6 +63,7 @@ const launchSources = [
   { title: "Oh LoCoMo result file, copy in the Wordcell repository", href: launchSource("docs/evaluations/oh/memory-evolution-locomo-sealed-1540-v1.json") },
   { title: "Oh framework pilot result file, copy in the Wordcell repository", href: launchSource("docs/evaluations/oh/memory-framework-pilot-v1.json") },
   { title: "Query the derived graph", href: launchSource("docs/graph-authority.md") },
+  { title: "LongMemEval-S result V1, all 500 questions", publisher: "Oh", href: ohLinks.longMemEvalResult },
   { title: "Matched descriptive comparison on LoCoMo", publisher: "Oh", href: ohLinks.locomoResult },
   { title: "Framework pilot result V1", publisher: "Oh", href: ohLinks.pilotResult },
   { title: "Self-hosting overview", publisher: "Supermemory", href: "https://supermemory.ai/docs/self-hosting/overview" },
@@ -253,7 +254,7 @@ export const blogArticles = [
       review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: "2026-09-26" },
       humanReview: null,
       reassessOn: "2026-11-07",
-      harmIfWrong: "A reader could cite Oh's LoCoMo figures as Wordcell's results, or switch from Supermemory expecting hosted extraction and connectors.",
+      harmIfWrong: "A reader could cite Oh's LoCoMo or LongMemEval-S figures as Wordcell's results, read Oh's lead over BM25 as settled when its interval reaches zero, or switch from Supermemory expecting hosted extraction and connectors.",
       refreshTriggers: [
         "A release that includes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",
         "A change to a vendored evidence file under docs/ or to the evidence modules under site/wordcell/",

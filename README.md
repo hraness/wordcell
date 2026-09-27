@@ -278,8 +278,11 @@ workflow that meets your needs.
 
 The [benchmarks page](https://wordcell.io/benchmarks) shows the payload and
 SciFact results beside the published results of Oh, the embedded memory
-framework, each with its source data and limits. Oh's scores measure its own
-memory-retrieval path, not a Wordcell vault.
+framework, each with its source data and limits. On all 500 LongMemEval-S
+questions, Oh semantic retrieval scored 88.87% and BM25 86.13% with the same
+reader and budget; on the measure Oh named before the run, its interval does
+not rule out a tie. Oh's scores measure its own memory-retrieval path, not a
+Wordcell vault.
 
 ## How the files fit together
 

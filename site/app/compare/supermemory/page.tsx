@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
 
-import { longDate, prose } from "../../../wordcell/format";
-import { pilotInterval } from "../../../wordcell/oh-evidence";
+import { grouped, longDate, prose } from "../../../wordcell/format";
+import { longMemEvalFacts, pilotInterval } from "../../../wordcell/oh-evidence";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
 import {
   formatPlanCredits,
@@ -205,7 +205,7 @@ export default function CompareSupermemory() {
         id="evidence"
         summary="Wordcell has published no head-to-head comparison with Supermemory of retrieval quality or speed."
       >
-        <p>The Oh memory kernel that Wordcell embeds published a {prose(pilotInterval.pairedQuestions)}-question pilot that includes Supermemory. It is Oh’s result, not Wordcell’s, and {pilotInterval.crossesZero ? `it does not separate ${pilotInterval.left} from ${pilotInterval.right}` : "it is a small pilot"}. The benchmarks page shows it with its limits.</p>
+        <p>The Oh memory kernel that Wordcell embeds published a {prose(pilotInterval.pairedQuestions)}-question pilot that includes Supermemory. It is Oh’s result, not Wordcell’s, and {pilotInterval.crossesZero ? `it does not separate ${pilotInterval.left} from ${pilotInterval.right}` : "it is a small pilot"}.{longMemEvalFacts.matchedSupermemoryRun ? "" : ` Oh’s later ${grouped(longMemEvalFacts.questions)}-question LongMemEval-S study compares Oh with BM25 only, so this pilot remains the only matched comparison with Supermemory.`} The benchmarks page shows both with their limits.</p>
         <ul className="wordcell-limits">
           <li><a href="/benchmarks#comparisons">Benchmarks: matched and published comparisons</a></li>
           <li><a href="/migrate/supermemory">Move from Supermemory to Wordcell</a></li>
