@@ -67,6 +67,6 @@ Capture only reads. It does not post, like, follow, send, delete, or submit anyt
 
 ## Limits
 
-Wordcell does not write answers. It returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows that a file said something at a given version, not that the note is correct. Graph queries accept vaults of up to 4,000 notes, and a result that hits a limit is marked as truncated. Search by meaning downloads a local model the first time you use it. An optional reranking step sends the query and note snippets to a paid hosted provider and is off by default.
+Wordcell does not write answers. It returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows that a file said something at a given version, not that the note is correct. Graph queries accept vaults of up to 4,000 notes. A result cut off by its row or proof limit is marked as truncated, and a query that runs out of work fails instead of returning a partial answer. Search by meaning downloads a local model the first time you use it. An optional reranking step sends the query and note snippets to a paid hosted provider and is off by default.
 
 Wordcell was called KB until version 0.20.0, and the vault format keeps its `kb` names, so an existing vault needs no migration. Releases up to 0.19.6 use the package name `@hraness/kb`: npm carries them through 0.19.2, and the later 0.19.x versions exist as GitHub Release archives. Newer releases use `@hraness/wordcell`, but older install notes and lockfiles may show the old name.

@@ -118,6 +118,7 @@ export const blogArticles = [
         "The published release record (site/published-release.json, 0.22.4) trails package.json (0.22.5) on main at 7b6cb5e, so a version typed from package.json or the README install line would claim a release the site has not recorded.",
         "The Oh adoption preparer in src/oh-adoption.ts always returns status \"prepared\" and renders Markdown that calls itself a review candidate; nothing in that path opens a vault or writes a note, so outside memory can only enter Wordcell through a person authoring Markdown.",
         "2026-09-26 editorial pass: reordered the post to lead with the claim and moved the release status and KB rename history next to what they qualify; no fact, command, link, or version changed. By then site/published-release.json recorded 0.22.5, so the gap in the first observation had closed, and npm still lists @hraness/kb only through 0.19.2.",
+        "2026-09-27 fact review (AI, Claude Opus 5.5): the 2026-09-26 pass had said every result that hits a limit is marked as truncated. docs/graph-authority.md says only row or proof truncation is marked (exit code 4) and work exhaustion fails, so the Limits paragraph now says both.",
       ],
       scores: {
         readerUtility: 2,
