@@ -1,4 +1,4 @@
-# Portfolio federation
+# Search several vaults together
 
 Portfolio federation searches and audits selected Markdown vaults without combining their files or indexes. A strict registry gives each vault a stable logical identity and maps that identity to a checkout under one workspace. Each vault keeps its own Markdown, local graph, optional QMD index, and Git history.
 

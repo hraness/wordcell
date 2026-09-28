@@ -1,8 +1,8 @@
-# Platform submission — wordcell.io hosted publication
+# Hosted publication API
 
-Evidence pack for submitting the Wordcell hosted surface to agent platforms
-(Muse connectors, Grok-style bots, Instinct-class clients) or any HTTP tool
-consumer. Every claim below was exercised against production on 2026-09-21.
+wordcell.io can host a static site built from notes you select. This page lists
+the endpoints, MCP tools, token model, and limits, each checked against
+production on 2026-09-21.
 
 ## Endpoints
 
@@ -10,13 +10,13 @@ consumer. Every claim below was exercised against production on 2026-09-21.
 | --- | --- |
 | Base URL | `https://wordcell.io` |
 | OpenAPI 3.1 | `GET /api/v1/openapi.json` (6 paths) |
-| MCP | `POST /api/v1/mcp` — streamable HTTP; `create_token`, `publish_site`, `list_sites`, `delete_site` |
+| MCP | `POST /api/v1/mcp`: streamable HTTP; `create_token`, `publish_site`, `list_sites`, `delete_site` |
 | Health | `GET /api/v1/health` → `{"ok":true,"storage":true,"artifact":"hraness.wordcell.site.v1"}` |
 | Auth | `POST /api/v1/tokens` → `wc_pub_…` bearer; digest-only storage |
 | Publish | `PUT /api/v1/sites/{slug}` → `{url, digest, revision}` |
-| Public reads | `https://wordcell.io/p/<key8>/<slug>/` — CDN, no auth |
+| Public reads | `https://wordcell.io/p/<key8>/<slug>/`: CDN, no auth |
 
-## Verified surface (live, 2026-09-21)
+## Checked in production (2026-09-21)
 
 - `POST /api/v1/tokens` minted a `wc_pub_` token self-serve; the server stores
   only the SHA-256 digest and the first 8 hex chars own the slug namespace.
@@ -26,11 +26,11 @@ consumer. Every claim below was exercised against production on 2026-09-21.
   through the CDN rewrite; `catalog.json` returned
   `hraness.wordcell.site-catalog.v1`; a missing note returned the artifact's
   own `404.html`.
-- Identical republish returned `idempotent: true` — same digest, same
-  revision, no rewrite.
+- Identical republish returned `idempotent: true`, with the same digest, the
+  same revision, and no rewrite.
 - Changed vault produced revision 2 under a new digest; the prior digest's
   objects were swept.
-- `GET /api/v1/sites` listed the caller's sites; `DELETE` unpublished —
+- `GET /api/v1/sites` listed the caller's sites; `DELETE` unpublished, and
   the public URL returns 404 (worker immediately, edge after ≤60s cache TTL).
 - `POST /api/v1/mcp` answered `tools/list` with `create_token`, `publish_site`,
   `list_sites`, `delete_site`; `create_token` minted a working `wc_pub_` token
@@ -42,38 +42,35 @@ consumer. Every claim below was exercised against production on 2026-09-21.
   reads.
 - Unauthenticated `PUT` returns 401.
 
-## Submission-form facts
+## Tokens, limits, and data handling
 
 - **Auth model**: capability token, `Authorization: Bearer wc_pub_…`. Minting
-  is free and self-serve; a platform connector can mint per-installation.
+  is free and self-serve; a platform connector can mint one per installation.
   There is no signup wall and no OAuth handshake.
-- **Input contract**: JSON `files` map — UTF-8 strings, `{"base64": …}`, or
+- **Input contract**: JSON `files` map of UTF-8 strings, `{"base64": …}`, or
   `{"upload": "<id>"}` from `POST /api/v1/uploads` (presigned PUT, ≤32 MiB,
   expires in 1 day). ≤256 files / 4 MiB inline per request.
-- **Output contract**: `hraness.wordcell.site.v1` — the identical artifact
-  `wordcell publish` emits locally. Server-side projection is the checked
-  property: callers cannot produce contract-invalid sites.
+- **Output contract**: `hraness.wordcell.site.v1`, the same artifact
+  `wordcell publish` emits locally. The server builds the site from the posted
+  notes, so callers cannot produce a site that breaks the contract.
 - **Rate limits**: 8 token mints and 120 publishes per client address per
   day; 60 publishes and 50 live sites per token. 429s carry `retryable` and
   `retryAfter`.
-- **Privacy posture**: the posted vault is materialized to a per-request
-  tempdir and deleted when the request ends; only the emitted artifact
+- **Data handling**: the posted vault is written to a per-request temporary
+  directory and deleted when the request ends; only the emitted artifact
   persists. Quota counters expire in 2 days; uploads in 1 day. Token digests,
   site records, and slug pointers persist until `DELETE`. Published sites
-  are public by contract — the API refuses to be a private store.
-- **Cost posture**: free at launch; quotas bound provider spend. Reads are
-  served from R2 through a CDN rewrite — zero compute per read.
+  are public by contract, and the API refuses to act as a private store.
+- **Cost**: free at launch; quotas bound provider spend. Reads are served
+  from R2 through a CDN rewrite, with no compute per read.
 
-## Per-platform readiness
+## Clients
 
-- **Muse / Instinct-class / Grok-style**: REST + OpenAPI live and verified;
-  MCP clients use `POST /api/v1/mcp` (`create_token`, `publish_site`,
-  `list_sites`, `delete_site`) — a stateless streamable-HTTP adapter that
-  dispatches to the identical route logic, so auth, bounds, and quotas are
-  the same surface.
-- **Direct HTTP**: ready now.
+- REST clients use the OpenAPI document. MCP clients call `POST /api/v1/mcp`,
+  a stateless streamable-HTTP adapter over the same routes, so auth, bounds,
+  and quotas are identical.
 
-## Not yet evidenced
+## Not yet checked in production
 
 - Vaults near the intake bounds (256 files / 4 MiB) are enforced by tests but
   not exercised at the limit live.

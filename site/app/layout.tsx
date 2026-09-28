@@ -11,7 +11,7 @@ import "./globals.css";
 /** Gruvbox follows the system until a reader chooses a saved appearance. */
 const initialPalette = getDesignPaletteTheme("gruvbox", "light");
 
-const title = "Wordcell: Give the next session what this one learned";
+const title = "Wordcell: Markdown memory for coding agents";
 const description = siteDescription;
 
 export const metadata: Metadata = {

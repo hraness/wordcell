@@ -3,9 +3,11 @@
 
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
-Wordcell keeps decisions, plans, and sources as Markdown files beside your
-code. Coding agents find them by exact words, by meaning with an optional
-local model, or from the file they are about to change.
+Wordcell is a Markdown knowledge base and local MCP memory server for coding
+agents such as Claude Code, Codex, and Cursor. It keeps decisions, plans, and
+sources as Markdown files beside your code, and agents find them by exact
+words, by meaning with an optional local model, or from the file they are
+about to change.
 
 A new coding-agent session can read your code, but not the decisions that
 stayed in the last session's chat. Wordcell keeps those decisions as Markdown
@@ -20,7 +22,7 @@ Web capture, optional hosted reranking, and your agent's provider reach other
 services; [Privacy and boundaries](#privacy-and-boundaries) says what each one
 sends.
 
-[Documentation](https://wordcell.io/docs) · [Comparisons](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md) · [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md) · [Changelog](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md)
+[Documentation](https://wordcell.io/docs) · [Comparisons](https://wordcell.io/docs/comparisons) · [Measured evidence](https://wordcell.io/docs/evidence) · [Changelog](https://github.com/hraness/wordcell/blob/main/CHANGELOG.md)
 
 ## Why Wordcell
 
@@ -42,7 +44,7 @@ sends.
 Plain Markdown may be enough for a small set of notes. QMD is a good fit for
 local document retrieval and also supplies Wordcell's optional semantic search.
 Wordcell adds a connected workflow for repository context, authored relationships,
-Git evidence, and selective publishing. [Compare the tradeoffs](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md).
+Git evidence, and selective publishing. [Compare the tradeoffs](https://wordcell.io/docs/comparisons).
 
 Wordcell keeps the record in Markdown files you own, rebuilds every index from those files, and lets the next session start from the notes for the file it is changing: the design every Hraness project shares. [The thread through hraness](https://hraness.com/writing/the-thread-through-hraness) follows that design across the projects, and the [ALGAL vision](https://algal.computer/docs/vision/) states the bet behind it.
 
@@ -270,9 +272,9 @@ Wordcell's benefit is selecting relevant context and keeping its sources
 inspectable. Local ownership is also available in other tools, and Wordcell
 does not claim to beat QMD's retrieval quality or every Markdown workflow.
 
-[Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md)
+[Measured evidence](https://wordcell.io/docs/evidence)
 shows a reproducible public-vault example, with the inputs, output sizes, and
-limits beside each result. [The comparison guide](https://github.com/hraness/wordcell/blob/main/docs/comparisons.md)
+limits beside each result. [The comparison guide](https://wordcell.io/docs/comparisons)
 covers Markdown alone, QMD, Basic Memory, Obsidian, static publishing tools,
 Supermemory, Mem0, and Zep using their own documentation. Choose the smallest
 workflow that meets your needs.
@@ -369,7 +371,7 @@ the design. Browse it on the [documentation index](https://wordcell.io/docs).
 | [Web capture](https://github.com/hraness/wordcell/blob/main/docs/capture.md) and [PDF capture](https://github.com/hraness/wordcell/blob/main/docs/pdf.md) | Save sources with provenance, assets, and explicit completeness limits. |
 | [Publish selected notes](https://github.com/hraness/wordcell/blob/main/docs/publish.md) | Preview a slice, build a static site, and choose how to host it. |
 | [Graph guide](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md) | Named queries, proofs, revisions, resource limits, and cache recovery. |
-| [Portfolio federation](https://github.com/hraness/wordcell/blob/main/docs/portfolio.md) | Search only selected, authorized vaults. |
+| [Search several vaults together](https://github.com/hraness/wordcell/blob/main/docs/portfolio.md) | Search only selected, authorized vaults. |
 | [Sync with Git](https://github.com/hraness/wordcell/blob/main/docs/sync.md) | Keep one vault current on several machines with a private repository. |
 | [Migrate from Supermemory](https://github.com/hraness/wordcell/blob/main/docs/migration-from-supermemory.md) | Export documents and memory entries, import them as notes, and replace connectors. |
 | [Design](https://github.com/hraness/wordcell/blob/main/docs/design.md) and [memory rationale](https://github.com/hraness/wordcell/blob/main/docs/agent-memory.md) | File contracts, design choices, and evaluation context. |

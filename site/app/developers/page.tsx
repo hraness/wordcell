@@ -257,7 +257,7 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 <p className="wordcell-bytes-meta"><strong>60,584 bytes</strong><span>The same notes in full</span></p>
               </div>
             </div>
-            <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href={`${repository}/blob/main/docs/evidence.md`}>Method and raw report</a>.</p>
+            <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href="/docs/evidence">Method and raw report</a>.</p>
             <p className="install-note">Oh backs Wordcell’s graph queries and source proofs. Markdown and Git remain authoritative; Wordcell search has its own retrieval path and evidence. <a href="/docs/graph-authority#how-wordcell-and-oh-fit-together">How the integration works</a> · <a href="/#evidence">Wordcell’s retrieval study</a>.</p>
           </MarketingSection>
 

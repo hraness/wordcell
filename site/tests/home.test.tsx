@@ -90,7 +90,10 @@ test("the homepage connects an agent, links the launch pages, and keeps Oh LoCoM
   expect(compare).toContain('href="/compare/supermemory"');
   expect(compare).toContain('href="/compare/basic-memory"');
   expect(compare).toContain('href="/compare/mem0"');
-  expect(compare).toContain("docs/comparisons.md");
+  expect(compare).toContain('href="/docs/comparisons"');
+  expect(compare).toContain("claude-mem");
+  expect(compare).toContain("CLAUDE.md");
+  expect(html).not.toContain("blob/main/docs/");
   for (const arm of locomoArms) expect(html).not.toContain(`${arm.percent.replace(/%$/u, "")}%`);
   expect(html).not.toMatch(/\bSOTA\b|state[\s-]+of[\s-]+the[\s-]+art/iu);
 });
@@ -118,9 +121,29 @@ test("every public route attributes the site to Hraness through the shared foote
 test("the homepage's maker answer attributes Wordcell to Hraness", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html).toContain("Who made it?");
-  expect(html).toContain("Built by Hraness. Hraness is an advanced software research organization dedicated to advancing the frontier of machine intelligence. Wordcell is published under the MIT license.");
+  expect(html).toContain('<a href="https://hraness.com">Hraness</a>, which makes tools for agents and humans. Wordcell is MIT licensed, and its source is <a href="https://github.com/hraness/wordcell">on GitHub</a>.');
   expect(html).not.toContain("Venmo");
   expect(html).not.toContain("Puerto Rico");
+});
+
+test("the homepage describes the software and site without FAQ markup", () => {
+  const html = renderToStaticMarkup(<Home />);
+  const match = /<script type="application\/ld\+json">([^<]*)<\/script>/u.exec(html);
+  expect(match).not.toBeNull();
+  const nodes: unknown = JSON.parse(match?.[1] ?? "null");
+  if (!Array.isArray(nodes)) throw new Error("expected a JSON-LD array");
+  const byType = new Map(nodes.map((node: { "@type": string }) => [node["@type"], node as Record<string, unknown>]));
+  expect([...byType.keys()]).toEqual(["WebSite", "SoftwareApplication", "SoftwareSourceCode"]);
+  expect(byType.get("WebSite")?.["@id"]).toBe("https://wordcell.io/#website");
+  const software = byType.get("SoftwareApplication");
+  expect(software?.["@id"]).toBe("https://wordcell.io/#software");
+  expect(software?.applicationCategory).toBe("DeveloperApplication");
+  expect(software?.offers).toEqual({ "@type": "Offer", price: "0", priceCurrency: "USD" });
+  expect(software?.publisher).toEqual({ "@id": "https://hraness.com/#organization" });
+  expect(software).not.toHaveProperty("operatingSystem");
+  if (publishedRelease !== null) expect(software?.softwareVersion).toBe(publishedRelease.version);
+  expect(byType.get("SoftwareSourceCode")?.targetProduct).toEqual({ "@id": "https://wordcell.io/#software" });
+  expect(html).not.toContain("FAQPage");
 });
 
 test("the homepage leads with the README identity and the verified install command", () => {
@@ -128,6 +151,7 @@ test("the homepage leads with the README identity and the verified install comma
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
   expect(html).toMatch(/<h1\b[^>]*>Give coding agents the decisions behind your code\.<\/h1>/u);
   expect(html).toContain("Markdown knowledge base");
+  expect(html).toContain("free, open-source CLI and local MCP server");
   if (publishedRelease === null) {
     expect(html).toContain("First Wordcell release in preparation");
     expect(html).not.toContain(".tgz");
@@ -264,8 +288,8 @@ test("keeps decision claims, privacy limits, and evidence visible with the quick
   expect(html).toContain("removed in version 0.21.0");
   expect(html).toContain("--skill wordcell");
   expect(html).toContain('id="compare"');
-  expect(html).toContain("docs/comparisons.md");
-  expect(html).toContain("docs/evidence.md");
+  expect(html).toContain('href="/docs/comparisons"');
+  expect(html).toContain('href="/docs/evidence"');
   expect(html).not.toContain("kb kept as a deprecated alias");
 });
 

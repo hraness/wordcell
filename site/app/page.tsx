@@ -15,10 +15,12 @@ import { ThemeMenuButton } from "@hraness/design-kit/react";
 import { product, type PortfolioProductId } from "@hraness/design-kit/portfolio";
 
 import { AskAiAboutThis } from "@hraness/ui";
+import { websiteJsonLd } from "@hraness/web-discovery";
 
 import { publishedRelease } from "./publication";
 import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { siteDescription } from "./site-description";
+import { site } from "./blog/discovery";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactDetails, scifactStudy } from "../wordcell/benchmark-evidence";
 import { SELECTED_PASSAGE_RELEASE, WordcellEvidenceStrip } from "../wordcell/evidence-strip";
@@ -35,7 +37,7 @@ const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases
 
 const heading = "Give coding agents the decisions behind your code.";
 const summary =
-  "Decisions, plans, and sources kept as Markdown beside your repository, one command away from the agent about to change a file.";
+  "Wordcell is a free, open-source CLI and local MCP server. It gives Claude Code, Codex, and Cursor the notes, plans, and AGENTS.md rules for the file they are about to change, from plain Markdown you review in Git.";
 const footnote = releaseVersion === undefined
   ? "Free under the MIT license. Exact search needs no account or model. First Wordcell release in preparation."
   : `Latest release: v${releaseVersion} · Free under the MIT license · Exact search needs no account or model.`;
@@ -104,25 +106,15 @@ const related = (id: PortfolioProductId, name: string) => {
   return { href: canonicalUrl, mark, name, role: oneLiner };
 };
 
+// Only products with a registered relationship to Wordcell appear here.
 const relatedGroups = [
   {
-    heading: "The personal apps",
-    headingId: "related-apps",
-    items: [
-      related("peopleblade", "PeopleBlade"),
-      related("soulscrape", "Soulscrape"),
-      related("message-like-me", "Textbutler"),
-    ],
-  },
-  {
-    heading: "The agent platform",
+    heading: "Works with Wordcell",
     headingId: "related-tools",
-    summary: "The layer your agent runs through: sessions, accounts, web reads, and the models behind them.",
     items: [
       related("wrench", "Ghostget"),
-      related("gobstopper", "Gobstopper"),
       related("xcb", "xcb"),
-      related("aicharts", "AI Charts"),
+      related("oh-computer", "Oh"),
     ],
   },
 ];
@@ -174,7 +166,8 @@ const questions: readonly { question: string; answer: string; after?: React.Reac
   },
   {
     question: "Who made it?",
-    answer: "Built by Hraness. Hraness is an advanced software research organization dedicated to advancing the frontier of machine intelligence. Wordcell is published under the MIT license.",
+    answer: "",
+    after: <><a href="https://hraness.com">Hraness</a>, which makes tools for agents and humans. Wordcell is MIT licensed, and its source is <a href={repository}>on GitHub</a>.</>,
   },
 ] as const;
 
@@ -190,6 +183,21 @@ const navigation = [
 
 export default function Home() {
   const structuredData = [
+    websiteJsonLd(site),
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "@id": "https://wordcell.io/#software",
+      name: "Wordcell",
+      url: "https://wordcell.io/",
+      description: siteDescription,
+      applicationCategory: "DeveloperApplication",
+      license: "https://opensource.org/license/mit",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      publisher: { "@id": "https://hraness.com/#organization" },
+      ...(releaseVersion !== undefined && archiveUrl !== null ? { downloadUrl: archiveUrl, softwareVersion: releaseVersion } : {}),
+      sameAs: [repository, "https://www.npmjs.com/package/@hraness/wordcell"],
+    },
     {
       "@context": "https://schema.org",
       "@type": "SoftwareSourceCode",
@@ -199,16 +207,8 @@ export default function Home() {
       name: "Wordcell",
       programmingLanguage: "TypeScript",
       runtimePlatform: "Bun",
+      targetProduct: { "@id": "https://wordcell.io/#software" },
       url: "https://wordcell.io",
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: questions.map(({ answer, question }) => ({
-        "@type": "Question",
-        acceptedAnswer: { "@type": "Answer", text: answer },
-        name: question,
-      })),
     },
   ];
 
@@ -320,7 +320,7 @@ wordcell note create notes/parser-contract \\
           />
 
           <MarketingSection
-            heading="The answer in the excerpt, not just the match"
+            heading="Excerpts that contain the answer"
             headingId="memory-title"
             id="evidence"
             summary={`On sealed questions, Wordcell’s selected passages held the answer ${passageDetails.passageAnswers} times out of ${passageDetails.questions}, against ${passageDetails.snippetAnswers} for older snippets. Optional hosted Jev reranking put a relevant source first for ${scifactDetails.additionalFirstResults} more of ${scifactDetails.queries} public queries.`}
@@ -354,7 +354,7 @@ wordcell note create notes/parser-contract \\
                 <p className="wordcell-bytes-meta"><strong>{formatBytes(handoffEvidence.fullNoteBytes)}</strong><span>The same notes in full</span></p>
               </div>
             </div>
-            <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href={`${repository}/blob/main/docs/evidence.md`}>Method, raw results, and reproduction</a>.</p>
+            <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href="/docs/evidence">Method, raw results, and reproduction</a>.</p>
           </MarketingSection>
 
           <MarketingSection
@@ -386,12 +386,14 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
             headingId="compare-title"
             id="compare"
             label="Compare"
-            summary="Local files are a shared strength. Wordcell brings authored structure, retrieval, and publishing into one workflow."
+            summary="Use the lightest tool that holds what your agent needs. Wordcell fits when that memory outgrows one file and should be reviewed in Git like code."
           >
             <div className="wordcell-comparison" role="region" aria-label="Workflow comparison" tabIndex={0}>
               <table>
                 <thead><tr><th scope="col">Start with</th><th scope="col">When it fits</th><th scope="col">What Wordcell adds</th></tr></thead>
                 <tbody>
+                  <tr><th scope="row">Claude Code memory (CLAUDE.md and auto memory)</th><td>Rules and preferences Claude Code loads automatically, with no setup.</td><td>A searchable vault reviewed in Git, with links and history, that Codex and Cursor can read too.</td></tr>
+                  <tr><th scope="row">claude-mem</th><td>You want every session recorded and summarized for you.</td><td>Only notes someone chose to write, kept as Markdown in Git, with exact search that needs no model.</td></tr>
                   <tr><th scope="row">Markdown + Git</th><td>A small set of notes you can navigate yourself.</td><td>Backlinks, typed relationships, metadata queries, and code-path context without moving the files.</td></tr>
                   <tr><th scope="row">QMD</th><td>Local document search with CLI, SDK, and agent integrations.</td><td>Current notes joined to authored relationships, AGENTS.md rules, Git evidence, and publishing.</td></tr>
                   <tr><th scope="row">Basic Memory</th><td>A local Markdown knowledge graph for AI conversations.</td><td>A workflow centered on repository paths, explicit edit rules, and code history.</td></tr>
@@ -399,7 +401,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 </tbody>
               </table>
             </div>
-            <p className="record-link"><a href={`${repository}/blob/main/docs/comparisons.md`}>Compare capabilities, tradeoffs, and primary sources</a> · <a href="/compare/supermemory">Compare Wordcell and Supermemory</a> · <a href="/compare/basic-memory">Compare Wordcell and Basic Memory</a> · <a href="/compare/mem0">Compare Wordcell and Mem0</a></p>
+            <p className="record-link"><a href="/docs/comparisons">Compare capabilities, tradeoffs, and primary sources</a> · <a href="/compare/supermemory">Compare Wordcell and Supermemory</a> · <a href="/compare/basic-memory">Compare Wordcell and Basic Memory</a> · <a href="/compare/mem0">Compare Wordcell and Mem0</a></p>
           </MarketingSection>
 
           <MarketingSection
@@ -415,7 +417,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
   --dry-run --json`}</code></pre>
             ) : <p className="install-note">Static publishing is introduced in v0.22.0. The current verified install above predates this feature; check the release notes before using it.</p>}
             <p className="install-note">Publishing writes a local folder, and you choose when and where to upload it. Selection does not remove secrets, so review the selected text and attachments before you share the site.</p>
-            <p className="record-link"><a href={`${repository}/blob/main/docs/publish.md`}>Select notes, inspect the output, and host your site</a></p>
+            <p className="record-link"><a href="/docs/publish">Select notes, inspect the output, and host your site</a></p>
           </MarketingSection>
 
           <MarketingInterfaceGrid
@@ -495,10 +497,10 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
 
           <MarketingRelated
             groups={relatedGroups}
-            heading="From the same workshop"
+            heading="Related Hraness tools"
             headingId="related-title"
             label="Related"
-            summary="Other apps and agent tools from Hraness."
+            summary="Tools that capture into, search, or back a Wordcell vault."
           />
 
           <MarketingCallToAction

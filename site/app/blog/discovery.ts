@@ -41,7 +41,7 @@ export const hraness = {
 
 /** The site's social card, reused as each post's representative image. */
 const socialImage = {
-  alt: "Wordcell: Give the next session what this one learned",
+  alt: "Wordcell: Markdown memory for coding agents",
   contentType: "image/png",
   height: 630,
   path: "/opengraph-image",

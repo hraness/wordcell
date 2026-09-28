@@ -54,8 +54,8 @@ When to use this site:
   command.
 - [Get started](https://wordcell.io/docs/getting-started): The first-vault
   tutorial.
-- [Overview](https://wordcell.io/docs/overview): The complete product README
-  rendered as one page.
+- [Overview](https://wordcell.io/docs/overview): What Wordcell does, how to
+  install it, and how a coding agent uses a vault, on one page.
 - [Use Wordcell with a coding agent](https://wordcell.io/docs/agent-workflow):
   Set up, query, maintain, and revise repository memory.
 - [Reference](https://wordcell.io/docs/reference): Exact commands, formats,
@@ -70,8 +70,9 @@ When to use this site:
   current on several machines with a private repository and a scheduled
   commit and push.
 - [Comparisons](https://wordcell.io/docs/comparisons): Markdown tools such as
-  QMD, Basic Memory, and Obsidian, and agent memory services such as
-  Supermemory, Mem0, and Zep, compared with Wordcell from primary sources.
+  QMD, Basic Memory, and Obsidian, Claude Code's built-in memory and
+  claude-mem, and agent memory services such as Supermemory, Mem0, and Zep,
+  compared with Wordcell from primary sources.
 - [Evidence](https://wordcell.io/docs/evidence): The reproducible
   context-payload study and the study of whether selected passages contain the
   answer.

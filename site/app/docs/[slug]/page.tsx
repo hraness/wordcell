@@ -10,7 +10,7 @@ const repository = "https://github.com/hraness/wordcell";
 const overviewEntry = {
   slug: "overview",
   title: "Wordcell overview",
-  summary: "The complete product README rendered as one page.",
+  summary: "What Wordcell does, how to install it, and how a coding agent uses a vault, on one page.",
   quadrant: null,
   sourcePath: "README.md",
 } as const;

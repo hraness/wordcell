@@ -745,4 +745,4 @@ installation side effect. The repository's phase-orchestration skill remains
 available to local repository agents but is marked internal, so public skill
 discovery omits it.
 
-See [Design](design.md), [Portfolio federation](portfolio.md), [Agent workflow](agent-workflow.md), [PDF capture](pdf.md), and [Contributing](../CONTRIBUTING.md) for the durable contracts and development gate. hraness/wordcell is available under the [MIT License](../LICENSE).
+See [Design](design.md), [Search several vaults together](portfolio.md), [Agent workflow](agent-workflow.md), [PDF capture](pdf.md), and [Contributing](../CONTRIBUTING.md) for the durable contracts and development gate. hraness/wordcell is available under the [MIT License](../LICENSE).

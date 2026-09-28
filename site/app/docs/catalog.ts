@@ -76,7 +76,7 @@ export const docCatalog = [
   },
   {
     slug: "portfolio",
-    title: "Portfolio federation",
+    title: "Search several vaults together",
     summary: "Search and link across only the vaults you explicitly select and authorize.",
     quadrant: "how-to",
   },
@@ -118,13 +118,13 @@ export const docCatalog = [
   },
   {
     slug: "design",
-    title: "Design",
+    title: "Why Wordcell keeps everything in Markdown",
     summary: "Why Wordcell keeps everything in Markdown files, and how its storage, search, graph, and capture fit together.",
     quadrant: "explanation",
   },
   {
     slug: "agent-memory",
-    title: "Markdown memory for coding agents",
+    title: "Why agent memory belongs in Markdown beside the repository",
     summary: "Why durable agent memory belongs in inspectable Markdown beside the repository.",
     quadrant: "explanation",
   },
