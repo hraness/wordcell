@@ -1,0 +1,314 @@
+{
+  "schema": "hraness.wordcell.passage-cases.v1",
+  "sourceRevision": "3a27fe51ae2644c53afb03e8687ac99985940061",
+  "corpus": "kb/",
+  "labelMeaning": "Any listed evidence alternative is sufficient; every anchor of that alternative must occur together in one returned passage from its path. Labels mark primary answer-bearing passages; they are not exhaustive relevance judgments.",
+  "cases": [
+    {
+      "id": "d01",
+      "split": "development",
+      "caseType": "positive",
+      "query": "Why should a runbook link to a test instead of copying its rules into the prose?",
+      "relevantPaths": [
+        "notes/documentation-ownership.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "notes/documentation-ownership.md",
+          "sourceSha256": "20c88b31783d6526a8e7b8687875ab4deff94b41bef9f07ec876b1c631f54b52",
+          "lineStart": 19,
+          "lineEnd": 19,
+          "quote": "A runbook can point to a test, but copying the test's rules into prose creates a second contract that can drift.",
+          "anchors": [
+            "copying the test's rules into prose",
+            "a second contract that can drift"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d02",
+      "split": "development",
+      "caseType": "positive",
+      "query": "If I leave a note out of a published site, what happens to links pointing at it, and can its name or file location still leak?",
+      "relevantPaths": [
+        "plans/static-site-publication.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "plans/static-site-publication.md",
+          "sourceSha256": "0eda8bfcf8be2946bf8c77da87ba609f2ca81ee67800e5683826014214462135",
+          "lineStart": 45,
+          "lineEnd": 46,
+          "quote": "Links and relations to excluded notes render as unresolved text so an\n  excluded note's title and path never enter the artifact.",
+          "anchors": [
+            "excluded notes render as unresolved text",
+            "title and path never enter the artifact"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d03",
+      "split": "development",
+      "caseType": "positive",
+      "query": "After deleting a hosted Wordcell site, how long can the public URL remain stale, and does reading the worker directly have the same delay?",
+      "relevantPaths": [
+        "plans/hosted-site-publication.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "plans/hosted-site-publication.md",
+          "sourceSha256": "74b01d08dea607a846bfb1b84be0b738b6b394964602a750a3c75dfc0dd40e27",
+          "lineStart": 176,
+          "lineEnd": 177,
+          "quote": "Deletes and republishes propagate in\n  ≤60s; a direct read of the worker returns 404 immediately after delete.",
+          "anchors": [
+            "Deletes and republishes propagate in",
+            "≤60s",
+            "worker returns 404 immediately after delete"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d04",
+      "split": "development",
+      "caseType": "positive",
+      "query": "When is it justified to extract another shared package, and may that package import one of its consumer products?",
+      "relevantPaths": [
+        "notes/repository-seams.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "notes/repository-seams.md",
+          "sourceSha256": "efdbe0f3d5bb01a9bda32672b3b097715d4cfa4ec80bec71c260c264d25b40e1",
+          "lineStart": 20,
+          "lineEnd": 20,
+          "quote": "Extract another shared package only after two concrete consumers need the same stable, product-neutral interface; this package never imports a consumer product.",
+          "anchors": [
+            "two concrete consumers",
+            "same stable, product-neutral interface",
+            "never imports a consumer product"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dn01",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "What rotation interval and overlap period were chosen for Wordcell hosted-publication capability tokens?",
+      "relevantPaths": [],
+      "goldEvidence": []
+    },
+    {
+      "id": "dn02",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "What percentage of hosted Wordcell publishes failed in each region during the last production month?",
+      "relevantPaths": [],
+      "goldEvidence": []
+    },
+    {
+      "id": "dn03",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "What accuracy did the evidence-obedience experiment measure separately for Spanish and Japanese notes?",
+      "relevantPaths": [],
+      "goldEvidence": []
+    },
+    {
+      "id": "dn04",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "Which named employee is designated to approve an exception to the two-consumer rule for extracting shared packages?",
+      "relevantPaths": [],
+      "goldEvidence": []
+    },
+    {
+      "id": "c01",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "In the omission test, did the models treat an unspecified field as false or as unknown, and how many affected items did they classify that way?",
+      "relevantPaths": [
+        "notes/evidence-obedience.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "notes/evidence-obedience.md",
+          "sourceSha256": "725a41b817e2c64ef84c1cd1c96fe955e5e9e94c90e4b949df7fca384d3144a1",
+          "lineStart": 52,
+          "lineEnd": 54,
+          "quote": "Both models placed all 40 affected items in \"cannot be determined\" and none in\n\"does not qualify\", with the hint given and withheld alike. Absence is read as\nunknown, not as a negative claim.",
+          "anchors": [
+            "all 40 affected items",
+            "\"cannot be determined\"",
+            "and none in",
+            "\"does not qualify\"",
+            "unknown, not as a negative claim"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c02",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "If removing a workflow listener fails after the workflow body also failed, which error reaches the caller, including when the rejection value is false or zero?",
+      "relevantPaths": [
+        "plans/effect-workflow-and-publication-owners.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "sourceSha256": "1541f4b4fb02d2b69f39dc9d203e412717e211f48426a9b6ccbf9455c038d997",
+          "lineStart": 41,
+          "lineEnd": 41,
+          "quote": "Listener removal remains a required finally operation; its failure supersedes the body exactly, including undefined, null, zero, false and Error reasons.",
+          "anchors": [
+            "Listener removal remains a required finally operation",
+            "its failure supersedes the body exactly",
+            "undefined, null, zero, false and Error reasons"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c03",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "Can the PeopleBlade connector expose message bodies or local file paths, or is it restricted to a different view of the contacts?",
+      "relevantPaths": [
+        "notes/agent-platform-readiness.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "notes/agent-platform-readiness.md",
+          "sourceSha256": "f97547cc8c4de5f138a80e3586278a95a48af8a4e86a76fb61dbcaf92d482005",
+          "lineStart": 38,
+          "lineEnd": 38,
+          "quote": "the connector reads only the owner's synced cloud projection. Notes, message bodies, archives, raw source records, and local paths never sync and never appear in responses.",
+          "anchors": [
+            "only the owner's synced cloud projection",
+            "message bodies",
+            "local paths never sync and never appear in responses"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c04",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "Why did the Wordcell rename leave the old kb directory and catalog/context markers in existing vaults?",
+      "relevantPaths": [
+        "plans/wordcell-rename-and-oh-seam.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "sourceSha256": "9fd024af15b1826449ea5ec280698a8371319568a1788f1174d27d8126f8c904",
+          "lineStart": 48,
+          "lineEnd": 52,
+          "quote": "The vault format keeps its `kb` names: the\n   `kb/` directory convention, `kb:catalog` and `kb:context` markers,\n   `kb_catalog`, `kb://` URIs, and the `KB_*` shell conventions identify files\n   that many repositories already commit; renaming them is a data migration\n   with no product benefit.",
+          "anchors": [
+            "`kb/` directory convention",
+            "`kb:catalog` and `kb:context` markers",
+            "many repositories already commit",
+            "renaming them is a data migration",
+            "with no product benefit"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c05",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "While several agents edit notes in parallel, which KB check should each lane use, and which command shows the complete generated inventory?",
+      "relevantPaths": [
+        "index.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "index.md",
+          "sourceSha256": "07035c1547b4d390dbeaf363d8260a752d67f8d8fd03b24f85ae92dbd105014c",
+          "lineStart": 28,
+          "lineEnd": 28,
+          "quote": "Parallel note lanes use `bun run kb:check:lane`; render the complete disposable inventory with `bun run kb:catalog`.",
+          "anchors": [
+            "Parallel note lanes use `bun run kb:check:lane`",
+            "complete disposable inventory with `bun run kb:catalog`"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c06",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "Where should repository rationale and history live, and why is the root skills directory not that store?",
+      "relevantPaths": [
+        "scopes/repository--cdb4ee2aea69.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "scopes/repository--cdb4ee2aea69.md",
+          "sourceSha256": "e363531f267956809f28b478a5db060399527d47926bc927182280ddc45b165c",
+          "lineStart": 17,
+          "lineEnd": 17,
+          "quote": "The local `kb/` vault owns pull-based rationale, history, evidence, maintained synthesis, plans, and relationships. The root `skills/` directory remains package source, not repository memory.",
+          "anchors": [
+            "The local `kb/` vault owns pull-based rationale, history",
+            "root `skills/` directory remains package source, not repository memory"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c07",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "In the shipped Supermemory importer, which parts of a note does its change fingerprint cover, and what can a rerun report?",
+      "relevantPaths": [
+        "plans/supermemory-competitive-launch.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "plans/supermemory-competitive-launch.md",
+          "sourceSha256": "18b9cf7026e61c7719bbd20cc814855b0347df58b234e5a02cb86f65db622b5e",
+          "lineStart": 936,
+          "lineEnd": 937,
+          "quote": "an `import_digest` over the title, owned fields, and text,\n  so a rerun creates, updates, skips, or reports a conflict.",
+          "anchors": [
+            "`import_digest` over the title, owned fields, and text",
+            "a rerun creates, updates, skips, or reports a conflict"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c08",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "When a Soundfish job is waiting for user action, is its credit reservation released, and can a tombstone with an open reservation be discarded?",
+      "relevantPaths": [
+        "notes/agent-platform-readiness.md"
+      ],
+      "goldEvidence": [
+        {
+          "path": "notes/agent-platform-readiness.md",
+          "sourceSha256": "f97547cc8c4de5f138a80e3586278a95a48af8a4e86a76fb61dbcaf92d482005",
+          "lineStart": 70,
+          "lineEnd": 70,
+          "quote": "`action_required` keeps the hold until the provider resolves; a 404 at the service records `lapsed` instead of retrying forever. Tombstones with open holds are never forgotten.",
+          "anchors": [
+            "`action_required` keeps the hold until the provider resolves",
+            "Tombstones with open holds are never forgotten"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -67,8 +67,10 @@ See [the design](design.md) and [agent workflow](agent-workflow.md).
 If all you need is local retrieval, standalone QMD may be the shorter path.
 Choose Wordcell when maintaining and reusing the knowledge around retrieval
 matters too. We have not published a head-to-head retrieval-quality or latency
-benchmark. The [payload demonstration](evidence.md) compares full-note and
-snippet handoffs within Wordcell.
+benchmark. The [measured evidence](evidence.md) compares full-note and
+snippet handoffs within Wordcell, and older snippets with selected passages:
+on eight sealed questions, passages held the labeled answer for six and
+snippets for one.
 
 ## Consider Basic Memory for an MCP-centered knowledge graph
 

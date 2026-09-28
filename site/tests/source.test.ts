@@ -198,10 +198,11 @@ test("public payload numbers stay tied to the committed evidence receipt", async
     if (typeof value !== "number" || !Number.isSafeInteger(value)) throw new TypeError("Evidence byte count must be an integer.");
     return new Intl.NumberFormat("en-US").format(value);
   };
-  for (const text of [home, readme]) {
-    expect(text).toContain(number(aggregate.packedBytes));
-    expect(text).toContain(number(aggregate.selectedFullNoteBytes));
-    expect(text).toContain("80% fewer UTF-8 bytes");
-  }
+  expect(readme).toContain(number(aggregate.packedBytes));
+  expect(readme).toContain(number(aggregate.selectedFullNoteBytes));
+  expect(readme).toContain("80% fewer UTF-8 bytes");
+  // The home page renders these figures from the receipt instead of typing them.
+  expect(home).toContain('from "../wordcell/handoff-evidence"');
+  expect(home).not.toContain(number(aggregate.packedBytes));
   expect(Math.round(Number(aggregate.reductionVsSelectedFullNotesPercent))).toBe(80);
 });

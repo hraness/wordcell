@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.24.0
+
+Search can return the part of each note that answers the question. With
+`--selected-passage`, every result carries one exact excerpt from the note,
+with its line range and section headings, chosen locally without a model. On
+eight sealed questions, these excerpts held the labeled answer for six; the
+older snippets held it for one.
 
 - `wordcell search --selected-passage` attaches one local source excerpt to
   each result: the paragraph or 512-byte window with the most distinct query
@@ -8,6 +14,13 @@
   headings. Ranking, scores, snippets, and reranker input do not change. The
   SDK and the MCP `search` tool accept `selectedPassage: true`, and both
   context packers include the excerpt.
+- [Measured evidence](https://github.com/hraness/wordcell/blob/main/docs/evidence.md#measure-whether-excerpts-contain-the-answer)
+  publishes the excerpt study with its frozen questions, recorded results, a
+  190-request reranking comparison, and a script that reproduces it against
+  the public `kb/` corpus.
+- The home, benchmarks, and comparison pages show Wordcell's measured results
+  together: answer-bearing excerpts, SciFact reranking, and handoff size, each
+  read from its recorded report.
 - The [benchmarks page](https://wordcell.io/benchmarks) now leads with Oh's
   500-question LongMemEval-S study, where Oh semantic retrieval scored 88.87%
   and BM25 86.13%; on the measure Oh named before the run, its interval does

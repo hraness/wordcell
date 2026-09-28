@@ -4,6 +4,7 @@ import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server"
 
 import { longDate } from "../../../wordcell/format";
 import { mem0CheckedOn, mem0Pages } from "../../../wordcell/mem0-sources";
+import { WordcellEvidenceStrip } from "../../../wordcell/evidence-strip";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
 
 const pageTitle = "Wordcell vs Mem0: agent notes or per-user app memory";
@@ -154,6 +155,8 @@ export default function CompareMem0() {
         summary="Wordcell has published no head-to-head comparison with Mem0 of retrieval quality or speed."
       >
         <p>Mem0 publishes its own figures on its <a href="https://mem0.ai/research">research page</a>. The benchmarks page shows them with their sources, as published figures rather than a matched ranking.</p>
+        <p>Wordcell does publish measurements against its own baseline, each with raw results you can rerun:</p>
+        <WordcellEvidenceStrip />
         <ul className="wordcell-limits">
           <li><a href="/benchmarks#comparisons">Benchmarks: matched and published comparisons</a></li>
           <li><a href="/docs/comparisons">The comparisons guide covers Supermemory, Zep, and more</a></li>

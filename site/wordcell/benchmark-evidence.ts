@@ -31,6 +31,9 @@ export const scifactStudy = {
 } as const satisfies BenchmarkStudy;
 
 export const scifactDetails = {
+  queries: questions,
+  exactFirstResults: exact,
+  rerankedFirstResults: reranked,
   additionalFirstResults: reranked - exact,
   baselineNdcg: report.combined300.metrics.ndcg5.baseline.toFixed(4),
   rerankedNdcg: report.combined300.metrics.ndcg5.reranked.toFixed(4),

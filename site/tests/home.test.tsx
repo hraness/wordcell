@@ -257,6 +257,8 @@ test("the 404 page leads with the install action inside the site header", async 
 test("keeps decision claims, privacy limits, and evidence visible with the quick start", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html).toContain("80% fewer UTF-8 bytes");
+  expect(html).toContain("12,126 bytes");
+  expect(html).toContain("60,584 bytes");
   expect(html).toContain("Payload size, not accuracy");
   expect(html).toContain("hosted Jev reranking");
   expect(html).toContain("removed in version 0.21.0");

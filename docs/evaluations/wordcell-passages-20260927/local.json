@@ -1,0 +1,1390 @@
+{
+  "schema": "hraness.wordcell.passage-evidence.v1",
+  "tool": {
+    "name": "@hraness/wordcell",
+    "version": "0.23.0",
+    "bun": "1.3.14"
+  },
+  "corpus": {
+    "notes": 12,
+    "bytes": 132819,
+    "identitySha256": "433a1ac444650c0ebdb8e9143a6d442d866df90ebda7e935691f50b257cfc8a3",
+    "files": [
+      {
+        "path": "index.md",
+        "bytes": 1733,
+        "sha256": "07035c1547b4d390dbeaf363d8260a752d67f8d8fd03b24f85ae92dbd105014c"
+      },
+      {
+        "path": "notes/agent-platform-readiness.md",
+        "bytes": 11704,
+        "sha256": "f97547cc8c4de5f138a80e3586278a95a48af8a4e86a76fb61dbcaf92d482005"
+      },
+      {
+        "path": "notes/documentation-ownership.md",
+        "bytes": 1178,
+        "sha256": "20c88b31783d6526a8e7b8687875ab4deff94b41bef9f07ec876b1c631f54b52"
+      },
+      {
+        "path": "notes/evidence-obedience.md",
+        "bytes": 4779,
+        "sha256": "725a41b817e2c64ef84c1cd1c96fe955e5e9e94c90e4b949df7fca384d3144a1"
+      },
+      {
+        "path": "notes/publishing.md",
+        "bytes": 1627,
+        "sha256": "3c58d874cb2e4df975b53be3d105b9047a20fff04b6d0e6555c96e15cbcf4c8d"
+      },
+      {
+        "path": "notes/repository-seams.md",
+        "bytes": 1657,
+        "sha256": "efdbe0f3d5bb01a9bda32672b3b097715d4cfa4ec80bec71c260c264d25b40e1"
+      },
+      {
+        "path": "plans/effect-workflow-and-publication-owners.md",
+        "bytes": 6972,
+        "sha256": "1541f4b4fb02d2b69f39dc9d203e412717e211f48426a9b6ccbf9455c038d997"
+      },
+      {
+        "path": "plans/hosted-site-publication.md",
+        "bytes": 11341,
+        "sha256": "74b01d08dea607a846bfb1b84be0b738b6b394964602a750a3c75dfc0dd40e27"
+      },
+      {
+        "path": "plans/static-site-publication.md",
+        "bytes": 5839,
+        "sha256": "0eda8bfcf8be2946bf8c77da87ba609f2ca81ee67800e5683826014214462135"
+      },
+      {
+        "path": "plans/supermemory-competitive-launch.md",
+        "bytes": 70754,
+        "sha256": "18b9cf7026e61c7719bbd20cc814855b0347df58b234e5a02cb86f65db622b5e"
+      },
+      {
+        "path": "plans/wordcell-rename-and-oh-seam.md",
+        "bytes": 13464,
+        "sha256": "9fd024af15b1826449ea5ec280698a8371319568a1788f1174d27d8126f8c904"
+      },
+      {
+        "path": "scopes/repository--cdb4ee2aea69.md",
+        "bytes": 1771,
+        "sha256": "e363531f267956809f28b478a5db060399527d47926bc927182280ddc45b165c"
+      }
+    ]
+  },
+  "configuration": {
+    "mode": "exact",
+    "limit": 5,
+    "graph": false,
+    "history": false,
+    "selectedPassage": true,
+    "maxTextBytes": 512
+  },
+  "semanticSessionOpens": 0,
+  "splits": [
+    {
+      "split": "development",
+      "cases": 4,
+      "positives": 4,
+      "candidateMisses": 0,
+      "snippetAnswers": 2,
+      "passageAnswers": 2,
+      "gained": 0,
+      "lost": 0,
+      "snippetBytes": 10227,
+      "passageBytes": 9217
+    },
+    {
+      "split": "development-control",
+      "cases": 4,
+      "positives": 0,
+      "candidateMisses": 0,
+      "snippetAnswers": 0,
+      "passageAnswers": 0,
+      "gained": 0,
+      "lost": 0,
+      "snippetBytes": 7308,
+      "passageBytes": 7012
+    },
+    {
+      "split": "confirmation",
+      "cases": 8,
+      "positives": 8,
+      "candidateMisses": 1,
+      "snippetAnswers": 1,
+      "passageAnswers": 6,
+      "gained": 5,
+      "lost": 0,
+      "snippetBytes": 20480,
+      "passageBytes": 17701
+    }
+  ],
+  "cases": [
+    {
+      "id": "d01",
+      "split": "development",
+      "caseType": "positive",
+      "query": "Why should a runbook link to a test instead of copying its rules into the prose?",
+      "relevantPaths": [
+        "notes/documentation-ownership.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": true,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            70,
+            72
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            752,
+            760
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "notes/documentation-ownership.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": true,
+          "passageStatus": "selected",
+          "passageLines": [
+            19,
+            19
+          ],
+          "passageBytes": 292,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 4,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            116,
+            123
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "notes/evidence-obedience.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            40,
+            46
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "d02",
+      "split": "development",
+      "caseType": "positive",
+      "query": "If I leave a note out of a published site, what happens to links pointing at it, and can its name or file location still leak?",
+      "relevantPaths": [
+        "plans/static-site-publication.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            111,
+            115
+          ],
+          "passageBytes": 200,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "plans/static-site-publication.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            89,
+            95
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            139,
+            147
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            364,
+            374
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            27,
+            30
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "d03",
+      "split": "development",
+      "caseType": "positive",
+      "query": "After deleting a hosted Wordcell site, how long can the public URL remain stale, and does reading the worker directly have the same delay?",
+      "relevantPaths": [
+        "plans/hosted-site-publication.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            123,
+            132
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "plans/static-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            37,
+            46
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            121,
+            127
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            225,
+            234
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            29,
+            31
+          ],
+          "passageBytes": 356,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "d04",
+      "split": "development",
+      "caseType": "positive",
+      "query": "When is it justified to extract another shared package, and may that package import one of its consumer products?",
+      "relevantPaths": [
+        "notes/repository-seams.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": true,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "notes/repository-seams.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": true,
+          "passageStatus": "selected",
+          "passageLines": [
+            20,
+            20
+          ],
+          "passageBytes": 364,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            701,
+            708
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            195,
+            202
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 499,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            142,
+            148
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            69,
+            71
+          ],
+          "passageBytes": 325,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "dn01",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "What rotation interval and overlap period were chosen for Wordcell hosted-publication capability tokens?",
+      "relevantPaths": [],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            597,
+            604
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 297,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            123,
+            132
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            21,
+            21
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "dn02",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "What percentage of hosted Wordcell publishes failed in each region during the last production month?",
+      "relevantPaths": [],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            93,
+            102
+          ],
+          "passageBytes": 429,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            38,
+            44
+          ],
+          "passageBytes": 358,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            597,
+            604
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            21,
+            21
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            41,
+            41
+          ],
+          "passageBytes": 387,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "dn03",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "What accuracy did the evidence-obedience experiment measure separately for Spanish and Japanese notes?",
+      "relevantPaths": [],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "notes/evidence-obedience.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            40,
+            46
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            431,
+            439
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "dn04",
+      "split": "development-control",
+      "caseType": "near-miss-negative",
+      "query": "Which named employee is designated to approve an exception to the two-consumer rule for extracting shared packages?",
+      "relevantPaths": [],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            115,
+            123
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            78,
+            85
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            21,
+            21
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "notes/evidence-obedience.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            60,
+            65
+          ],
+          "passageBytes": 354,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "notes/repository-seams.md",
+          "relevant": false,
+          "snippetBytes": 355,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            20,
+            20
+          ],
+          "passageBytes": 364,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c01",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "In the omission test, did the models treat an unspecified field as false or as unknown, and how many affected items did they classify that way?",
+      "relevantPaths": [
+        "notes/evidence-obedience.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": true,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "notes/evidence-obedience.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": true,
+          "passageStatus": "selected",
+          "passageLines": [
+            49,
+            54
+          ],
+          "passageBytes": 309,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            420,
+            427
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            142,
+            148
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            70,
+            72
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/static-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            59,
+            64
+          ],
+          "passageBytes": 310,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c02",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "If removing a workflow listener fails after the workflow body also failed, which error reaches the caller, including when the rejection value is false or zero?",
+      "relevantPaths": [
+        "plans/effect-workflow-and-publication-owners.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            41,
+            41
+          ],
+          "passageBytes": 387,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            458,
+            466
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            142,
+            148
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "notes/evidence-obedience.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            49,
+            54
+          ],
+          "passageBytes": 309,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            53,
+            60
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c03",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "Can the PeopleBlade connector expose message bodies or local file paths, or is it restricted to a different view of the contacts?",
+      "relevantPaths": [
+        "notes/agent-platform-readiness.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            37,
+            39
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            549,
+            557
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            139,
+            147
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            38,
+            44
+          ],
+          "passageBytes": 358,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/static-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            16,
+            26
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c04",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "Why did the Wordcell rename leave the old kb directory and catalog/context markers in existing vaults?",
+      "relevantPaths": [
+        "plans/wordcell-rename-and-oh-seam.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            46,
+            55
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            861,
+            870
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            43,
+            45
+          ],
+          "passageBytes": 482,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            164,
+            171
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/static-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            37,
+            46
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c05",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "While several agents edit notes in parallel, which KB check should each lane use, and which command shows the complete generated inventory?",
+      "relevantPaths": [
+        "index.md"
+      ],
+      "candidateMiss": true,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            865,
+            874
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            37,
+            39
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "notes/evidence-obedience.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            40,
+            46
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "notes/documentation-ownership.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            21,
+            21
+          ],
+          "passageBytes": 236,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            121,
+            127
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c06",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "Where should repository rationale and history live, and why is the root skills directory not that store?",
+      "relevantPaths": [
+        "scopes/repository--cdb4ee2aea69.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "scopes/repository--cdb4ee2aea69.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            15,
+            17
+          ],
+          "passageBytes": 410,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 2,
+          "path": "notes/repository-seams.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            26,
+            28
+          ],
+          "passageBytes": 200,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            504,
+            513
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "plans/wordcell-rename-and-oh-seam.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            175,
+            181
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            58,
+            58
+          ],
+          "passageBytes": 59,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c07",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "In the shipped Supermemory importer, which parts of a note does its change fingerprint cover, and what can a rerun report?",
+      "relevantPaths": [
+        "plans/supermemory-competitive-launch.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": false,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            1064,
+            1074
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 2,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            87,
+            91
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            25,
+            27
+          ],
+          "passageBytes": 383,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "notes/evidence-obedience.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            56,
+            58
+          ],
+          "passageBytes": 212,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "plans/static-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            59,
+            64
+          ],
+          "passageBytes": 310,
+          "passageContainsAnswer": false
+        }
+      ]
+    },
+    {
+      "id": "c08",
+      "split": "confirmation",
+      "caseType": "positive",
+      "query": "When a Soundfish job is waiting for user action, is its credit reservation released, and can a tombstone with an open reservation be discarded?",
+      "relevantPaths": [
+        "notes/agent-platform-readiness.md"
+      ],
+      "candidateMiss": false,
+      "snippetContainsAnswer": false,
+      "passageContainsAnswer": true,
+      "candidates": [
+        {
+          "rank": 1,
+          "path": "notes/agent-platform-readiness.md",
+          "relevant": true,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            70,
+            70
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": true
+        },
+        {
+          "rank": 2,
+          "path": "plans/supermemory-competitive-launch.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            597,
+            604
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 3,
+          "path": "plans/effect-workflow-and-publication-owners.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            47,
+            47
+          ],
+          "passageBytes": 424,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 4,
+          "path": "plans/hosted-site-publication.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            191,
+            198
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        },
+        {
+          "rank": 5,
+          "path": "notes/evidence-obedience.md",
+          "relevant": false,
+          "snippetBytes": 512,
+          "snippetContainsAnswer": false,
+          "passageStatus": "selected",
+          "passageLines": [
+            40,
+            46
+          ],
+          "passageBytes": 512,
+          "passageContainsAnswer": false
+        }
+      ]
+    }
+  ]
+}

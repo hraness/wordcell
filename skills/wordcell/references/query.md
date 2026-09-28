@@ -54,7 +54,7 @@ returned:
 ```sh
 wordcell context packages/parser/src/index.ts --root "$KB_ROOT" --repo "$KB_REPO"
 wordcell search "why parser retries stop" --root "$KB_ROOT" --mode exact \
-  --history --repo "$KB_REPO" --json
+  --selected-passage --history --repo "$KB_REPO" --json
 wordcell backlinks notes/parser-contract --root "$KB_ROOT" --json
 wordcell history notes/parser-contract --root "$KB_ROOT" \
   --repo "$KB_REPO" --json
@@ -80,7 +80,7 @@ read them with the commands under
   resolve note identities before returning authored relationships.
 - A whole-vault structural question or relationship audit: use `wordcell graph --json`,
   then inspect the smallest relevant portion of its canonical output.
-- A phrase, identity, or concept expressed with different vocabulary: use `wordcell search`, whose default hybrid result preserves exact and QMD evidence separately.
+- A phrase, identity, or concept expressed with different vocabulary: use `wordcell search`, whose default hybrid result preserves exact and QMD evidence separately. Add `--selected-passage` when you will read, quote, or act on results: each hit then carries the note's best-matching excerpt with its line range and section headings.
 - Direct provenance for one note or repository path: use `wordcell history` or
   `wordcell history search` without changing authored metadata or links.
 - Recent captures awaiting maintained disposition: use the advisory `wordcell inbox` view.
@@ -96,7 +96,7 @@ wordcell backlinks "Plan title or path" --root "$KB_ROOT" --json
 wordcell links "Plan title or path" --root "$KB_ROOT" --direction both --depth 1 --limit 25 --json
 wordcell relation list "Plan title or path" --root "$KB_ROOT" --json
 wordcell graph --root "$KB_ROOT" --json
-wordcell search "why browser capture uses the current tab" --root "$KB_ROOT" --json
+wordcell search "why browser capture uses the current tab" --root "$KB_ROOT" --selected-passage --json
 wordcell search "accepted ingestion plans" --root "$KB_ROOT" --where type=plan --where status=accepted --tag ingestion --json
 wordcell search "notes/write-path" --root "$KB_ROOT" --mode exact --no-history --json
 wordcell history "notes/write-path" --root "$KB_ROOT" --repo "$KB_REPO" --json

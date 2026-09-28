@@ -52,14 +52,14 @@ Wordcell keeps the record in Markdown files you own, rebuilds every index from t
 The CLI and TypeScript SDK run with Bun. Install the versioned GitHub archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.24.0/hraness-wordcell-0.24.0.tgz
 wordcell --help
 ```
 
 Prefer npm? The same release is [mirrored there](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.23.0
+npm install --global --ignore-scripts @hraness/wordcell@0.24.0
 wordcell --help
 ```
 
@@ -101,7 +101,7 @@ After trying the CLI, install the public Agent Skill into a compatible agent,
 such as Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.23.0 --skill wordcell
+bunx skills add hraness/wordcell#v0.24.0 --skill wordcell
 ```
 
 Then ask:
@@ -247,6 +247,14 @@ keeps one vault current on several machines.
 
 ## Evidence and comparisons
 
+On eight questions sealed before the passage selector was finished,
+`wordcell search --selected-passage` returned an excerpt holding the labeled
+answer for **6 of 8**, versus **1 of 8** for the older search snippets, at the
+same 512-byte limit and from the same retrieved notes. It runs locally with no
+model. The corpus is small and consists of Wordcell's own notes; containing the
+answer is not the same as an agent answering correctly.
+[Method, raw results, and reproduction](https://github.com/hraness/wordcell/blob/main/docs/evidence.md#measure-whether-excerpts-contain-the-answer).
+
 In a four-query example over a seven-note public vault, packed search snippets
 used **80% fewer UTF-8 bytes** than passing the same matching notes in full:
 12,126 versus 60,584 bytes. This measures context payload size, not tokenizer
@@ -269,8 +277,8 @@ covers Markdown alone, QMD, Basic Memory, Obsidian, static publishing tools,
 Supermemory, Mem0, and Zep using their own documentation. Choose the smallest
 workflow that meets your needs.
 
-The [benchmarks page](https://wordcell.io/benchmarks) shows the payload and
-SciFact results beside the published results of Oh, the embedded memory
+The [benchmarks page](https://wordcell.io/benchmarks) shows the excerpt, payload,
+and SciFact results beside the published results of Oh, the embedded memory
 framework, each with its source data and limits. On all 500 LongMemEval-S
 questions, Oh semantic retrieval scored 88.87% and BM25 86.13% with the same
 reader and budget; on the measure Oh named before the run, its interval does
@@ -324,7 +332,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.23.0/hraness-wordcell-0.23.0.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.24.0/hraness-wordcell-0.24.0.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph

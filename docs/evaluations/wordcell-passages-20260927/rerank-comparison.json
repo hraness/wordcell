@@ -1,0 +1,702 @@
+{
+  "schema": "hraness.wordcell.passage-rerank-comparison.v1",
+  "model": "jev-1.13.0",
+  "provider": "TypeSafe",
+  "recordedOn": "2026-09-27",
+  "sourceRevision": "3a27fe51ae2644c53afb03e8687ac99985940061",
+  "design": "Both arms rerank the same exact-search candidate windows of at most five notes with the production TypeSafe adapter and identical query, title, and path inputs. Only the candidate text differs: the legacy snippet clipped to 512 UTF-8 bytes, or the locally selected passage of at most 512 bytes.",
+  "accounting": {
+    "plannedCalls": 190,
+    "attemptedCalls": 190,
+    "requestBytes": 222932,
+    "completedCalls": 190,
+    "successfulCalls": 190,
+    "knownInputTokens": 102556,
+    "knownOutputTokens": 4180,
+    "unknownUsageAttempts": 0,
+    "usageComplete": true,
+    "maxConcurrent": 4,
+    "retries": 0
+  },
+  "limitations": [
+    "Twenty hand-authored cases in one small public corpus; no general quality claim.",
+    "Both arms share the fixed exact candidate window; absent relevant notes remain retrieval misses.",
+    "Existing production applyRerank preserves identity hits before score ordering. No candidates are removed.",
+    "Scores and >0.5 diagnostic threshold are uncalibrated model relevance judgments, not answer correctness.",
+    "One execution per arm with alternating order; no reliability, variance, or production latency estimate.",
+    "The earlier confirmation set is reused here after local selection testing; this is not a fresh end-to-end holdout."
+  ],
+  "summaries": [
+    {
+      "group": "new-development",
+      "cases": 8,
+      "positiveCases": 4,
+      "negativeControls": 4,
+      "arms": [
+        {
+          "arm": "baseline",
+          "primaryHitsAt1": 4,
+          "primaryHitsAt3": 4,
+          "meanReciprocalRank": 1,
+          "negativeControlsWithScoresAboveHalf": 0
+        },
+        {
+          "arm": "passage",
+          "primaryHitsAt1": 3,
+          "primaryHitsAt3": 4,
+          "meanReciprocalRank": 0.8333333333333333,
+          "negativeControlsWithScoresAboveHalf": 0
+        }
+      ]
+    },
+    {
+      "group": "original-development",
+      "cases": 4,
+      "positiveCases": 4,
+      "negativeControls": 0,
+      "arms": [
+        {
+          "arm": "baseline",
+          "primaryHitsAt1": 3,
+          "primaryHitsAt3": 4,
+          "meanReciprocalRank": 0.875,
+          "negativeControlsWithScoresAboveHalf": 0
+        },
+        {
+          "arm": "passage",
+          "primaryHitsAt1": 4,
+          "primaryHitsAt3": 4,
+          "meanReciprocalRank": 1,
+          "negativeControlsWithScoresAboveHalf": 0
+        }
+      ]
+    },
+    {
+      "group": "confirmation",
+      "cases": 8,
+      "positiveCases": 8,
+      "negativeControls": 0,
+      "arms": [
+        {
+          "arm": "baseline",
+          "primaryHitsAt1": 7,
+          "primaryHitsAt3": 7,
+          "meanReciprocalRank": 0.875,
+          "negativeControlsWithScoresAboveHalf": 0
+        },
+        {
+          "arm": "passage",
+          "primaryHitsAt1": 7,
+          "primaryHitsAt3": 7,
+          "meanReciprocalRank": 0.875,
+          "negativeControlsWithScoresAboveHalf": 0
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "d01",
+      "group": "new-development",
+      "relevantPaths": [
+        "notes/documentation-ownership.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.05,
+            "plans/supermemory-competitive-launch": 0.04,
+            "notes/documentation-ownership": 0.94,
+            "plans/hosted-site-publication": 0.15,
+            "notes/evidence-obedience": 0.63
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.24,
+            "plans/supermemory-competitive-launch": 0.32,
+            "notes/documentation-ownership": 0.95,
+            "plans/hosted-site-publication": 0.04,
+            "notes/evidence-obedience": 0.8
+          }
+        }
+      }
+    },
+    {
+      "id": "d02",
+      "group": "new-development",
+      "relevantPaths": [
+        "plans/static-site-publication.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 3,
+          "probabilities": {
+            "plans/wordcell-rename-and-oh-seam": 0.07,
+            "plans/static-site-publication": 0.37,
+            "plans/hosted-site-publication": 0.57,
+            "plans/supermemory-competitive-launch": 0.08,
+            "notes/agent-platform-readiness": 0.47
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/wordcell-rename-and-oh-seam": 0.08,
+            "plans/static-site-publication": 0.37,
+            "plans/hosted-site-publication": 0.36,
+            "plans/supermemory-competitive-launch": 0.07,
+            "notes/agent-platform-readiness": 0.15
+          }
+        }
+      }
+    },
+    {
+      "id": "d03",
+      "group": "new-development",
+      "relevantPaths": [
+        "plans/hosted-site-publication.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/hosted-site-publication": 0.36,
+            "plans/static-site-publication": 0.2,
+            "plans/wordcell-rename-and-oh-seam": 0.14,
+            "plans/supermemory-competitive-launch": 0.03,
+            "plans/effect-workflow-and-publication-owners": 0.04
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/hosted-site-publication": 0.52,
+            "plans/static-site-publication": 0.14,
+            "plans/wordcell-rename-and-oh-seam": 0.14,
+            "plans/supermemory-competitive-launch": 0.09,
+            "plans/effect-workflow-and-publication-owners": 0.07
+          }
+        }
+      }
+    },
+    {
+      "id": "d04",
+      "group": "new-development",
+      "relevantPaths": [
+        "notes/repository-seams.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/repository-seams": 0.96,
+            "plans/supermemory-competitive-launch": 0.12,
+            "plans/hosted-site-publication": 0.16,
+            "plans/wordcell-rename-and-oh-seam": 0.1,
+            "plans/effect-workflow-and-publication-owners": 0.08
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/repository-seams": 0.96,
+            "plans/supermemory-competitive-launch": 0.08,
+            "plans/hosted-site-publication": 0.06,
+            "plans/wordcell-rename-and-oh-seam": 0.15,
+            "plans/effect-workflow-and-publication-owners": 0.28
+          }
+        }
+      }
+    },
+    {
+      "id": "dn01",
+      "group": "new-development",
+      "relevantPaths": [],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.03,
+            "plans/hosted-site-publication": 0.18,
+            "notes/agent-platform-readiness": 0.21
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.1,
+            "plans/hosted-site-publication": 0.34,
+            "notes/agent-platform-readiness": 0.18
+          }
+        }
+      }
+    },
+    {
+      "id": "dn02",
+      "group": "new-development",
+      "relevantPaths": [],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/hosted-site-publication": 0.1,
+            "plans/wordcell-rename-and-oh-seam": 0.05,
+            "plans/supermemory-competitive-launch": 0.04,
+            "notes/agent-platform-readiness": 0.04,
+            "plans/effect-workflow-and-publication-owners": 0.03
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/hosted-site-publication": 0.13,
+            "plans/wordcell-rename-and-oh-seam": 0.07,
+            "plans/supermemory-competitive-launch": 0.05,
+            "notes/agent-platform-readiness": 0.05,
+            "plans/effect-workflow-and-publication-owners": 0.05
+          }
+        }
+      }
+    },
+    {
+      "id": "dn03",
+      "group": "new-development",
+      "relevantPaths": [],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "notes/evidence-obedience": 0.44,
+            "plans/supermemory-competitive-launch": 0.03
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "notes/evidence-obedience": 0.16,
+            "plans/supermemory-competitive-launch": 0.05
+          }
+        }
+      }
+    },
+    {
+      "id": "dn04",
+      "group": "new-development",
+      "relevantPaths": [],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.04,
+            "plans/wordcell-rename-and-oh-seam": 0.08,
+            "notes/agent-platform-readiness": 0.07,
+            "notes/evidence-obedience": 0.02,
+            "notes/repository-seams": 0.2
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.03,
+            "plans/wordcell-rename-and-oh-seam": 0.06,
+            "notes/agent-platform-readiness": 0.05,
+            "notes/evidence-obedience": 0.04,
+            "notes/repository-seams": 0.11
+          }
+        }
+      }
+    },
+    {
+      "id": "p1_citation_truth",
+      "group": "original-development",
+      "relevantPaths": [
+        "notes/evidence-obedience.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.09,
+            "notes/evidence-obedience": 0.49,
+            "plans/supermemory-competitive-launch": 0.1,
+            "notes/documentation-ownership": 0.09,
+            "plans/effect-workflow-and-publication-owners": 0.04
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.07,
+            "notes/evidence-obedience": 0.96,
+            "plans/supermemory-competitive-launch": 0.19,
+            "notes/documentation-ownership": 0.11,
+            "plans/effect-workflow-and-publication-owners": 0.04
+          }
+        }
+      }
+    },
+    {
+      "id": "p2_pending_directory_sync",
+      "group": "original-development",
+      "relevantPaths": [
+        "plans/effect-workflow-and-publication-owners.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.06,
+            "plans/effect-workflow-and-publication-owners": 0.89,
+            "notes/agent-platform-readiness": 0.04,
+            "plans/wordcell-rename-and-oh-seam": 0.08,
+            "notes/repository-seams": 0.06
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 2,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.05,
+            "plans/effect-workflow-and-publication-owners": 0.04,
+            "notes/agent-platform-readiness": 0.04,
+            "plans/wordcell-rename-and-oh-seam": 0.04,
+            "notes/repository-seams": 0.04
+          }
+        }
+      }
+    },
+    {
+      "id": "p3_node_hosted_projection",
+      "group": "original-development",
+      "relevantPaths": [
+        "notes/publishing.md",
+        "plans/hosted-site-publication.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/hosted-site-publication": 0.81,
+            "plans/static-site-publication": 0.47,
+            "plans/wordcell-rename-and-oh-seam": 0.09,
+            "notes/agent-platform-readiness": 0.14,
+            "notes/publishing": 0.7
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/hosted-site-publication": 0.94,
+            "plans/static-site-publication": 0.61,
+            "plans/wordcell-rename-and-oh-seam": 0.29,
+            "notes/agent-platform-readiness": 0.2,
+            "notes/publishing": 0.96
+          }
+        }
+      }
+    },
+    {
+      "id": "p4_safe_graph_rebuild",
+      "group": "original-development",
+      "relevantPaths": [
+        "plans/wordcell-rename-and-oh-seam.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/wordcell-rename-and-oh-seam": 0.96,
+            "plans/supermemory-competitive-launch": 0.18,
+            "notes/agent-platform-readiness": 0.11,
+            "plans/hosted-site-publication": 0.19,
+            "plans/effect-workflow-and-publication-owners": 0.2
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/wordcell-rename-and-oh-seam": 0.22,
+            "plans/supermemory-competitive-launch": 0.07,
+            "notes/agent-platform-readiness": 0.12,
+            "plans/hosted-site-publication": 0.13,
+            "plans/effect-workflow-and-publication-owners": 0.14
+          }
+        }
+      }
+    },
+    {
+      "id": "c01",
+      "group": "confirmation",
+      "relevantPaths": [
+        "notes/evidence-obedience.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/evidence-obedience": 0.96,
+            "plans/supermemory-competitive-launch": 0.1,
+            "plans/wordcell-rename-and-oh-seam": 0.05,
+            "notes/agent-platform-readiness": 0.06,
+            "plans/static-site-publication": 0.05
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/evidence-obedience": 0.97,
+            "plans/supermemory-competitive-launch": 0.13,
+            "plans/wordcell-rename-and-oh-seam": 0.04,
+            "notes/agent-platform-readiness": 0.06,
+            "plans/static-site-publication": 0.06
+          }
+        }
+      }
+    },
+    {
+      "id": "c02",
+      "group": "confirmation",
+      "relevantPaths": [
+        "plans/effect-workflow-and-publication-owners.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/effect-workflow-and-publication-owners": 0.93,
+            "plans/supermemory-competitive-launch": 0.03,
+            "plans/wordcell-rename-and-oh-seam": 0.06,
+            "notes/evidence-obedience": 0.06,
+            "plans/hosted-site-publication": 0.03
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/effect-workflow-and-publication-owners": 0.68,
+            "plans/supermemory-competitive-launch": 0.02,
+            "plans/wordcell-rename-and-oh-seam": 0.03,
+            "notes/evidence-obedience": 0.02,
+            "plans/hosted-site-publication": 0.02
+          }
+        }
+      }
+    },
+    {
+      "id": "c03",
+      "group": "confirmation",
+      "relevantPaths": [
+        "notes/agent-platform-readiness.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.08,
+            "plans/supermemory-competitive-launch": 0.04,
+            "plans/hosted-site-publication": 0.04,
+            "plans/wordcell-rename-and-oh-seam": 0.03,
+            "plans/static-site-publication": 0.03
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.96,
+            "plans/supermemory-competitive-launch": 0.04,
+            "plans/hosted-site-publication": 0.04,
+            "plans/wordcell-rename-and-oh-seam": 0.08,
+            "plans/static-site-publication": 0.03
+          }
+        }
+      }
+    },
+    {
+      "id": "c04",
+      "group": "confirmation",
+      "relevantPaths": [
+        "plans/wordcell-rename-and-oh-seam.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/wordcell-rename-and-oh-seam": 0.96,
+            "plans/supermemory-competitive-launch": 0.14,
+            "plans/effect-workflow-and-publication-owners": 0.2,
+            "plans/hosted-site-publication": 0.29,
+            "plans/static-site-publication": 0.86
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/wordcell-rename-and-oh-seam": 0.62,
+            "plans/supermemory-competitive-launch": 0.07,
+            "plans/effect-workflow-and-publication-owners": 0.11,
+            "plans/hosted-site-publication": 0.06,
+            "plans/static-site-publication": 0.07
+          }
+        }
+      }
+    },
+    {
+      "id": "c05",
+      "group": "confirmation",
+      "relevantPaths": [
+        "index.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.65,
+            "notes/agent-platform-readiness": 0.21,
+            "notes/evidence-obedience": 0.16,
+            "notes/documentation-ownership": 0.43,
+            "plans/wordcell-rename-and-oh-seam": 0.08
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": null,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.26,
+            "notes/agent-platform-readiness": 0.12,
+            "notes/evidence-obedience": 0.21,
+            "notes/documentation-ownership": 0.28,
+            "plans/wordcell-rename-and-oh-seam": 0.12
+          }
+        }
+      }
+    },
+    {
+      "id": "c06",
+      "group": "confirmation",
+      "relevantPaths": [
+        "scopes/repository--cdb4ee2aea69.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "scopes/repository--cdb4ee2aea69": 0.96,
+            "notes/repository-seams": 0.3,
+            "plans/supermemory-competitive-launch": 0.07,
+            "plans/wordcell-rename-and-oh-seam": 0.11,
+            "plans/effect-workflow-and-publication-owners": 0.1
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "scopes/repository--cdb4ee2aea69": 0.67,
+            "notes/repository-seams": 0.46,
+            "plans/supermemory-competitive-launch": 0.1,
+            "plans/wordcell-rename-and-oh-seam": 0.18,
+            "plans/effect-workflow-and-publication-owners": 0.08
+          }
+        }
+      }
+    },
+    {
+      "id": "c07",
+      "group": "confirmation",
+      "relevantPaths": [
+        "plans/supermemory-competitive-launch.md"
+      ],
+      "arms": {
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.19,
+            "notes/agent-platform-readiness": 0.05,
+            "plans/effect-workflow-and-publication-owners": 0.06,
+            "notes/evidence-obedience": 0.05,
+            "plans/static-site-publication": 0.04
+          }
+        },
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "plans/supermemory-competitive-launch": 0.36,
+            "notes/agent-platform-readiness": 0.05,
+            "plans/effect-workflow-and-publication-owners": 0.04,
+            "notes/evidence-obedience": 0.04,
+            "plans/static-site-publication": 0.04
+          }
+        }
+      }
+    },
+    {
+      "id": "c08",
+      "group": "confirmation",
+      "relevantPaths": [
+        "notes/agent-platform-readiness.md"
+      ],
+      "arms": {
+        "passage": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.92,
+            "plans/supermemory-competitive-launch": 0.04,
+            "plans/effect-workflow-and-publication-owners": 0.08,
+            "plans/hosted-site-publication": 0.05,
+            "notes/evidence-obedience": 0.03
+          }
+        },
+        "baseline": {
+          "status": "ready",
+          "primaryRank": 1,
+          "probabilities": {
+            "notes/agent-platform-readiness": 0.15,
+            "plans/supermemory-competitive-launch": 0.03,
+            "plans/effect-workflow-and-publication-owners": 0.06,
+            "plans/hosted-site-publication": 0.04,
+            "notes/evidence-obedience": 0.03
+          }
+        }
+      }
+    }
+  ]
+}

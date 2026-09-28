@@ -4,7 +4,9 @@ import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server"
 import { BenchmarkComparison } from "../../wordcell/benchmark-comparison";
 import { scifactDetails, scifactStudy } from "../../wordcell/benchmark-evidence";
 import { grouped, longDate, prose, signed } from "../../wordcell/format";
+import { WordcellEvidenceStrip } from "../../wordcell/evidence-strip";
 import { formatBytes, handoffEvidence } from "../../wordcell/handoff-evidence";
+import { passageDetails, passageMissSentence, passageStudy } from "../../wordcell/passage-evidence";
 import {
   longMemEvalArms,
   longMemEvalComparison,
@@ -34,7 +36,7 @@ import { publishedRelease } from "../publication";
 
 const pageTitle = "Wordcell and Oh benchmarks, with their limits";
 const pageDescription =
-  `Wordcell’s payload and reranking measurements, Oh’s ${longMemEvalFacts.questions}-question LongMemEval-S study, LoCoMo run and Supermemory pilot, each with its source and limits.`;
+  `Wordcell’s excerpt, payload, and reranking results, Oh’s ${longMemEvalFacts.questions}-question LongMemEval-S study, LoCoMo run and Supermemory pilot, each with its source and limits.`;
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -85,15 +87,22 @@ export default function Benchmarks() {
         heading="Wordcell measurements with source data"
         headingId="hero-title"
         name=""
-        summary={`Each Wordcell and Oh result here links its raw data; none ranks Wordcell against another memory tool. Wordcell measures context handoff size and reranking quality; the embedded Oh kernel’s memory benchmarks are reported as Oh’s results. On all ${grouped(longMemEvalFacts.questions)} LongMemEval-S questions, Oh semantic retrieval scored ${semanticArm?.percent}% and BM25 ${bm25Arm?.percent}%${longMemEvalComparison.tieNotRuledOut ? "; on the measure Oh named before the run, its interval does not rule out a tie" : ""}.`}
+        summary={`Each Wordcell and Oh result here links its raw data; none ranks Wordcell against another memory tool. Wordcell measures whether excerpts contain the answer, context handoff size, and reranking quality; the embedded Oh kernel’s memory benchmarks are reported as Oh’s results. On all ${grouped(longMemEvalFacts.questions)} LongMemEval-S questions, Oh semantic retrieval scored ${semanticArm?.percent}% and BM25 ${bm25Arm?.percent}%${longMemEvalComparison.tieNotRuledOut ? "; on the measure Oh named before the run, its interval does not rule out a tie" : ""}.`}
       />
 
       <MarketingSection
-        heading="Wordcell’s own measurements: payload size and reranking"
+        heading="Wordcell’s own measurements: excerpts, payload size, and reranking"
         headingId="wordcell-title"
         id="wordcell"
-        summary={`Across ${prose(handoffEvidence.queries)} queries on a ${prose(handoffEvidence.noteCount)}-note public vault, packed snippets used ${handoffEvidence.reductionPercent}% fewer UTF-8 bytes than the same notes in full.`}
+        summary={`On ${prose(passageDetails.questions)} sealed questions, selected passages held the labeled answer for ${prose(passageDetails.passageAnswers)} and older snippets for ${prose(passageDetails.snippetAnswers)}. Across ${prose(handoffEvidence.queries)} queries on a ${prose(handoffEvidence.noteCount)}-note public vault, packed snippets used ${handoffEvidence.reductionPercent}% fewer UTF-8 bytes than the same notes in full.`}
       >
+        <WordcellEvidenceStrip />
+
+        <BenchmarkComparison study={passageStudy}>
+          <p>Both excerpts come from the same retrieved notes at the same 512-byte limit. Passages gained {passageDetails.gained} answers and lost {passageDetails.lost}. {passageMissSentence} Across those notes, passages used {formatBytes(passageDetails.passageBytes)} and snippets {formatBytes(passageDetails.snippetBytes)}.</p>
+          <p>A separate run gave TypeSafe’s Jev reranker passages instead of snippets. It put the answer note first for {passageDetails.rerankFirstWithPassages} of {passageDetails.rerankPositives} answerable questions with passages and {passageDetails.rerankFirstWithSnippets} with snippets, over {grouped(passageDetails.rerankRequests)} requests, so reranker input is unchanged.</p>
+        </BenchmarkComparison>
+
         <div aria-label={`Packed snippets: ${formatBytes(handoffEvidence.packedBytes)}. The same notes in full: ${formatBytes(handoffEvidence.fullNoteBytes)}.`} className="wordcell-bytes" role="group">
           <div className="wordcell-bytes-row">
             <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar wordcell-bytes-bar--primary" style={{ inlineSize: `${handoffShare}%` }} /></div>
@@ -252,6 +261,7 @@ export default function Benchmarks() {
         summary="Each Wordcell and Oh figure on this page comes from a file you can read and a procedure you can rerun. The published figures in the table link their sources."
       >
         <ul className="wordcell-limits">
+          <li><a href="/docs/evidence#measure-whether-excerpts-contain-the-answer">Selected passages: method, raw results, and reproduction</a></li>
           <li><a href="/docs/evidence">Context handoff: method, raw results, and reproduction</a></li>
           <li><a href="/docs/reranking#evidence-and-limits">Reranking study: evidence and limits</a></li>
           <li><a href={ohLinks.longMemEvalResult}>Oh’s LongMemEval-S result on all {grouped(longMemEvalFacts.questions)} questions</a> and <a href={ohLongMemEvalPost}>Oh’s write-up of it</a></li>

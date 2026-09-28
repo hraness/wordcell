@@ -22,6 +22,10 @@ import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { siteDescription } from "./site-description";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactDetails, scifactStudy } from "../wordcell/benchmark-evidence";
+import { SELECTED_PASSAGE_RELEASE, WordcellEvidenceStrip } from "../wordcell/evidence-strip";
+import { prose } from "../wordcell/format";
+import { formatBytes, handoffEvidence } from "../wordcell/handoff-evidence";
+import { passageDetails, passageMissSentence, passageStudy } from "../wordcell/passage-evidence";
 import { SetupLinks } from "../wordcell/setup-links";
 import { AGENT_MEMORY_RELEASE } from "../wordcell/setup-prompt";
 
@@ -317,12 +321,17 @@ wordcell note create notes/parser-contract \\
           />
 
           <MarketingSection
-            heading="More relevant results near the top"
+            heading="The answer in the excerpt, not just the match"
             headingId="memory-title"
             id="evidence"
-            summary={`In a public retrieval study, adding hosted Jev reranking put a relevant source first for ${scifactDetails.additionalFirstResults} more queries. Compare the same questions and candidate windows.`}
+            summary={`On sealed questions, Wordcell’s selected passages held the answer ${passageDetails.passageAnswers} times out of ${passageDetails.questions}, against ${passageDetails.snippetAnswers} for older snippets. Optional hosted Jev reranking put a relevant source first for ${scifactDetails.additionalFirstResults} more of ${scifactDetails.queries} public queries.`}
           >
             <span aria-hidden="true" id="memory" style={{ position: "absolute" }} />
+            <WordcellEvidenceStrip />
+            <BenchmarkComparison study={passageStudy}>
+              <p>Both excerpts come from the same retrieved notes. Passages gained {passageDetails.gained} answers and lost {passageDetails.lost}. {passageMissSentence}</p>
+              <p>Passages are chosen locally with <code>--selected-passage</code>, available in Wordcell {SELECTED_PASSAGE_RELEASE} and later. Ranking, scores, and reranker input stay the same.</p>
+            </BenchmarkComparison>
             <BenchmarkComparison study={scifactStudy}>
               <p>nDCG at five rose from {scifactDetails.baselineNdcg} to {scifactDetails.rerankedNdcg}. It improved for {scifactDetails.improved} queries and regressed for {scifactDetails.regressed}. For {scifactDetails.missing} queries, neither candidate window contained a judged relevant source.</p>
               <p>Reranking sends bounded query and candidate context to a paid provider. It is optional; the local search path runs without it. QMD, Letta, and Supermemory were not evaluated under this protocol.</p>
@@ -334,16 +343,16 @@ wordcell note create notes/parser-contract \\
             heading="A smaller first context handoff"
             headingId="evidence-title"
             id="context"
-            summary="Packed snippets carry what matched, not the whole note. Across four queries on a seven-note public vault, snippets used 80% fewer UTF-8 bytes than the same notes in full."
+            summary={`Packed snippets carry what matched, not the whole note. Across ${prose(handoffEvidence.queries)} queries on a ${prose(handoffEvidence.noteCount)}-note public vault, snippets used ${Math.round(handoffEvidence.reductionPercent)}% fewer UTF-8 bytes than the same notes in full.`}
           >
-            <div aria-label="Packed snippets: 12,126 bytes. The same notes in full: 60,584 bytes." className="wordcell-bytes" role="group">
+            <div aria-label={`Packed snippets: ${formatBytes(handoffEvidence.packedBytes)}. The same notes in full: ${formatBytes(handoffEvidence.fullNoteBytes)}.`} className="wordcell-bytes" role="group">
               <div className="wordcell-bytes-row">
-                <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar wordcell-bytes-bar--primary" style={{ inlineSize: "20%" }} /></div>
-                <p className="wordcell-bytes-meta"><strong>12,126 bytes</strong><span>Packed snippets</span></p>
+                <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar wordcell-bytes-bar--primary" style={{ inlineSize: `${Math.round((handoffEvidence.packedBytes / handoffEvidence.fullNoteBytes) * 100)}%` }} /></div>
+                <p className="wordcell-bytes-meta"><strong>{formatBytes(handoffEvidence.packedBytes)}</strong><span>Packed snippets</span></p>
               </div>
               <div className="wordcell-bytes-row">
                 <div className="wordcell-bytes-track"><div className="wordcell-bytes-bar" style={{ inlineSize: "100%" }} /></div>
-                <p className="wordcell-bytes-meta"><strong>60,584 bytes</strong><span>The same notes in full</span></p>
+                <p className="wordcell-bytes-meta"><strong>{formatBytes(handoffEvidence.fullNoteBytes)}</strong><span>The same notes in full</span></p>
               </div>
             </div>
             <p className="install-note">Payload size, not accuracy; savings depend on your notes and query. <a href={`${repository}/blob/main/docs/evidence.md`}>Method, raw results, and reproduction</a>.</p>

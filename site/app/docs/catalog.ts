@@ -136,8 +136,8 @@ export const docCatalog = [
   },
   {
     slug: "evidence",
-    title: "Measure a smaller context handoff",
-    summary: "The reproducible payload study with its inputs, byte counts, and stated limits.",
+    title: "Measure the context an agent receives",
+    summary: "Reproducible studies of handoff size and whether excerpts contain the answer, with inputs, results, and limits.",
     quadrant: "explanation",
   },
   {
