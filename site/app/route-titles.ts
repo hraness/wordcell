@@ -1,7 +1,7 @@
 /**
- * Page titles and share-card headings for routes outside the docs catalog.
- * Each page's metadata and its opengraph-image read the same entry, so the
- * image alt text always matches the page title.
+ * Page titles and share-card headlines for routes outside the docs catalog.
+ * Each page's metadata reads `title`; its share card in `social.ts` reads
+ * `card` as the headline.
  */
 export const routeTitles = {
   home: { title: "Wordcell: Markdown memory for coding agents", card: "Markdown memory for coding agents" },

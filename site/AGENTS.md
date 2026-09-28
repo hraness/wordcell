@@ -9,6 +9,8 @@
 
 # Guidelines
 
+- Share images come only from the shared `@hraness/web-discovery` social-image template, rendered from the single `defineSocialImageSite` declaration in `app/social.ts` (real app icon, brand theme, registry description). Routes pass page copy only (`headline`, `description`, `eyebrow`) and take alt text from `socialImageAlt`; never add per-site drawing code.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 **This is NOT the Next.js you know**

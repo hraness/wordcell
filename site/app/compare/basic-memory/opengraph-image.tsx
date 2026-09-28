@@ -1,9 +1,16 @@
-import { routeTitles } from "../../route-titles";
-import { wordcellSocialImage } from "../../social-image";
+import {
+  createSiteSocialImageResponse,
+  socialImageAlt,
+  socialImageContentType,
+  socialImageSize,
+} from "@hraness/web-discovery/social-image";
 
-export { contentType, size } from "../../social-image";
-export const alt = routeTitles.compareBasicMemory.title;
+import { socialPages, wordcellSocialSite } from "../../social";
+
+export const alt = socialImageAlt(wordcellSocialSite, socialPages.compareBasicMemory);
+export const contentType = socialImageContentType;
+export const size = socialImageSize;
 
 export default function OpengraphImage() {
-  return wordcellSocialImage(routeTitles.compareBasicMemory.card);
+  return createSiteSocialImageResponse(wordcellSocialSite, socialPages.compareBasicMemory);
 }

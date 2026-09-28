@@ -16,30 +16,58 @@ import { metadata as supermemoryMetadata } from "../app/compare/supermemory/page
 import * as supermemoryImage from "../app/compare/supermemory/opengraph-image";
 import { metadata as migrateMetadata } from "../app/migrate/supermemory/page";
 import * as migrateImage from "../app/migrate/supermemory/opengraph-image";
-import { docCatalog, docTitle } from "../app/docs/catalog";
+import * as docImage from "../app/docs/[slug]/opengraph-image";
+import { docCatalog, docOverview, docTitle } from "../app/docs/catalog";
+import { docSocialPage, socialPages, wordcellSocialSite } from "../app/social";
+import { socialImageAlt } from "@hraness/web-discovery/social-image/card";
 
 const routes = [
-  ["/", homeMetadata, homeImage],
-  ["/developers", developersMetadata, developersImage],
-  ["/benchmarks", benchmarksMetadata, benchmarksImage],
-  ["/docs", docsMetadata, docsImage],
-  ["/compare/basic-memory", basicMemoryMetadata, basicMemoryImage],
-  ["/compare/mem0", mem0Metadata, mem0Image],
-  ["/compare/supermemory", supermemoryMetadata, supermemoryImage],
-  ["/migrate/supermemory", migrateMetadata, migrateImage],
+  ["/", homeMetadata, homeImage, undefined],
+  ["/developers", developersMetadata, developersImage, socialPages.developers],
+  ["/benchmarks", benchmarksMetadata, benchmarksImage, socialPages.benchmarks],
+  ["/docs", docsMetadata, docsImage, socialPages.docs],
+  ["/compare/basic-memory", basicMemoryMetadata, basicMemoryImage, socialPages.compareBasicMemory],
+  ["/compare/mem0", mem0Metadata, mem0Image, socialPages.compareMem0],
+  ["/compare/supermemory", supermemoryMetadata, supermemoryImage, socialPages.compareSupermemory],
+  ["/migrate/supermemory", migrateMetadata, migrateImage, socialPages.migrateSupermemory],
 ] as const;
 
-test("each route's share image alt text matches its page title", () => {
-  for (const [, metadata, image] of routes) {
-    expect(metadata.title).toBe(image.alt);
+test("the site declares one share card with its real app icon and brand", () => {
+  expect(wordcellSocialSite.name).toBe("Wordcell");
+  expect(wordcellSocialSite.domain).toBe("wordcell.io");
+  expect(wordcellSocialSite.icon?.kind).toBe("app");
+  expect(wordcellSocialSite.icon?.src).toStartWith("data:image/png;base64,");
+  expect(Object.keys(wordcellSocialSite.theme ?? {}).sort()).toEqual(["accent", "background", "foreground", "muted"]);
+  for (const color of Object.values(wordcellSocialSite.theme ?? {})) expect(color).toMatch(/^#[0-9A-F]{6}$/i);
+});
+
+test("each route renders the shared template from the site declaration", () => {
+  for (const [, metadata, image, page] of routes) {
+    expect(metadata.title).toBeString();
+    expect(image.alt).toBe(socialImageAlt(wordcellSocialSite, page));
     expect(image.size).toEqual({ height: 630, width: 1200 });
     expect(image.contentType).toBe("image/png");
   }
   expect(new Set(routes.map(([, , image]) => image.alt)).size).toBe(routes.length);
+  expect(docImage.size).toEqual({ height: 630, width: 1200 });
+  expect(docImage.contentType).toBe("image/png");
 });
 
-test("every documentation route resolves a card title", () => {
+test("the home card is a PNG of the declared size", async () => {
+  const response = homeImage.default();
+  expect(response.headers.get("content-type")).toBe("image/png");
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  expect([...bytes.slice(1, 4)].map((byte) => String.fromCharCode(byte)).join("")).toBe("PNG");
+  const view = new DataView(bytes.buffer);
+  expect([view.getUint32(16), view.getUint32(20)]).toEqual([1200, 630]);
+});
+
+test("every documentation route passes its own page copy", () => {
   expect(docTitle("overview")).toBe("Wordcell overview");
-  for (const entry of docCatalog) expect(docTitle(entry.slug)).toBe(entry.title);
+  for (const entry of [docOverview, ...docCatalog]) {
+    expect(docTitle(entry.slug)).toBe(entry.title);
+    expect(docSocialPage(entry.slug)).toEqual({ description: entry.summary, eyebrow: "Documentation", headline: entry.title });
+  }
   expect(docTitle("missing")).toBeNull();
+  expect(docSocialPage("missing")).toBe(socialPages.docs);
 });

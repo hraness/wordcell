@@ -12,10 +12,11 @@ import {
   type FeedDiscovery,
   type SearchSite,
 } from "@hraness/web-discovery";
+import { socialImageAlt } from "@hraness/web-discovery/social-image/card";
 import { isArticleIndexable, type ArticleIsoDate } from "@hraness/design-kit";
 
 import { siteDescription } from "../site-description";
-import { routeTitles } from "../route-titles";
+import { wordcellSocialSite } from "../social";
 import {
   articlePath,
   BLOG_DESCRIPTION,
@@ -42,7 +43,7 @@ export const hraness = {
 
 /** The site's social card, reused as each post's representative image. */
 const socialImage = {
-  alt: routeTitles.home.title,
+  alt: socialImageAlt(wordcellSocialSite),
   contentType: "image/png",
   height: 630,
   path: "/opengraph-image",
