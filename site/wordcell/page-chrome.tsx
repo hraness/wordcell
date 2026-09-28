@@ -3,8 +3,6 @@ import { MarketingPage, MarketingSiteHeader } from "@hraness/design-kit/react/se
 import { ThemeMenuButton } from "@hraness/design-kit/react";
 import { AskAiAboutThis } from "@hraness/ui";
 
-import { WordcellContentFooter } from "../app/site-footer";
-
 const repository = "https://github.com/hraness/wordcell";
 
 const navigation = [
@@ -49,8 +47,6 @@ export function WordcellPageChrome({ path, action, children }: Readonly<{ path: 
       </main>
 
       <AskAiAboutThis className="ask-ai" url={`https://wordcell.io${path}`} />
-
-      <WordcellContentFooter />
     </div>
   );
 }

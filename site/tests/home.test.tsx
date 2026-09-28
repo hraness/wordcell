@@ -59,7 +59,7 @@ test("every public route has the in-flow content footer above the network footer
 
 test("every public route links the benchmarks page from the content footer", async () => {
   for (const Page of await publicRoutes()) {
-    const html = renderToStaticMarkup(Page);
+    const html = renderToStaticMarkup(<RootLayout>{Page}</RootLayout>);
     const footer = html.slice(html.indexOf('data-hraness-marketing="footer"'));
     expect(footer).toContain('href="/benchmarks"');
   }

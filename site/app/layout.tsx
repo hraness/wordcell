@@ -66,7 +66,7 @@ export default function RootLayout({
           <ThemeColorSync />
           {children}
           <WordcellContentFooter />
-          <HranessSiteFooter mailingList={{ kind: "none" }} support={supportProfile} />
+          <HranessSiteFooter placement="flow" mailingList={{ kind: "none" }} support={supportProfile} />
           <FoilController />
         </DesignPaletteProvider>
       </body>
