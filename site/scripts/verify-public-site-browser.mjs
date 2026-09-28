@@ -63,7 +63,9 @@ try {
         const state = await page.evaluate(() => {
           const footer = document.querySelector("#hraness-site-footer");
           return {
-            overflow: document.documentElement.scrollWidth > innerWidth,
+            overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, document.querySelector("main")?.getBoundingClientRect().right ?? 0) > innerWidth + 1,
+            viewportWidth: innerWidth,
+            bodyWidth: document.body.scrollWidth,
             heading: document.querySelector("h1")?.textContent?.trim(),
             theme: document.documentElement.dataset.theme,
             footerPositions: [footer, footer?.querySelector(".hraness-site-footer__inner")].map(element => element ? getComputedStyle(element).position : null),
@@ -71,8 +73,10 @@ try {
           };
         });
         const name = `${width}-${theme}-${route === "/" ? "home" : route.slice(1).replaceAll("/", "_")}`;
-        await page.screenshot({ path: resolve(artifacts, `${name}.png`), fullPage: true, animations: "disabled" });
-        await writeFile(resolve(artifacts, `${name}.json`), JSON.stringify({ route, state, errors }, null, 2));
+        const screenshot = await page.screenshot({ path: resolve(artifacts, `${name}.png`), fullPage: true, animations: "disabled" });
+        const screenshotWidth = screenshot.readUInt32BE(16);
+        await writeFile(resolve(artifacts, `${name}.json`), JSON.stringify({ route, state, screenshotWidth, errors }, null, 2));
+        assert.equal(screenshotWidth, width, `${route}: full-page screenshot width`);
         assert.ok(!state.overflow, `${route}: horizontal overflow at ${width}`);
         assert.ok(state.heading || config.minimalRoutes?.includes(route), `${route}: missing heading`);
         assert.equal(state.theme, config.forcedTheme ?? theme, `${route}: system appearance`);

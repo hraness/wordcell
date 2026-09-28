@@ -192,7 +192,10 @@ a { text-underline-offset: 0.2em; }
 /* Wordcell document pages render README Markdown. */
 .document-page {
   margin: 0 auto;
+  width: 100%;
+  min-width: 0;
   max-width: 72ch;
+  overflow-wrap: anywhere;
   padding: 3rem 1.25rem 5rem;
 }
 .document-page h1, .document-page h2, .document-page h3 { text-wrap: balance; line-height: 1.2; }
