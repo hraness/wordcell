@@ -10,7 +10,6 @@ import {
 } from "@hraness/design-kit/react/server";
 import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 
-import { WordcellContentFooter } from "../../site-footer";
 import { blogArticles, findArticle } from "../articles";
 import { blogContents, blogHtml } from "../blog.generated";
 import { articleMetadata, articleSchema } from "../discovery";
@@ -68,7 +67,6 @@ export default async function BlogPostPage(
         </MarketingArticle>
       </main>
       <AskAiAboutThis className="ask-ai" url={`https://wordcell.io/blog/${article.slug}`} />
-      <WordcellContentFooter />
     </>
   );
 }

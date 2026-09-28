@@ -144,10 +144,6 @@ body > .document-page {
   flex: 1;
 }
 
-.network-footer {
-  --hraness-site-footer-measure: var(--hraness-marketing-measure);
-}
-
 .ask-ai {
   inline-size: min(100%, var(--hraness-marketing-measure));
   margin-inline: auto;

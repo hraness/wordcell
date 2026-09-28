@@ -3,7 +3,6 @@ import { AskAiAboutThis } from "@hraness/ui";
 import { ArticleIndex } from "@hraness/design-kit/react/server";
 import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 
-import { WordcellContentFooter } from "../site-footer";
 import {
   articlePath,
   BLOG_DESCRIPTION,
@@ -62,7 +61,6 @@ export default function BlogIndex() {
         />
       </main>
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io/blog" />
-      <WordcellContentFooter />
     </>
   );
 }

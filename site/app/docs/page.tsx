@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { AskAiAboutThis } from "@hraness/ui";
 
 import { publishedRelease } from "../publication";
-import { WordcellContentFooter } from "../site-footer";
 import { readmeVersion } from "../readme.generated";
 import { docCatalog, docQuadrants } from "./catalog";
 
@@ -89,7 +88,6 @@ wordcell --help`}</code></pre>
         ))}
       </main>
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />
-      <WordcellContentFooter />
     </>
   );
 }

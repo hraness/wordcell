@@ -22,7 +22,6 @@ function TopicIcon({ slug }: Readonly<{ slug: WordcellIconName }>) {
 
 import { WordcellIcon, type WordcellIconName } from "../../wordcell/icons";
 import { publishedRelease } from "../publication";
-import { WordcellContentFooter } from "../site-footer";
 
 const releaseVersion = publishedRelease?.version;
 const repository = "https://github.com/hraness/wordcell";
@@ -361,8 +360,6 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
       </main>
 
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io/developers" />
-
-      <WordcellContentFooter />
     </div>
   );
 }

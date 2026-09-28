@@ -17,7 +17,6 @@ import { product, type PortfolioProductId } from "@hraness/design-kit/portfolio"
 import { AskAiAboutThis } from "@hraness/ui";
 
 import { publishedRelease } from "./publication";
-import { WordcellContentFooter } from "./site-footer";
 import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { siteDescription } from "./site-description";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
@@ -516,8 +515,6 @@ const hits = await session.search({ query: "parser contract", mode: "exact" });`
       </main>
 
       <AskAiAboutThis className="ask-ai" url="https://wordcell.io" />
-
-      <WordcellContentFooter />
     </div>
   );
 }

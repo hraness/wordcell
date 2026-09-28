@@ -3,6 +3,7 @@ import { getDesignPaletteTheme } from "@hraness/design-kit";
 import { DesignPaletteProvider, ThemeColorSync } from "@hraness/design-kit/react";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import { supportProfile } from "../../src/support-profile";
+import { WordcellContentFooter } from "./site-footer";
 import { siteDescription } from "./site-description";
 import { FoilController } from "./foil-controller";
 import "./globals.css";
@@ -64,9 +65,8 @@ export default function RootLayout({
         <DesignPaletteProvider defaultPreference={{ palette: "gruvbox", mode: "system" }}>
           <ThemeColorSync />
           {children}
-          <div className="network-footer">
-            <HranessSiteFooter placement="flow" mailingList={{ kind: "none" }} support={supportProfile} />
-          </div>
+          <WordcellContentFooter />
+          <HranessSiteFooter mailingList={{ kind: "none" }} support={supportProfile} />
           <FoilController />
         </DesignPaletteProvider>
       </body>

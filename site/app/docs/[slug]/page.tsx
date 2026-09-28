@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AskAiAboutThis } from "@hraness/ui";
 
-import { WordcellContentFooter } from "../../site-footer";
 import { docCatalog, docQuadrants, type DocQuadrant } from "../catalog";
 import { docHtml } from "../docs.generated";
 
@@ -90,7 +89,6 @@ export default async function DocPage(
         </p>
       </main>
       <AskAiAboutThis className="ask-ai" url={`https://wordcell.io/docs/${doc.slug}`} />
-      <WordcellContentFooter />
     </>
   );
 }
