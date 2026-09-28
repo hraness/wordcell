@@ -320,7 +320,7 @@ async function resolveEngineHosts(resolver, timeoutMs) {
       allowPrivateNetwork: false,
       timeoutMs
     });
-    if (addresses.length === 0 || addresses.length > MAX_ENGINE_ADDRESSES) {
+    if (addresses.length === 0) {
       throw new Error("metadata search engine DNS answer count is invalid");
     }
     const unique = new Map;
@@ -333,7 +333,7 @@ async function resolveEngineHosts(resolver, timeoutMs) {
       throw new Error("metadata search engine DNS answer is duplicated");
     return Object.freeze({
       hostname,
-      addresses: Object.freeze([...unique.values()].sort((left, right) => left.family - right.family || (left.address < right.address ? -1 : left.address > right.address ? 1 : 0)))
+      addresses: Object.freeze([...unique.values()].sort((left, right) => left.family - right.family || (left.address < right.address ? -1 : left.address > right.address ? 1 : 0)).slice(0, MAX_ENGINE_ADDRESSES))
     });
   }));
   return Object.freeze(resolved);

@@ -3,7 +3,7 @@ import {
   backfillSavedUrlMetadata,
   createRustMetadataSearchProvider,
   savedSourceProblem
-} from "./index-0eacgvpv.js";
+} from "./index-vm0ejnkz.js";
 import {
   main as main2
 } from "./index-qfqjfxaa.js";

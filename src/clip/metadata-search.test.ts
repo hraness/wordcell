@@ -1,3 +1,5 @@
+import fc from "fast-check";
+import { resolveSafeNetworkTarget } from "./network.js";
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   chmodSync,
@@ -303,6 +305,39 @@ process.stdout.write(JSON.stringify({
 
     for (const outcome of [empty, large, resultLimit, timeout]) {
       expectFailure(outcome, "invalid-request");
+    }
+  });
+
+  test("selects eight deterministic candidates from large validated DNS sets", async () => {
+    const fixture = executable(SUCCESS_SCRIPT.replace(
+      'process.stdout.write',
+      `for (const host of request.engine_hosts) {
+  if (host.addresses.length !== 8 || host.addresses.some((a, i) => a.address !== "93.184.216." + (10 + i))) process.exit(1);
+}
+process.stdout.write`,
+    ));
+    const addresses = Array.from({ length: 12 }, (_, i) => ({ address: `93.184.216.${10 + i}`, family: 4 as const }));
+    await fc.assert(fc.asyncProperty(fc.shuffledSubarray(addresses, { minLength: 12, maxLength: 12 }), async shuffled => {
+      const provider = createRustMetadataSearchProvider({ binaryPath: fixture.path, resolveNetworkTarget: async () => shuffled });
+      expect((await provider({ query: "large DNS", timeoutMs: 10_000 })).status).toBe("success");
+    }), { numRuns: 8 });
+  });
+
+  test("rejects unsafe DNS answers beyond the candidate limit before spawning", async () => {
+    const fixture = executable(SUCCESS_SCRIPT);
+    for (const unsafe of ["127.0.0.1", "10.0.0.1", "192.168.1.1", "93.184.216.99"]) {
+      const provider = createProductionMetadataSearchProvider({
+        binaryPath: fixture.path,
+        resolveNetworkTarget: (url, options) => resolveSafeNetworkTarget(url, {
+          ...options,
+          resolveHostname: async () => [
+            ...Array.from({ length: 12 }, (_, i) => ({ address: `93.184.216.${10 + i}`, family: 4 as const })),
+            { address: unsafe, family: 4 as const },
+          ],
+          getLocalNetworkAddresses: () => ["93.184.216.99"],
+        }),
+      });
+      expectFailure(await provider({ query: "unsafe tail" }), "unavailable");
     }
   });
 
