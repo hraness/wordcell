@@ -82,10 +82,10 @@ export default function Benchmarks() {
         boundary={status}
         className="wordcell-marketing-hero"
         eyebrow="Benchmarks"
-        heading="Each Wordcell and Oh result here links its raw data. None of them ranks Wordcell against another memory tool."
+        heading="Wordcell measurements with source data"
         headingId="hero-title"
         name=""
-        summary={`Wordcell’s own measurements cover the size of a context handoff and reranking quality. The Oh memory kernel that Wordcell embeds publishes its own memory benchmarks, reported here as Oh’s results, not Wordcell’s. On all ${grouped(longMemEvalFacts.questions)} LongMemEval-S questions, Oh semantic retrieval scored ${semanticArm?.percent}% and BM25 ${bm25Arm?.percent}%${longMemEvalComparison.tieNotRuledOut ? "; on the measure Oh named before the run, its interval does not rule out a tie" : ""}.`}
+        summary={`These source-linked Wordcell and Oh measurements do not rank Wordcell against another memory tool. Wordcell measures context handoff size and reranking quality; the embedded Oh kernel’s memory benchmarks are reported as Oh’s results. On all ${grouped(longMemEvalFacts.questions)} LongMemEval-S questions, Oh semantic retrieval scored ${semanticArm?.percent}% and BM25 ${bm25Arm?.percent}%${longMemEvalComparison.tieNotRuledOut ? "; on the measure Oh named before the run, its interval does not rule out a tie" : ""}.`}
       />
 
       <MarketingSection

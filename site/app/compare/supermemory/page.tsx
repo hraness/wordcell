@@ -89,10 +89,10 @@ export default function CompareSupermemory() {
         boundary={`Supermemory’s features and prices were checked on ${checkedOn}.`}
         className="wordcell-marketing-hero"
         eyebrow="Compare"
-        heading="Supermemory is a hosted memory engine for agents and the apps you build. Wordcell keeps your memory in Markdown files you own."
+        heading="Wordcell and Supermemory"
         headingId="hero-title"
         name=""
-        summary="Pick Supermemory to store memory for the users of a product you build. Pick Wordcell to keep your own agents’ memory as files you review in Git."
+        summary="Supermemory is a hosted memory engine for agents and the apps you build. Wordcell keeps your memory in Markdown files you own. Pick Supermemory to store memory for the users of a product you build; pick Wordcell to keep your own agents’ memory as files you review in Git."
       />
 
       <MarketingSection

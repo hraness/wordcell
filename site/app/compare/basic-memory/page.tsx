@@ -79,10 +79,10 @@ export default function CompareBasicMemory() {
         boundary={`Basic Memory’s features and license were checked on ${checkedOn}.`}
         className="wordcell-marketing-hero"
         eyebrow="Compare"
-        heading="Basic Memory indexes Markdown notes into a knowledge graph your assistant works through MCP tools. Wordcell adds typed relations, vault checks, and memory scoped to repository paths."
+        heading="Wordcell and Basic Memory"
         headingId="hero-title"
         name=""
-        summary="Pick Basic Memory if you want the assistant to write the structure through MCP tools. Pick Wordcell if you want links checked and notes tied to your code."
+        summary="Basic Memory indexes Markdown notes into a knowledge graph your assistant works through MCP tools. Wordcell adds typed relations, vault checks, and memory scoped to repository paths. Pick Basic Memory if you want the assistant to write the structure through MCP tools; pick Wordcell if you want links checked and notes tied to your code."
       />
 
       <MarketingSection

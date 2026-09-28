@@ -79,10 +79,10 @@ export default function CompareMem0() {
         boundary={`Mem0’s features and license were checked on ${checkedOn}.`}
         className="wordcell-marketing-hero"
         eyebrow="Compare"
-        heading="Mem0 extracts and stores memories about each user of your application. Wordcell keeps your own working memory in Markdown files you own."
+        heading="Wordcell and Mem0"
         headingId="hero-title"
         name=""
-        summary="Mem0 distills the messages you send into stored facts, managed or self-hosted. Wordcell notes hold what a person or agent chose to write."
+        summary="Mem0 extracts and stores memories about each user of your application. Wordcell keeps your own working memory in Markdown files you own. Mem0 distills the messages you send into stored facts, managed or self-hosted; Wordcell notes hold what a person or agent chose to write."
       />
 
       <MarketingSection
