@@ -29,7 +29,7 @@ assessment of those documented capabilities.
 | Approach | A good fit when you want… | What Wordcell adds or changes |
 | --- | --- | --- |
 | Claude Code memory (CLAUDE.md, `.claude/rules/`, auto memory) | Instructions and notes Claude Code loads on its own, with no setup. | A vault shared through Git that any MCP client or CLI user can search, link, and trace to commits. |
-| claude-mem | Automatic capture of each agent session, summarized by a model and injected into later sessions. | Notes that a person or agent chose to write, stored as Markdown you review, with exact search that needs no model. |
+| claude-mem | Automatic capture of each agent session, summarized by a model and injected into later sessions. | Notes that a person or agent chose to write, stored as Markdown you review. Writing and exact search need no model provider. |
 | Plain Markdown with your editor, Git, and `rg` | Portable files and a small toolset you already know. | Consistent metadata queries, derived backlinks and typed relations, repository-scope context, bounded agent handoffs, and a publication workflow. |
 | QMD | Local search over document collections, with keyword, vector, and hybrid retrieval. | Uses QMD as an optional retrieval layer, then joins results to current authored metadata, explicit graph context, and bounded Git provenance. |
 | Basic Memory | A Markdown knowledge graph that AI assistants can read and update through MCP. | A headless CLI/SDK workflow centered on repository scopes, code-mode composition, explicit Git evidence, and static publication. `wordcell mcp` serves a vault to local MCP clients. |
@@ -57,24 +57,26 @@ answer quality.
 ## Start with Claude Code memory if Claude Code is your only agent
 
 [Claude Code memory](https://code.claude.com/docs/en/memory) has two parts.
-CLAUDE.md files and rules under `.claude/rules/` hold instructions you write,
-and a rule can load only when Claude works on matching paths. Auto memory holds
-notes Claude writes itself under `~/.claude/projects/<project>/memory/`. It
-stays on one machine, and Claude loads the first 200 lines or 25KB of its
-`MEMORY.md` index each session. Both need no setup, and auto memory is on by
-default. Wordcell fits when the record should be reviewed and shared through
-Git, searched and linked rather than loaded as instructions, and read by agents
-other than Claude Code.
+CLAUDE.md files and rules under `.claude/rules/` hold instructions you write.
+A project CLAUDE.md is usually committed so the team shares it, and a rule can
+load only when Claude works on matching paths. Auto memory holds notes Claude
+writes itself under `~/.claude/projects/<project>/memory/`. It stays on one
+machine, and Claude loads the first 200 lines or 25KB of its `MEMORY.md` index
+each session. Both need no setup, and auto memory is on by default. Wordcell
+fits when notes should be searched and linked rather than loaded as
+instructions, when what an agent learns should be reviewed in Git rather than
+stay on one machine, and when agents other than Claude Code read the record.
 
 ## Use claude-mem to capture sessions automatically
 
 [claude-mem](https://github.com/thedotmack/claude-mem) records what an agent
 does in each session, compresses it with a model, and injects relevant context
 into later sessions. It supports Claude Code, Codex, Gemini, Copilot, and other
-agents, keeps its records in a local SQLite database with vector search, and
-asks nothing of you after installation. Wordcell keeps only what a person or
-agent chooses to write, as Markdown you review in Git, and its exact search
-runs without a model.
+agents. It stores sessions and summaries in a local SQLite database with
+full-text search, adds Chroma vector search, and runs without manual steps once
+installed. Its summaries need a model provider. Wordcell keeps only what a
+person or agent chooses to write, as Markdown you review in Git, and writing a
+note or running an exact search needs no model.
 
 ## Use QMD for retrieval, or use it inside Wordcell
 

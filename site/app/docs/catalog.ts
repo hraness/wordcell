@@ -107,7 +107,7 @@ export const docCatalog = [
   {
     slug: "platform-submission",
     title: "Hosted publication API",
-    summary: "The live wordcell.io publication surface: endpoints, MCP tools, and the verified evidence record.",
+    summary: "Endpoints, MCP tools, tokens, and limits for hosting a site built from selected notes on wordcell.io.",
     quadrant: "reference",
   },
   {

@@ -393,7 +393,7 @@ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 <thead><tr><th scope="col">Start with</th><th scope="col">When it fits</th><th scope="col">What Wordcell adds</th></tr></thead>
                 <tbody>
                   <tr><th scope="row">Claude Code memory (CLAUDE.md and auto memory)</th><td>Rules and preferences Claude Code loads automatically, with no setup.</td><td>A searchable vault reviewed in Git, with links and history, that Codex and Cursor can read too.</td></tr>
-                  <tr><th scope="row">claude-mem</th><td>You want every session recorded and summarized for you.</td><td>Only notes someone chose to write, kept as Markdown in Git, with exact search that needs no model.</td></tr>
+                  <tr><th scope="row">claude-mem</th><td>You want every session recorded and summarized for you.</td><td>Only notes someone chose to write, kept as Markdown in Git. Writing and exact search need no model.</td></tr>
                   <tr><th scope="row">Markdown + Git</th><td>A small set of notes you can navigate yourself.</td><td>Backlinks, typed relationships, metadata queries, and code-path context without moving the files.</td></tr>
                   <tr><th scope="row">QMD</th><td>Local document search with CLI, SDK, and agent integrations.</td><td>Current notes joined to authored relationships, AGENTS.md rules, Git evidence, and publishing.</td></tr>
                   <tr><th scope="row">Basic Memory</th><td>A local Markdown knowledge graph for AI conversations.</td><td>A workflow centered on repository paths, explicit edit rules, and code history.</td></tr>
