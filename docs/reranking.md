@@ -21,6 +21,9 @@ and at most 512 UTF-8 bytes of its snippet to TypeSafe. Use this command only fo
 vaults approved for that external processing. It does not send entire notes,
 Git history, or graph neighborhoods. Provider input-token charges apply.
 Omitting `--rerank` performs no hosted rerank calls or credential lookup.
+`--selected-passage` does not change what TypeSafe receives: the reranker still
+reads each candidate's snippet, and Wordcell chooses excerpts locally after
+ranking.
 
 An approved repository script is the reusable default for that vault: declare
 the provider in `kb:search` once and run the script for subsequent searches.

@@ -385,6 +385,20 @@ For a repository's ordinary KB searches, prefer its approved, pinned
 choice. Read returned notes before acting; model probabilities are ranking
 signals, not proof of truth. Explicit priority rules still run last.
 
+Add `--selected-passage` to attach one source excerpt to each returned note.
+Wordcell chooses it locally, without model calls: the paragraph, or window of
+at most 512 UTF-8 bytes, that contains the most distinct query words, outside
+frontmatter. The excerpt is unedited note text with its byte offsets, line
+range, the SHA-256 of the note text, and the enclosing Markdown headings as
+separate spans. Offsets count from the start of the note text, after any
+byte-order mark. Ranking, scores, the `snippet` field, and reranker input do not
+change. A note without matching body text reports `status: "none"`; a note
+past a size limit reports `status: "unavailable"` with a reason. Both keep
+their snippet. Terminal output shows CRLF as LF and tabs as four spaces, and
+reports `display-sanitized` instead of an excerpt that credential redaction
+would alter. An excerpt shows where query words appear; it is not a verified
+answer. SDK and MCP `search` callers pass `selectedPassage: true`.
+
 Wordcell pins QMD 2.5.3 and one full upstream revision of its compact
 EmbeddingGemma model for local vector retrieval. The revision prevents branch
 drift and gives the model a revision-specific cache identity. Without an

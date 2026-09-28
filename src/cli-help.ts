@@ -114,6 +114,7 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--min-score <score>", "Drop results scoring below this (0 to 1)"],
       ["--rerank <typesafe>", "Rerank results with the hosted TypeSafe service"],
       ["--rerank-limit <2..25>", "How many results the reranker sees"],
+      ["--selected-passage", "Add a local source excerpt to each result"],
       JSON_OPTION,
     ],
     examples: ['wordcell search "retries" --root kb --mode exact', 'wordcell search "retry policy" --root kb --limit 5'],

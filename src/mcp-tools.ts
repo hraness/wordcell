@@ -229,6 +229,15 @@ export function optionalText(arguments_: Arguments, key: string, maxBytes: numbe
   return has(arguments_, key) ? checkedText(arguments_[key], key, maxBytes) : undefined;
 }
 
+function optionalBoolean(arguments_: Arguments, key: string): boolean | undefined {
+  if (!has(arguments_, key)) return undefined;
+  const value = arguments_[key];
+  if (typeof value !== "boolean") {
+    throw new ToolArgumentError(`Invalid argument "${key}": expected a boolean.`);
+  }
+  return value;
+}
+
 export function optionalInteger(
   arguments_: Arguments,
   key: string,
@@ -631,6 +640,11 @@ export function readTools(root: string, sessions: VaultSessions): readonly ToolE
           properties: {
             query: { type: "string", minLength: 1, maxLength: MAX_QUERY_TEXT_UTF8_BYTES },
             mode: { type: "string", enum: SEARCH_MODES, default: "hybrid" },
+            selectedPassage: {
+              type: "boolean",
+              default: false,
+              description: "Include a local source excerpt with line references and section headings. Ranking is unchanged.",
+            },
             limit: { type: "integer", minimum: 1, maximum: MAX_SEARCH_RESULTS, default: DEFAULT_SEARCH_RESULTS },
             ...filterProperties,
           },
@@ -638,10 +652,11 @@ export function readTools(root: string, sessions: VaultSessions): readonly ToolE
         annotations: { title: "Search notes", ...READ_ONLY },
       },
       handler: async (arguments_) => {
-        allowOnly(arguments_, ["query", "mode", "limit", "tags", "where", "has", "scope"]);
+        allowOnly(arguments_, ["query", "mode", "limit", "tags", "where", "has", "scope", "selectedPassage"]);
         const query = requiredText(arguments_, "query", MAX_QUERY_TEXT_UTF8_BYTES);
         const mode = optionalChoice(arguments_, "mode", SEARCH_MODES) ?? "hybrid";
         const limit = optionalInteger(arguments_, "limit", 1, MAX_SEARCH_RESULTS) ?? DEFAULT_SEARCH_RESULTS;
+        const selectedPassage = optionalBoolean(arguments_, "selectedPassage");
         const filters = metadataFilters(arguments_);
         const tags = optionalTextList(arguments_, "tags", MAX_QUERY_TAGS, MAX_QUERY_TEXT_UTF8_BYTES);
         const scopes = optionalTextList(arguments_, "scope", MAX_REPOSITORY_SCOPES, MAX_QUERY_TEXT_UTF8_BYTES);
@@ -650,6 +665,7 @@ export function readTools(root: string, sessions: VaultSessions): readonly ToolE
           query,
           mode,
           limit,
+          ...(selectedPassage === undefined ? {} : { selectedPassage }),
           ...(filters.length === 0 ? {} : { filters }),
           ...(tags === undefined ? {} : { tags }),
           ...(scopes === undefined ? {} : { repositoryScopes: scopes }),

@@ -437,6 +437,7 @@
     "src/semantic.ts",
     "src/serve.ts",
     "src/sdk.ts",
+    "src/selected-passage.ts",
     "src/source-inbox.ts",
     "src/untrusted-content.ts",
     "src/vault.ts",

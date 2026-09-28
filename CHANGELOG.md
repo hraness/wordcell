@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- `wordcell search --selected-passage` attaches one local source excerpt to
+  each result: the paragraph or 512-byte window with the most distinct query
+  words, with its byte offsets, line range, note SHA-256, and enclosing
+  headings. Ranking, scores, snippets, and reranker input do not change. The
+  SDK and the MCP `search` tool accept `selectedPassage: true`, and both
+  context packers include the excerpt.
 - The [benchmarks page](https://wordcell.io/benchmarks) now leads with Oh's
   500-question LongMemEval-S study, where Oh semantic retrieval scored 88.87%
   and BM25 86.13%; on the measure Oh named before the run, its interval does

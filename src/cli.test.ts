@@ -3827,3 +3827,57 @@ describe("import supermemory command", () => {
     });
   });
 });
+
+describe("search --selected-passage", () => {
+  test("parses only for search and forwards the option", () => {
+    expect(parseArguments(["search", "query", "--selected-passage"]))
+      .toMatchObject({ ok: true, value: { kind: "search", selectedPassage: true } });
+    const plain = parseArguments(["search", "query"]);
+    expect(plain.ok && "selectedPassage" in plain.value).toBe(false);
+    expect(parseArguments(["index", "--selected-passage"]))
+      .toEqual({ ok: false, message: "unknown index option" });
+  });
+
+  test("renders exact passages with sections and withholds redacted ones", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-cli-passage-"));
+    try {
+      const root = join(temporary, "kb");
+      await mkdir(join(root, "notes"), { recursive: true });
+      await writeFile(join(root, "index.md"), "# Knowledge base\n", "utf8");
+      await writeFile(join(root, "notes", "sync.md"), [
+        "---", "title: Directory sync", "---", "# Storage", "", "## Checklist", "",
+        "Every release has a checklist.", "", "## Failure handling", "",
+        "A failed quartz sync keeps the writer lock.", "",
+      ].join("\r\n"), "utf8");
+      await writeFile(join(root, "notes", "secret.md"), [
+        "---", "title: Deploy", "---", "The quartz sync deploy uses api_key=sk-abcdefghijklmnopqrstuvwxyz0123456789 today.", "",
+      ].join("\n"), "utf8");
+      const arguments_ = ["search", "quartz sync lock", "--root", root, "--mode", "exact", "--no-graph", "--no-history", "--selected-passage"];
+
+      const human = captureOutput();
+      expect(await main(arguments_, human.output)).toBe(0);
+      expect(human.stdout()).toContain("Selected passage: notes/sync.md:10-12");
+      expect(human.stdout()).toContain("    Section: # Storage\n");
+      expect(human.stdout()).toContain("    ## Failure handling\n");
+      expect(human.stdout()).toContain("    A failed quartz sync keeps the writer lock.\n");
+      expect(human.stdout()).not.toContain("Section: ## Checklist");
+      expect(human.stdout()).toContain("Selected passage: unavailable (display-sanitized); showing the search snippet.");
+      expect(human.stdout()).not.toContain("sk-abcdefghijklmnopqrstuvwxyz0123456789");
+
+      const json = captureOutput();
+      expect(await main([...arguments_, "--json"], json.output)).toBe(0);
+      const parsed = JSON.parse(json.stdout()) as {
+        results: { id: string; selectedPassage?: { status: string; reason?: string; startLine?: number } }[];
+      };
+      const byId = new Map(parsed.results.map((hit) => [hit.id, hit.selectedPassage]));
+      expect(byId.get("notes/sync")).toMatchObject({ status: "selected", startLine: 10 });
+      expect(byId.get("notes/secret")).toEqual({ status: "unavailable", reason: "display-sanitized" });
+
+      const without = captureOutput();
+      expect(await main([...arguments_.slice(0, -1), "--json"], without.output)).toBe(0);
+      expect(without.stdout()).not.toContain("selectedPassage");
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+});

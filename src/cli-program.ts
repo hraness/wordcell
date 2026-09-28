@@ -385,6 +385,7 @@ type ParsedCommand =
       readonly minScore?: number;
       readonly rerank?: "typesafe";
       readonly rerankLimit?: number;
+      readonly selectedPassage?: boolean;
       readonly query: string;
       readonly json: boolean;
     }
@@ -1274,6 +1275,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
   let minScore: number | undefined;
   let rerank: "typesafe" | undefined;
   let rerankLimit: number | undefined;
+  let selectedPassage = false;
   let graphDepth: number | undefined;
   let noGraph = false;
   let history = false;
@@ -1298,6 +1300,10 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
     }
     if (argument === "--no-graph" && command === "search") {
       noGraph = true;
+      continue;
+    }
+    if (argument === "--selected-passage" && command === "search") {
+      selectedPassage = true;
       continue;
     }
     if (argument === "--no-history" && command === "search") {
@@ -1535,6 +1541,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       ...(minScore === undefined ? {} : { minScore }),
       ...(rerank === undefined ? {} : { rerank }),
       ...(rerankLimit === undefined ? {} : { rerankLimit }),
+      ...(selectedPassage ? { selectedPassage: true } : {}),
       query,
       json,
     },
@@ -2418,6 +2425,22 @@ function renderSemanticIndex(result: SemanticIndexResult): string {
   ].join("\n");
 }
 
+function searchForDisplay(result: KnowledgeBaseSearchResult): KnowledgeBaseSearchResult {
+  return {
+    ...result,
+    results: result.results.map((hit) => {
+      const passage = hit.selectedPassage;
+      if (passage?.status !== "selected") return hit;
+      const texts = [passage.text, ...passage.headings.map(({ text }) => text)];
+      // Terminal output always renders CRLF as LF and tabs as four spaces; only other changes lose content.
+      if (texts.every((text) => sanitizeTerminalText(redactSensitiveText(text))
+        === text.replaceAll("\r\n", "\n").replaceAll("\t", "    "))) return hit;
+      // Redacted display text cannot retain a claim of exact source bytes.
+      return { ...hit, selectedPassage: { status: "unavailable", reason: "display-sanitized" } as const };
+    }),
+  };
+}
+
 function renderKnowledgeBaseSearch(result: KnowledgeBaseSearchResult): string {
   const lines = [
     `${result.mode[0]?.toLocaleUpperCase("en-US") ?? ""}${result.mode.slice(1)} results for “${safe(result.query)}” (${result.results.length})${result.partial ? " [partial]" : ""}`,
@@ -2445,7 +2468,20 @@ function renderKnowledgeBaseSearch(result: KnowledgeBaseSearchResult): string {
       .map((item) => `${item.kind}#${searchEvidenceRank(item)}`)
       .join(", ");
     lines.push(`  ${hit.rank}. ${hit.score.toFixed(3)}  ${location} — ${safe(hit.title)} [${safe(evidence)}]`);
-    if (hit.snippet !== "") lines.push(`    ${safe(hit.snippet)}`);
+    const passage = hit.selectedPassage;
+    if (passage?.status === "selected") {
+      lines.push(`    Selected passage: ${safe(hit.path)}:${passage.startLine}-${passage.endLine}`
+        + (passage.clippedStart || passage.clippedEnd ? " (clipped excerpt)" : ""));
+      for (const heading of passage.headings) {
+        lines.push(`    Section: ${safe(heading.text)}${heading.truncated ? " (clipped)" : ""}`);
+      }
+      for (const line of passage.text.split(/\r?\n/u)) lines.push(`    ${safe(line)}`);
+    } else {
+      if (hit.snippet !== "") lines.push(`    ${safe(hit.snippet)}`);
+      if (passage !== undefined) {
+        lines.push(`    Selected passage: ${passage.status} (${safe(passage.reason)}); showing the search snippet.`);
+      }
+    }
   }
   if ((result.graph?.related.length ?? 0) > 0) {
     lines.push(`  Related graph context: ${result.graph?.related.length ?? 0}`);
@@ -2523,6 +2559,7 @@ async function runSemantic(
         ? {}
         : { candidateLimit: command.candidateLimit }),
       ...(command.minScore === undefined ? {} : { minScore: command.minScore }),
+      ...(command.selectedPassage === undefined ? {} : { selectedPassage: command.selectedPassage }),
       ...(command.rerank === undefined ? {} : {
         rerank: {
           engine: command.rerank,
@@ -2530,9 +2567,10 @@ async function runSemantic(
         },
       }),
     });
+    const display = searchForDisplay(result);
     output.stdout(command.json
-      ? terminalSafeJson(result)
-      : sanitizeTerminalText(renderKnowledgeBaseSearch(result)));
+      ? terminalSafeJson(display)
+      : sanitizeTerminalText(renderKnowledgeBaseSearch(display)));
     if (withoutIndex && person) {
       output.stderr("Searched without an index, so only exact words matched. "
         + `For meaning-based search, run wordcell index --root ${safe(shellWord(command.root))} `

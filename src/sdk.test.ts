@@ -2379,3 +2379,160 @@ describe("search rerank", () => {
     }
   });
 });
+
+describe("selected search passages", () => {
+  async function passageFixture(): Promise<{ readonly temporary: string; readonly root: string }> {
+    const temporary = await mkdtemp(join(tmpdir(), "hraness-wordcell-sdk-passage-"));
+    const root = join(temporary, "kb");
+    await mkdir(join(root, "notes"), { recursive: true });
+    await writeFile(join(root, "index.md"), "# Knowledge base\n", "utf8");
+    await writeFile(join(root, "notes", "sync.md"), [
+      "---",
+      "title: Directory sync",
+      "tags: [storage]",
+      "---",
+      "# Storage",
+      "",
+      "## Checklist",
+      "",
+      `Every release must include the storage checklist. ${"Reviewers confirm each checklist item. ".repeat(20)}`,
+      "",
+      "## Failure handling",
+      "",
+      "A failed directory sync keeps the writer lock until the flush completes.",
+      "",
+    ].join("\n"), "utf8");
+    await writeFile(join(root, "notes", "queue.md"), [
+      "---",
+      "title: Queue drains",
+      "---",
+      "# Queue drains",
+      "",
+      "Queue drains must never hold the writer lock.",
+      "",
+    ].join("\n"), "utf8");
+    return { temporary, root };
+  }
+
+  const query = "Why must a failed directory sync keep the writer lock?";
+
+  test("adds one exact passage after ranking without changing existing fields", async () => {
+    const { temporary, root } = await passageFixture();
+    try {
+      const kb = await openKnowledgeBase({ root });
+      const baseline = await kb.search({ query, mode: "exact", graph: false, history: false });
+      const disabled = await kb.search({ query, mode: "exact", graph: false, history: false, selectedPassage: false });
+      const result = await kb.search({ query, mode: "exact", graph: false, history: false, selectedPassage: true });
+      await kb.close();
+      expect(baseline.results.length).toBeGreaterThan(0);
+      expect(baseline.results.every((hit) => !Object.hasOwn(hit, "selectedPassage"))).toBe(true);
+      expect(disabled.results).toEqual(baseline.results);
+      expect(result.results.map(({ selectedPassage: _passage, ...hit }) => hit)).toEqual([...baseline.results]);
+      expect(result.partial).toBe(baseline.partial);
+
+      const sync = result.results.find(({ id }) => id === "notes/sync");
+      const passage = sync?.selectedPassage;
+      if (passage?.status !== "selected") throw new Error("Expected a selected passage for notes/sync.");
+      expect(passage.text).toBe("## Failure handling\n\nA failed directory sync keeps the writer lock until the flush completes.");
+      expect(passage.startLine).toBe(11);
+      expect(passage.endLine).toBe(13);
+      expect(passage.headings.map(({ text, startLine }) => [text, startLine])).toEqual([["# Storage", 5]]);
+      expect(sync?.snippet).not.toContain("keeps the writer lock");
+      const source = Buffer.from(await Bun.file(join(root, "notes", "sync.md")).text(), "utf8");
+      expect(source.subarray(passage.startByte, passage.endByte).toString("utf8")).toBe(passage.text);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("keeps reranker input identical", async () => {
+    const { temporary, root } = await passageFixture();
+    try {
+      const requests: SearchRerankRequest[][] = [[], []];
+      const results = [];
+      for (const [index, selectedPassage] of [false, true].entries()) {
+        const reranker: SearchReranker = {
+          id: "typesafe",
+          rerank: async (request) => {
+            requests[index]?.push(request);
+            const ordering = request.candidates.map(({ id }) => id).reverse();
+            return { status: "ready", ordering, probabilities: Object.fromEntries(ordering.map((id) => [id, 0.5])) };
+          },
+        };
+        const kb = await openKnowledgeBase({ root }, { rerankers: [reranker] });
+        results.push(await kb.search({
+          query,
+          mode: "exact",
+          graph: false,
+          history: false,
+          selectedPassage,
+          rerank: { engine: "typesafe", limit: 2 },
+        }));
+        await kb.close();
+      }
+      expect(requests[0]).toHaveLength(1);
+      const strip = (request: SearchRerankRequest | undefined) => ({ query: request?.query, candidates: request?.candidates });
+      expect(strip(requests[1]?.[0])).toEqual(strip(requests[0]?.[0]));
+      expect(results[1]?.results.map(({ id, rank }) => [id, rank]))
+        .toEqual(results[0]?.results.map(({ id, rank }) => [id, rank]));
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects a non-boolean option before searching", async () => {
+    const { temporary, root } = await passageFixture();
+    try {
+      const kb = await openKnowledgeBase({ root });
+      await expect(kb.search({ query, mode: "exact", selectedPassage: "yes" as never }))
+        .rejects.toThrow("selectedPassage must be a boolean");
+      await kb.close();
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  test("packs selected passages into both context formats and rejects hostile values", async () => {
+    const { temporary, root } = await passageFixture();
+    try {
+      const kb = await openKnowledgeBase({ root });
+      const result = await kb.search({ query, mode: "exact", graph: false, history: false, selectedPassage: true });
+      await kb.close();
+      const packed = packSearchContext(result).content;
+      expect(packed).toContain("Section (level 1, lines 5-5):\n# Storage\n\nSelected source");
+      expect(packed).not.toContain("## Checklist");
+      expect(packed).toMatch(/Selected source \(UTF-8 snapshot [0-9a-f]{64}; bytes \d+-\d+; lines 11-13\):\n## Failure handling\n\nA failed directory sync/u);
+
+      const untrusted = packUntrustedSearchContext(result);
+      expect(untrusted.content).toContain("\"selectedPassage\"");
+      expect(untrusted.content).toContain("keeps the writer lock until the flush completes");
+
+      const [first, ...rest] = result.results;
+      if (first === undefined) throw new Error("Expected a search hit.");
+      const withHit = (hit: unknown) => ({ ...result, results: [hit, ...rest] }) as typeof result;
+      const accessor = { ...first };
+      delete (accessor as { selectedPassage?: unknown }).selectedPassage;
+      Object.defineProperty(accessor, "selectedPassage", { enumerable: true, get: () => { throw new Error("getter ran"); } });
+      expect(() => packSearchContext(withHit(accessor))).toThrow("accessor property");
+      expect(() => packUntrustedSearchContext(withHit(accessor))).toThrow("accessor property");
+
+      const passage = first.selectedPassage;
+      if (passage?.status !== "selected") throw new Error("Expected a selected passage.");
+      for (const [malformed, message] of [
+        [{ ...passage, endByte: passage.endByte + 1 }, "byte span must match"],
+        [{ ...passage, sourceSha256: "abc" }, "SHA-256"],
+        [{ ...passage, text: "x".repeat(513), endByte: passage.startByte + 513 }, "exceeds 512"],
+        [{ ...passage, headings: [passage.headings[0], passage.headings[0]] }, "level must be"],
+        [{ status: "unavailable", reason: "later" }, "known unavailable reason"],
+        [{ status: "maybe" }, "known selected-passage status"],
+      ] as const) {
+        expect(() => packSearchContext(withHit({ ...first, selectedPassage: malformed }))).toThrow(message);
+        expect(() => packUntrustedSearchContext(withHit({ ...first, selectedPassage: malformed }))).toThrow(message);
+      }
+      const fallback = packSearchContext(withHit({ ...first, selectedPassage: { status: "none", reason: "no-lexical-match" } }));
+      expect(fallback.content).toContain(first.snippet);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+});

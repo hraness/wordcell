@@ -58,6 +58,317 @@ import {
 
 // src/sdk.ts
 import { resolve } from "path";
+
+// src/selected-passage.ts
+import { createHash } from "crypto";
+var SELECTED_PASSAGE_MAX_BYTES = 512;
+var SELECTED_PASSAGE_MAX_HEADING_BYTES = 256;
+var SELECTED_PASSAGE_MAX_SOURCE_BYTES = 2 * 1024 * 1024;
+var SELECTED_PASSAGE_MAX_SEARCH_BYTES = 8 * 1024 * 1024;
+var MAX_QUERY_BYTES = 16 * 1024;
+var MAX_QUERY_TERMS = 64;
+var MAX_CANDIDATES = 1e4;
+var WORD = /[\p{L}\p{N}][\p{L}\p{N}\p{M}]*/gu;
+var STOP_WORDS = new Set(("a an and are as at be been being but by can could did do does doing each either " + "for from had has have having he her here hers herself him himself his how i " + "if in into is it its itself may me might mine more most must my myself neither " + "no nor not of on once only or our ours ourselves out own same she should so " + "some such than that the their theirs them themselves then there these they " + "this those through to too under until up us very was we were what when where " + "which while who whom why will with would you your yours yourself yourselves").split(" "));
+var SELECTED_PASSAGE_NONE_REASONS = Object.freeze([
+  "no-query-terms",
+  "no-lexical-match"
+]);
+var SELECTED_PASSAGE_UNAVAILABLE_REASONS = Object.freeze([
+  "query-limit",
+  "source-limit",
+  "search-budget",
+  "candidate-limit",
+  "grapheme-limit",
+  "invalid-source",
+  "display-sanitized"
+]);
+function createSelectedPassageBudget(maximumBytes = SELECTED_PASSAGE_MAX_SEARCH_BYTES) {
+  if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 0) {
+    throw new RangeError("Selected passage budget must be a non-negative safe integer.");
+  }
+  let remaining = maximumBytes;
+  return Object.freeze({
+    take: (bytes) => {
+      if (bytes > remaining)
+        return false;
+      remaining -= bytes;
+      return true;
+    }
+  });
+}
+function unavailable(reason) {
+  return Object.freeze({ status: "unavailable", reason });
+}
+function none(reason) {
+  return Object.freeze({ status: "none", reason });
+}
+function normalize(value) {
+  return value.normalize("NFC").toLocaleLowerCase("en-US");
+}
+function wellFormed(value) {
+  return !/\p{Surrogate}/u.test(value);
+}
+function lowerBound(values, target) {
+  let low = 0;
+  let high = values.length;
+  while (low < high) {
+    const middle = low + high >>> 1;
+    if (values[middle] < target)
+      low = middle + 1;
+    else
+      high = middle;
+  }
+  return low;
+}
+function upperBound(values, target) {
+  let low = 0;
+  let high = values.length;
+  while (low < high) {
+    const middle = low + high >>> 1;
+    if (values[middle] <= target)
+      low = middle + 1;
+    else
+      high = middle;
+  }
+  return low;
+}
+function sourceLayout(text) {
+  const lineStarts = [0];
+  for (let index = text.indexOf(`
+`);index >= 0; index = text.indexOf(`
+`, index + 1)) {
+    lineStarts.push(index + 1);
+  }
+  const lineEnd = (index) => {
+    const next = lineStarts[index + 1];
+    let end = next === undefined ? text.length : next - 1;
+    if (end > lineStarts[index] && text[end - 1] === "\r")
+      end--;
+    return end;
+  };
+  let firstBodyLine = 0;
+  if (text.slice(0, lineEnd(0)).trim() === "---") {
+    for (let index = 1;index < lineStarts.length; index++) {
+      if (text.slice(lineStarts[index], lineEnd(index)).trim() === "---") {
+        firstBodyLine = index + 1;
+        break;
+      }
+    }
+  }
+  const bodyStart = lineStarts[firstBodyLine] ?? text.length;
+  const paragraphs = [];
+  const headings = [];
+  let fence;
+  let current;
+  for (let index = firstBodyLine;index < lineStarts.length; index++) {
+    const start = lineStarts[index];
+    const end = lineEnd(index);
+    const line = text.slice(start, end);
+    if (line.trim() === "") {
+      if (current !== undefined)
+        paragraphs.push(current);
+      current = undefined;
+      continue;
+    }
+    const delimiter = /^\s{0,3}(`{3,}|~{3,})/u.exec(line)?.[1];
+    const marker = fence === undefined ? /^\s{0,3}(#{1,6})(?:\s|$)/u.exec(line)?.[1] : undefined;
+    const heading = marker !== undefined;
+    if (heading)
+      headings.push({ start, end, level: marker.length, line: index + 1 });
+    if (delimiter !== undefined) {
+      if (fence === undefined)
+        fence = { character: delimiter[0], length: delimiter.length };
+      else if (delimiter[0] === fence.character && delimiter.length >= fence.length && line.trim() === delimiter)
+        fence = undefined;
+    }
+    if (current === undefined)
+      current = { start, end, headingOnly: heading };
+    else {
+      current.end = end;
+      current.headingOnly &&= heading;
+    }
+  }
+  if (current !== undefined)
+    paragraphs.push(current);
+  return { bodyStart, lineStarts, paragraphs, headings };
+}
+function graphemePrefix(value, maximumBytes) {
+  if (Buffer.byteLength(value, "utf8") <= maximumBytes)
+    return { text: value, truncated: false };
+  let end = 0;
+  let bytes = 0;
+  for (const part of new Intl.Segmenter("en-US", { granularity: "grapheme" }).segment(value)) {
+    const width = Buffer.byteLength(part.segment, "utf8");
+    if (bytes + width > maximumBytes)
+      break;
+    bytes += width;
+    end = part.index + part.segment.length;
+  }
+  return { text: value.slice(0, end), truncated: true };
+}
+function enclosingHeadings(text, headings, passageStart, passageEnd) {
+  const stack = [];
+  const pop = (level) => {
+    while (stack.length > 0 && stack[stack.length - 1].level >= level)
+      stack.pop();
+  };
+  for (const heading of headings) {
+    if (heading.start >= passageEnd)
+      break;
+    if (heading.start >= passageStart) {
+      const before = text.slice(passageStart, heading.start).split(`
+`);
+      if (!before.every((line) => line.trim() === "" || /^\s{0,3}#{1,6}(?:\s|$)/u.test(line)))
+        break;
+      pop(heading.level);
+      continue;
+    }
+    pop(heading.level);
+    stack.push(heading);
+  }
+  return Object.freeze(stack.map((heading) => {
+    const end = Math.min(heading.end, passageStart);
+    const clipped = graphemePrefix(text.slice(heading.start, end), SELECTED_PASSAGE_MAX_HEADING_BYTES);
+    const startByte = Buffer.byteLength(text.slice(0, heading.start), "utf8");
+    return Object.freeze({
+      level: heading.level,
+      text: clipped.text,
+      startByte,
+      endByte: startByte + Buffer.byteLength(clipped.text, "utf8"),
+      startLine: heading.line,
+      endLine: heading.line,
+      truncated: clipped.truncated || end < heading.end
+    });
+  }));
+}
+function selectSearchPassage(input) {
+  const { query, text, budget } = input;
+  if (typeof query !== "string" || Buffer.byteLength(query, "utf8") > MAX_QUERY_BYTES) {
+    return unavailable("query-limit");
+  }
+  if (typeof text !== "string" || !wellFormed(text))
+    return unavailable("invalid-source");
+  const allTerms = new Set([...normalize(query).matchAll(WORD)].map((match) => match[0]));
+  if (allTerms.size > MAX_QUERY_TERMS)
+    return unavailable("query-limit");
+  const terms = new Set([...allTerms].filter((term) => !STOP_WORDS.has(term)));
+  if (terms.size === 0)
+    return none("no-query-terms");
+  const sourceBytes = Buffer.byteLength(text, "utf8");
+  if (sourceBytes > SELECTED_PASSAGE_MAX_SOURCE_BYTES)
+    return unavailable("source-limit");
+  if (!budget.take(sourceBytes))
+    return unavailable("search-budget");
+  if (text.length === 0)
+    return none("no-lexical-match");
+  const maxBytes = SELECTED_PASSAGE_MAX_BYTES;
+  const { bodyStart, lineStarts, paragraphs, headings } = sourceLayout(text);
+  const headingStarts = new Set(headings.map(({ start }) => start));
+  const headingOnlyFile = paragraphs.every((paragraph) => paragraph.headingOnly);
+  const positions = [bodyStart];
+  const bytePositions = [Buffer.byteLength(text.slice(0, bodyStart), "utf8")];
+  let bytes = bytePositions[0];
+  for (const part of new Intl.Segmenter("en-US", { granularity: "grapheme" }).segment(text.slice(bodyStart))) {
+    const width = Buffer.byteLength(part.segment, "utf8");
+    if (width > maxBytes)
+      return unavailable("grapheme-limit");
+    bytes += width;
+    positions.push(bodyStart + part.index + part.segment.length);
+    bytePositions.push(bytes);
+  }
+  const tokens = [];
+  const tokenStarts = [];
+  for (const match of text.slice(bodyStart).matchAll(WORD)) {
+    const start = bodyStart + match.index;
+    const term = normalize(match[0]);
+    const inHeading = headingStarts.has(lineStarts[upperBound(lineStarts, start) - 1]);
+    tokenStarts.push(start);
+    tokens.push({
+      start,
+      end: start + match[0].length,
+      term: terms.has(term) && (headingOnlyFile || !inHeading) ? term : undefined
+    });
+  }
+  const regions = [];
+  let pendingHeading;
+  for (const paragraph of paragraphs) {
+    if (paragraph.headingOnly) {
+      pendingHeading = pendingHeading === undefined ? paragraph : { ...pendingHeading, end: paragraph.end };
+    } else {
+      regions.push({ start: pendingHeading?.start ?? paragraph.start, end: paragraph.end });
+      pendingHeading = undefined;
+    }
+  }
+  if (regions.length === 0 && pendingHeading !== undefined)
+    regions.push(pendingHeading);
+  let best;
+  let considered = 0;
+  for (const region of regions) {
+    const first = lowerBound(positions, region.start);
+    const last = upperBound(positions, region.end) - 1;
+    if (first >= last)
+      continue;
+    let startIndex = first;
+    for (;; ) {
+      const endIndex = Math.min(last, upperBound(bytePositions, bytePositions[startIndex] + maxBytes) - 1);
+      if (endIndex <= startIndex)
+        return unavailable("grapheme-limit");
+      if (++considered > MAX_CANDIDATES)
+        return unavailable("candidate-limit");
+      const start = positions[startIndex];
+      const end = positions[endIndex];
+      const matched = new Set;
+      let tokenCount = 0;
+      for (let index = lowerBound(tokenStarts, start);index < tokens.length; index++) {
+        const token = tokens[index];
+        if (token.start >= end)
+          break;
+        if (token.end > end)
+          continue;
+        tokenCount++;
+        if (token.term !== undefined)
+          matched.add(token.term);
+      }
+      if (matched.size > 0) {
+        const score = matched.size + matched.size / (tokenCount + 1) / 10;
+        if (best === undefined || score > best.score) {
+          best = {
+            start,
+            end,
+            startByte: bytePositions[startIndex],
+            endByte: bytePositions[endIndex],
+            regionStart: positions[first],
+            regionEnd: positions[last],
+            score
+          };
+        }
+      }
+      if (endIndex === last)
+        break;
+      const stepped = lowerBound(bytePositions, bytePositions[startIndex] + Math.max(1, Math.floor(maxBytes / 2)));
+      const finalStart = lowerBound(bytePositions, bytePositions[last] - maxBytes);
+      startIndex = Math.max(startIndex + 1, Math.min(stepped, finalStart));
+    }
+  }
+  if (best === undefined)
+    return none("no-lexical-match");
+  return Object.freeze({
+    status: "selected",
+    text: text.slice(best.start, best.end),
+    startByte: best.startByte,
+    endByte: best.endByte,
+    startLine: upperBound(lineStarts, best.start),
+    endLine: upperBound(lineStarts, best.end - 1),
+    sourceSha256: createHash("sha256").update(text, "utf8").digest("hex"),
+    sourceEncoding: "utf8-snapshot",
+    clippedStart: best.start > best.regionStart,
+    clippedEnd: best.end < best.regionEnd,
+    headings: enclosingHeadings(text, headings, best.start, best.end)
+  });
+}
+
+// src/sdk.ts
 var MAX_SEARCH_RESULTS = 100;
 var MAX_SEARCH_CANDIDATES = 500;
 var DEFAULT_SEARCH_RESULTS = 10;
@@ -332,6 +643,9 @@ async function openKnowledgeBase(options, dependencies = {}) {
     const { query: requestedQuery } = validateSearchQuery(searchOptions.query);
     const expansion = searchRules === null ? { request: searchOptions, alias: null } : expandSearchRequest(searchOptions, searchRules);
     const effectiveOptions = expansion.request;
+    if (effectiveOptions.selectedPassage !== undefined && typeof effectiveOptions.selectedPassage !== "boolean") {
+      throw new TypeError("Search selectedPassage must be a boolean.");
+    }
     const { query: effectiveQuery } = validateSearchQuery(effectiveOptions.query);
     const mode = checkedSearchMode(effectiveOptions.mode);
     const ordering = checkedSearchOrdering(effectiveOptions.ordering);
@@ -560,6 +874,18 @@ async function openKnowledgeBase(options, dependencies = {}) {
         priorityTrace = Object.freeze(selectedTrace);
         results = Object.freeze(selectedHits.map((hit, index) => hit.rank === index + 1 ? hit : { ...hit, rank: index + 1 }));
       }
+    }
+    if (effectiveOptions.selectedPassage === true) {
+      const budget = createSelectedPassageBudget();
+      results = Object.freeze(results.map((hit) => {
+        const note = notesById.get(hit.id);
+        if (note === undefined)
+          throw new Error("Selected search hit has no snapshot note.");
+        return Object.freeze({
+          ...hit,
+          selectedPassage: selectSearchPassage({ query: effectiveQuery, text: note.content, budget })
+        });
+      }));
     }
     let graph = null;
     if (graphOptions !== null) {
@@ -793,7 +1119,25 @@ Evidence: `))
 
 `))
       return writer.result();
-    if (!append(hit.snippet))
+    const selected = selectedPassageForContext(hit, `Knowledge-base search result ${hit.rank}`);
+    if (selected?.status === "selected") {
+      for (const heading of selected.headings) {
+        if (!append(`Section (level ${heading.level}, lines ${heading.startLine}-${heading.endLine}${heading.truncated ? ", shortened" : ""}):
+`))
+          return writer.result();
+        if (!append(heading.text))
+          return writer.result();
+        if (!append(`
+
+`))
+          return writer.result();
+      }
+      if (!append(`Selected source (UTF-8 snapshot ${selected.sourceSha256}; bytes ${selected.startByte}-${selected.endByte}; lines ${selected.startLine}-${selected.endLine}${selected.clippedStart || selected.clippedEnd ? "; excerpt clipped" : ""}):
+`))
+        return writer.result();
+      if (!append(selected.text))
+        return writer.result();
+    } else if (!append(hit.snippet))
       return writer.result();
   }
   const graph = result.graph;
@@ -954,6 +1298,95 @@ function optionalDataNumber(record, key, label) {
     return;
   return dataNumber(record[key], `${label}.${key}`);
 }
+function dataCount(value, label, minimum = 0) {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < minimum) {
+    throw new TypeError(`${label} must be an integer of at least ${minimum}.`);
+  }
+  return value;
+}
+function dataSourceText(value, label, maximumBytes) {
+  const text = dataString(value, label);
+  if (/\p{Surrogate}/u.test(text))
+    throw new TypeError(`${label} must be well-formed Unicode.`);
+  if (Buffer.byteLength(text, "utf8") > maximumBytes) {
+    throw new RangeError(`${label} exceeds ${maximumBytes} UTF-8 bytes.`);
+  }
+  return text;
+}
+function sourceSpan(record, label, text) {
+  const startByte = dataCount(requiredData(record, "startByte", label), `${label}.startByte`);
+  const endByte = dataCount(requiredData(record, "endByte", label), `${label}.endByte`);
+  const startLine = dataCount(requiredData(record, "startLine", label), `${label}.startLine`, 1);
+  const endLine = dataCount(requiredData(record, "endLine", label), `${label}.endLine`, startLine);
+  if (endByte - startByte !== Buffer.byteLength(text, "utf8")) {
+    throw new TypeError(`${label} byte span must match its text.`);
+  }
+  return { startByte, endByte, startLine, endLine };
+}
+function selectedPassageData(value, label) {
+  const record = inspectedDataRecord(value, label);
+  const status = requiredData(record, "status", label);
+  if (status === "none" || status === "unavailable") {
+    const reason = requiredData(record, "reason", label);
+    const reasons = status === "none" ? SELECTED_PASSAGE_NONE_REASONS : SELECTED_PASSAGE_UNAVAILABLE_REASONS;
+    if (typeof reason !== "string" || !reasons.includes(reason)) {
+      throw new TypeError(`${label}.reason is not a known ${status} reason.`);
+    }
+    return Object.freeze({ status, reason });
+  }
+  if (status !== "selected")
+    throw new TypeError(`${label}.status is not a known selected-passage status.`);
+  const text = dataSourceText(requiredData(record, "text", label), `${label}.text`, SELECTED_PASSAGE_MAX_BYTES);
+  if (text === "")
+    throw new TypeError(`${label}.text must not be empty.`);
+  const span = sourceSpan(record, label, text);
+  const sourceSha256 = dataString(requiredData(record, "sourceSha256", label), `${label}.sourceSha256`);
+  if (!/^[0-9a-f]{64}$/u.test(sourceSha256))
+    throw new TypeError(`${label}.sourceSha256 must be a SHA-256 digest.`);
+  if (requiredData(record, "sourceEncoding", label) !== "utf8-snapshot") {
+    throw new TypeError(`${label}.sourceEncoding must be utf8-snapshot.`);
+  }
+  let previousLevel = 0;
+  let previousEnd = 0;
+  const headings = inspectedDataArray(requiredData(record, "headings", label), `${label}.headings`, 6).map((entry, index) => {
+    const headingLabel = `${label}.headings[${index}]`;
+    const heading = inspectedDataRecord(entry, headingLabel);
+    const level = dataCount(requiredData(heading, "level", headingLabel), `${headingLabel}.level`, previousLevel + 1);
+    if (level > 6)
+      throw new TypeError(`${headingLabel}.level must be at most 6.`);
+    const headingText = dataSourceText(requiredData(heading, "text", headingLabel), `${headingLabel}.text`, SELECTED_PASSAGE_MAX_HEADING_BYTES);
+    const headingSpan = sourceSpan(heading, headingLabel, headingText);
+    if (headingSpan.startByte < previousEnd || headingSpan.endByte > span.startByte) {
+      throw new TypeError(`${headingLabel} must precede the selected passage in source order.`);
+    }
+    previousLevel = level;
+    previousEnd = headingSpan.endByte;
+    return Object.freeze({
+      level,
+      text: headingText,
+      ...headingSpan,
+      truncated: dataBoolean(requiredData(heading, "truncated", headingLabel), `${headingLabel}.truncated`)
+    });
+  });
+  return Object.freeze({
+    status,
+    text,
+    ...span,
+    sourceSha256,
+    sourceEncoding: "utf8-snapshot",
+    clippedStart: dataBoolean(requiredData(record, "clippedStart", label), `${label}.clippedStart`),
+    clippedEnd: dataBoolean(requiredData(record, "clippedEnd", label), `${label}.clippedEnd`),
+    headings: Object.freeze(headings)
+  });
+}
+function selectedPassageForContext(hit, label) {
+  const descriptor = Object.getOwnPropertyDescriptor(hit, "selectedPassage");
+  if (descriptor === undefined)
+    return;
+  if (!("value" in descriptor))
+    throw new TypeError(`${label} contains an accessor property.`);
+  return descriptor.value === undefined ? undefined : selectedPassageData(descriptor.value, `${label}.selectedPassage`);
+}
 function searchEvidenceSummary(value, label) {
   const evidence = inspectedDataRecord(value, label);
   return Object.freeze({
@@ -966,6 +1399,7 @@ function searchHitContextRecord(value, index) {
   const hit = inspectedDataRecord(value, label);
   const evidence = inspectedDataArray(requiredData(hit, "evidence", label), `${label}.evidence`, 32).map((entry, evidenceIndex) => searchEvidenceSummary(entry, `${label}.evidence[${evidenceIndex}]`));
   const line = optionalDataNumber(hit, "line", label);
+  const selectedPassage = selectedPassageForContext(hit, label);
   return Object.freeze({
     kind: "search-result",
     id: dataString(requiredData(hit, "id", label), `${label}.id`),
@@ -976,7 +1410,8 @@ function searchHitContextRecord(value, index) {
     identity: dataBoolean(requiredData(hit, "identity", label), `${label}.identity`),
     ...line === undefined ? {} : { line },
     evidence: Object.freeze(evidence),
-    snippet: dataString(requiredData(hit, "snippet", label), `${label}.snippet`)
+    snippet: dataString(requiredData(hit, "snippet", label), `${label}.snippet`),
+    ...selectedPassage === undefined ? {} : { selectedPassage }
   });
 }
 function graphContextRecords(value) {

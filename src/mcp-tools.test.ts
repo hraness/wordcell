@@ -145,6 +145,26 @@ describe("read tools", () => {
     });
   });
 
+  test("search returns selected passages only on request and validates the flag", async () => {
+    await withCatalog(async ({ ok, call }) => {
+      type Hit = { id: string; snippet: string; selectedPassage?: { status: string; text?: string } };
+      const plain = await ok("search", { query: "exact identifier", mode: "exact" });
+      const off = await ok("search", { query: "exact identifier", mode: "exact", selectedPassage: false });
+      const on = await ok("search", { query: "exact identifier", mode: "exact", selectedPassage: true });
+      const plainHits = plain["results"] as readonly Hit[];
+      expect(plainHits.every((hit) => !Object.hasOwn(hit, "selectedPassage"))).toBe(true);
+      expect(off["results"]).toEqual(plainHits);
+      const onHits = on["results"] as readonly Hit[];
+      expect(onHits.map(({ selectedPassage: _passage, ...hit }) => hit)).toEqual([...plainHits]);
+      expect(onHits[0]?.selectedPassage).toMatchObject({ status: "selected" });
+      expect(onHits[0]?.selectedPassage?.text).toContain("exact identifier");
+      for (const value of ["true", 1, null]) {
+        expect(errorText(await call("search", { query: "exact identifier", selectedPassage: value })))
+          .toContain('Invalid argument "selectedPassage": expected a boolean.');
+      }
+    });
+  });
+
   test("search in exact mode honors tags and metadata filters", async () => {
     await withCatalog(async ({ ok }) => {
       const tagged = await ok("search", { query: "alpha", mode: "exact", tags: ["relay"] });

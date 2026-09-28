@@ -13,7 +13,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-r4qs6vq4.js";
+} from "./index-f184qyh1.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -51,7 +51,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-mnq2wy34.js";
+} from "./index-mvs6f7ne.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -60,7 +60,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-tvd2sqrx.js";
+} from "./index-5d1rd5v9.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -932,6 +932,7 @@ var commandHelp = [
       ["--min-score <score>", "Drop results scoring below this (0 to 1)"],
       ["--rerank <typesafe>", "Rerank results with the hosted TypeSafe service"],
       ["--rerank-limit <2..25>", "How many results the reranker sees"],
+      ["--selected-passage", "Add a local source excerpt to each result"],
       JSON_OPTION
     ],
     examples: ['wordcell search "retries" --root kb --mode exact', 'wordcell search "retry policy" --root kb --limit 5']
@@ -3624,6 +3625,15 @@ function requiredText(arguments_, key, maxBytes) {
 function optionalText(arguments_, key, maxBytes) {
   return has(arguments_, key) ? checkedText(arguments_[key], key, maxBytes) : undefined;
 }
+function optionalBoolean(arguments_, key) {
+  if (!has(arguments_, key))
+    return;
+  const value = arguments_[key];
+  if (typeof value !== "boolean") {
+    throw new ToolArgumentError(`Invalid argument "${key}": expected a boolean.`);
+  }
+  return value;
+}
 function optionalInteger(arguments_, key, minimum, maximum) {
   if (!has(arguments_, key))
     return;
@@ -3923,6 +3933,11 @@ function readTools(root, sessions) {
           properties: {
             query: { type: "string", minLength: 1, maxLength: MAX_QUERY_TEXT_UTF8_BYTES },
             mode: { type: "string", enum: SEARCH_MODES, default: "hybrid" },
+            selectedPassage: {
+              type: "boolean",
+              default: false,
+              description: "Include a local source excerpt with line references and section headings. Ranking is unchanged."
+            },
             limit: { type: "integer", minimum: 1, maximum: MAX_SEARCH_RESULTS, default: DEFAULT_SEARCH_RESULTS },
             ...filterProperties
           }
@@ -3930,10 +3945,11 @@ function readTools(root, sessions) {
         annotations: { title: "Search notes", ...READ_ONLY }
       },
       handler: async (arguments_) => {
-        allowOnly(arguments_, ["query", "mode", "limit", "tags", "where", "has", "scope"]);
+        allowOnly(arguments_, ["query", "mode", "limit", "tags", "where", "has", "scope", "selectedPassage"]);
         const query = requiredText(arguments_, "query", MAX_QUERY_TEXT_UTF8_BYTES);
         const mode = optionalChoice(arguments_, "mode", SEARCH_MODES) ?? "hybrid";
         const limit = optionalInteger(arguments_, "limit", 1, MAX_SEARCH_RESULTS) ?? DEFAULT_SEARCH_RESULTS;
+        const selectedPassage = optionalBoolean(arguments_, "selectedPassage");
         const filters = metadataFilters(arguments_);
         const tags = optionalTextList(arguments_, "tags", MAX_QUERY_TAGS, MAX_QUERY_TEXT_UTF8_BYTES);
         const scopes = optionalTextList(arguments_, "scope", MAX_REPOSITORY_SCOPES, MAX_QUERY_TEXT_UTF8_BYTES);
@@ -3942,6 +3958,7 @@ function readTools(root, sessions) {
           query,
           mode,
           limit,
+          ...selectedPassage === undefined ? {} : { selectedPassage },
           ...filters.length === 0 ? {} : { filters },
           ...tags === undefined ? {} : { tags },
           ...scopes === undefined ? {} : { repositoryScopes: scopes }
@@ -5151,6 +5168,7 @@ function parseSemanticCommand(command, arguments_) {
   let minScore;
   let rerank;
   let rerankLimit;
+  let selectedPassage = false;
   let graphDepth;
   let noGraph = false;
   let history = false;
@@ -5175,6 +5193,10 @@ function parseSemanticCommand(command, arguments_) {
     }
     if (argument === "--no-graph" && command === "search") {
       noGraph = true;
+      continue;
+    }
+    if (argument === "--selected-passage" && command === "search") {
+      selectedPassage = true;
       continue;
     }
     if (argument === "--no-history" && command === "search") {
@@ -5402,6 +5424,7 @@ function parseSemanticCommand(command, arguments_) {
       ...minScore === undefined ? {} : { minScore },
       ...rerank === undefined ? {} : { rerank },
       ...rerankLimit === undefined ? {} : { rerankLimit },
+      ...selectedPassage ? { selectedPassage: true } : {},
       query,
       json
     }
@@ -6293,6 +6316,22 @@ function renderSemanticIndex(result) {
   ].join(`
 `);
 }
+function searchForDisplay(result) {
+  return {
+    ...result,
+    results: result.results.map((hit) => {
+      const passage = hit.selectedPassage;
+      if (passage?.status !== "selected")
+        return hit;
+      const texts = [passage.text, ...passage.headings.map(({ text }) => text)];
+      if (texts.every((text) => sanitizeTerminalText(redactSensitiveText(text)) === text.replaceAll(`\r
+`, `
+`).replaceAll("\t", "    ")))
+        return hit;
+      return { ...hit, selectedPassage: { status: "unavailable", reason: "display-sanitized" } };
+    })
+  };
+}
 function renderKnowledgeBaseSearch(result) {
   const lines = [
     `${result.mode[0]?.toLocaleUpperCase("en-US") ?? ""}${result.mode.slice(1)} results for \u201C${safe(result.query)}\u201D (${result.results.length})${result.partial ? " [partial]" : ""}`
@@ -6315,8 +6354,21 @@ function renderKnowledgeBaseSearch(result) {
     const location = `${safe(hit.path)}${hit.line === undefined ? "" : `:${hit.line}`}`;
     const evidence = hit.evidence.map((item) => `${item.kind}#${searchEvidenceRank(item)}`).join(", ");
     lines.push(`  ${hit.rank}. ${hit.score.toFixed(3)}  ${location} \u2014 ${safe(hit.title)} [${safe(evidence)}]`);
-    if (hit.snippet !== "")
-      lines.push(`    ${safe(hit.snippet)}`);
+    const passage = hit.selectedPassage;
+    if (passage?.status === "selected") {
+      lines.push(`    Selected passage: ${safe(hit.path)}:${passage.startLine}-${passage.endLine}` + (passage.clippedStart || passage.clippedEnd ? " (clipped excerpt)" : ""));
+      for (const heading of passage.headings) {
+        lines.push(`    Section: ${safe(heading.text)}${heading.truncated ? " (clipped)" : ""}`);
+      }
+      for (const line of passage.text.split(/\r?\n/u))
+        lines.push(`    ${safe(line)}`);
+    } else {
+      if (hit.snippet !== "")
+        lines.push(`    ${safe(hit.snippet)}`);
+      if (passage !== undefined) {
+        lines.push(`    Selected passage: ${passage.status} (${safe(passage.reason)}); showing the search snippet.`);
+      }
+    }
   }
   if ((result.graph?.related.length ?? 0) > 0) {
     lines.push(`  Related graph context: ${result.graph?.related.length ?? 0}`);
@@ -6369,6 +6421,7 @@ async function runSemantic(command, output, dependencies) {
       ...command.limit === undefined ? {} : { limit: command.limit },
       ...command.candidateLimit === undefined ? {} : { candidateLimit: command.candidateLimit },
       ...command.minScore === undefined ? {} : { minScore: command.minScore },
+      ...command.selectedPassage === undefined ? {} : { selectedPassage: command.selectedPassage },
       ...command.rerank === undefined ? {} : {
         rerank: {
           engine: command.rerank,
@@ -6376,7 +6429,8 @@ async function runSemantic(command, output, dependencies) {
         }
       }
     });
-    output.stdout(command.json ? terminalSafeJson(result) : sanitizeTerminalText(renderKnowledgeBaseSearch(result)));
+    const display = searchForDisplay(result);
+    output.stdout(command.json ? terminalSafeJson(display) : sanitizeTerminalText(renderKnowledgeBaseSearch(display)));
     if (withoutIndex && person) {
       output.stderr("Searched without an index, so only exact words matched. " + `For meaning-based search, run wordcell index --root ${safe(shellWord(command.root))} ` + `(downloads about 300 MB once).
 `);

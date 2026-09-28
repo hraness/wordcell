@@ -59,6 +59,7 @@ Options
   --min-score <score>           Drop results scoring below this (0 to 1)
   --rerank <typesafe>           Rerank results with the hosted TypeSafe service
   --rerank-limit <2..25>        How many results the reranker sees
+  --selected-passage            Add a local source excerpt to each result
   --json                        Print machine-readable output
 
 Examples

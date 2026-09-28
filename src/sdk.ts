@@ -53,6 +53,15 @@ import {
   type SearchRulesV1,
 } from "./search-rules.js";
 import {
+  createSelectedPassageBudget,
+  SELECTED_PASSAGE_MAX_BYTES,
+  SELECTED_PASSAGE_MAX_HEADING_BYTES,
+  SELECTED_PASSAGE_NONE_REASONS,
+  SELECTED_PASSAGE_UNAVAILABLE_REASONS,
+  selectSearchPassage,
+  type SelectedPassageResult,
+} from "./selected-passage.js";
+import {
   applyRerank,
   MAX_RERANK_CANDIDATES,
   MAX_RERANK_SNIPPET_BYTES,
@@ -81,6 +90,14 @@ import {
   UntrustedContentBudgetError,
   type UntrustedStructuredContent,
 } from "./untrusted-content.js";
+
+export type {
+  SelectedPassage,
+  SelectedPassageHeading,
+  SelectedPassageNone,
+  SelectedPassageResult,
+  SelectedPassageUnavailable,
+} from "./selected-passage.js";
 
 export const MAX_SEARCH_RESULTS = 100;
 export const MAX_SEARCH_CANDIDATES = 500;
@@ -131,6 +148,8 @@ export type KnowledgeBaseSearchOptions = {
   readonly history?: false | "auto" | "required" | KnowledgeBaseHistoryOptions;
   /** Opt-in rerank engine over a bounded result window. */
   readonly rerank?: KnowledgeBaseSearchRerankOptions;
+  /** Add one local query-selected source passage after ranking; never changes reranker input. */
+  readonly selectedPassage?: boolean;
 };
 
 export type KnowledgeBaseExactEvidence = {
@@ -179,6 +198,8 @@ export type KnowledgeBaseSearchHit = {
   readonly identity: boolean;
   readonly line?: number;
   readonly snippet: string;
+  /** Present only when requested; legacy snippet, line, and retrieval evidence retain their meanings. */
+  readonly selectedPassage?: SelectedPassageResult;
   readonly tags: readonly string[];
   readonly metadata: MetadataObject;
   readonly evidence: readonly KnowledgeBaseSearchEvidence[];
@@ -729,6 +750,10 @@ export async function openKnowledgeBase(
           searchRules,
         );
     const effectiveOptions = expansion.request as KnowledgeBaseSearchOptions;
+    if (effectiveOptions.selectedPassage !== undefined
+      && typeof effectiveOptions.selectedPassage !== "boolean") {
+      throw new TypeError("Search selectedPassage must be a boolean.");
+    }
     const { query: effectiveQuery } = validateSearchQuery(effectiveOptions.query);
     const mode = checkedSearchMode(effectiveOptions.mode);
     const ordering = checkedSearchOrdering(effectiveOptions.ordering);
@@ -1029,6 +1054,17 @@ export async function openKnowledgeBase(
           hit.rank === index + 1 ? hit : { ...hit, rank: index + 1 }));
       }
     }
+    if (effectiveOptions.selectedPassage === true) {
+      const budget = createSelectedPassageBudget();
+      results = Object.freeze(results.map((hit) => {
+        const note = notesById.get(hit.id);
+        if (note === undefined) throw new Error("Selected search hit has no snapshot note.");
+        return Object.freeze({
+          ...hit,
+          selectedPassage: selectSearchPassage({ query: effectiveQuery, text: note.content, budget }),
+        });
+      }));
+    }
     let graph: GraphContext | null = null;
     if (graphOptions !== null) {
       try {
@@ -1273,7 +1309,16 @@ export function packSearchContext(
       if (!append(String(searchEvidenceRank(item)))) return writer.result();
     }
     if (!append("\n\n")) return writer.result();
-    if (!append(hit.snippet)) return writer.result();
+    const selected = selectedPassageForContext(hit, `Knowledge-base search result ${hit.rank}`);
+    if (selected?.status === "selected") {
+      for (const heading of selected.headings) {
+        if (!append(`Section (level ${heading.level}, lines ${heading.startLine}-${heading.endLine}${heading.truncated ? ", shortened" : ""}):\n`)) return writer.result();
+        if (!append(heading.text)) return writer.result();
+        if (!append("\n\n")) return writer.result();
+      }
+      if (!append(`Selected source (UTF-8 snapshot ${selected.sourceSha256}; bytes ${selected.startByte}-${selected.endByte}; lines ${selected.startLine}-${selected.endLine}${selected.clippedStart || selected.clippedEnd ? "; excerpt clipped" : ""}):\n`)) return writer.result();
+      if (!append(selected.text)) return writer.result();
+    } else if (!append(hit.snippet)) return writer.result();
   }
 
   const graph = result.graph;
@@ -1420,6 +1465,107 @@ function optionalDataNumber(
   return dataNumber(record[key], `${label}.${key}`);
 }
 
+function dataCount(value: unknown, label: string, minimum = 0): number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < minimum) {
+    throw new TypeError(`${label} must be an integer of at least ${minimum}.`);
+  }
+  return value;
+}
+
+function dataSourceText(value: unknown, label: string, maximumBytes: number): string {
+  const text = dataString(value, label);
+  if (/\p{Surrogate}/u.test(text)) throw new TypeError(`${label} must be well-formed Unicode.`);
+  if (Buffer.byteLength(text, "utf8") > maximumBytes) {
+    throw new RangeError(`${label} exceeds ${maximumBytes} UTF-8 bytes.`);
+  }
+  return text;
+}
+
+function sourceSpan(
+  record: InspectedDataRecord,
+  label: string,
+  text: string,
+): { startByte: number; endByte: number; startLine: number; endLine: number } {
+  const startByte = dataCount(requiredData(record, "startByte", label), `${label}.startByte`);
+  const endByte = dataCount(requiredData(record, "endByte", label), `${label}.endByte`);
+  const startLine = dataCount(requiredData(record, "startLine", label), `${label}.startLine`, 1);
+  const endLine = dataCount(requiredData(record, "endLine", label), `${label}.endLine`, startLine);
+  if (endByte - startByte !== Buffer.byteLength(text, "utf8")) {
+    throw new TypeError(`${label} byte span must match its text.`);
+  }
+  return { startByte, endByte, startLine, endLine };
+}
+
+function selectedPassageData(value: unknown, label: string): SelectedPassageResult {
+  const record = inspectedDataRecord(value, label);
+  const status = requiredData(record, "status", label);
+  if (status === "none" || status === "unavailable") {
+    const reason = requiredData(record, "reason", label);
+    const reasons: readonly string[] = status === "none"
+      ? SELECTED_PASSAGE_NONE_REASONS
+      : SELECTED_PASSAGE_UNAVAILABLE_REASONS;
+    if (typeof reason !== "string" || !reasons.includes(reason)) {
+      throw new TypeError(`${label}.reason is not a known ${status} reason.`);
+    }
+    return Object.freeze({ status, reason }) as SelectedPassageResult;
+  }
+  if (status !== "selected") throw new TypeError(`${label}.status is not a known selected-passage status.`);
+  const text = dataSourceText(requiredData(record, "text", label), `${label}.text`, SELECTED_PASSAGE_MAX_BYTES);
+  if (text === "") throw new TypeError(`${label}.text must not be empty.`);
+  const span = sourceSpan(record, label, text);
+  const sourceSha256 = dataString(requiredData(record, "sourceSha256", label), `${label}.sourceSha256`);
+  if (!/^[0-9a-f]{64}$/u.test(sourceSha256)) throw new TypeError(`${label}.sourceSha256 must be a SHA-256 digest.`);
+  if (requiredData(record, "sourceEncoding", label) !== "utf8-snapshot") {
+    throw new TypeError(`${label}.sourceEncoding must be utf8-snapshot.`);
+  }
+  let previousLevel = 0;
+  let previousEnd = 0;
+  const headings = inspectedDataArray(requiredData(record, "headings", label), `${label}.headings`, 6)
+    .map((entry, index) => {
+      const headingLabel = `${label}.headings[${index}]`;
+      const heading = inspectedDataRecord(entry, headingLabel);
+      const level = dataCount(requiredData(heading, "level", headingLabel), `${headingLabel}.level`, previousLevel + 1);
+      if (level > 6) throw new TypeError(`${headingLabel}.level must be at most 6.`);
+      const headingText = dataSourceText(
+        requiredData(heading, "text", headingLabel),
+        `${headingLabel}.text`,
+        SELECTED_PASSAGE_MAX_HEADING_BYTES,
+      );
+      const headingSpan = sourceSpan(heading, headingLabel, headingText);
+      if (headingSpan.startByte < previousEnd || headingSpan.endByte > span.startByte) {
+        throw new TypeError(`${headingLabel} must precede the selected passage in source order.`);
+      }
+      previousLevel = level;
+      previousEnd = headingSpan.endByte;
+      return Object.freeze({
+        level,
+        text: headingText,
+        ...headingSpan,
+        truncated: dataBoolean(requiredData(heading, "truncated", headingLabel), `${headingLabel}.truncated`),
+      });
+    });
+  return Object.freeze({
+    status,
+    text,
+    ...span,
+    sourceSha256,
+    sourceEncoding: "utf8-snapshot",
+    clippedStart: dataBoolean(requiredData(record, "clippedStart", label), `${label}.clippedStart`),
+    clippedEnd: dataBoolean(requiredData(record, "clippedEnd", label), `${label}.clippedEnd`),
+    headings: Object.freeze(headings),
+  });
+}
+
+/** Read an optional hit passage as untrusted data without invoking accessors. */
+function selectedPassageForContext(hit: object, label: string): SelectedPassageResult | undefined {
+  const descriptor = Object.getOwnPropertyDescriptor(hit, "selectedPassage");
+  if (descriptor === undefined) return undefined;
+  if (!("value" in descriptor)) throw new TypeError(`${label} contains an accessor property.`);
+  return descriptor.value === undefined
+    ? undefined
+    : selectedPassageData(descriptor.value, `${label}.selectedPassage`);
+}
+
 function searchEvidenceSummary(value: unknown, label: string): Readonly<Record<string, unknown>> {
   const evidence = inspectedDataRecord(value, label);
   return Object.freeze({
@@ -1438,6 +1584,7 @@ function searchHitContextRecord(value: unknown, index: number): Readonly<Record<
   ).map((entry, evidenceIndex) =>
     searchEvidenceSummary(entry, `${label}.evidence[${evidenceIndex}]`));
   const line = optionalDataNumber(hit, "line", label);
+  const selectedPassage = selectedPassageForContext(hit, label);
   return Object.freeze({
     kind: "search-result",
     id: dataString(requiredData(hit, "id", label), `${label}.id`),
@@ -1449,6 +1596,7 @@ function searchHitContextRecord(value: unknown, index: number): Readonly<Record<
     ...(line === undefined ? {} : { line }),
     evidence: Object.freeze(evidence),
     snippet: dataString(requiredData(hit, "snippet", label), `${label}.snippet`),
+    ...(selectedPassage === undefined ? {} : { selectedPassage }),
   });
 }
 
