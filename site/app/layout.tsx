@@ -5,13 +5,14 @@ import { HranessSiteFooter } from "@hraness/site-footer/react";
 import { supportProfile } from "../../src/support-profile";
 import { WordcellContentFooter } from "./site-footer";
 import { siteDescription } from "./site-description";
+import { routeTitles } from "./route-titles";
 import { FoilController } from "./foil-controller";
 import "./globals.css";
 
 /** Gruvbox follows the system until a reader chooses a saved appearance. */
 const initialPalette = getDesignPaletteTheme("gruvbox", "light");
 
-const title = "Wordcell: Markdown memory for coding agents";
+const title = routeTitles.home.title;
 const description = siteDescription;
 
 export const metadata: Metadata = {

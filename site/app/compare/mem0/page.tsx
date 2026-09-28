@@ -6,8 +6,9 @@ import { longDate } from "../../../wordcell/format";
 import { mem0CheckedOn, mem0Pages } from "../../../wordcell/mem0-sources";
 import { WordcellEvidenceStrip } from "../../../wordcell/evidence-strip";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
+import { routeTitles } from "../../route-titles";
 
-const pageTitle = "Wordcell vs Mem0: agent notes or per-user app memory";
+const pageTitle = routeTitles.compareMem0.title;
 const pageDescription =
   "Mem0 vs Wordcell: Mem0 extracts and stores facts about each user of your app; Wordcell keeps your own agents’ memory as Markdown notes you own.";
 

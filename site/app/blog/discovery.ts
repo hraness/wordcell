@@ -15,6 +15,7 @@ import {
 import { isArticleIndexable, type ArticleIsoDate } from "@hraness/design-kit";
 
 import { siteDescription } from "../site-description";
+import { routeTitles } from "../route-titles";
 import {
   articlePath,
   BLOG_DESCRIPTION,
@@ -41,7 +42,7 @@ export const hraness = {
 
 /** The site's social card, reused as each post's representative image. */
 const socialImage = {
-  alt: "Wordcell: Markdown memory for coding agents",
+  alt: routeTitles.home.title,
   contentType: "image/png",
   height: 630,
   path: "/opengraph-image",

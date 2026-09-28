@@ -2,18 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AskAiAboutThis } from "@hraness/ui";
 
-import { docCatalog, docQuadrants, type DocQuadrant } from "../catalog";
+import { docCatalog, docOverview, docQuadrants, type DocQuadrant } from "../catalog";
 import { docHtml } from "../docs.generated";
 
 const repository = "https://github.com/hraness/wordcell";
 
-const overviewEntry = {
-  slug: "overview",
-  title: "Wordcell overview",
-  summary: "What Wordcell does, how to install it, and how a coding agent uses a vault, on one page.",
-  quadrant: null,
-  sourcePath: "README.md",
-} as const;
+const overviewEntry = docOverview;
 
 interface DocSource {
   readonly slug: string;

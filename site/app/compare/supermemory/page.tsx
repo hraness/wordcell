@@ -12,8 +12,9 @@ import {
   formatUsageRate,
   supermemoryPricing,
 } from "../../../wordcell/supermemory-pricing";
+import { routeTitles } from "../../route-titles";
 
-const pageTitle = "Wordcell vs Supermemory: files or a hosted memory API";
+const pageTitle = routeTitles.compareSupermemory.title;
 const pageDescription =
   "Supermemory vs Wordcell: a hosted memory API that extracts facts for you, or agent memory kept as Markdown files you own and review in Git.";
 

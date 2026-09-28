@@ -33,8 +33,9 @@ import {
 import { WordcellPageChrome } from "../../wordcell/page-chrome";
 import { publishedClaims, publishedClaimsCheckedOn } from "../../wordcell/published-claims";
 import { publishedRelease } from "../publication";
+import { routeTitles } from "../route-titles";
 
-const pageTitle = "Wordcell and Oh benchmarks, with their limits";
+const pageTitle = routeTitles.benchmarks.title;
 const pageDescription =
   `Wordcell’s excerpt, payload, and reranking results, Oh’s ${longMemEvalFacts.questions}-question LongMemEval-S study, LoCoMo run and Supermemory pilot, each with its source and limits.`;
 

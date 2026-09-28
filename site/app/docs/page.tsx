@@ -4,8 +4,9 @@ import { AskAiAboutThis } from "@hraness/ui";
 import { publishedRelease } from "../publication";
 import { readmeVersion } from "../readme.generated";
 import { docCatalog, docQuadrants } from "./catalog";
+import { routeTitles } from "../route-titles";
 
-const docsTitle = "Wordcell documentation";
+const docsTitle = routeTitles.docs.title;
 const docsDescription =
   "Learn the loop on a first vault, finish a task, look up an exact interface, or read why the design works the way it does.";
 

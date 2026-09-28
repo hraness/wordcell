@@ -6,8 +6,9 @@ import { basicMemoryCheckedOn, basicMemoryPages } from "../../../wordcell/basic-
 import { longDate } from "../../../wordcell/format";
 import { WordcellEvidenceStrip } from "../../../wordcell/evidence-strip";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
+import { routeTitles } from "../../route-titles";
 
-const pageTitle = "Wordcell vs Basic Memory: two Markdown knowledge graphs";
+const pageTitle = routeTitles.compareBasicMemory.title;
 const pageDescription =
   "Basic Memory vs Wordcell: both keep a knowledge graph in Markdown files. Wordcell adds typed relations, vault checks, and notes tied to code paths.";
 

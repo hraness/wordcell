@@ -1,1 +1,9 @@
-export { alt, contentType, default, size } from "../opengraph-image";
+import { routeTitles } from "../route-titles";
+import { wordcellSocialImage } from "../social-image";
+
+export { contentType, size } from "../social-image";
+export const alt = routeTitles.docs.title;
+
+export default function OpengraphImage() {
+  return wordcellSocialImage(routeTitles.docs.card);
+}

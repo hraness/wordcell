@@ -22,6 +22,7 @@ function TopicIcon({ slug }: Readonly<{ slug: WordcellIconName }>) {
 
 import { WordcellIcon, type WordcellIconName } from "../../wordcell/icons";
 import { publishedRelease } from "../publication";
+import { routeTitles } from "../route-titles";
 
 const releaseVersion = publishedRelease?.version;
 const repository = "https://github.com/hraness/wordcell";
@@ -34,7 +35,7 @@ const footnote = releaseVersion === undefined
   ? "Free under the MIT license. Exact search needs no account or model. First Wordcell release in preparation."
   : `Latest release: v${releaseVersion} · Free under the MIT license · Exact search needs no account or model.`;
 
-const pageTitle = "Wordcell for developers and coding agents";
+const pageTitle = routeTitles.developers.title;
 const pageDescription = lead;
 
 export const metadata: Metadata = {

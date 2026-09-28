@@ -12,8 +12,9 @@ import {
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
 import { SetupLinks } from "../../../wordcell/setup-links";
 import { AGENT_MEMORY_RELEASE } from "../../../wordcell/setup-prompt";
+import { routeTitles } from "../../route-titles";
 
-const pageTitle = "Migrate from Supermemory to Wordcell";
+const pageTitle = routeTitles.migrateSupermemory.title;
 const pageDescription =
   "Migrate from Supermemory: export documents and memory entries with its API, import them as Markdown notes with one Wordcell command, and verify the result.";
 

@@ -148,6 +148,21 @@ export const docCatalog = [
   },
 ] as const satisfies readonly DocEntry[];
 
+/** The README rendered at /docs/overview, listed apart from the docs/ catalog. */
+export const docOverview = {
+  slug: "overview",
+  title: "Wordcell overview",
+  summary: "What Wordcell does, how to install it, and how a coding agent uses a vault, on one page.",
+  quadrant: null,
+  sourcePath: "README.md",
+} as const;
+
+/** The title a documentation route shows, or null for an unknown slug. */
+export function docTitle(slug: string): string | null {
+  if (slug === docOverview.slug) return docOverview.title;
+  return docCatalog.find((entry) => entry.slug === slug)?.title ?? null;
+}
+
 const seen = new Set<string>();
 for (const entry of docCatalog) {
   if (seen.has(entry.slug)) throw new Error(`Duplicate documentation slug: ${entry.slug}`);
