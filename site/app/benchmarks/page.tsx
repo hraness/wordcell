@@ -85,7 +85,7 @@ export default function Benchmarks() {
         heading="Wordcell measurements with source data"
         headingId="hero-title"
         name=""
-        summary={`These source-linked Wordcell and Oh measurements do not rank Wordcell against another memory tool. Wordcell measures context handoff size and reranking quality; the embedded Oh kernel’s memory benchmarks are reported as Oh’s results. On all ${grouped(longMemEvalFacts.questions)} LongMemEval-S questions, Oh semantic retrieval scored ${semanticArm?.percent}% and BM25 ${bm25Arm?.percent}%${longMemEvalComparison.tieNotRuledOut ? "; on the measure Oh named before the run, its interval does not rule out a tie" : ""}.`}
+        summary={`Each Wordcell and Oh result here links its raw data; none ranks Wordcell against another memory tool. Wordcell measures context handoff size and reranking quality; the embedded Oh kernel’s memory benchmarks are reported as Oh’s results. On all ${grouped(longMemEvalFacts.questions)} LongMemEval-S questions, Oh semantic retrieval scored ${semanticArm?.percent}% and BM25 ${bm25Arm?.percent}%${longMemEvalComparison.tieNotRuledOut ? "; on the measure Oh named before the run, its interval does not rule out a tie" : ""}.`}
       />
 
       <MarketingSection
