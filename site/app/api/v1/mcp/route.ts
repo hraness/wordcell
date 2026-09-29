@@ -78,7 +78,10 @@ const TOOLS: readonly Tool[] = [
         title: { type: "string" },
         description: { type: "string" },
         index: { type: "string" },
-        noindex: { type: "boolean" },
+        noindex: {
+          type: "boolean",
+          description: "Sites are indexable by default; true adds a noindex robots tag to every page",
+        },
         indexContent: { type: "boolean" },
         selection: { type: "object" },
       },

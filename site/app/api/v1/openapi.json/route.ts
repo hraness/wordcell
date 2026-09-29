@@ -134,7 +134,11 @@ const SPEC = {
                   title: { type: "string", maxLength: 200 },
                   description: { type: "string", maxLength: 1000 },
                   index: { type: "string", description: "Vault-relative index note path" },
-                  noindex: { type: "boolean" },
+                  noindex: {
+                    type: "boolean",
+                    description:
+                      "Sites are indexable by default; true adds a noindex robots tag to every page",
+                  },
                   indexContent: { type: "boolean" },
                   selection: {
                     type: "object",

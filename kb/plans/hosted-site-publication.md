@@ -69,6 +69,10 @@ natively — no catch-all workaround needed.
 - **Namespace**: `wordcell.io/p/<key8>/<slug>/` — same public-by-contract
   posture as soulscrape person indexes; emitted pages may set `noindex` only
   when the caller asks for it, never to hide public content.
+  Owner decision 2026-09-29: hosted third-party sites stay indexable by
+  default and the publisher opts out with `noindex: true`, which marks every
+  emitted page. The worker adds no `X-Robots-Tag`, and a per-site
+  `robots.txt` under `/p/` is not read by crawlers.
 - **R2 holds everything — no Convex.** The emitted file set is immutable by
   digest, and the control plane (token digests, site records, slug pointers,
   daily quota counters) is a handful of small JSON objects in the same

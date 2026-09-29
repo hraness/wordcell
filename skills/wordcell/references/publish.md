@@ -96,7 +96,8 @@ The full artifact contract and hosting options are in
 
 Agents on platforms without a filesystem or Bun runtime can publish the same
 `hraness.wordcell.site.v1` artifact through the hosted surface. It runs the
-identical projection server-side; published sites are public.
+identical projection server-side; published sites are public, and search
+engines may index them unless the publish request sets `"noindex": true`.
 
 ```sh
 # Self-serve capability token (IP-limited; shown once — store it).

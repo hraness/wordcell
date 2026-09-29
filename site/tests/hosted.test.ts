@@ -195,6 +195,33 @@ describe("projectHostedVault", () => {
     await expect(access(root)).rejects.toThrow();
   });
 
+  test("hosted sites are indexable by default and noindex opts every page out", async () => {
+    const files = new Map([
+      ["index.md", enc("# Index\n\nFront door linking [[a]].\n")],
+      ["a.md", enc("# A\n\nBody.\n")],
+    ]);
+    const noindexMeta = /<meta name="robots" content="noindex">/u;
+    const pages = ["index.html", "n/a/index.html", "graph/index.html"];
+    for (const noindex of [undefined, true] as const) {
+      const { root, cleanup } = await materializeVault(files);
+      try {
+        const projected = await projectHostedVault(root, {
+          basePath: "/p/abcd1234/test/",
+          baseUrl: "https://wordcell.io",
+          ...(noindex === undefined ? {} : { noindex }),
+        });
+        for (const page of pages) {
+          const html = new TextDecoder().decode(projected.files.get(page));
+          expect(html.length).toBeGreaterThan(0);
+          expect(noindexMeta.test(html)).toBe(noindex === true);
+        }
+        expect(projected.files.has("sitemap.xml")).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    }
+  });
+
   test("rejects an empty selection", async () => {
     const { root, cleanup } = await materializeVault(
       new Map([["a.md", enc("# A\n\nbody\n")]]),

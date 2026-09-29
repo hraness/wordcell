@@ -350,6 +350,11 @@ curl -s -X PUT https://wordcell.io/api/v1/sites/handbook \
   persists. Quota counters expire within two days; token digests, site records,
   namespace reservations, operation receipts, and tombstones persist. Published sites are
   public by contract — never publish private content.
+- **Search indexing.** Hosted sites can be indexed by search engines by
+  default. To opt out, send `"noindex": true`: every page then carries a
+  `noindex` robots tag. Crawlers read `robots.txt` only at the root of
+  wordcell.io, so the site's own `robots.txt` has no effect there. Either way,
+  the site stays public to anyone with the link.
 
 `GET /api/v1/openapi.json` returns the OpenAPI 3.1 description;
 `GET /api/v1/health` reports service and storage health. MCP clients can use
