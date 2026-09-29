@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.25.1
+
+Optional OpenAlex search omits works explicitly marked as retracted by the
+index or with a title beginning `RETRACTED ARTICLE:`. Missing retraction
+status does not establish that a work is unretracted. Other search engines
+may return the same work.
+
+- Retraction filtering preserves articles about retractions and prevents
+  duplicate records from reintroducing an excluded OpenAlex work.
+- A response containing only excluded works returns an empty result with
+  provider-reported cost preserved. A response with no usable links and at
+  least one allowed work remains a search failure.
+
 ## 0.25.0
 
 Metadata search reports why each engine failed. The SDK also offers optional

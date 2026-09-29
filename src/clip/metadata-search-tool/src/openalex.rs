@@ -170,8 +170,8 @@ fn parse(body: &str, limit: usize, query: &str) -> Outcome {
             Some(cost)
         }
     };
-    let mut seen = std::collections::HashSet::new();
-    let mut seen_ids = std::collections::HashSet::new();
+    let mut known_retracted_ids = std::collections::HashSet::new();
+    let mut observed_ids = Vec::with_capacity(rows.len());
     let mut results = Vec::new();
     for row in rows {
         let id = row
@@ -191,6 +191,18 @@ fn parse(body: &str, limit: usize, query: &str) -> Outcome {
         if title.trim().is_empty() || title.len() > MAX_TEXT {
             return Err(FailureCode::Parse);
         }
+        let title = title.split_whitespace().collect::<Vec<_>>().join(" ");
+        // Absence is unknown; only an explicit flag or title marker excludes a work.
+        let retracted = match row.get("is_retracted") {
+            None => false,
+            Some(value) => value.as_bool().ok_or(FailureCode::Parse)?,
+        };
+        const RETRACTED_PREFIX: &str = "RETRACTED ARTICLE:";
+        let retracted = retracted
+            || title
+                .get(..RETRACTED_PREFIX.len())
+                .is_some_and(|prefix| prefix.eq_ignore_ascii_case(RETRACTED_PREFIX));
+        observed_ids.push(id);
         let mut candidates = Vec::new();
         let mut locations = Vec::new();
         for field in ["best_oa_location", "primary_location"] {
@@ -270,21 +282,41 @@ fn parse(body: &str, limit: usize, query: &str) -> Outcome {
             }
             _ => return Err(FailureCode::Parse),
         }
+        // Validate every row's bounded fields even when its work will be omitted.
+        if retracted {
+            known_retracted_ids.insert(id);
+            continue;
+        }
         // Prefer observed direct destinations over DOI redirectors; preserve stable location order.
         candidates.sort_by_key(|(priority, _)| *priority);
         let Some((_, url)) = candidates.into_iter().next() else {
             continue;
         };
-        if seen_ids.insert(id.to_owned()) && seen.insert(url.clone()) {
-            results.push(SearchResult {
-                title: title.split_whitespace().collect::<Vec<_>>().join(" "),
+        results.push((
+            id,
+            SearchResult {
+                title,
                 url,
                 snippet: Some("Scholarly index metadata; full text not fetched.".into()),
                 source_engine: "openalex".into(),
-            });
-        }
+            },
+        ));
     }
-    if !rows.is_empty() && results.is_empty() {
+    // A duplicate row cannot reintroduce an identity explicitly marked retracted.
+    // Deduplicate only admitted works so excluded identities cannot hide usable rows.
+    let mut seen = std::collections::HashSet::new();
+    let mut seen_ids = std::collections::HashSet::new();
+    let results: Vec<_> = results
+        .into_iter()
+        .filter(|(id, _)| !known_retracted_ids.contains(id))
+        .filter(|(id, result)| seen_ids.insert(*id) && seen.insert(result.url.clone()))
+        .map(|(_, result)| result)
+        .collect();
+    if results.is_empty()
+        && observed_ids
+            .iter()
+            .any(|id| !known_retracted_ids.contains(id))
+    {
         return Err(FailureCode::UnverifiedEmpty);
     }
     Ok(Discovery {
@@ -305,6 +337,122 @@ mod tests {
     }
     fn check(value: Value) -> Outcome {
         parse(&value.to_string(), 3, "microalgae")
+    }
+    #[test]
+    fn omits_known_retractions_and_preserves_cost_for_policy_empty_results() {
+        let mut retracted = row();
+        retracted["is_retracted"] = json!(true);
+        let mut value = response(vec![retracted.clone()]);
+        value["meta"]["cost_usd"] = json!(0.0001);
+        let result = check(value).unwrap();
+        assert!(result.results.is_empty());
+        assert_eq!(result.reported_cost_usd, Some(0.0001));
+
+        let mut good = row();
+        good["id"] = json!("https://openalex.org/W456");
+        good["is_retracted"] = json!(false);
+        let result = check(response(vec![retracted, good])).unwrap();
+        assert_eq!(result.results.len(), 1);
+        assert_eq!(
+            result.results[0].title,
+            "Microalgae harvesting energy efficiency"
+        );
+        // Missing status remains admissible metadata, without a verified-status claim.
+        let result = check(response(vec![row()])).unwrap();
+        assert_eq!(result.results.len(), 1);
+        assert_eq!(
+            result.results[0].snippet.as_deref(),
+            Some("Scholarly index metadata; full text not fetched.")
+        );
+    }
+    #[test]
+    fn retraction_marker_is_anchored_and_does_not_exclude_scholarship_about_retractions() {
+        for title in [
+            "RETRACTED ARTICLE: Microalgae",
+            " retracted article:Microalgae",
+            "RETRACTED\n ARTICLE: Microalgae",
+        ] {
+            let mut r = row();
+            r["title"] = json!(title);
+            r["is_retracted"] = json!(false);
+            assert!(
+                check(response(vec![r])).unwrap().results.is_empty(),
+                "{title}"
+            );
+        }
+        for title in [
+            "A study of retractions",
+            "Analysis of RETRACTED ARTICLE: labels",
+            "RETRACTED ARTICLES: a review",
+            "Retraction notices in science",
+            "論文について",
+        ] {
+            let mut r = row();
+            r["title"] = json!(title);
+            assert_eq!(
+                check(response(vec![r])).unwrap().results.len(),
+                1,
+                "{title}"
+            );
+        }
+    }
+    #[test]
+    fn rejects_malformed_status_even_with_an_explicit_title_marker() {
+        for status in [Value::Null, json!("true"), json!(1), json!([]), json!({})] {
+            for title in ["Microalgae harvesting", "RETRACTED ARTICLE: Microalgae"] {
+                let mut r = row();
+                r["title"] = json!(title);
+                r["is_retracted"] = status.clone();
+                assert_eq!(check(response(vec![r])).unwrap_err(), FailureCode::Parse);
+            }
+        }
+    }
+    #[test]
+    fn policy_filter_preserves_unusable_link_failures_and_row_validation() {
+        let mut retracted = row();
+        retracted["is_retracted"] = json!(true);
+        let mut unusable = row();
+        unusable["id"] = json!("https://openalex.org/W456");
+        unusable["best_oa_location"] = Value::Null;
+        unusable["doi"] = Value::Null;
+        assert_eq!(
+            check(response(vec![retracted.clone(), unusable])).unwrap_err(),
+            FailureCode::UnverifiedEmpty
+        );
+        retracted["doi"] = json!(42);
+        assert_eq!(
+            check(response(vec![retracted.clone()])).unwrap_err(),
+            FailureCode::Parse
+        );
+        retracted["doi"] = Value::Null;
+        retracted["locations"] = json!([{"is_oa":true,"landing_page_url":"x".repeat(8193)}]);
+        assert_eq!(
+            check(response(vec![retracted])).unwrap_err(),
+            FailureCode::BodyLimit
+        );
+    }
+    #[test]
+    fn duplicate_work_cannot_reintroduce_a_known_retraction_in_either_order() {
+        let mut retracted = row();
+        retracted["is_retracted"] = json!(true);
+        for rows in [vec![row(), retracted.clone()], vec![retracted, row()]] {
+            assert!(check(response(rows)).unwrap().results.is_empty());
+        }
+    }
+    #[test]
+    fn excluded_identity_cannot_consume_a_valid_works_url_deduplication_slot() {
+        let mut retracted = row();
+        retracted["is_retracted"] = json!(true);
+        let mut good = row();
+        good["id"] = json!("https://openalex.org/W456");
+        good["title"] = json!("Allowed work at the shared destination");
+        let result = check(response(vec![row(), good, retracted])).unwrap();
+        assert_eq!(result.results.len(), 1);
+        assert_eq!(
+            result.results[0].title,
+            "Allowed work at the shared destination"
+        );
+        assert_eq!(result.results[0].url, "https://repository.example/paper");
     }
     #[test]
     fn discovery_prefers_observed_oa_landing_and_deduplicates() {
