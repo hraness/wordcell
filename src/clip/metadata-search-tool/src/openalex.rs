@@ -86,12 +86,17 @@ async fn search_at(
     .map_err(|_| FailureCode::Timeout)?
 }
 
-fn destination(raw: &str) -> Result<String, FailureCode> {
+fn destination(raw: &str) -> Result<Option<String>, FailureCode> {
     if raw.len() > 8192 {
         return Err(FailureCode::BodyLimit);
     }
-    let url = Url::parse(raw).map_err(|_| FailureCode::Parse)?;
-    let host = url.host_str().ok_or(FailureCode::Parse)?;
+    let Ok(url) = Url::parse(raw) else {
+        return Ok(None);
+    };
+    let Some(host) = url.host_str() else {
+        return Ok(None);
+    };
+    let host = host.trim_end_matches('.');
     if url.scheme() != "https"
         || !url.username().is_empty()
         || url.password().is_some()
@@ -104,9 +109,9 @@ fn destination(raw: &str) -> Result<String, FailureCode> {
             .parse()
             .is_ok_and(super::is_private_or_reserved)
     {
-        return Err(FailureCode::Parse);
+        return Ok(None);
     }
-    Ok(url.into())
+    Ok(Some(url.into()))
 }
 
 fn parse(body: &str, limit: usize, query: &str) -> Outcome {
@@ -222,7 +227,9 @@ fn parse(body: &str, limit: usize, query: &str) -> Outcome {
                 match location.get(key) {
                     None | Some(Value::Null) => {}
                     Some(Value::String(raw)) => {
-                        let url = destination(raw)?;
+                        let Some(url) = destination(raw)? else {
+                            continue;
+                        };
                         let parsed = Url::parse(&url).unwrap();
                         let host = parsed.host_str().unwrap();
                         let archive_article = (host == "europepmc.org"
@@ -254,11 +261,12 @@ fn parse(body: &str, limit: usize, query: &str) -> Outcome {
         match row.get("doi") {
             None | Some(Value::Null) => {}
             Some(Value::String(raw)) => {
-                let url = destination(raw)?;
-                if Url::parse(&url).unwrap().host_str() != Some("doi.org") {
-                    return Err(FailureCode::Parse);
+                if let Some(url) = destination(raw)? {
+                    if Url::parse(&url).unwrap().host_str() != Some("doi.org") {
+                        return Err(FailureCode::Parse);
+                    }
+                    candidates.push((4, url));
                 }
-                candidates.push((4, url));
             }
             _ => return Err(FailureCode::Parse),
         }
@@ -331,13 +339,16 @@ mod tests {
         );
         r["locations"][0]["is_oa"] = json!(true);
         r["locations"][0]["landing_page_url"] = json!("https://127.0.0.1/x");
-        assert!(check(response(vec![r])).is_err());
+        assert_eq!(
+            check(response(vec![r])).unwrap().results[0].url,
+            "https://repository.example/paper"
+        );
         let mut bad = response(vec![row()]);
         bad["meta"]["cost_usd"] = json!(-1);
         assert!(check(bad).is_err());
     }
     #[test]
-    fn rejects_schema_query_bounds_and_unsafe_links() {
+    fn rejects_schema_query_and_bounds() {
         for path in [
             "/meta/page",
             "/meta/per_page",
@@ -353,19 +364,6 @@ mod tests {
         let mut wrong = response(vec![]);
         wrong["meta"]["x_query"]["oqo"]["filter_rows"][0]["value"] = Value::String("other".into());
         assert_eq!(check(wrong).unwrap_err(), FailureCode::QueryMismatch);
-        for url in [
-            "http://public.example/a",
-            "https://127.0.0.1/a",
-            "https://user:password@example.com/a",
-            "https://[::1]/a",
-            "https://localhost/a",
-            "file:///tmp/a",
-            "https://example.com:8443/a",
-        ] {
-            let mut r = row();
-            r["best_oa_location"]["landing_page_url"] = Value::String(url.into());
-            assert!(check(response(vec![r])).is_err(), "{url}");
-        }
         assert_eq!(
             check(response(vec![row(), row(), row(), row()])).unwrap_err(),
             FailureCode::ResultLimit
@@ -378,6 +376,70 @@ mod tests {
         assert_eq!(
             parse("{}", 0, "microalgae").unwrap_err(),
             FailureCode::ResultLimit
+        );
+    }
+    #[test]
+    fn filters_unusable_destinations_without_losing_valid_rows_or_promoting_urls() {
+        for raw in [
+            "http://repository.example/paper",
+            "https://127.0.0.1/a",
+            "https://10.0.0.1/a",
+            "https://user:password@example.com/a",
+            "https://[::1]/a",
+            "https://localhost/a",
+            "https://localhost./a",
+            "https://host.local./a",
+            "https://host.localhost./a",
+            "file:///tmp/a",
+            "https://example.com:8443/a",
+            "not a URL",
+            "",
+        ] {
+            let mut unusable = row();
+            unusable["best_oa_location"]["landing_page_url"] = json!(raw);
+            unusable["best_oa_location"]["pdf_url"] = json!(raw);
+            unusable["doi"] = json!("http://doi.org/10.1234/old");
+            assert_eq!(
+                check(response(vec![unusable.clone()])).unwrap_err(),
+                FailureCode::UnverifiedEmpty,
+                "{raw}"
+            );
+            let mut good = row();
+            good["id"] = json!("https://openalex.org/W456");
+            let results = check(response(vec![unusable.clone(), good]))
+                .unwrap()
+                .results;
+            assert_eq!(results.len(), 1, "{raw}");
+            assert_eq!(results[0].url, "https://repository.example/paper", "{raw}");
+            unusable["locations"] = json!([{"is_oa":true,"landing_page_url":"https://europepmc.org/articles/PMC3172406"}]);
+            let results = check(response(vec![unusable])).unwrap().results;
+            assert_eq!(results.len(), 1, "{raw}");
+            assert_eq!(
+                results[0].url, "https://europepmc.org/articles/PMC3172406",
+                "{raw}"
+            );
+        }
+    }
+    #[test]
+    fn keeps_destination_type_and_size_failures_after_valid_candidates() {
+        for key in ["landing_page_url", "pdf_url"] {
+            for value in [json!(42), json!(false), json!([]), json!({})] {
+                let mut r = row();
+                r["locations"] = json!([{"is_oa":true,key:value}]);
+                assert_eq!(check(response(vec![r])).unwrap_err(), FailureCode::Parse);
+            }
+        }
+        let mut r = row();
+        r["doi"] = json!(42);
+        assert_eq!(check(response(vec![r])).unwrap_err(), FailureCode::Parse);
+        let mut r = row();
+        r["doi"] = json!("https://other.example/paper");
+        assert_eq!(check(response(vec![r])).unwrap_err(), FailureCode::Parse);
+        let mut r = row();
+        r["locations"] = json!([{"is_oa":true,"landing_page_url":"x".repeat(8193)}]);
+        assert_eq!(
+            check(response(vec![r])).unwrap_err(),
+            FailureCode::BodyLimit
         );
     }
     #[test]
