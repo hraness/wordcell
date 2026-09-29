@@ -14,9 +14,9 @@ export function npmInstallCommand(version: string): string {
 
 /**
  * Install tabs for macOS, Linux, and Windows. Wordcell is a Bun package, so
- * macOS and Linux use the same command; npm is the documented alternative.
- * Native Windows installs but cannot write notes yet (directory fsync fails
- * with EPERM), so the Windows tab points to WSL2.
+ * every platform uses the same command; npm is the documented alternative.
+ * CI installs the packed build on macOS and Windows Server 2025 and runs the
+ * quick start; Linux is covered by the package smoke.
  */
 export function installPlatforms(version: string): readonly PlatformInstallTarget[] {
   const command = bunInstallCommand(version);
@@ -25,9 +25,9 @@ export function installPlatforms(version: string): readonly PlatformInstallTarge
   return [
     { id: "macos", command, shell: "Terminal", note, alternatives },
     { id: "linux", command, shell: "Terminal", note, alternatives },
-    { id: "windows", unavailable: true, unavailableNote: "Runs in WSL2 with the Linux command.", command, shell: "WSL2 terminal" },
+    { id: "windows", command, shell: "PowerShell", note, alternatives },
   ];
 }
 
-/** The "Runs on" row: native on macOS and Linux, Windows through WSL2. */
-export const runsOnPlatforms = ["macos", "linux", { id: "windows", note: "via WSL2" }] as const;
+/** The "Runs on" row: native on macOS, Linux, and Windows. */
+export const runsOnPlatforms = ["macos", "linux", "windows"] as const;

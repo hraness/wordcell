@@ -19,7 +19,7 @@
 **Search repository knowledge**
 
 Use `bun run kb:search "question" --json` for ordinary questions about this
-repository's `kb/`. It pins Wordcell 0.24.0, returns a local
+repository's `kb/`. It pins Wordcell 0.24.1, returns a local
 `selectedPassage` excerpt with line references for each result, and enables
 hosted TypeSafe reranking for this public KB. Queries and bounded note identifiers, titles,
 paths, and snippets leave the machine. Keep the API key in the private
