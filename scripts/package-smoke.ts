@@ -652,6 +652,8 @@ const work = await mkdtemp(join(tmpdir(), "hraness-package-smoke-"));
 const temporary = join(work, "tmp");
 // CI may share one npm download cache across runs; the release workflow never
 // sets this, so the canonical artifact smoke always starts from an empty cache.
+// npm still revalidates packument metadata, so the smoke resolves the ranges a
+// real user would get today; only tarball downloads come from the cache.
 const sharedNpmCache = parseSharedNpmCache(process.env.WORDCELL_SMOKE_NPM_CACHE);
 const environment = {
   ...process.env,
@@ -663,7 +665,6 @@ const environment = {
   TMPDIR: temporary,
   npm_config_audit: "false",
   npm_config_cache: sharedNpmCache ?? join(temporary, "npm-cache"),
-  ...(sharedNpmCache === null ? {} : { npm_config_prefer_offline: "true" }),
   npm_config_fund: "false",
   npm_config_ignore_scripts: "true",
   npm_config_registry: "https://registry.npmjs.org",

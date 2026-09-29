@@ -18,7 +18,7 @@ permissions:
 # Pull requests cancel superseded runs. Runs on main are keyed by commit, so a
 # later push or rerun never cancels an earlier main run.
 concurrency:
-  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # `bun run check` stays the local and prepack aggregate. CI runs its three slow
