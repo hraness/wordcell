@@ -193,7 +193,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "references/url-platforms.md",
     "templates/companion-skill.template.md",
   ]);
-  expect(manifest.version).toBe("0.25.0");
+  expect(manifest.version).toBe("0.25.1");
   expect(manifestFiles).toContain("skills/wordcell");
   expect(publicSourceFiles).toContain("src/repository-memory.ts");
   expect(Object.keys(manifest.exports as Record<string, unknown>).toSorted()).toEqual([
