@@ -1,3 +1,4 @@
+mod bing;
 mod duckduckgo;
 
 use std::alloc::{GlobalAlloc, Layout, System};
@@ -39,6 +40,7 @@ enum FailureCode {
     BodyEncoding,
     ResultLimit,
     UnrecognizedHtml,
+    QueryMismatch,
 }
 
 /// Only bounded categorical diagnostics cross the protocol boundary, never error text.
@@ -192,10 +194,20 @@ struct SearchRequest {
     schema_version: u8,
     #[serde(default)]
     diagnostics: bool,
+    #[serde(default)]
+    bing_rss: bool,
     query: String,
     max_results: usize,
     timeout_ms: u64,
     engine_hosts: Vec<EngineHost>,
+}
+
+fn expected_hosts(bing_rss: bool) -> Vec<&'static str> {
+    let mut hosts = ENGINE_HOSTS.to_vec();
+    if bing_rss {
+        hosts.push("www.bing.com");
+    }
+    hosts
 }
 
 fn read_request() -> Result<SearchRequest, &'static str> {
@@ -220,10 +232,16 @@ fn read_request() -> Result<SearchRequest, &'static str> {
     if !(MIN_TIMEOUT_MS..=MAX_TIMEOUT_MS).contains(&request.timeout_ms) {
         return Err("invalid-timeout");
     }
-    if request.engine_hosts.len() != ENGINE_HOSTS.len() {
+    validate_engine_hosts(&request)?;
+    Ok(request)
+}
+
+fn validate_engine_hosts(request: &SearchRequest) -> Result<(), &'static str> {
+    let expected_hosts = expected_hosts(request.bing_rss);
+    if request.engine_hosts.len() != expected_hosts.len() {
         return Err("invalid-engine-hosts");
     }
-    for (host, expected) in request.engine_hosts.iter().zip(ENGINE_HOSTS) {
+    for (host, expected) in request.engine_hosts.iter().zip(expected_hosts) {
         if host.hostname != expected
             || host.addresses.is_empty()
             || host.addresses.len() > MAX_ENGINE_ADDRESSES
@@ -231,7 +249,7 @@ fn read_request() -> Result<SearchRequest, &'static str> {
             return Err("invalid-engine-hosts");
         }
     }
-    Ok(request)
+    Ok(())
 }
 
 fn fail(code: &'static str) -> ! {
@@ -387,7 +405,8 @@ async fn run() {
         Ok(request) => request,
         Err(code) => fail(code),
     };
-    let timeout = Duration::from_millis(request.timeout_ms / ENGINE_HOSTS.len() as u64);
+    let timeout =
+        Duration::from_millis(request.timeout_ms / expected_hosts(request.bing_rss).len() as u64);
     let client = Arc::new(
         build_pinned_http_client(&request.engine_hosts, timeout).unwrap_or_else(|code| fail(code)),
     );
@@ -404,6 +423,20 @@ async fn run() {
     let mut successes = Vec::new();
     let mut engines_failed = Vec::new();
     let mut engine_failures = Vec::new();
+    // Optional independent backend runs first within the existing total time budget.
+    if request.bing_rss {
+        engines_queried.insert(0, "bing".to_string());
+        match bing::search(&client, request.query.trim(), request.max_results, timeout).await {
+            Ok(results) => successes.push(("bing".to_string(), results)),
+            Err(code) => {
+                engines_failed.push("bing".to_string());
+                engine_failures.push(EngineFailure {
+                    engine: "bing".to_string(),
+                    code,
+                });
+            }
+        }
+    }
     match duckduckgo::search(&client, request.query.trim(), request.max_results, timeout).await {
         Ok(results) => successes.push(("duckduckgo".to_string(), results)),
         Err(code) => {
@@ -538,5 +571,21 @@ mod diagnostic_tests {
             input["diagnostics"] = invalid;
             assert!(serde_json::from_value::<SearchRequest>(input).is_err());
         }
+    }
+    #[test]
+    fn optional_bing_preserves_exact_legacy_host_contract() {
+        let mut value = serde_json::json!({"schema_version":1,"query":"query","max_results":3,"timeout_ms":15000,
+            "engine_hosts": expected_hosts(false).into_iter().map(|hostname| serde_json::json!({"hostname":hostname,"addresses":[{"address":"93.184.216.34","family":4}]})).collect::<Vec<_>>() });
+        let legacy: SearchRequest = serde_json::from_value(value.clone()).unwrap();
+        assert!(!legacy.bing_rss);
+        assert!(validate_engine_hosts(&legacy).is_ok());
+        value["bing_rss"] = serde_json::json!(true);
+        assert!(validate_engine_hosts(&serde_json::from_value(value.clone()).unwrap()).is_err());
+        value["engine_hosts"].as_array_mut().unwrap().push(serde_json::json!({"hostname":"www.bing.com","addresses":[{"address":"93.184.216.34","family":4}]}));
+        assert!(validate_engine_hosts(&serde_json::from_value(value.clone()).unwrap()).is_ok());
+        value["bing_rss"] = serde_json::json!(false);
+        assert!(validate_engine_hosts(&serde_json::from_value(value.clone()).unwrap()).is_err());
+        value["bing_rss"] = serde_json::json!("true");
+        assert!(serde_json::from_value::<SearchRequest>(value).is_err());
     }
 }

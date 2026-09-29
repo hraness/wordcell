@@ -391,6 +391,12 @@ responses omit this field; absence does not mean no failures. The Rust helper em
 The current SDK opts in and requires the matching helper. An older helper rejects
 that request without retrying; upgrade the SDK and helper together. Search results retain their existing `engineStatus` semantics.
 
+The experimental `enableBingRss: true` provider option adds Bing RSS as a fifth
+engine. It is disabled by default. Requests use the same public-network checks,
+redirect refusal, and total time limit. RSS must identify the requested query;
+a missing or different query produces `query-mismatch`, including for an empty
+feed. Matching the query field does not establish that the results are relevant.
+
 
 ### Update a note body conditionally
 

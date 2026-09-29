@@ -38,7 +38,7 @@ export type MetadataSearchResult = {
 export const METADATA_SEARCH_FAILURE_CODES = [
   "timeout", "http", "http-body", "http-status", "http-forbidden", "http-rate-limited", "http-redirect",
   "parse", "unverified-empty", "challenge", "content-type", "content-encoding", "body-limit",
-  "body-encoding", "result-limit", "unrecognized-html",
+  "body-encoding", "result-limit", "unrecognized-html", "query-mismatch",
 ] as const;
 export type MetadataSearchFailureCode = (typeof METADATA_SEARCH_FAILURE_CODES)[number];
 export type MetadataSearchEngineFailure = {

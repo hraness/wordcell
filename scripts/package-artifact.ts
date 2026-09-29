@@ -43,6 +43,7 @@ const requiredPaths = Object.freeze([
   "src/clip/metadata-search-tool/runner.ts",
   "src/clip/metadata-search-tool/src/main.rs",
   "src/clip/metadata-search-tool/src/duckduckgo.rs",
+  "src/clip/metadata-search-tool/src/bing.rs",
   "src/evaluation-builder.ts",
   "src/index.ts",
   "src/graph-authority.ts",
