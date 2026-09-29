@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.25.0
+
+Metadata search reports why each engine failed. The SDK also offers optional
+Bing RSS and OpenAlex searches; both are disabled by default.
+
+- Search diagnostics distinguish rate limits, access blocks, redirects,
+  challenges, timeouts, and invalid responses. Older callers receive the
+  original response format unless they request diagnostics.
+- OpenAlex supplies scholarly article links, including open-access repository
+  locations reported by the index. Indexed links still require a separate
+  full-text read. Provider-reported usage does not establish a billed charge.
+- Capture extracts article bodies from the supported `jsonArticle` embedded
+  JSON format when the record matches the page URL. Parsing does not execute
+  scripts, and the text passes through the existing article sanitizer.
+
 ## 0.24.1
 
 Wordcell now runs on native Windows. `wordcell note create` and the other

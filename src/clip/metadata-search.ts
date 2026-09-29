@@ -94,6 +94,8 @@ export type RustMetadataSearchProviderOptions = {
   readonly binaryPath: string;
   /** Opt in to the fixed, public Bing RSS endpoint. Disabled by default. */
   readonly enableBingRss?: boolean;
+  /** Opt in to public OpenAlex scholarly discovery; indexed links are not fetched evidence. */
+  readonly enableOpenAlexDiscovery?: boolean;
   readonly defaultMaxResults?: number;
   readonly defaultTimeoutMs?: number;
   readonly processGraceMs?: number;
@@ -495,8 +497,9 @@ async function resolveEngineHosts(
   resolver: MetadataSearchNetworkResolver,
   timeoutMs: number,
   enableBingRss: boolean,
+  enableOpenAlexDiscovery: boolean,
 ): Promise<readonly ResolvedEngineHost[]> {
-  const resolved = await Promise.all([...METADATA_SEARCH_ENGINE_HOSTS, ...(enableBingRss ? ["www.bing.com"] : [])].map(async (hostname) => {
+  const resolved = await Promise.all([...METADATA_SEARCH_ENGINE_HOSTS, ...(enableBingRss ? ["www.bing.com"] : []), ...(enableOpenAlexDiscovery ? ["api.openalex.org"] : [])].map(async (hostname) => {
     const addresses = await resolver(new URL(`https://${hostname}/`), {
       allowPrivateNetwork: false,
       timeoutMs,
@@ -556,6 +559,8 @@ export function createExactUrlSearchQuery(value: string | URL): string | null {
 export function createRustMetadataSearchProvider(options: RustMetadataSearchProviderOptions): SearchProvider {
   if (options.enableBingRss !== undefined && typeof options.enableBingRss !== "boolean") throw new TypeError("enableBingRss must be boolean.");
   const enableBingRss = options.enableBingRss === true;
+  if (options.enableOpenAlexDiscovery !== undefined && typeof options.enableOpenAlexDiscovery !== "boolean") throw new TypeError("enableOpenAlexDiscovery must be boolean.");
+  const enableOpenAlexDiscovery = options.enableOpenAlexDiscovery === true;
   if (!isAbsolute(options.binaryPath)) {
     throw new TypeError("The metadata search binary path must be absolute.");
   }
@@ -617,7 +622,7 @@ export function createRustMetadataSearchProvider(options: RustMetadataSearchProv
 
     let engineHosts: readonly ResolvedEngineHost[];
     try {
-      engineHosts = await resolveEngineHosts(resolveNetworkTarget, validated.timeoutMs, enableBingRss);
+      engineHosts = await resolveEngineHosts(resolveNetworkTarget, validated.timeoutMs, enableBingRss, enableOpenAlexDiscovery);
     } catch {
       return failure("unavailable", "Metadata search network targets are unavailable.");
     }
@@ -644,6 +649,7 @@ export function createRustMetadataSearchProvider(options: RustMetadataSearchProv
         schema_version: REQUEST_SCHEMA_VERSION,
         diagnostics: true,
         ...(enableBingRss ? { bing_rss: true } : {}),
+        ...(enableOpenAlexDiscovery ? { openalex_discovery: true } : {}),
         query: validated.query,
         max_results: validated.maxResults,
         timeout_ms: validated.timeoutMs,

@@ -46,6 +46,12 @@ export type MetadataSearchEngineFailure = {
   readonly code: MetadataSearchFailureCode;
 };
 
+export type MetadataSearchEngineUsage = {
+  readonly engine: "openalex";
+  readonly reportedCostUsd: number;
+  readonly billingStatus: "not-established";
+};
+
 export type MetadataSearchResponse = {
   readonly query: string;
   readonly results: readonly MetadataSearchResult[];
@@ -54,6 +60,8 @@ export type MetadataSearchResponse = {
   readonly engineStatus: MetadataSearchEngineStatus;
   /** Absent for older providers; present entries cover every failed engine exactly once. */
   readonly engineFailures?: readonly MetadataSearchEngineFailure[];
+  /** Provider-reported telemetry; this does not establish a user charge. */
+  readonly engineUsage?: readonly MetadataSearchEngineUsage[];
 };
 
 export type RankMetadataSearchOptions = {
@@ -259,7 +267,7 @@ function parseMetadataResult(
 /** Strictly parse one successful metadata-search-engine-rs `GET /search` body. */
 export function parseMetadataSearchResponse(value: unknown): MetadataSearchResponse {
   const input = record(value, "Metadata search response");
-  strictKeys(input, ["query", "results", "engines_queried", "engines_failed", "engine_failures"], "Metadata search response");
+  strictKeys(input, ["query", "results", "engines_queried", "engines_failed", "engine_failures", "engine_usage"], "Metadata search response");
   const budget: TextBudget = { bytes: 0 };
   const query = boundedString(input.query, "Metadata search response.query", MAX_METADATA_SEARCH_QUERY_UTF8_BYTES, budget);
   if (query === "" || query !== query.trim() || hasUnsafeControls(query)) {
@@ -297,12 +305,23 @@ export function parseMetadataSearchResponse(value: unknown): MetadataSearchRespo
   }
   const results = Object.freeze(input.results.map((result, index) =>
     parseMetadataResult(result, index, queried, failed, budget)));
+  let engineUsage: readonly MetadataSearchEngineUsage[] | undefined;
+  if (Object.hasOwn(input, "engine_usage")) {
+    if (!Array.isArray(input.engine_usage) || input.engine_usage.length !== 1) fail("Metadata search response.engine_usage", "must contain one bounded OpenAlex usage record.");
+    const entry = record(input.engine_usage[0], "engine usage");
+    strictKeys(entry, ["engine", "reported_cost_usd", "billing_status"], "engine usage");
+    if (entry.engine !== "openalex" || !enginesQueried.includes("openalex") || failed.has("openalex")
+      || typeof entry.reported_cost_usd !== "number" || !Number.isFinite(entry.reported_cost_usd)
+      || entry.reported_cost_usd < 0 || entry.reported_cost_usd > 1_000_000 || entry.billing_status !== "not-established") fail("engine usage", "must preserve bounded provider-reported usage without asserting billing.");
+    engineUsage = Object.freeze([Object.freeze({ engine: "openalex" as const, reportedCostUsd: entry.reported_cost_usd, billingStatus: "not-established" as const })]);
+  }
   return Object.freeze({
     query,
     results,
     enginesQueried,
     enginesFailed,
     ...(engineFailures === undefined ? {} : { engineFailures }),
+    ...(engineUsage === undefined ? {} : { engineUsage }),
     engineStatus: enginesFailed.length === 0
       ? "complete"
       : enginesFailed.length === enginesQueried.length ? "unavailable" : "partial",

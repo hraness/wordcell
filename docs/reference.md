@@ -397,6 +397,13 @@ redirect refusal, and total time limit. RSS must identify the requested query;
 a missing or different query produces `query-mismatch`, including for an empty
 feed. Matching the query field does not establish that the results are relevant.
 
+The experimental `enableOpenAlexDiscovery: true` provider option adds OpenAlex
+scholarly metadata. It is disabled by default and uses the same network and
+resource limits. Article links come from the provider's response; a link does
+not establish full-text access. The response must identify the requested query.
+Optional `engineUsage` records provider-reported usage, which does not establish
+a billed charge. Neither experimental option changes the four default engines.
+
 
 ### Update a note body conditionally
 

@@ -1,4 +1,5 @@
 import { Defuddle } from "defuddle/node";
+import { embeddedArticleHtml } from "./embedded-article.js";
 
 type WorkerResponse =
   | { readonly ok: true; readonly value: unknown }
@@ -112,8 +113,11 @@ workerGlobal.onmessage = async (event: MessageEvent<unknown>): Promise<void> => 
     return;
   }
   try {
-    const videoPosters = collectVideoPosters(request.html);
-    const value = await Defuddle(request.html, request.url, {
+    const extractionHtml = request.includeReplies === false
+      ? await embeddedArticleHtml(request.html, request.url) ?? request.html
+      : request.html;
+    const videoPosters = collectVideoPosters(extractionHtml);
+    const value = await Defuddle(extractionHtml, request.url, {
       markdown: false,
       separateMarkdown: true,
       includeReplies: request.includeReplies,

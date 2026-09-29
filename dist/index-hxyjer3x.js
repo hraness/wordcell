@@ -30,6 +30,25 @@ var ARCHIVE_TODAY_HOSTS = Object.freeze([
   "archive.md",
   "archive.vn"
 ]);
+var METADATA_SEARCH_FAILURE_CODES = [
+  "timeout",
+  "http",
+  "http-body",
+  "http-status",
+  "http-forbidden",
+  "http-rate-limited",
+  "http-redirect",
+  "parse",
+  "unverified-empty",
+  "challenge",
+  "content-type",
+  "content-encoding",
+  "body-limit",
+  "body-encoding",
+  "result-limit",
+  "unrecognized-html",
+  "query-mismatch"
+];
 var archiveTodayHosts = new Set(ARCHIVE_TODAY_HOSTS);
 var tokenCharacter = /^[!#$%&'*+.^_`|~0-9A-Za-z-]$/u;
 var engineName = /^[a-z0-9][a-z0-9._-]{0,127}$/u;
@@ -140,7 +159,7 @@ function parseMetadataResult(value, index, queried, failed, budget) {
 }
 function parseMetadataSearchResponse(value) {
   const input = record(value, "Metadata search response");
-  strictKeys(input, ["query", "results", "engines_queried", "engines_failed"], "Metadata search response");
+  strictKeys(input, ["query", "results", "engines_queried", "engines_failed", "engine_failures", "engine_usage"], "Metadata search response");
   const budget = { bytes: 0 };
   const query = boundedString(input.query, "Metadata search response.query", MAX_METADATA_SEARCH_QUERY_UTF8_BYTES, budget);
   if (query === "" || query !== query.trim() || hasUnsafeControls(query)) {
@@ -157,12 +176,44 @@ function parseMetadataSearchResponse(value) {
     fail("Metadata search response.results", `must be an array with at most ${MAX_METADATA_SEARCH_RESULTS} entries.`);
   }
   const failed = new Set(enginesFailed);
+  let engineFailures;
+  if (Object.hasOwn(input, "engine_failures")) {
+    if (!Array.isArray(input.engine_failures) || input.engine_failures.length !== enginesFailed.length) {
+      fail("Metadata search response.engine_failures", "must cover every failed engine exactly once.");
+    }
+    const seen = new Set;
+    engineFailures = Object.freeze(input.engine_failures.map((value2, index) => {
+      const label = `Metadata search response.engine_failures[${index}]`;
+      const entry = record(value2, label);
+      strictKeys(entry, ["engine", "code"], label);
+      if (typeof entry.engine !== "string" || !failed.has(entry.engine) || seen.has(entry.engine)) {
+        fail(label, "must name a unique failed, queried engine.");
+      }
+      if (typeof entry.code !== "string" || !METADATA_SEARCH_FAILURE_CODES.some((code) => code === entry.code)) {
+        fail(label, "must contain a known categorical failure code.");
+      }
+      seen.add(entry.engine);
+      return Object.freeze({ engine: entry.engine, code: entry.code });
+    }));
+  }
   const results = Object.freeze(input.results.map((result, index) => parseMetadataResult(result, index, queried, failed, budget)));
+  let engineUsage;
+  if (Object.hasOwn(input, "engine_usage")) {
+    if (!Array.isArray(input.engine_usage) || input.engine_usage.length !== 1)
+      fail("Metadata search response.engine_usage", "must contain one bounded OpenAlex usage record.");
+    const entry = record(input.engine_usage[0], "engine usage");
+    strictKeys(entry, ["engine", "reported_cost_usd", "billing_status"], "engine usage");
+    if (entry.engine !== "openalex" || !enginesQueried.includes("openalex") || failed.has("openalex") || typeof entry.reported_cost_usd !== "number" || !Number.isFinite(entry.reported_cost_usd) || entry.reported_cost_usd < 0 || entry.reported_cost_usd > 1e6 || entry.billing_status !== "not-established")
+      fail("engine usage", "must preserve bounded provider-reported usage without asserting billing.");
+    engineUsage = Object.freeze([Object.freeze({ engine: "openalex", reportedCostUsd: entry.reported_cost_usd, billingStatus: "not-established" })]);
+  }
   return Object.freeze({
     query,
     results,
     enginesQueried,
     enginesFailed,
+    ...engineFailures === undefined ? {} : { engineFailures },
+    ...engineUsage === undefined ? {} : { engineUsage },
     engineStatus: enginesFailed.length === 0 ? "complete" : enginesFailed.length === enginesQueried.length ? "unavailable" : "partial"
   });
 }

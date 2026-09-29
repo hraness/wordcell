@@ -5,7 +5,7 @@ import {
   parseArchiveTodayMementoUrl,
   parseMetadataSearchResponse,
   rankMetadataSearchResults
-} from "./index-6jcz0m1c.js";
+} from "./index-hxyjer3x.js";
 import {
   assertSafeNetworkUrl,
   isPrivateHostname,
@@ -314,11 +314,12 @@ function deterministicResponse(response, maximumResults) {
     results: Object.freeze(results),
     enginesQueried,
     enginesFailed: Object.freeze([...response.enginesFailed].sort()),
-    engineStatus: response.engineStatus
+    engineStatus: response.engineStatus,
+    ...response.engineFailures === undefined ? {} : { engineFailures: Object.freeze([...response.engineFailures].sort((a, b) => compareText(a.engine, b.engine))) }
   });
 }
-async function resolveEngineHosts(resolver, timeoutMs) {
-  const resolved = await Promise.all(METADATA_SEARCH_ENGINE_HOSTS.map(async (hostname) => {
+async function resolveEngineHosts(resolver, timeoutMs, enableBingRss, enableOpenAlexDiscovery) {
+  const resolved = await Promise.all([...METADATA_SEARCH_ENGINE_HOSTS, ...enableBingRss ? ["www.bing.com"] : [], ...enableOpenAlexDiscovery ? ["api.openalex.org"] : []].map(async (hostname) => {
     const addresses = await resolver(new URL(`https://${hostname}/`), {
       allowPrivateNetwork: false,
       timeoutMs
@@ -364,6 +365,12 @@ function createExactUrlSearchQuery(value) {
   return `"${exactUrl}"`;
 }
 function createRustMetadataSearchProvider(options) {
+  if (options.enableBingRss !== undefined && typeof options.enableBingRss !== "boolean")
+    throw new TypeError("enableBingRss must be boolean.");
+  const enableBingRss = options.enableBingRss === true;
+  if (options.enableOpenAlexDiscovery !== undefined && typeof options.enableOpenAlexDiscovery !== "boolean")
+    throw new TypeError("enableOpenAlexDiscovery must be boolean.");
+  const enableOpenAlexDiscovery = options.enableOpenAlexDiscovery === true;
   if (!isAbsolute(options.binaryPath)) {
     throw new TypeError("The metadata search binary path must be absolute.");
   }
@@ -389,7 +396,7 @@ function createRustMetadataSearchProvider(options) {
       return failure("aborted", "Metadata search was aborted.");
     let engineHosts;
     try {
-      engineHosts = await resolveEngineHosts(resolveNetworkTarget, validated.timeoutMs);
+      engineHosts = await resolveEngineHosts(resolveNetworkTarget, validated.timeoutMs, enableBingRss, enableOpenAlexDiscovery);
     } catch {
       return failure("unavailable", "Metadata search network targets are unavailable.");
     }
@@ -413,6 +420,9 @@ function createRustMetadataSearchProvider(options) {
     try {
       const input = JSON.stringify({
         schema_version: REQUEST_SCHEMA_VERSION,
+        diagnostics: true,
+        ...enableBingRss ? { bing_rss: true } : {},
+        ...enableOpenAlexDiscovery ? { openalex_discovery: true } : {},
         query: validated.query,
         max_results: validated.maxResults,
         timeout_ms: validated.timeoutMs,

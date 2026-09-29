@@ -446,3 +446,29 @@ test("Bing RSS is opt-in, pins only its fixed public host, and snapshots configu
     expect(request.bing_rss).toBe(enabled ? true : undefined);
   }
 });
+
+test("OpenAlex discovery is opt-in, pins only its fixed public host, and snapshots configuration", async () => {
+  for (const enabled of [false, true]) {
+    const directory = mkdtempSync(join(tmpdir(), "metadata-openalex-"));
+    temporaryDirectories.push(directory);
+    const requestPath = join(directory, "request.json");
+    const fixture = executable(`
+      const request = JSON.parse(await Bun.stdin.text());
+      const { writeFileSync } = await import("node:fs");
+      writeFileSync(${JSON.stringify(requestPath)}, JSON.stringify(request));
+      process.stdout.write(JSON.stringify({query:request.query, results:[], engines_queried:["openalex"], engines_failed:[]}));
+    `);
+    const hosts: string[] = [];
+    const options = {binaryPath:fixture.path, enableOpenAlexDiscovery:enabled, resolveNetworkTarget:async (url:URL) => {
+      hosts.push(url.hostname); return testNetworkAddresses;
+    }};
+    const provider = createProductionMetadataSearchProvider(options);
+    options.enableOpenAlexDiscovery = !enabled;
+    expect((await provider({query:"public query"})).status).toBe("success");
+    const request = JSON.parse(readFileSync(requestPath,"utf8"));
+    const expected = ["html.duckduckgo.com","search.brave.com","www.startpage.com","search.yahoo.com", ...(enabled ? ["api.openalex.org"] : [])];
+    expect(hosts).toEqual(expected);
+    expect(request.engine_hosts.map((host:{hostname:string})=>host.hostname)).toEqual(expected);
+    expect(request.openalex_discovery).toBe(enabled ? true : undefined);
+  }
+});

@@ -3,7 +3,7 @@ import {
   backfillSavedUrlMetadata,
   createRustMetadataSearchProvider,
   savedSourceProblem
-} from "./index-t0fh8a1q.js";
+} from "./index-47893rgw.js";
 import {
   main as main2
 } from "./index-qfqjfxaa.js";
@@ -19,7 +19,7 @@ import {
 } from "./index-j4zgmzjr.js";
 import {
   main
-} from "./index-2fmnttca.js";
+} from "./index-t3abkwk4.js";
 import {
   detectAudience,
   renderFailure,

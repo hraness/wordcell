@@ -10,7 +10,7 @@ import {
   readUrlMetadataDocument,
   renderUrlMetadataDocument,
   writeUrlMetadataDocument
-} from "./index-t0fh8a1q.js";
+} from "./index-47893rgw.js";
 import {
   ARCHIVE_TODAY_HOSTS,
   ArchiveTodayFailure,
@@ -23,7 +23,7 @@ import {
   parseMetadataSearchResponse,
   rankMetadataSearchResults,
   selectNewestArchiveTodayMemento
-} from "./index-6jcz0m1c.js";
+} from "./index-hxyjer3x.js";
 import"./index-e5fbsywq.js";
 import"./index-gh719d91.js";
 import"./index-mxxxytys.js";

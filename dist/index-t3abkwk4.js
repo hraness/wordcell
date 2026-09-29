@@ -2,7 +2,7 @@
 import {
   acquireArchiveTodaySnapshot,
   discoverArchiveTodaySnapshot
-} from "./index-6jcz0m1c.js";
+} from "./index-hxyjer3x.js";
 import {
   canonicalizeUrl,
   chooseBestExtraction,

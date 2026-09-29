@@ -300,3 +300,17 @@ test("failure codes round trip across the complete categorical vocabulary", () =
     expect(parseMetadataSearchResponse(JSON.parse(JSON.stringify(input))).engineFailures).toEqual(input.engine_failures);
   }));
 });
+
+
+test("OpenAlex usage retains provider telemetry without asserting a charge", () => {
+  const base = {query:"microalgae",results:[],engines_queried:["openalex"],engines_failed:[],engine_failures:[],
+    engine_usage:[{engine:"openalex",reported_cost_usd:0.001,billing_status:"not-established"}]};
+  expect(parseMetadataSearchResponse(base).engineUsage).toEqual([{engine:"openalex",reportedCostUsd:0.001,billingStatus:"not-established"}]);
+  for (const bad of [
+    {...base,engines_queried:["brave"]}, {...base,engines_failed:["openalex"],engine_failures:[{engine:"openalex",code:"timeout"}]},
+    {...base,engine_usage:[]}, {...base,engine_usage:[...base.engine_usage,...base.engine_usage]},
+    ...[-1,Infinity,NaN,1_000_001,"0.001"].map(cost=>({...base,engine_usage:[{...base.engine_usage[0],reported_cost_usd:cost}]})),
+    {...base,engine_usage:[{...base.engine_usage[0],billing_status:"charged"}]},
+    {...base,engine_usage:[{...base.engine_usage[0],raw_error:"secret"}]},
+  ]) expect(()=>parseMetadataSearchResponse(bad)).toThrow();
+});

@@ -102,6 +102,7 @@ const metadataSearchToolFiles = [
   "src/clip/metadata-search-tool/src/main.rs",
   "src/clip/metadata-search-tool/src/duckduckgo.rs",
   "src/clip/metadata-search-tool/src/bing.rs",
+  "src/clip/metadata-search-tool/src/openalex.rs",
 ] as const;
 const requiredPackageFiles = [
   "LICENSE",

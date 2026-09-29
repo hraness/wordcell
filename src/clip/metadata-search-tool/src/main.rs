@@ -1,4 +1,5 @@
 mod bing;
+mod openalex;
 mod duckduckgo;
 
 use std::alloc::{GlobalAlloc, Layout, System};
@@ -51,11 +52,16 @@ struct EngineFailure {
 }
 
 #[derive(Serialize)]
+struct EngineUsage { engine: String, reported_cost_usd: f64, billing_status: &'static str }
+
+#[derive(Serialize)]
 struct DiagnosticResponse {
     #[serde(flatten)]
     response: SearchResponse,
     #[serde(skip_serializing_if = "Option::is_none")]
     engine_failures: Option<Vec<EngineFailure>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    engine_usage: Option<Vec<EngineUsage>>,
 }
 
 fn transport_code(error: &reqwest::Error, otherwise: FailureCode) -> FailureCode {
@@ -196,17 +202,20 @@ struct SearchRequest {
     diagnostics: bool,
     #[serde(default)]
     bing_rss: bool,
+    #[serde(default)]
+    openalex_discovery: bool,
     query: String,
     max_results: usize,
     timeout_ms: u64,
     engine_hosts: Vec<EngineHost>,
 }
 
-fn expected_hosts(bing_rss: bool) -> Vec<&'static str> {
+fn expected_hosts(bing_rss: bool, openalex_discovery: bool) -> Vec<&'static str> {
     let mut hosts = ENGINE_HOSTS.to_vec();
     if bing_rss {
         hosts.push("www.bing.com");
     }
+    if openalex_discovery { hosts.push("api.openalex.org"); }
     hosts
 }
 
@@ -237,7 +246,7 @@ fn read_request() -> Result<SearchRequest, &'static str> {
 }
 
 fn validate_engine_hosts(request: &SearchRequest) -> Result<(), &'static str> {
-    let expected_hosts = expected_hosts(request.bing_rss);
+    let expected_hosts = expected_hosts(request.bing_rss, request.openalex_discovery);
     if request.engine_hosts.len() != expected_hosts.len() {
         return Err("invalid-engine-hosts");
     }
@@ -406,7 +415,7 @@ async fn run() {
         Err(code) => fail(code),
     };
     let timeout =
-        Duration::from_millis(request.timeout_ms / expected_hosts(request.bing_rss).len() as u64);
+        Duration::from_millis(request.timeout_ms / expected_hosts(request.bing_rss, request.openalex_discovery).len() as u64);
     let client = Arc::new(
         build_pinned_http_client(&request.engine_hosts, timeout).unwrap_or_else(|code| fail(code)),
     );
@@ -423,7 +432,18 @@ async fn run() {
     let mut successes = Vec::new();
     let mut engines_failed = Vec::new();
     let mut engine_failures = Vec::new();
+    let mut engine_usage = Vec::new();
     // Optional independent backend runs first within the existing total time budget.
+    if request.openalex_discovery {
+        engines_queried.insert(0, "openalex".to_string());
+        match openalex::search(&client, request.query.trim(), request.max_results, timeout).await {
+            Ok(discovery) => {
+                if let Some(cost)=discovery.reported_cost_usd { engine_usage.push(EngineUsage {engine:"openalex".into(),reported_cost_usd:cost,billing_status:"not-established"}); }
+                successes.push(("openalex".to_string(), discovery.results));
+            },
+            Err(code) => { engines_failed.push("openalex".to_string()); engine_failures.push(EngineFailure {engine:"openalex".to_string(),code}); }
+        }
+    }
     if request.bing_rss {
         engines_queried.insert(0, "bing".to_string());
         match bing::search(&client, request.query.trim(), request.max_results, timeout).await {
@@ -502,6 +522,7 @@ async fn run() {
         &DiagnosticResponse {
             response,
             engine_failures: request.diagnostics.then_some(engine_failures),
+            engine_usage: (request.diagnostics && !engine_usage.is_empty()).then_some(engine_usage),
         },
     )
     .is_err()
@@ -522,6 +543,7 @@ mod diagnostic_tests {
                 engines_queried: vec!["brave".into()],
                 engines_failed: vec!["brave".into()],
             },
+            engine_usage: None,
             engine_failures: Some(vec![EngineFailure {
                 engine: "brave".into(),
                 code: FailureCode::HttpForbidden,
@@ -554,6 +576,7 @@ mod diagnostic_tests {
                     engines_failed: vec![],
                 },
                 engine_failures: parsed.diagnostics.then_some(vec![]),
+                engine_usage: None,
             };
             let encoded = serde_json::to_value(output).unwrap();
             assert_eq!(
@@ -575,7 +598,7 @@ mod diagnostic_tests {
     #[test]
     fn optional_bing_preserves_exact_legacy_host_contract() {
         let mut value = serde_json::json!({"schema_version":1,"query":"query","max_results":3,"timeout_ms":15000,
-            "engine_hosts": expected_hosts(false).into_iter().map(|hostname| serde_json::json!({"hostname":hostname,"addresses":[{"address":"93.184.216.34","family":4}]})).collect::<Vec<_>>() });
+            "engine_hosts": expected_hosts(false, false).into_iter().map(|hostname| serde_json::json!({"hostname":hostname,"addresses":[{"address":"93.184.216.34","family":4}]})).collect::<Vec<_>>() });
         let legacy: SearchRequest = serde_json::from_value(value.clone()).unwrap();
         assert!(!legacy.bing_rss);
         assert!(validate_engine_hosts(&legacy).is_ok());
@@ -588,4 +611,18 @@ mod diagnostic_tests {
         value["bing_rss"] = serde_json::json!("true");
         assert!(serde_json::from_value::<SearchRequest>(value).is_err());
     }
+    #[test]
+    fn optional_openalex_preserves_legacy_hosts_and_boolean_contract() {
+        let mut value=serde_json::json!({"schema_version":1,"query":"query","max_results":3,"timeout_ms":15000,
+            "engine_hosts":expected_hosts(false,false).into_iter().map(|hostname|serde_json::json!({"hostname":hostname,"addresses":[{"address":"93.184.216.34","family":4}]})).collect::<Vec<_>>()});
+        let legacy:SearchRequest=serde_json::from_value(value.clone()).unwrap();assert!(!legacy.openalex_discovery);
+        value["openalex_discovery"]=serde_json::json!(true);
+        assert!(validate_engine_hosts(&serde_json::from_value(value.clone()).unwrap()).is_err());
+        value["engine_hosts"].as_array_mut().unwrap().push(serde_json::json!({"hostname":"api.openalex.org","addresses":[{"address":"93.184.216.34","family":4}]}));
+        assert!(validate_engine_hosts(&serde_json::from_value(value.clone()).unwrap()).is_ok());
+        value["openalex_discovery"]=serde_json::json!(false);
+        assert!(validate_engine_hosts(&serde_json::from_value(value.clone()).unwrap()).is_err());
+        value["openalex_discovery"]=serde_json::json!("true");assert!(serde_json::from_value::<SearchRequest>(value).is_err());
+    }
+
 }
