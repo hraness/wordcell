@@ -8,9 +8,10 @@ import {
   MarketingSection,
   MarketingSiteHeader,
   MarketingTrustBoundary,
+  PlatformBadges,
   ProductHero,
 } from "@hraness/design-kit/react/server";
-import { ThemeMenuButton } from "@hraness/design-kit/react";
+import { PlatformInstall, ThemeMenuButton } from "@hraness/design-kit/react";
 import { product, type PortfolioProductId } from "@hraness/design-kit/portfolio";
 
 import { AskAiAboutThis } from "@hraness/ui";
@@ -23,6 +24,7 @@ import { site } from "./blog/discovery";
 import { passageDetails } from "../wordcell/passage-evidence";
 import { Terminal } from "../wordcell/code-block";
 import { SetupLinks } from "../wordcell/setup-links";
+import { installPlatforms, runsOnPlatforms } from "../wordcell/install-platforms";
 
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
@@ -187,11 +189,12 @@ export default function Home() {
             id="install"
           >
             <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : <>You need <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git. These steps install Wordcell v{releaseVersion}.</>}</p>
-            {publishedRelease !== null && archiveUrl !== null ? (
+            {releaseVersion !== undefined ? (
               <>
+                <PlatformBadges platforms={runsOnPlatforms} />
                 <figure className="wordcell-step">
                   <figcaption><span>1</span>Install the CLI</figcaption>
-                  <Terminal code={`bun add --global --ignore-scripts ${archiveUrl}`} />
+                  <PlatformInstall platforms={installPlatforms(releaseVersion)} />
                 </figure>
                 <figure className="wordcell-step">
                   <figcaption><span>2</span>Create a vault and save a note</figcaption>

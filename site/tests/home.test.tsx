@@ -296,3 +296,19 @@ test("the header keeps a named home link and exact-artwork foil fallback", () =>
     expect(masks).toEqual(['--hraness-foil-mask:url("/marks/kb.svg")']);
   }
 });
+
+test("home and docs install with per-platform tabs: Bun on macOS and Linux, WSL2 on Windows", () => {
+  if (publishedRelease === null) return;
+  const version = publishedRelease.version;
+  for (const Page of [Home, Docs]) {
+    const html = renderToStaticMarkup(<Page />);
+    expect(html).toContain("hraness-platform-install");
+    expect(html).toContain("hraness-platform-badges");
+    expect(html).toContain(`bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v${version}/hraness-wordcell-${version}.tgz`);
+    expect(html).toContain(`npm install --global --ignore-scripts @hraness/wordcell@${version}`);
+    expect(html).toContain("Runs in WSL2 with the Linux command.");
+    const tabs = [...html.matchAll(/data-platform="(macos|linux|windows)"/gu)].map((match) => match[1]);
+    expect(tabs.indexOf("macos")).toBeLessThan(tabs.indexOf("linux"));
+    expect(tabs.indexOf("linux")).toBeLessThan(tabs.indexOf("windows"));
+  }
+});
