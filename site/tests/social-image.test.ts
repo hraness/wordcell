@@ -19,7 +19,15 @@ import * as migrateImage from "../app/migrate/supermemory/opengraph-image";
 import * as docImage from "../app/docs/[slug]/opengraph-image";
 import { docCatalog, docOverview, docTitle } from "../app/docs/catalog";
 import { docSocialPage, socialPages, wordcellSocialSite } from "../app/social";
-import { socialImageAlt } from "@hraness/web-discovery/social-image/card";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import {
+  socialImageAlt,
+  socialImageFit,
+  socialImageIconShape,
+  socialImageSiteDetails,
+} from "@hraness/web-discovery/social-image/card";
 
 const routes = [
   ["/", homeMetadata, homeImage, undefined],
@@ -32,11 +40,15 @@ const routes = [
   ["/migrate/supermemory", migrateMetadata, migrateImage, socialPages.migrateSupermemory],
 ] as const;
 
-test("the site declares one share card with its real app icon and brand", () => {
+test("the site declares one share card with the pinned Wordcell mark and brand", () => {
   expect(wordcellSocialSite.name).toBe("Wordcell");
   expect(wordcellSocialSite.domain).toBe("wordcell.io");
-  expect(wordcellSocialSite.icon?.kind).toBe("app");
-  expect(wordcellSocialSite.icon?.src).toStartWith("data:image/png;base64,");
+  expect(wordcellSocialSite.icon?.kind).toBe("mark");
+  const prefix = "data:image/svg+xml;base64,";
+  expect(wordcellSocialSite.icon?.src).toStartWith(prefix);
+  const embedded = Buffer.from(wordcellSocialSite.icon!.src.slice(prefix.length), "base64");
+  expect(embedded.equals(readFileSync(join(import.meta.dir, "../public/marks/kb.svg")))).toBe(true);
+  expect(socialImageIconShape(wordcellSocialSite.icon!)).toBe("open");
   expect(Object.keys(wordcellSocialSite.theme ?? {}).sort()).toEqual(["accent", "background", "foreground", "muted"]);
   for (const color of Object.values(wordcellSocialSite.theme ?? {})) expect(color).toMatch(/^#[0-9A-F]{6}$/i);
 });
@@ -66,8 +78,40 @@ test("every documentation route passes its own page copy", () => {
   expect(docTitle("overview")).toBe("Wordcell overview");
   for (const entry of [docOverview, ...docCatalog]) {
     expect(docTitle(entry.slug)).toBe(entry.title);
-    expect(docSocialPage(entry.slug)).toEqual({ description: entry.summary, eyebrow: "Documentation", headline: entry.title });
+    const card = "card" in entry ? entry.card : undefined;
+    const cardTitle = "cardTitle" in entry ? entry.cardTitle : undefined;
+    expect(docSocialPage(entry.slug)).toEqual({
+      description: card ?? entry.summary,
+      eyebrow: "Documentation",
+      headline: cardTitle ?? entry.title,
+    });
   }
   expect(docTitle("missing")).toBeNull();
   expect(docSocialPage("missing")).toBe(socialPages.docs);
+});
+
+test("every card fits as written: no cut description, smaller headline, or stripped text", () => {
+  const pages = [
+    undefined,
+    ...Object.values(socialPages),
+    ...[docOverview, ...docCatalog].map((entry) => docSocialPage(entry.slug)),
+  ];
+  for (const page of pages) {
+    const details = socialImageSiteDetails(wordcellSocialSite, page);
+    expect({ headline: page?.headline ?? "home", issues: socialImageFit(details).issues }).toEqual({
+      headline: page?.headline ?? "home",
+      issues: [],
+    });
+  }
+});
+
+test("page cards describe their own page instead of repeating the site tagline", () => {
+  for (const [, , , page] of routes.slice(1)) {
+    expect(page?.description).toBeString();
+    expect(page?.description).not.toBe(wordcellSocialSite.description);
+  }
+  for (const entry of [docOverview, ...docCatalog]) {
+    const page = docSocialPage(entry.slug);
+    expect(page.description?.toLowerCase().startsWith((page.headline ?? "").toLowerCase())).toBe(false);
+  }
 });

@@ -11,6 +11,10 @@ export interface DocEntry {
   readonly slug: string;
   readonly title: string;
   readonly summary: string;
+  /** Share-card description when the summary would not fit two lines or repeats the title. */
+  readonly card?: string;
+  /** Share-card headline when the title would not fit two lines at the standard size. */
+  readonly cardTitle?: string;
   readonly quadrant: DocQuadrant;
 }
 
@@ -54,6 +58,7 @@ export const docCatalog = [
     slug: "migration-from-supermemory",
     title: "Migrate from Supermemory",
     summary: "Export your Supermemory documents and memory entries, import them as Markdown notes, and see what does not transfer.",
+    card: "Export Supermemory documents and memory entries, then import them as Markdown notes.",
     quadrant: "how-to",
   },
   {
@@ -84,12 +89,14 @@ export const docCatalog = [
     slug: "sync",
     title: "Sync a vault with Git",
     summary: "Keep one vault current on several machines with a private Git repository and a script that commits and pushes on a schedule.",
+    card: "Keep one vault current on several machines through a private Git repository.",
     quadrant: "how-to",
   },
   {
     slug: "reranking",
     title: "Use hosted reranking",
     summary: "Reorder up to 25 search results with TypeSafe's Jev model. If the provider fails, you keep the original order.",
+    card: "Reorder up to 25 search results with TypeSafe’s Jev model.",
     quadrant: "how-to",
   },
   {
@@ -120,24 +127,30 @@ export const docCatalog = [
     slug: "design",
     title: "Why Wordcell keeps everything in Markdown",
     summary: "Why Wordcell keeps everything in Markdown files, and how its storage, search, graph, and capture fit together.",
+    card: "Plain files you can edit, diff, and review, with search and the graph derived from them.",
     quadrant: "explanation",
   },
   {
     slug: "agent-memory",
     title: "Why agent memory belongs in Markdown beside the repository",
+    cardTitle: "Why agent memory belongs in Markdown",
     summary: "Why durable agent memory belongs in inspectable Markdown beside the repository.",
+    card: "Rules on the edit path in AGENTS.md, reasons in a vault that Git versions and agents search.",
     quadrant: "explanation",
   },
   {
     slug: "comparisons",
     title: "Choose a Markdown knowledge or agent memory tool",
+    cardTitle: "Choose a knowledge or memory tool",
     summary: "Markdown knowledge tools and agent memory services compared with Wordcell, using each project's own primary documentation.",
+    card: "Markdown knowledge tools and agent memory services, compared from each project’s own documentation.",
     quadrant: "explanation",
   },
   {
     slug: "evidence",
     title: "Measure the context an agent receives",
     summary: "Reproducible studies of handoff size and whether excerpts contain the answer, with inputs, results, and limits.",
+    card: "Reproducible studies of handoff size and whether excerpts contain the answer.",
     quadrant: "explanation",
   },
   {
