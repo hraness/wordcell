@@ -14,6 +14,9 @@ import {
   acquireFileLease
 } from "./index-3rm7cz6h.js";
 import {
+  syncsDirectories
+} from "./index-qkesh4c6.js";
+import {
   VaultAnalysisBudgetError,
   analyzeVault,
   documentIdState,
@@ -443,11 +446,13 @@ async function rebuildGraph(rootInput, options = {}) {
       await handle.close();
     }
     await rename(stagedPath, path);
-    const directory = await graphCacheFileSystem.open(cache, constants.O_RDONLY);
-    try {
-      await directory.sync();
-    } finally {
-      await directory.close();
+    if (syncsDirectories()) {
+      const directory = await graphCacheFileSystem.open(cache, constants.O_RDONLY);
+      try {
+        await directory.sync();
+      } finally {
+        await directory.close();
+      }
     }
     return result;
   } finally {

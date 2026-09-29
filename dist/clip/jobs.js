@@ -9,6 +9,9 @@ import {
 import {
   acquireFileLease
 } from "../index-3rm7cz6h.js";
+import {
+  syncsDirectories
+} from "../index-qkesh4c6.js";
 import"../index-z1w83f81.js";
 
 // src/clip/jobs.ts
@@ -360,7 +363,8 @@ async function fsyncStore(store) {
     if (!stat.isDirectory() || !sameIdentity(stat, expected)) {
       throw new CaptureJobSafetyError("Capture job store changed before synchronization.");
     }
-    await handle.sync();
+    if (syncsDirectories())
+      await handle.sync();
   } finally {
     await handle.close();
   }

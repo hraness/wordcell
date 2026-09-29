@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { syncsDirectories } from "./directory-sync.js";
 import { constants } from "node:fs";
 import { mkdir, mkdtemp, realpath, rename, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -197,8 +198,10 @@ export async function rebuildGraph(rootInput: string, options: GraphRebuildOptio
     const handle = await fs.open(stagedPath, constants.O_RDONLY | constants.O_NOFOLLOW);
     try { await handle.sync(); } finally { await handle.close(); }
     await rename(stagedPath, path);
-    const directory = await fs.open(cache, constants.O_RDONLY);
-    try { await directory.sync(); } finally { await directory.close(); }
+    if (syncsDirectories()) {
+      const directory = await fs.open(cache, constants.O_RDONLY);
+      try { await directory.sync(); } finally { await directory.close(); }
+    }
     return result;
   } finally {
     try {

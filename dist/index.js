@@ -37,7 +37,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-mvs6f7ne.js";
+} from "./index-59bcxqee.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -50,7 +50,7 @@ import {
   packUntrustedSearchContext,
   searchEvidenceRank,
   validateKnowledgeBaseSearchHistory
-} from "./index-5d1rd5v9.js";
+} from "./index-mcpppwbq.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -94,7 +94,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-tcaq1c7f.js";
+} from "./index-e26mdwxz.js";
 import {
   DEFAULT_PERCOLATION_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
@@ -122,7 +122,7 @@ import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-1er88ckw.js";
+} from "./index-3gc2yk4k.js";
 import {
   GRAPH_LIMITS,
   GraphAuthorityError,
@@ -297,8 +297,9 @@ import {
   noteRevision,
   removeNoteRelation,
   updateNoteBody
-} from "./index-b0khj0h5.js";
+} from "./index-qt2zwza8.js";
 import"./index-3rm7cz6h.js";
+import"./index-qkesh4c6.js";
 import {
   MAX_ANALYZED_NOTES,
   MAX_CONNECTION_OBSERVATIONS,

@@ -3,6 +3,9 @@ import {
   acquireNoteLock
 } from "./index-3rm7cz6h.js";
 import {
+  syncsDirectories
+} from "./index-qkesh4c6.js";
+import {
   isCanonicalNoteId,
   isCanonicalRelationPredicate,
   isMetadataNumber,
@@ -844,7 +847,9 @@ async function cleanupTemporary(temporaryPath, identity) {
       throw error;
   }
 }
-async function fsyncDirectory(path, openDirectory = open) {
+async function fsyncDirectory(path, openDirectory = open, platform = process.platform) {
+  if (!syncsDirectories(platform))
+    return;
   const handle = await openDirectory(path, constants.O_RDONLY);
   try {
     await handle.sync();

@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { syncsDirectories } from "../directory-sync.js";
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import {
@@ -500,7 +501,7 @@ async function fsyncStore(store: CaptureJobStore): Promise<void> {
     if (!stat.isDirectory() || !sameIdentity(stat, expected)) {
       throw new CaptureJobSafetyError("Capture job store changed before synchronization.");
     }
-    await handle.sync();
+    if (syncsDirectories()) await handle.sync();
   } finally {
     await handle.close();
   }

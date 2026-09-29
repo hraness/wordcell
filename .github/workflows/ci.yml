@@ -213,16 +213,51 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  published-install:
-    # Installs the published release with the documented Bun command on macOS
-    # (Linux is covered by the package smoke), then runs the quick start.
-    # Informational: not part of Required. Windows is not listed because note
-    # writes fsync their directory, which Windows refuses with EPERM; the site
-    # sends Windows users to WSL2 until that changes.
+  changes:
+    # Pull requests and pushes to main skip the native install smoke when no
+    # CLI input changed (a push is compared with the commit it replaced on
+    # main). Manual dispatches run everything.
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      cli: ${{ github.event_name == 'workflow_dispatch' && 'true' || steps.filter.outputs.cli }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        if: github.event_name == 'push'
+        with:
+          fetch-depth: 2
+          filter: blob:none
+          persist-credentials: false
+      - id: filter
+        if: github.event_name != 'workflow_dispatch'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          base: ${{ github.event_name == 'push' && github.event.before || '' }}
+          filters: |
+            cli:
+              - 'src/**'
+              - 'dist/**'
+              - 'skills/**'
+              - 'package.json'
+              - 'bun.lock'
+              - '.github/workflows/ci.yml'
+
+  native-install:
+    # Packs this commit (dist is committed and the check job keeps it current),
+    # installs the archive with the documented Bun command on macOS and native
+    # Windows (Linux is covered by the package smoke), then runs the quick
+    # start. Windows skips directory fsync; see src/directory-sync.ts.
+    name: Native install (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [macos-latest, windows-2025]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     defaults:
@@ -232,28 +267,47 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-          sparse-checkout: site/published-release.json
-          sparse-checkout-cone-mode: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: "1.3.14"
-      - name: Install the published release and run the quick start
+      - name: Restore the Bun install cache
+        id: bun-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: native-install-bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: native-install-bun-${{ runner.os }}-
+      - name: Pack this commit
         run: |
           set -euo pipefail
-          version="$(bun -e 'console.log((await Bun.file("site/published-release.json").json()).version)')"
-          bun add --global --ignore-scripts "https://github.com/hraness/wordcell/releases/download/v${version}/hraness-wordcell-${version}.tgz"
-          export PATH="$(bun pm bin -g):$PATH"
+          mkdir -p "$RUNNER_TEMP/pack"
+          bun pm pack --ignore-scripts --destination "$RUNNER_TEMP/pack"
+      - name: Install the packed build and run the quick start
+        run: |
+          set -euo pipefail
+          version="$(bun -e 'console.log((await Bun.file("package.json").json()).version)')"
+          archive="$(ls "$RUNNER_TEMP"/pack/*.tgz)"
+          bun add --global --ignore-scripts "$archive"
+          bin="$(bun pm bin -g)"
+          if command -v cygpath >/dev/null; then bin="$(cygpath -u "$bin")"; fi
+          export PATH="$bin:$PATH"
           wordcell --version | grep -qx "wordcell ${version}.\{0,1\}"
           work="$(mktemp -d)"
           cd "$work"
           wordcell init kb
           wordcell note create notes/decision --title "A decision" --body "Keep retries bounded." --root kb
           wordcell search "retries" --root kb --mode exact | grep -q "A decision"
+      - name: Save the Bun install cache
+        if: github.ref == 'refs/heads/main' && steps.bun-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: native-install-bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
   required:
     name: Required
     if: always()
-    needs: [check, package, metadata-tool, site]
+    needs: [check, package, metadata-tool, site, changes, native-install]
     runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
@@ -263,11 +317,19 @@ jobs:
           PACKAGE: ${{ needs.package.result }}
           METADATA_TOOL: ${{ needs['metadata-tool'].result }}
           SITE: ${{ needs.site.result }}
+          CHANGES: ${{ needs.changes.result }}
+          CLI_CHANGED: ${{ needs.changes.outputs.cli }}
+          NATIVE_INSTALL: ${{ needs['native-install'].result }}
         run: |
           set -euo pipefail
-          for result in "$CHECK" "$PACKAGE" "$METADATA_TOOL" "$SITE"; do
+          for result in "$CHECK" "$PACKAGE" "$METADATA_TOOL" "$SITE" "$CHANGES"; do
             if [[ "$result" != success ]]; then
               printf 'Unexpected required job result: %s\n' "$result"
               exit 1
             fi
           done
+          # The native install smoke may be skipped only when no CLI input changed.
+          if [[ "$NATIVE_INSTALL" != success ]] && ! [[ "$NATIVE_INSTALL" == skipped && "$CLI_CHANGED" != true ]]; then
+            printf 'Unexpected native install result: %s\n' "$NATIVE_INSTALL"
+            exit 1
+          fi

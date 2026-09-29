@@ -14,6 +14,9 @@ import {
 import {
   sanitizeArtifactUrl
 } from "./index-mxxxytys.js";
+import {
+  syncsDirectories
+} from "./index-qkesh4c6.js";
 
 // src/clip/metadata-search.ts
 import { spawn } from "child_process";
@@ -1524,7 +1527,8 @@ function writeUrlMetadataDocument(saved, document) {
       throw new Error(`URL metadata sidecar failed post-install verification: ${saved.sidecarPath}`);
     }
     assertHeldUrlMetadataWriteLockCurrent(heldLock);
-    fsyncSync2(directoryDescriptor);
+    if (syncsDirectories())
+      fsyncSync2(directoryDescriptor);
     return { changed: true, path: saved.sidecarPath };
   } catch (error) {
     operationError = error;

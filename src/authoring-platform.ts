@@ -1,4 +1,5 @@
 import { acquireNoteLock } from "./note-lock.js";
+import { syncsDirectories } from "./directory-sync.js";
 import { rename } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
@@ -202,7 +203,9 @@ export async function cleanupTemporary(
 export async function fsyncDirectory(
   path: string,
   openDirectory: typeof open = open,
+  platform: NodeJS.Platform = process.platform,
 ): Promise<void> {
+  if (!syncsDirectories(platform)) return;
   const handle = await openDirectory(path, constants.O_RDONLY);
   try {
     await handle.sync();

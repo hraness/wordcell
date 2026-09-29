@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.24.1
+
+Wordcell now runs on native Windows. `wordcell note create` and the other
+note writes failed there with `EPERM ... fsync`, because Windows cannot fsync
+a directory handle.
+
+- Note writes, the graph cache, capture jobs, URL metadata sidecars, and the
+  metadata-search tool install skip the directory fsync on Windows, where NTFS
+  journals directory metadata. Every file is still fsynced before it is
+  renamed or linked into place, and POSIX systems still fsync the directory.
+- CI installs the packed build with the documented Bun command on macOS and
+  Windows Server 2025 and runs the quick start (init, note create, search).
+  The check is part of `Required` whenever the CLI changes.
+
 ## 0.24.0
 
 Search can return the part of each note that answers the question. With

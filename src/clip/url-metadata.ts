@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { syncsDirectories } from "../directory-sync.js";
 import { randomUUID } from "node:crypto";
 import {
   closeSync,
@@ -1371,7 +1372,7 @@ export function writeUrlMetadataDocument(
       throw new Error(`URL metadata sidecar failed post-install verification: ${saved.sidecarPath}`);
     }
     assertHeldUrlMetadataWriteLockCurrent(heldLock);
-    fsyncSync(directoryDescriptor);
+    if (syncsDirectories()) fsyncSync(directoryDescriptor);
     return { changed: true, path: saved.sidecarPath };
   } catch (error) {
     operationError = error;

@@ -3,7 +3,7 @@ import {
   backfillSavedUrlMetadata,
   createRustMetadataSearchProvider,
   savedSourceProblem
-} from "./index-vm0ejnkz.js";
+} from "./index-t0fh8a1q.js";
 import {
   main as main2
 } from "./index-qfqjfxaa.js";
@@ -13,7 +13,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-f184qyh1.js";
+} from "./index-hz2wyggk.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -51,7 +51,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-mvs6f7ne.js";
+} from "./index-59bcxqee.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -60,7 +60,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-5d1rd5v9.js";
+} from "./index-mcpppwbq.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -85,7 +85,7 @@ import {
 } from "./index-b88v3vtm.js";
 import {
   percolateWithGraph
-} from "./index-tcaq1c7f.js";
+} from "./index-e26mdwxz.js";
 import {
   MAX_PERCOLATION_MENTIONS,
   MAX_PERCOLATION_MENTION_PAIRS,
@@ -97,7 +97,7 @@ import {
   queryGraph,
   rebuildGraph,
   verifyGraph
-} from "./index-1er88ckw.js";
+} from "./index-3gc2yk4k.js";
 import {
   validateGraphQueryRequest
 } from "./index-pgtm2nhf.js";
@@ -184,7 +184,10 @@ import {
   sha256,
   updateNoteBody,
   updateNoteBodyProgram
-} from "./index-b0khj0h5.js";
+} from "./index-qt2zwza8.js";
+import {
+  syncsDirectories
+} from "./index-qkesh4c6.js";
 import {
   isMetadataNumber,
   lookupNote,
@@ -440,7 +443,10 @@ function installMetadataSearchExecutable(input) {
   const backupName = `.${executableName}.${process.pid}.${randomUUID()}.backup`;
   const stagingPath = join(toolDirectory, stagingName);
   const backupPath = join(toolDirectory, backupName);
-  const syncDirectory = input.syncDirectory ?? ((descriptor) => fsyncSync(descriptor));
+  const syncDirectory = input.syncDirectory ?? ((descriptor) => {
+    if (syncsDirectories())
+      fsyncSync(descriptor);
+  });
   const toolBinding = openBoundDirectory(toolDirectory, "metadata-search tool directory");
   let targetBinding = null;
   let releaseBinding = null;

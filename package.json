@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "description": "Wordcell keeps decisions, plans, and sources as Markdown beside your code, so coding agents can find them from the file they are about to change.",
   "license": "MIT",
   "type": "module",
@@ -468,7 +468,8 @@
     "src/oh/validation.ts",
     "assets/agent-skill.svg",
     "src/support.ts",
-    "src/support-profile.ts"
+    "src/support-profile.ts",
+    "src/directory-sync.ts"
   ],
   "scripts": {
     "kb:refresh": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.0/hraness-wordcell-0.24.0.tgz wordcell refresh --root kb",

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { syncsDirectories } from "../../directory-sync.js";
 import {
   closeSync,
   constants,
@@ -387,7 +388,9 @@ export function installMetadataSearchExecutable(input: {
   const stagingPath = join(toolDirectory, stagingName);
   const backupPath = join(toolDirectory, backupName);
   const syncDirectory = input.syncDirectory
-    ?? ((descriptor: number) => fsyncSync(descriptor));
+    ?? ((descriptor: number) => {
+      if (syncsDirectories()) fsyncSync(descriptor);
+    });
 
   const toolBinding = openBoundDirectory(toolDirectory, "metadata-search tool directory");
   let targetBinding: DirectoryBinding | null = null;
