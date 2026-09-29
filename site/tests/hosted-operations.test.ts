@@ -121,13 +121,16 @@ describe("hosted conditional publication", () => {
       const response = await read(directory);
       expect(response.status).toBe(200);
       expect(response.headers.get("location")).toBeNull();
+      expect(response.headers.get("link")).toBe(`<https://wordcell.io${directory}>; rel="canonical"`);
       const html = await response.text();
       const publicUrl = `https://wordcell.test${directory}`;
       for (const match of html.matchAll(/(?:href|src)="([^"<>]+)"/gu)) {
         if (/^(?:#|https?:)/u.test(match[1]!)) continue;
         const resolved = new URL(match[1]!, publicUrl);
         expect(resolved.pathname.startsWith(base)).toBe(true);
-        expect((await read(resolved.pathname)).status).toBe(200);
+        const linked = await read(resolved.pathname);
+        expect(linked.status).toBe(200);
+        if (!(linked.headers.get("content-type") ?? "").startsWith("text/html")) expect(linked.headers.get("link")).toBeNull();
       }
     }
     for (const file of ["manifest.json", "reader/reader.js", "reader/reader.css", "n/reports/evidence.v2/index.html"]) {

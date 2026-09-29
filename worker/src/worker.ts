@@ -76,6 +76,11 @@ const MAX_CONTENT_TYPE = 128
 const MAX_LIST_LIMIT = 512
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/u
 const KEY8_PATTERN = /^[a-z0-9]{8}$/u
+// Hosted pages are also reachable on this Worker's workers.dev origin, which
+// the wordcell.io proxy forwards to. The canonical Link header points search
+// engines at the public wordcell.io URL so the proxy origin is not indexed as
+// a duplicate.
+const PUBLIC_ORIGIN = "https://wordcell.io"
 
 function text(value: string, status: number): Response {
   return new Response(JSON.stringify({ error: value }), {
@@ -388,6 +393,9 @@ async function serve(request: Request, env: Env, url: URL): Promise<Response> {
     object.writeHttpMetadata(headers)
     headers.set("content-length", String(object.size))
     headers.set("cache-control", "public, max-age=60")
+    if (headers.get("content-type")?.startsWith("text/html") === true) {
+      headers.set("link", `<${PUBLIC_ORIGIN}${url.pathname}>; rel="canonical"`)
+    }
     return new Response(request.method === "GET" ? object.body : null, {
       headers,
       status: 200,

@@ -72,7 +72,9 @@ natively — no catch-all workaround needed.
   Owner decision 2026-09-29: hosted third-party sites stay indexable by
   default and the publisher opts out with `noindex: true`, which marks every
   emitted page. The worker adds no `X-Robots-Tag`, and a per-site
-  `robots.txt` under `/p/` is not read by crawlers.
+  `robots.txt` under `/p/` is not read by crawlers. Each HTML page carries a
+  `Link: <https://wordcell.io/p/...>; rel="canonical"` header, so the Worker's
+  workers.dev origin behind the proxy is not indexed as a duplicate.
 - **R2 holds everything — no Convex.** The emitted file set is immutable by
   digest, and the control plane (token digests, site records, slug pointers,
   daily quota counters) is a handful of small JSON objects in the same
