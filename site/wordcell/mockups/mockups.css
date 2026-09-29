@@ -1,0 +1,62 @@
+/* Wordcell's additions to the shared mockup frames: the note file in a plain
+ * editor window, and the agent-beside-file pair. Colors come from the kit's
+ * --hkm tokens, so both themes follow the page. */
+.wordcell-note-file {
+  margin: 0;
+  font-family: var(--hkm-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--hkm-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wordcell-note-line {
+  display: grid;
+  grid-template-columns: 2.2em 1fr;
+  gap: 0.75em;
+  border-radius: 4px;
+}
+
+.wordcell-note-line[data-rule] {
+  background: color-mix(in srgb, var(--hkm-accent) 14%, transparent);
+  font-weight: 600;
+}
+
+.wordcell-note-number {
+  color: var(--hkm-faint);
+  text-align: end;
+  user-select: none;
+}
+
+.wordcell-mockup-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .wordcell-mockup-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.wordcell-showcase-section .hkm-showcase {
+  margin-block: 0;
+}
+
+.wordcell-launch-figure {
+  margin: 1.5rem 0;
+}
+
+/* Launch post: each beat's illustration fills the figure and never scrolls the page sideways. */
+.wordcell-beat-visual {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.wordcell-beats-note {
+  color: var(--color-muted, currentColor);
+  font-size: 0.875rem;
+}

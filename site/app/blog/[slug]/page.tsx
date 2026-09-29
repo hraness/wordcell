@@ -13,6 +13,7 @@ import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import { blogArticles, findArticle } from "../articles";
 import { blogContents, blogHtml } from "../blog.generated";
 import { articleMetadata, articleSchema } from "../discovery";
+import { LAUNCH_POST_SLUG, LaunchPostBeats, launchBeatToc } from "../launch-post";
 
 export function generateStaticParams() {
   return blogArticles.map((article) => ({ slug: article.slug }));
@@ -36,6 +37,8 @@ export default async function BlogPostPage(
   const html = blogHtml[slug];
   if (article === null || html === undefined) notFound();
   const related = relatedFor("kb");
+  const isLaunchPost = slug === LAUNCH_POST_SLUG;
+  const toc = [...(isLaunchPost ? launchBeatToc() : []), ...(blogContents[slug] ?? [])];
 
   return (
     <>
@@ -60,9 +63,10 @@ export default async function BlogPostPage(
           heading={article.title}
           provenance={articleProvenanceFromAdmission(article.admission)}
           published={article.published}
-          toc={blogContents[slug] ?? []}
+          toc={toc}
           {...(article.updated === undefined ? {} : { updated: article.updated })}
         >
+          {isLaunchPost ? <LaunchPostBeats /> : null}
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </MarketingArticle>
       </main>

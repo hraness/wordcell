@@ -25,6 +25,7 @@ import { passageDetails } from "../wordcell/passage-evidence";
 import { Terminal } from "../wordcell/code-block";
 import { SetupLinks } from "../wordcell/setup-links";
 import { installPlatforms, runsOnPlatforms } from "../wordcell/install-platforms";
+import { SearchShowcase } from "../wordcell/mockups/search-showcase";
 
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
@@ -181,6 +182,17 @@ export default function Home() {
             summary={summary}
           />
           </div>
+
+          <MarketingSection
+            className="wordcell-showcase-section"
+            heading="Your agent finds the rule and names the file"
+            headingId="showcase-title"
+            id="showcase"
+            label="How it looks"
+            summary="The same note, found three ways. Pick one to see the command and what comes back."
+          >
+            <SearchShowcase />
+          </MarketingSection>
 
           <MarketingInstallPanel
             eyebrow="Get started"

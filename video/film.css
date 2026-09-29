@@ -1,0 +1,593 @@
+/* Launch film stage. Sizes use --u, one unit per pixel of a 1080 px short
+ * side, so the same film renders at 16:9, 1:1 and 9:16. */
+
+:root {
+  --ink: #f3f1ec;
+  --ink-2: rgb(243 241 236 / 0.62);
+  --paper: #f6f4ef;
+  --paper-ink: #16171a;
+  --paper-ink-2: #5d5f66;
+  --line: rgb(255 255 255 / 0.09);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: var(--cw);
+  height: var(--ch);
+  overflow: hidden;
+  background: #111214;
+}
+
+/* The film always lays out at full size; --zoom scales a draft render down
+ * as a whole, so mockups with fixed pixel sizes keep their proportions. */
+.film {
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  zoom: var(--zoom);
+  overflow: hidden;
+  color: var(--ink);
+  font-family: "Film Sans", ui-sans-serif, system-ui, sans-serif;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+}
+
+.bg-night {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 0.06), transparent 60%),
+    #111214;
+}
+
+.bg-paper {
+  background:
+    radial-gradient(110% 80% at 50% 10%, #ffffff, transparent 70%),
+    var(--paper);
+  visibility: hidden;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+/* Kinetic type: each word rises inside its own mask */
+.kin {
+  visibility: hidden;
+}
+
+.kin .w {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.08em 0.02em 0.26em;
+  margin: -0.08em -0.02em -0.26em;
+  vertical-align: top;
+}
+
+.kin .wi {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* 1. Cold open */
+.open-src {
+  display: none;
+}
+
+.open-grid {
+  position: absolute;
+  inset: 0;
+  perspective: calc(var(--u) * 1800px);
+}
+
+.open-tile {
+  position: absolute;
+  width: calc(var(--u) * 520px);
+  will-change: transform, opacity;
+}
+
+.open-scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(70% 60% at 50% 50%, rgb(17 18 20 / 0.92), rgb(17 18 20 / 0.55));
+  opacity: 0;
+}
+
+.open-lines {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 calc(var(--u) * 120px);
+}
+
+.open-line {
+  grid-area: 1 / 1;
+  margin: 0;
+  max-width: calc(var(--u) * 1400px);
+  font-size: calc(var(--u) * 92px);
+  font-weight: 700;
+  line-height: 1.04;
+  text-align: center;
+  letter-spacing: -0.035em;
+}
+
+/* 2. Title */
+#s-title {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: calc(var(--u) * 34px);
+  text-align: center;
+}
+
+.title-word {
+  margin: 0;
+  font-size: calc(var(--u) * 210px);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.title-promise {
+  margin: 0;
+  max-width: calc(var(--u) * 1100px);
+  padding: 0 calc(var(--u) * 80px);
+  font-size: calc(var(--u) * 46px);
+  line-height: 1.2;
+  color: var(--ink-2);
+}
+
+/* The mark: a stroked outline that later becomes the product window edge */
+.mark {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mark-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.mark-svg rect {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 1 1;
+}
+
+/* 3. Product walk */
+.walk-copy {
+  position: absolute;
+}
+
+.walk-step {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+}
+
+.walk-num {
+  display: block;
+  margin-bottom: calc(var(--u) * 22px);
+  font-size: calc(var(--u) * 26px);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.walk-h {
+  margin: 0 0 calc(var(--u) * 22px);
+  font-size: calc(var(--u) * 88px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--paper-ink);
+  letter-spacing: -0.045em;
+}
+
+.walk-p {
+  margin: 0;
+  font-size: calc(var(--u) * 36px);
+  line-height: 1.3;
+  color: var(--paper-ink-2);
+}
+
+.walk-dots {
+  position: absolute;
+  display: flex;
+  gap: calc(var(--u) * 10px);
+}
+
+.walk-dot {
+  height: calc(var(--u) * 6px);
+  width: calc(var(--u) * 26px);
+  border-radius: 99px;
+  background: rgb(22 23 26 / 0.14);
+  overflow: hidden;
+}
+
+.walk-dot i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+.win {
+  position: absolute;
+  overflow: hidden;
+  border-radius: calc(var(--u) * 18px);
+  background: #fff;
+  box-shadow:
+    0 calc(var(--u) * 50px) calc(var(--u) * 120px) rgb(20 22 30 / 0.22),
+    0 calc(var(--u) * 8px) calc(var(--u) * 24px) rgb(20 22 30 / 0.1),
+    0 0 0 1px rgb(20 22 30 / 0.08);
+  will-change: transform;
+}
+
+.win-surface {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  width: 1280px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* film.js sets the surface's min-height to the window at rest, so the mockup fills it. */
+.win-surface > * {
+  flex: 1 0 auto;
+}
+
+.win-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  transform-origin: 5px 3px;
+  visibility: hidden;
+  z-index: 3;
+}
+
+.win-cursor svg {
+  display: block;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.3));
+}
+
+.win-cursor path {
+  fill: #111;
+  stroke: #fff;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.win-ripple {
+  position: absolute;
+  left: -13px;
+  top: -15px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+}
+
+.win .mark {
+  z-index: 2;
+}
+
+.hl-fill {
+  position: absolute;
+  inset: 0;
+}
+
+/* 4. Proof */
+#s-proof {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: calc(var(--u) * 60px);
+  color: var(--paper-ink);
+}
+
+.proof-row {
+  display: flex;
+  gap: calc(var(--u) * 110px);
+}
+
+[data-aspect="9:16"] .proof-row {
+  flex-direction: column;
+  gap: calc(var(--u) * 70px);
+}
+
+.proof-item {
+  text-align: center;
+}
+
+.proof-value {
+  display: block;
+  font-size: calc(var(--u) * 190px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.proof-label {
+  display: block;
+  max-width: calc(var(--u) * 520px);
+  margin-top: calc(var(--u) * 18px);
+  font-size: calc(var(--u) * 32px);
+  line-height: 1.25;
+  color: var(--paper-ink-2);
+}
+
+.proof-caption {
+  margin: 0;
+  font-size: calc(var(--u) * 26px);
+  color: var(--paper-ink-2);
+}
+
+/* 5. Limits */
+#s-limits {
+  display: grid;
+  place-items: center;
+}
+
+.limits-card {
+  max-width: calc(var(--u) * 1180px);
+  margin: 0 calc(var(--u) * 80px);
+  padding: calc(var(--u) * 70px) calc(var(--u) * 80px);
+  border-radius: calc(var(--u) * 28px);
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.limits-h {
+  margin: 0 0 calc(var(--u) * 26px);
+  font-size: calc(var(--u) * 30px);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+}
+
+.limits-p {
+  margin: 0;
+  font-size: calc(var(--u) * 64px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+/* 6. End card */
+#s-end {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: calc(var(--u) * 26px);
+  text-align: center;
+}
+
+.end-word {
+  margin: 0;
+  font-size: calc(var(--u) * 170px);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.end-url {
+  margin: 0;
+  font-size: calc(var(--u) * 50px);
+  color: var(--accent);
+}
+
+.end-line {
+  margin: 0;
+  font-size: calc(var(--u) * 34px);
+  color: var(--ink-2);
+}
+
+/* Film grain: a fixed noise tile, so it never flickers between renders */
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='7' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Placeholder product mockup (mockups.tsx). Replace with your own. */
+.fm-browser {
+  display: flex;
+  flex-direction: column;
+  width: 1280px;
+  font-family: "Film Sans", ui-sans-serif, system-ui, sans-serif;
+  color: #16171a;
+  background: #fff;
+  letter-spacing: 0;
+}
+
+.fm-chrome {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 52px;
+  padding: 0 18px;
+  background: #f1f0ec;
+  border-bottom: 1px solid #e2e0da;
+}
+
+.fm-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.fm-dots i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #d6d3cc;
+}
+
+.fm-url {
+  flex: 1;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 15px;
+  color: #5d5f66;
+  text-align: center;
+}
+
+.fm-page {
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: 200px 1fr 440px;
+  min-height: 860px;
+}
+
+.fm-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px 22px;
+  border-right: 1px solid #eceae4;
+  font-size: 16px;
+  color: #5d5f66;
+}
+
+.fm-side b {
+  margin-bottom: 8px;
+  color: #16171a;
+  font-size: 18px;
+}
+
+.fm-side-on {
+  color: #16171a;
+  font-weight: 700;
+}
+
+.fm-list {
+  padding: 28px 30px;
+}
+
+.fm-h {
+  margin: 0 0 20px;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+
+.fm-list ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fm-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 12px;
+  border-bottom: 1px solid #eceae4;
+  font-size: 17px;
+}
+
+.fm-row[data-film-state="done"] .fm-row-text {
+  color: #8a8c93;
+  text-decoration: line-through;
+}
+
+.fm-row-text {
+  flex: 1;
+}
+
+.fm-row-meta {
+  font-size: 14px;
+  color: #8a8c93;
+}
+
+.fm-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  background: #e8e6f5;
+  color: #3d3a7a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fm-detail {
+  padding: 28px 30px;
+  border-left: 1px solid #eceae4;
+  background: #fbfaf7;
+}
+
+.fm-eyebrow {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #8a8c93;
+}
+
+.fm-body {
+  margin: 0 0 26px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: #3b3d44;
+}
+
+.fm-button {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.fm-card {
+  display: flex;
+  gap: 14px;
+  padding: 22px 24px;
+  border-radius: 16px;
+  background: #1c1d21;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 24px 50px rgb(0 0 0 / 0.4);
+  color: #f3f1ec;
+  font-size: 19px;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.fm-card p {
+  margin: 4px 0 0;
+  color: rgb(243 241 236 / 0.7);
+}

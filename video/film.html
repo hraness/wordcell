@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width={{CANVAS_WIDTH}}, initial-scale=1">
+    <title>{{TITLE}}</title>
+    <style>:root { --w: {{WIDTH}}px; --h: {{HEIGHT}}px; --cw: {{CANVAS_WIDTH}}px; --ch: {{CANVAS_HEIGHT}}px; --zoom: {{ZOOM}}; --u: {{UNIT}}; --accent: {{ACCENT}}; }</style>
+    <style>{{KIT_CSS}}</style>
+    <style>{{PRODUCT_CSS}}</style>
+    <style>{{FILM_CSS}}</style>
+  </head>
+  <body>
+    <div id="film" class="film" data-aspect="{{ASPECT}}">
+      <div class="bg bg-night" id="bg-night"></div>
+      <div class="bg bg-paper" id="bg-paper"></div>
+
+      <!-- 1. Cold open: a collage of the problem, then two lines -->
+      <section class="scene" id="s-open">
+        <div class="open-src" id="open-src" aria-hidden="true">{{OPEN_CARDS}}</div>
+        <div class="open-grid" id="open-grid"></div>
+        <div class="open-scrim" id="open-scrim"></div>
+        <div class="open-lines">
+          <h2 class="kin open-line" data-copy="open.0"></h2>
+          <h2 class="kin open-line" data-copy="open.1"></h2>
+        </div>
+      </section>
+
+      <!-- 2. Title -->
+      <section class="scene" id="s-title">
+        <h1 class="kin title-word" id="title-word" data-copy="name"></h1>
+        <p class="kin title-promise" id="title-promise" data-copy="promise"></p>
+      </section>
+
+      <!-- The mark draws at the title, then opens into the product window -->
+      <div class="mark" id="mark">
+        <svg class="mark-svg" id="mark-svg" viewBox="0 0 120 120" preserveAspectRatio="none" aria-hidden="true">
+          <rect id="mark-rect" pathLength="1"></rect>
+        </svg>
+      </div>
+
+      <!-- 3. Product walk: copy beside a framed product with camera, cursor and highlight -->
+      <section class="scene" id="s-walk">
+        <div class="walk-copy" id="walk-copy"></div>
+        <div class="walk-dots" id="walk-dots"></div>
+        <div class="win" id="win">
+          <div class="win-surface" id="win-surface">{{PRODUCT}}</div>
+          <div class="mark hl" id="hl">
+            <svg class="mark-svg" id="hl-svg" viewBox="0 0 120 120" preserveAspectRatio="none" aria-hidden="true">
+              <rect id="hl-rect" pathLength="1"></rect>
+            </svg>
+          </div>
+          <div class="win-cursor" id="win-cursor" aria-hidden="true">
+            <svg viewBox="0 0 28 28" width="28" height="28"><path d="M5 3 L5 22 L10 17.5 L13.6 25 L17 23.4 L13.5 16.2 L20 16 Z"></path></svg>
+            <span class="win-ripple" id="win-ripple"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Proof: numbers from the facts file -->
+      <section class="scene" id="s-proof">
+        <div class="proof-row" id="proof-row"></div>
+        <p class="kin proof-caption" data-copy="proof.caption"></p>
+      </section>
+
+      <!-- 5. Limits: what it does not do -->
+      <section class="scene" id="s-limits">
+        <div class="limits-card" id="limits-card">
+          <h2 class="kin limits-h" data-copy="limits.heading"></h2>
+          <p class="kin limits-p" data-copy="limits.body"></p>
+        </div>
+      </section>
+
+      <!-- 6. End card -->
+      <section class="scene" id="s-end">
+        <h2 class="kin end-word" id="end-word" data-copy="name"></h2>
+        <p class="kin end-url" data-copy="url"></p>
+        <p class="kin end-line" data-copy="end.line"></p>
+      </section>
+
+      <div class="grain" aria-hidden="true"></div>
+    </div>
+    <script>window.__FILM__ = {{CONFIG}};</script>
+    <script>{{FILM_JS}}</script>
+  </body>
+</html>

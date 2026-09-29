@@ -1,0 +1,22 @@
+{
+  "name": "video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build.ts",
+    "still": "slopcamera html still --input out/scene.json --at 3,12.5 --output out/stills",
+    "draft": "bun build.ts --scale 0.5 --fps 15",
+    "render": "slopcamera html render --input out/scene.json --json > out/export.json",
+    "deliver": "slopcamera html deliver out/export.json --basename launch --poster-at 9 --social-at 9 --cuts 1:1,9:16 --per-beat-clips"
+  },
+  "dependencies": {
+    "@hraness/slopcamera": "3.8.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0"
+  }
+}

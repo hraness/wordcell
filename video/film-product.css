@@ -1,0 +1,19 @@
+/* The film's desk: the agent session beside the terminal and the note file.
+ * The windows are the site's own mockups; this only lays them out. */
+.wc-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 28px;
+  background: #eef0f3;
+}
+
+.wc-desk-side {
+  display: grid;
+  gap: 24px;
+}
+
+.wc-desk .hkm-root {
+  margin: 0;
+}

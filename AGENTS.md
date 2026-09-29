@@ -100,6 +100,13 @@ Existing catalog, context, and maintenance commands retain their own roles.
 - When a product is renamed or a relation changes, update the post bodies that mention it in the same change.
 <!-- hraness-articles:end -->
 
+<!-- hraness-launch:start -->
+- Launch posts, their social posts, product mockups, and launch films follow the launch beats and social posts addendum in `GENERATION_STYLE.md` and the beats shape under “Introducing a product” in `ARTICLE_COPY.md` in `@hraness/design-kit`. Channel limits are in the launch posts section of `MESSAGING.md`.
+- Build them with the `product-launch` agent skill, the `./mockups` and `./launch` exports of `@hraness/design-kit`, and `slopcamera html init --template launch-film`.
+- Take every number in a beat, social post, film caption, or store listing from the product's launch facts module, and the status from the release record. Label mockups as illustrations.
+- The social kit emits posts for X, Bluesky, Threads, and LinkedIn, and a fact sheet for the Show HN post and the Product Hunt first comment. A person writes those two.
+<!-- hraness-launch:end -->
+
 <!-- hraness-delivery:start -->
 - Treat the user's request to change this repository as standing authorization for routine task-owned commits, pushes, pull requests, merges, releases, deployments, and production verification after the gates applicable to that action pass. Do not ask for duplicate confirmation. Build confidence through relevant automated checks, bounded diagnostics, and independent review, not another human approval. Passing checks does not expand task scope or authority.
 - Prefer agentic service provisioning for new infrastructure. Check Vercel Marketplace for a native product that can provision the required resource first; use Stripe Projects as a supported alternative when it better covers the service or the Marketplace route only connects an existing account. Verify the current catalog, account, region, plan, recurring cost and resource capabilities before selecting a route. Prefer supported provider CLIs or APIs over browser-only setup when neither catalog fits, and explain the concrete exception. Reuse existing owner-controlled resources where appropriate; this preference alone does not authorize migrations, duplicate accounts, paid upgrades or wider access. Continue setup already authorized by the task and budget without duplicate confirmation. Keep provider credentials and generated environment files private, complete required interactive authentication, and verify deployment, persistence and recovery separately from successful provisioning.

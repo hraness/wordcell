@@ -1,0 +1,66 @@
+{
+  "name": "Introducing Wordcell",
+  "aspect": "16:9",
+  "fps": 30,
+  "seed": 20260930,
+  "background": "#111214",
+  "accent": "#3f7d5c",
+  "copy": {
+    "name": "Wordcell",
+    "promise": "Give the next session what this one learned.",
+    "url": "wordcell.io",
+    "open": [
+      "Decisions get made in chats, calls and commits.",
+      "The next agent session starts without them."
+    ],
+    "steps": [
+      {
+        "heading": "Save it once",
+        "body": "One command saves a decision as a Markdown note, and exact search finds it again.",
+        "focus": "terminal",
+        "target": "terminal",
+        "highlight": "terminal"
+      },
+      {
+        "heading": "A plain file",
+        "body": "The note is an ordinary Markdown file you can open, edit and commit.",
+        "focus": "note",
+        "target": "note-rule",
+        "highlight": "note-rule"
+      },
+      {
+        "heading": "Your agent checks first",
+        "body": "Before it edits a file, your agent finds the rule and says which note it came from.",
+        "focus": "agent",
+        "target": "agent",
+        "highlight": "agent"
+      }
+    ],
+    "proof": {
+      "caption": "Free and MIT licensed. Exact search needs no model or account.",
+      "items": [
+        {
+          "value": 4000,
+          "suffix": "",
+          "label": "notes per vault for graph queries"
+        },
+        {
+          "value": 8,
+          "suffix": "",
+          "label": "links deep a graph query can follow"
+        }
+      ]
+    },
+    "limits": {
+      "heading": "What it does not do",
+      "body": "It finds notes. Your agent writes the answer, and a note can still be wrong."
+    },
+    "end": {
+      "line": "Free and open source."
+    }
+  },
+  "productCss": [
+    "../site/wordcell/mockups/mockups.css",
+    "film-product.css"
+  ]
+}
