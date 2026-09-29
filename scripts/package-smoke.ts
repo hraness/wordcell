@@ -640,10 +640,19 @@ async function verifyInstalledPackagePolicy(consumer: string): Promise<Readonly<
   return { fileCount: files.length, unpackedBytes };
 }
 
+function parseSharedNpmCache(value: string | undefined): string | null {
+  if (value === undefined || value === "") return null;
+  if (!isAbsolute(value)) throw new Error("WORDCELL_SMOKE_NPM_CACHE must be an absolute path");
+  return value;
+}
+
 const repository = process.cwd();
 const packageInput = parsePackageInput(process.argv.slice(2), repository);
 const work = await mkdtemp(join(tmpdir(), "hraness-package-smoke-"));
 const temporary = join(work, "tmp");
+// CI may share one npm download cache across runs; the release workflow never
+// sets this, so the canonical artifact smoke always starts from an empty cache.
+const sharedNpmCache = parseSharedNpmCache(process.env.WORDCELL_SMOKE_NPM_CACHE);
 const environment = {
   ...process.env,
   HRANESS_SUPPORT: "off",
@@ -653,7 +662,8 @@ const environment = {
   BUN_TMPDIR: temporary,
   TMPDIR: temporary,
   npm_config_audit: "false",
-  npm_config_cache: join(temporary, "npm-cache"),
+  npm_config_cache: sharedNpmCache ?? join(temporary, "npm-cache"),
+  ...(sharedNpmCache === null ? {} : { npm_config_prefer_offline: "true" }),
   npm_config_fund: "false",
   npm_config_ignore_scripts: "true",
   npm_config_registry: "https://registry.npmjs.org",

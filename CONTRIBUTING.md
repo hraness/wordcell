@@ -11,6 +11,8 @@ bun install --frozen-lockfile
 bun run check
 ```
 
+`bun run check:fast` runs the same gate without the packed-install smoke and the metadata-search tool's cargo check. Use it while iterating; CI runs those two parts as separate parallel jobs, and `bun run check` stays the gate before a pull request.
+
 Keep changes platform-neutral unless the feature is explicitly capability-detected. Add a named regression test for every parser, path, network, credential, status, or rollback bug. Add property tests for laws over arbitrary input, including parsing, normalization, ordering, cardinality, and round trips.
 
 Capture changes must preserve bounded time, bytes, item counts, depth, process output, filesystem paths, and cleanup. A fallback may retain useful content, but it must not upgrade an uncertain conversation to `complete`. Security-sensitive changes should include failure cases for private-network access, DNS rebinding, redirects, cookie scope, credential redaction, symlinks, and subprocess termination as applicable.

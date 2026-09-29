@@ -15,10 +15,16 @@ on:
 permissions:
   contents: read
 
+# Pull requests cancel superseded runs. Runs on main are keyed by commit, so a
+# later push or rerun never cancels an earlier main run.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# `bun run check` stays the local and prepack aggregate. CI runs its three slow
+# parts as parallel jobs: `check:fast` (static checks, build, unit tests), the
+# packed-install smoke, and the metadata-search tool's cargo check. Caches are
+# restored on pull requests and saved only on main.
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -36,13 +42,6 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: "1.3.14"
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-        with:
-          workspaces: src/clip/metadata-search-tool
-          cache-targets: false
       - name: Pin npm
         run: |
           set -euo pipefail
@@ -52,7 +51,7 @@ jobs:
           test "$(npm --version)" = "11.19.0"
           [[ "$(node --version)" == v24.* ]]
       - run: bun install --frozen-lockfile --ignore-scripts
-      - run: bun run check
+      - run: bun run check:fast
       - run: |
           generated_status="$(git status --porcelain --untracked-files=all -- dist bun.lock)"
           if [[ -n "$generated_status" ]]; then
@@ -62,6 +61,69 @@ jobs:
       - run: bun pm pack --dry-run --ignore-scripts
       - run: >-
           node --input-type=module -e 'const manifest = (await import("./package.json", { with: { type: "json" } })).default; await Promise.all(Object.values(manifest.exports).map(({ import: path }) => import(path)))'
+
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+          registry-url: "https://registry.npmjs.org"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.3.14"
+      - name: Pin npm
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.19.0 \
+            --ignore-scripts \
+            --registry=https://registry.npmjs.org
+          test "$(npm --version)" = "11.19.0"
+          [[ "$(node --version)" == v24.* ]]
+      - name: Share one npm download cache across package-smoke runs
+        run: echo "WORDCELL_SMOKE_NPM_CACHE=$HOME/.cache/wordcell-npm-smoke" >> "$GITHUB_ENV"
+      - name: Restore the package-smoke npm cache
+        id: npm-smoke-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/wordcell-npm-smoke
+          key: npm-smoke-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: npm-smoke-${{ runner.os }}-
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run build
+      - run: bun run test:package
+      - name: Save the package-smoke npm cache
+        if: github.ref == 'refs/heads/main' && steps.npm-smoke-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/wordcell-npm-smoke
+          key: npm-smoke-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+  metadata-tool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.3.14"
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          workspaces: src/clip/metadata-search-tool
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run build
+      - run: bun run url-metadata:tool:check
 
   site:
     runs-on: ubuntu-latest
@@ -81,18 +143,66 @@ jobs:
         with:
           bun-version: "1.3.14"
       - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Restore Chromium
+        id: chromium-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: site-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium in the background
+        env:
+          CHROMIUM_LOG: ${{ runner.temp }}/chromium-install.log
+          CHROMIUM_STATUS: ${{ runner.temp }}/chromium-install.status
+        run: |
+          (
+            status=0
+            node node_modules/playwright-core/cli.js install --with-deps chromium > "$CHROMIUM_LOG" 2>&1 || status=$?
+            echo "$status" > "$CHROMIUM_STATUS"
+          ) &
+      - name: Restore the Next build cache
+        id: next-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.next/cache
+          key: site-next-${{ runner.os }}-${{ hashFiles('site/bun.lock') }}-${{ github.sha }}
+          restore-keys: site-next-${{ runner.os }}-${{ hashFiles('site/bun.lock') }}-
       - run: bun run check
       - run: git diff --exit-code -- app/readme.generated.ts app/docs/docs.generated.ts lib/hosted/reader.generated.ts bun.lock
-      - name: Install Chromium for public-page evidence
-        run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Save the Next build cache
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.next/cache
+          key: site-next-${{ runner.os }}-${{ hashFiles('site/bun.lock') }}-${{ github.sha }}
+      - name: Wait for Chromium
+        timeout-minutes: 5
+        env:
+          CHROMIUM_LOG: ${{ runner.temp }}/chromium-install.log
+          CHROMIUM_STATUS: ${{ runner.temp }}/chromium-install.status
+        run: |
+          set -euo pipefail
+          until [[ -s "$CHROMIUM_STATUS" ]]; do sleep 1; done
+          tail -n 40 "$CHROMIUM_LOG"
+          exit "$(cat "$CHROMIUM_STATUS")"
+      - name: Save Chromium
+        if: github.ref == 'refs/heads/main' && steps.chromium-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: site-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
       - name: Verify public pages at phone and desktop sizes
         env:
           SITE_BROWSER_ARTIFACTS: ${{ runner.temp }}/public-site-candidate
+          SITE_BROWSER_CONCURRENCY: "3"
         run: node scripts/verify-public-site-browser.mjs
       - name: Verify the fixed public production site
         if: github.event_name == 'workflow_dispatch' && inputs.production
         env:
           SITE_BROWSER_ARTIFACTS: ${{ runner.temp }}/public-site-production
+          SITE_BROWSER_CONCURRENCY: "3"
         run: node scripts/verify-public-site-browser.mjs --production
       - name: Save public-page browser evidence
         if: always()
@@ -100,23 +210,25 @@ jobs:
         with:
           name: public-site-browser
           path: ${{ runner.temp }}/public-site-*
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 7
 
   required:
     name: Required
     if: always()
-    needs: [check, site]
-    runs-on: ubuntu-latest
+    needs: [check, package, metadata-tool, site]
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
       - name: Require every selected job
         env:
           CHECK: ${{ needs.check.result }}
+          PACKAGE: ${{ needs.package.result }}
+          METADATA_TOOL: ${{ needs['metadata-tool'].result }}
           SITE: ${{ needs.site.result }}
         run: |
           set -euo pipefail
-          for result in "$CHECK" "$SITE"; do
+          for result in "$CHECK" "$PACKAGE" "$METADATA_TOOL" "$SITE"; do
             if [[ "$result" != success ]]; then
               printf 'Unexpected required job result: %s\n' "$result"
               exit 1

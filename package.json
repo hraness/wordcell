@@ -485,6 +485,7 @@
     "url-metadata:tool:build": "bun ./dist/cli.js url-metadata tool build",
     "url-metadata:tool:check": "bun ./dist/cli.js url-metadata tool check",
     "test:package": "bun run ./scripts/package-smoke.ts",
+    "check:fast": "bun run check:worker && bun run check:effect && bun run check:workflows && bun run check:portfolio-inventory && bun run check:installed-command-docs && bun run typecheck && bun run build && bun run test",
     "check": "bun run check:worker && bun run check:effect && bun run check:workflows && bun run check:portfolio-inventory && bun run check:installed-command-docs && bun run typecheck && bun run build && bun run test:package && bun run test && bun run url-metadata:tool:check",
     "prepack": "bun run check",
     "check:effect": "bun run scripts/check-effect-policy.ts",
