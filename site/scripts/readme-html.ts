@@ -1,3 +1,8 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { Terminal } from "../wordcell/code-block.tsx";
+import { highlightCode } from "@hraness/design-kit/syntax-highlighting";
+
 export const REPOSITORY_BLOB_ROOT = "https://github.com/hraness/wordcell/blob/main/";
 export const REPOSITORY_RAW_ROOT = "https://raw.githubusercontent.com/hraness/wordcell/main/";
 
@@ -139,6 +144,46 @@ export function renderedFragmentIds(html: string): ReadonlySet<string> {
   return new Set(Array.from(html.matchAll(/\sid="([^"]+)"/gu), ([, id]) => id));
 }
 
+function decodeCodeText(html: string): string {
+  return html.replace(
+    /&#x([0-9a-f]+);?|&#([0-9]+);?|&([a-z]+);?/giu,
+    (match, hex: string | undefined, decimal: string | undefined, name: string | undefined) => {
+      if (hex !== undefined) return String.fromCodePoint(Number.parseInt(hex, 16));
+      if (decimal !== undefined) return String.fromCodePoint(Number.parseInt(decimal, 10));
+      switch ((name ?? "").toLowerCase()) {
+        case "amp": return "&";
+        case "lt": return "<";
+        case "gt": return ">";
+        case "quot": return '"';
+        case "apos": return "'";
+        case "colon": return ":";
+        case "tab": return "\t";
+        case "newline": return "\n";
+        default: return match;
+      }
+    },
+  );
+}
+
+/** Fenced blocks become shared syntax markup; the fence hint selects the language. */
+export function highlightCodeBlocks(html: string): string {
+  return html.replace(
+    /<pre><code(?:\s+class="([^"]*)")?>([\s\S]*?)<\/code><\/pre>/gu,
+    (_, classAttribute: string | undefined, body: string) => {
+      const highlighted = highlightCode(
+        decodeCodeText(body),
+        classAttribute === undefined ? undefined : classAttribute,
+        { styles: "classes" },
+      );
+      const code = `<code class="${highlighted.className}" data-language="${highlighted.language}">${highlighted.html}</code>`;
+      if (highlighted.language === "shell") {
+        return renderToStaticMarkup(createElement(Terminal, { code: decodeCodeText(body) }));
+      }
+      return `<pre>${code}</pre>`;
+    },
+  );
+}
+
 export function renderMarkdownHtml(
   source: string,
   resolve: RelativeTargetResolver = githubResolver,
@@ -155,7 +200,7 @@ export function renderMarkdownHtml(
   }
   const rendered = rewriteRelativeTargets(addHeadingIds(html), base, resolve);
   assertFragmentsResolve(rendered);
-  return rendered;
+  return highlightCodeBlocks(rendered);
 }
 
 export function renderReadmeHtml(

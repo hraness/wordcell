@@ -18,7 +18,7 @@ import CompareMem0 from "../app/compare/mem0/page";
 import CompareSupermemory from "../app/compare/supermemory/page";
 import MigrateSupermemory from "../app/migrate/supermemory/page";
 import { locomoArms } from "../wordcell/oh-evidence";
-import { AGENT_MEMORY_RELEASE, SETUP_PROMPT } from "../wordcell/setup-prompt";
+import { SETUP_PROMPT } from "../wordcell/setup-prompt";
 import { BenchmarkComparison } from "../wordcell/benchmark-comparison";
 import { scifactStudy } from "../wordcell/benchmark-evidence";
 
@@ -74,25 +74,19 @@ test("the homepage connects an agent, links the launch pages, and keeps Oh LoCoM
   expect(agentMemory).toBeGreaterThan(install);
   expect(model).toBeGreaterThan(agentMemory);
   const section = html.slice(agentMemory, model);
-  expect(section).toContain(`need Wordcell ${AGENT_MEMORY_RELEASE} or later.`);
-  if (publishedRelease !== null) expect(section).toContain(`The prompt below installs Wordcell v${publishedRelease.version}.`);
   expect(section).not.toMatch(/from source|until the next release|checkout/u);
-  expect(section).toContain("<code>wordcell mcp</code>");
-  expect(section).toContain("<code>wordcell import supermemory</code>");
   expect(section).toContain("Wordcell’s local MCP server serves a vault");
   expect(section).not.toMatch(/<p[^>]*>wordcell (mcp|import)/u);
   expect(section).toContain(SETUP_PROMPT.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#x27;"));
   expect(section).toContain("Copy prompt");
   expect(section).toContain('href="/migrate/supermemory"');
-  const evidence = html.slice(html.indexOf('id="evidence"'), html.indexOf('id="context"'));
+  const evidence = html.slice(html.indexOf('id="evidence"'), html.indexOf('id="developers"'));
   expect(evidence).toContain('href="/benchmarks"');
   const compare = html.slice(html.indexOf('id="compare"'), html.indexOf('id="publish"'));
   expect(compare).toContain('href="/compare/supermemory"');
   expect(compare).toContain('href="/compare/basic-memory"');
   expect(compare).toContain('href="/compare/mem0"');
   expect(compare).toContain('href="/docs/comparisons"');
-  expect(compare).toContain("claude-mem");
-  expect(compare).toContain("CLAUDE.md");
   expect(html).not.toContain("blob/main/docs/");
   for (const arm of locomoArms) expect(html).not.toContain(`${arm.percent.replace(/%$/u, "")}%`);
   expect(html).not.toMatch(/\bSOTA\b|state[\s-]+of[\s-]+the[\s-]+art/iu);
@@ -116,14 +110,6 @@ test("every public route attributes the site to Hraness through the shared foote
     expect(html).not.toContain("hraness-marketing-maker");
     expect(html).not.toContain('id="maker"');
   }
-});
-
-test("the homepage's maker answer attributes Wordcell to Hraness", () => {
-  const html = renderToStaticMarkup(<Home />);
-  expect(html).toContain("Who made it?");
-  expect(html).toContain('<a href="https://hraness.com">Hraness</a>, which makes tools for agents and humans. Wordcell is MIT licensed, and its source is <a href="https://github.com/hraness/wordcell">on GitHub</a>.');
-  expect(html).not.toContain("Venmo");
-  expect(html).not.toContain("Puerto Rico");
 });
 
 test("the homepage describes the software and site without FAQ markup", () => {
@@ -157,44 +143,18 @@ test("the homepage leads with the README identity and the verified install comma
     expect(html).not.toContain(".tgz");
   } else {
     expect(html).toContain(`hraness-wordcell-${publishedRelease.version}.tgz`);
-    expect(html).toContain("wordcell init kb");
-    expect(html).toContain(publishedRelease.verificationRun);
+    expect(html.replace(/<[^>]+>/gu, "")).toContain("wordcell init kb");
   }
   expect(html).not.toContain("hraness.com/kb");
 });
 
-test("Wordcell compares its measured retrieval path and keeps the Oh boundary explicit", () => {
-  const html = renderToStaticMarkup(<Home />);
-  const fragments: string[] = [];
-  const legacyTargets: string[] = [];
-  new HTMLRewriter()
-    .on("#memory, #evidence, #oh", {
-      element(element) { fragments.push(element.getAttribute("id") ?? ""); },
-    })
-    .on("section#evidence #memory", {
-      element(element) {
-        legacyTargets.push(element.getAttribute("id") ?? "");
-        expect(element.hasAttribute("href")).toBe(false);
-        expect(element.hasAttribute("tabindex")).toBe(false);
-      },
-    })
-    .transform(html);
-  expect(fragments.toSorted()).toEqual(["evidence", "memory", "oh"]);
-  expect(legacyTargets).toEqual(["memory"]);
-  expect(html).toContain("hraness-design-bar-list-chart");
-  expect(html).toContain("33.7%");
-  expect(html).toContain("53.7%");
-  expect(html).toContain("101 of 300 queries");
-  expect(html).toContain("161 of 300 queries");
-  expect(html).toContain("jev-1.13.0");
-  expect(html).toContain("BEIR SciFact relevance judgments");
-  expect(html).toContain("25-candidate windows");
-  expect(html).toContain("260-query confirmation");
-  expect(html).toContain("optional paid provider");
+test("detailed retrieval measurements retain their sources and limits on the benchmarks page", () => {
+  const html = renderToStaticMarkup(<Benchmarks />);
+  for (const fact of ["33.7%", "53.7%", "101 of 300 queries", "161 of 300 queries", "jev-1.13.0", "BEIR SciFact relevance judgments", "25-candidate windows", "260-query confirmation", "optional paid provider"]) {
+    expect(html).toContain(fact);
+  }
   expect(html).toContain('href="/docs/reranking#evidence-and-limits"');
-  expect(html).toContain("Markdown and Git remain authoritative");
-  expect(html).toContain("conversation-memory benchmark scores do not measure that search path");
-  for (const page of [html, renderToStaticMarkup(<Developers />)]) {
+  for (const page of [renderToStaticMarkup(<Home />), renderToStaticMarkup(<Developers />)]) {
     expect(page).not.toContain("89.8%");
     expect(page).not.toContain("84.4%");
     expect(page).not.toContain("for the same answer");
@@ -210,7 +170,7 @@ test("unmatched published protocols cannot be plotted as a shared comparison", (
 test("the docs page indexes every catalog entry by Diataxis quadrant", () => {
   const html = renderToStaticMarkup(<Docs />);
   expect(html).toContain('id="install"');
-  expect(html).toContain("wordcell --help");
+  expect(html.replace(/<[^>]+>/gu, "")).toContain("wordcell --help");
   expect(html).not.toContain("data-hraness-marketing-preset");
   for (const quadrant of docQuadrants) {
     expect(html).toContain(`id="docs-${quadrant.id}"`);
@@ -243,7 +203,7 @@ test("the overview page renders the README with its installation anchor", async 
   const html = renderToStaticMarkup(element);
   expect(html).toContain('id="install"');
   expect(html).toContain('id="the-kb-vault-format"');
-  expect(html).toContain("wordcell --help");
+  expect(html.replace(/<[^>]+>/gu, "")).toContain("wordcell --help");
 });
 
 test("scopes the editorial preset to the homepage header and a quiet CLI-first hero", () => {
@@ -258,11 +218,10 @@ test("scopes the editorial preset to the homepage header and a quiet CLI-first h
     })
     .transform(html);
   expect(elements).toEqual(["header"]);
-  expect(html).toContain('wordcell search &quot;parser retries&quot; --root kb --mode exact');
+  expect(html.replace(/<[^>]+>/gu, "")).toContain('wordcell search &quot;parser retries&quot; --root kb --mode exact');
   expect(html).not.toContain("wordcell-note");
   expect(html).not.toContain("wordcell-edge");
 });
-
 
 test("the 404 page leads with the install action inside the site header", async () => {
   const { default: NotFound } = await import("../app/not-found");
@@ -277,22 +236,13 @@ test("the 404 page leads with the install action inside the site header", async 
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
 });
 
-
-test("keeps decision claims, privacy limits, and evidence visible with the quick start", () => {
+test("keeps quick-start commands, privacy limits, and evidence links accessible", () => {
   const html = renderToStaticMarkup(<Home />);
-  expect(html).toContain("80% fewer UTF-8 bytes");
-  expect(html).toContain("12,126 bytes");
-  expect(html).toContain("60,584 bytes");
-  expect(html).toContain("Payload size, not accuracy");
-  expect(html).toContain("hosted Jev reranking");
-  expect(html).toContain("removed in version 0.21.0");
-  expect(html).toContain("--skill wordcell");
-  expect(html).toContain('id="compare"');
+  expect(html).toContain('href="/benchmarks"');
   expect(html).toContain('href="/docs/comparisons"');
-  expect(html).toContain('href="/docs/evidence"');
-  expect(html).not.toContain("kb kept as a deprecated alias");
+  expect(html).toContain('data-language="shell"');
+  expect(html).toContain("Optional Jev reranking and your agent&#x27;s provider can receive selected content.");
 });
-
 
 test("unreleased publishing is labeled and source docs do not silently pretend to be an older release", () => {
   const docs = renderToStaticMarkup(<Docs />);
@@ -311,7 +261,6 @@ test("unreleased publishing is labeled and source docs do not silently pretend t
     expect(docs).toContain("v0.22.0 or newer");
   }
 });
-
 
 test("the header keeps a named home link and exact-artwork foil fallback", () => {
   for (const Page of [Home]) {

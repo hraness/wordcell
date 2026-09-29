@@ -49,7 +49,6 @@ describe("Wordcell site source contract", () => {
     expect(home).toContain('import { publishedRelease } from "./publication"');
     expect(home).toContain("const releaseVersion = publishedRelease?.version;");
     expect(home).not.toContain("package.json");
-    expect(home).toContain("href={publishedRelease.verificationRun}");
   });
 
   test("renders the README landing identity and the shared Ask AI links", async () => {

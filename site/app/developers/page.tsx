@@ -1,3 +1,4 @@
+import { CodeBlock, Terminal } from "../../wordcell/code-block";
 import type { Metadata } from "next";
 import {
   MarketingCallToAction,
@@ -190,12 +191,12 @@ export default function Developers() {
               <>
                 <figure className="wordcell-step">
                   <figcaption><span>1</span>Install the CLI</figcaption>
-                  <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts ${archiveUrl}
-wordcell --help`}</code></pre>
+                  <Terminal code={`bun add --global --ignore-scripts ${archiveUrl}
+wordcell --help`} />
                 </figure>
                 <figure className="wordcell-step">
                   <figcaption><span>2</span>Teach your agent the commands</figcaption>
-                  <pre className="install-command" tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>
+                  <Terminal code={`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`} />
                 </figure>
                 <p className="install-note">
                   The skill gives a compatible agent instructions; it does not run a service.{" "}
@@ -220,10 +221,10 @@ wordcell --help`}</code></pre>
           >
             <MarketingFlow ariaLabel="The repository-memory loop" steps={loop} />
             <div className="wordcell-pane">
-              <pre className="transcript" tabIndex={0}><code>{`$ wordcell context packages/parser/src/index.ts \\
+              <Terminal code={`wordcell context packages/parser/src/index.ts \\
     --root kb --repo .
-$ wordcell backlinks notes/parser-contract --root kb
-$ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
+wordcell backlinks notes/parser-contract --root kb
+wordcell history notes/parser-contract --root kb --repo .`} />
               <p className="wordcell-pane-note">Start from the file you are changing. <code>context</code> lists the notes and AGENTS.md guides that apply to it, <code>backlinks</code> shows what links to the note, and <code>history</code> lists the commits that changed it. They print paths and short summaries, and the agent opens a full note when it needs one.</p>
             </div>
           </MarketingSection>
@@ -273,8 +274,8 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 example: (
                   <>
                     <WordcellIcon className="wordcell-topic-icon" name="cli" />
-                    <pre tabIndex={0}><code>{`wordcell context packages/parser/src/index.ts \\
-  --root kb --repo .`}</code></pre>
+                    <Terminal code={`wordcell context packages/parser/src/index.ts \\
+  --root kb --repo .`} />
                   </>
                 ),
               },
@@ -284,9 +285,9 @@ $ wordcell history notes/parser-contract --root kb --repo .`}</code></pre>
                 example: (
                   <>
                     <WordcellIcon className="wordcell-topic-icon" name="sdk" />
-                    <pre tabIndex={0}><code>{`import { openKnowledgeBase } from "@hraness/wordcell/sdk";
+                    <CodeBlock code={`import { openKnowledgeBase } from "@hraness/wordcell/sdk";
 
-const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
+const session = await openKnowledgeBase({ root: "kb" });`} />
                   </>
                 ),
               },
@@ -296,7 +297,7 @@ const session = await openKnowledgeBase({ root: "kb" });`}</code></pre>
                 example: (
                   <>
                     <WordcellIcon className="wordcell-topic-icon" name="agent-skill" />
-                    {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <pre tabIndex={0}><code>{`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`}</code></pre>}
+                    {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <Terminal code={`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`} />}
                     <p className="interface-link"><a href={`${repository}/blob/main/skills/wordcell/SKILL.md`}>Inspect the packaged skill</a></p>
                   </>
                 ),

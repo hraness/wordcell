@@ -1,3 +1,4 @@
+import { Terminal } from "./code-block";
 import { CopyPromptButton } from "./copy-prompt-button";
 import { SETUP_PROMPT, SETUP_VAULT_PATH, setupTargets } from "./setup-prompt";
 
@@ -26,7 +27,7 @@ export function SetupLinks() {
       {targets.map((target) => target.kind === "command" ? (
         <figure className="wordcell-step" key={target.id}>
           <figcaption>{target.label}</figcaption>
-          <pre className="install-command" tabIndex={0}><code>{target.command}</code></pre>
+          <Terminal code={target.command} />
         </figure>
       ) : null)}
     </div>

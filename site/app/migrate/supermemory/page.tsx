@@ -1,3 +1,4 @@
+import { Terminal } from "../../../wordcell/code-block";
 import type { Metadata } from "next";
 import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
 
@@ -91,7 +92,7 @@ export default function MigrateSupermemory() {
           <figure className="wordcell-step" id={step.id} key={step.id}>
             <figcaption><span>{index + 1}</span>{step.title}</figcaption>
             <p className="install-note wordcell-step__lead">{step.lead}</p>
-            <pre className="install-command" tabIndex={0}><code>{step.commands.join("\n")}</code></pre>
+            <Terminal code={step.commands.join("\n")} />
             <p className="install-note">{"note" in step ? <>{step.note} </> : null}<a href={step.href}>Details</a></p>
           </figure>
         ))}

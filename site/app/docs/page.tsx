@@ -1,3 +1,4 @@
+import { Terminal } from "../../wordcell/code-block";
 import type { Metadata } from "next";
 import { AskAiAboutThis } from "@hraness/ui";
 
@@ -62,8 +63,8 @@ export default function Docs() {
             </p>
           ) : (
             <>
-              <pre className="install-command" tabIndex={0}><code>{`bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v${publishedRelease.version}/hraness-wordcell-${publishedRelease.version}.tgz
-wordcell --help`}</code></pre>
+              <Terminal code={`bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v${publishedRelease.version}/hraness-wordcell-${publishedRelease.version}.tgz
+wordcell --help`} />
               <p className="install-note">
                 Requires <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git.{" "}
                 <a href="/docs/getting-started">Walk through the first vault</a> or{" "}

@@ -45,8 +45,8 @@ test("documentation install coordinates follow admission without changing histor
   ].join("\n");
   const html = renderMarkdownHtml(publishedReadme(source, "0.22.4", "0.22.3"));
   expect(html).toContain("/v0.22.3/hraness-wordcell-0.22.3.tgz");
-  expect(html).toContain("npm install @hraness/wordcell@0.22.3");
-  expect(html).toContain("hraness/wordcell#v0.22.3 --skill wordcell");
+  expect(html.replace(/<[^>]+>/gu, "")).toContain("npm install @hraness/wordcell@0.22.3");
+  expect(html.replace(/<[^>]+>/gu, "")).toContain("hraness/wordcell#v0.22.3 --skill wordcell");
   expect(html).toContain("/v0.20.0/hraness-wordcell-0.20.0.tgz");
   expect(html).not.toContain("0.22.4");
 });
