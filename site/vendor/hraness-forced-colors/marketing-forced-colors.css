@@ -1,0 +1,12 @@
+/* Marketing action forced-colors compatibility: keep this final block self-contained. */
+@media (forced-colors: active) {
+  .hraness-marketing-action,
+  .hraness-marketing-action[data-emphasis="primary"],
+  .hraness-marketing-hero[data-tone="accent"] .hraness-marketing-action,
+  .hraness-marketing-cta[data-tone="accent"] .hraness-marketing-action {
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+    box-shadow: none;
+  }
+}

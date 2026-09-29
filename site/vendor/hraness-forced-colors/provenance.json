@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": 1,
+  "source": {
+    "repository": "https://github.com/hraness/design-kit",
+    "commit": "3d28bc3ceceecd98e5ec1ccff57b7da0ec17539c",
+    "tag": "v0.29.1",
+    "export": "@hraness/design-kit/marketing-forced-colors.css"
+  },
+  "files": {
+    "marketing-forced-colors.css": {
+      "path": "src/marketing-forced-colors.css",
+      "sha256": "11b42385c6a0380b1101a5504e6959fa432d3801cff2f29f2cdb718d3eb4925a"
+    },
+    "LICENSE": {
+      "path": "LICENSE",
+      "sha256": "763eaf6783097cac7303f10321b33ffc6a88c35845ba1e592b6a750e4568c5e0"
+    }
+  }
+}

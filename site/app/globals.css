@@ -17,6 +17,7 @@
  * foundations. */
 @import "../wordcell/wordcell-theme.css";
 @import "../wordcell/wordcell.css";
+@import "../vendor/hraness-forced-colors/marketing-forced-colors.css";
 
 :root {
   font-synthesis: none;
