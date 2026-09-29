@@ -382,6 +382,16 @@ diffs, and the explicit local job ledger are available from
 `@hraness/wordcell/clip/bundle-reader`, `@hraness/wordcell/clip/refresh`, and
 `@hraness/wordcell/clip/jobs`.
 
+Metadata-search responses optionally expose `engineFailures`, containing exactly one
+`{ engine, code }` entry for each failed engine. Codes distinguish timeouts, HTTP
+403/429/redirect responses, challenges, unsupported or oversized bodies, and
+unrecognized result pages without returning raw provider errors. Older provider
+responses omit this field; absence does not mean no failures. The Rust helper emits diagnostics only when its request explicitly sets
+`diagnostics: true`; older callers continue to receive the original four fields.
+The current SDK opts in and requires the matching helper. An older helper rejects
+that request without retrying; upgrade the SDK and helper together. Search results retain their existing `engineStatus` semantics.
+
+
 ### Update a note body conditionally
 
 `updateNoteBody` replaces the prose in one existing note. Read its revision

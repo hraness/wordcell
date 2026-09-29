@@ -6,6 +6,7 @@ import {
   MAX_ARCHIVE_TIMEMAP_ENTRIES,
   MAX_ARCHIVE_TIMEMAP_UTF8_BYTES,
   MAX_METADATA_SEARCH_RESULTS,
+  METADATA_SEARCH_FAILURE_CODES,
   isExactSourceTarget,
   normalizeSourceUrlIdentity,
   parseArchiveTodayMementoUrl,
@@ -266,4 +267,36 @@ describe("archive.today Memento TimeMap boundary", () => {
       { originalUrl, now },
     )).toThrow("allowlisted archive host");
   });
+});
+
+
+describe("categorical engine diagnostics", () => {
+  const base = { query: "query", results: [], engines_queried: ["brave", "duckduckgo"], engines_failed: ["brave", "duckduckgo"] };
+  const failures = [{ engine: "brave", code: "http-forbidden" }, { engine: "duckduckgo", code: "challenge" }] as const;
+  test("retains bounded diagnostics and accepts old provider responses", () => {
+    expect(parseMetadataSearchResponse(base)).not.toHaveProperty("engineFailures");
+    const result = parseMetadataSearchResponse({ ...base, engine_failures: failures });
+    expect(result.engineStatus).toBe("unavailable");
+    expect(result.engineFailures).toEqual(failures);
+    expect(Object.isFrozen(result.engineFailures)).toBe(true);
+    expect(Object.isFrozen(result.engineFailures?.[0])).toBe(true);
+    expect(parseMetadataSearchResponse({ ...base, engines_failed: [], engine_failures: [] }).engineStatus).toBe("complete");
+  });
+  test("rejects unknown, duplicate, missing, unqueried and successful-engine failures", () => {
+    for (const engine_failures of [null, {}, [], [failures[0]], [failures[0], failures[0]],
+      [...failures, failures[0]], [{ engine: "unknown", code: "http" }, failures[1]],
+      [{ engine: "brave", code: "secret query https://private.invalid" }, failures[1]],
+      [{ engine: "brave", code: "http", detail: "secret" }, failures[1]],
+      [{ engine: "brave" }, failures[1]],
+    ]) expect(() => parseMetadataSearchResponse({ ...base, engine_failures })).toThrow();
+    expect(() => parseMetadataSearchResponse({ ...base, engines_failed: ["brave"], engine_failures: [failures[1]] })).toThrow();
+  });
+});
+
+
+test("failure codes round trip across the complete categorical vocabulary", () => {
+  fc.assert(fc.property(fc.constantFrom(...METADATA_SEARCH_FAILURE_CODES), code => {
+    const input = { query: "query", results: [], engines_queried: ["brave"], engines_failed: ["brave"], engine_failures: [{ engine: "brave", code }] };
+    expect(parseMetadataSearchResponse(JSON.parse(JSON.stringify(input))).engineFailures).toEqual(input.engine_failures);
+  }));
 });

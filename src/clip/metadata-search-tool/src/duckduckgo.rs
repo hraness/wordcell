@@ -1,5 +1,6 @@
 //! Bounded parsing of the fixed DuckDuckGo HTML endpoint. An unrecognized page
 //! is unavailable evidence, never proof that a query has no results.
+use super::FailureCode;
 use std::time::Duration;
 
 use metadata_search_engine_rs::models::SearchResult;
@@ -10,7 +11,7 @@ use url::Url;
 const ENDPOINT: &str = "https://html.duckduckgo.com/html/";
 const MAX_BODY_BYTES: usize = 2 * 1024 * 1024;
 
-type Outcome = Result<Vec<SearchResult>, &'static str>;
+type Outcome = Result<Vec<SearchResult>, FailureCode>;
 
 pub async fn search(client: &Client, query: &str, limit: usize, timeout: Duration) -> Outcome {
     search_at(client, ENDPOINT, query, limit, timeout).await
@@ -29,30 +30,34 @@ async fn search_at(
             .query(&[("q", query)])
             .send()
             .await
-            .map_err(|_| "http")?;
+            .map_err(|error| super::transport_code(&error, FailureCode::Http))?;
         validate_response(
             response.status(),
             response.headers(),
             response.content_length(),
         )?;
         let mut body = Vec::new();
-        while let Some(chunk) = response.chunk().await.map_err(|_| "http-body")? {
+        while let Some(chunk) = response
+            .chunk()
+            .await
+            .map_err(|error| super::transport_code(&error, FailureCode::HttpBody))?
+        {
             append_body(&mut body, &chunk)?;
         }
-        let html = std::str::from_utf8(&body).map_err(|_| "body-encoding")?;
+        let html = std::str::from_utf8(&body).map_err(|_| FailureCode::BodyEncoding)?;
         parse(html, limit)
     })
     .await
-    .map_err(|_| "timeout")?
+    .map_err(|_| FailureCode::Timeout)?
 }
 
 fn validate_response(
     status: reqwest::StatusCode,
     headers: &header::HeaderMap,
     length: Option<u64>,
-) -> Result<(), &'static str> {
+) -> Result<(), FailureCode> {
     if !status.is_success() {
-        return Err("http-status");
+        return Err(super::status_code(status.as_u16()));
     }
     let content_type = headers
         .get(header::CONTENT_TYPE)
@@ -65,21 +70,21 @@ fn validate_response(
     if !content_type.eq_ignore_ascii_case("text/html")
         && !content_type.eq_ignore_ascii_case("application/xhtml+xml")
     {
-        return Err("content-type");
+        return Err(FailureCode::ContentType);
     }
     // reqwest removes this header after a supported decoding operation.
     if headers.get(header::CONTENT_ENCODING).is_some() {
-        return Err("content-encoding");
+        return Err(FailureCode::ContentEncoding);
     }
     if length.is_some_and(|length| length > MAX_BODY_BYTES as u64) {
-        return Err("body-limit");
+        return Err(FailureCode::BodyLimit);
     }
     Ok(())
 }
 
-fn append_body(body: &mut Vec<u8>, chunk: &[u8]) -> Result<(), &'static str> {
+fn append_body(body: &mut Vec<u8>, chunk: &[u8]) -> Result<(), FailureCode> {
     if chunk.len() > MAX_BODY_BYTES.saturating_sub(body.len()) {
-        return Err("body-limit");
+        return Err(FailureCode::BodyLimit);
     }
     body.extend_from_slice(chunk);
     Ok(())
@@ -124,10 +129,10 @@ fn destination(href: &str) -> Option<String> {
 
 fn parse(html: &str, limit: usize) -> Outcome {
     if html.len() > MAX_BODY_BYTES {
-        return Err("body-limit");
+        return Err(FailureCode::BodyLimit);
     }
     if limit == 0 || limit > 20 {
-        return Err("result-limit");
+        return Err(FailureCode::ResultLimit);
     }
     let document = Html::parse_document(html);
     if document
@@ -137,7 +142,7 @@ fn parse(html: &str, limit: usize) -> Outcome {
         .next()
         .is_some()
     {
-        return Err("challenge");
+        return Err(FailureCode::Challenge);
     }
     let result_selector = selector("div.result");
     let title_selector = selector("a.result__a");
@@ -209,7 +214,7 @@ fn parse(html: &str, limit: usize) -> Outcome {
     if result_containers == 0 && no_results {
         Ok(Vec::new())
     } else {
-        Err("unrecognized-html")
+        Err(FailureCode::UnrecognizedHtml)
     }
 }
 
@@ -251,7 +256,7 @@ mod tests {
         ] {
             assert_eq!(
                 parse(&format!("{marker}{}", result("https://example.org")), 5).unwrap_err(),
-                "challenge"
+                FailureCode::Challenge
             );
         }
     }
@@ -274,7 +279,7 @@ mod tests {
             "<div class='result'><h2>unrecognized</h2></div>",
             "<div class='no-results'>No results found for query</div><div class='result'></div>",
         ] {
-            assert_eq!(parse(html, 5).unwrap_err(), "unrecognized-html");
+            assert_eq!(parse(html, 5).unwrap_err(), FailureCode::UnrecognizedHtml);
         }
     }
 
@@ -288,7 +293,10 @@ mod tests {
             "/l/?uddg=https%3A%2F%2Fa.org&uddg=https%3A%2F%2Fb.org",
         ] {
             assert!(destination(href).is_none(), "{href}");
-            assert_eq!(parse(&result(href), 5).unwrap_err(), "unrecognized-html");
+            assert_eq!(
+                parse(&result(href), 5).unwrap_err(),
+                FailureCode::UnrecognizedHtml
+            );
         }
     }
 
@@ -300,15 +308,18 @@ mod tests {
                 .len(),
             2
         );
-        assert_eq!(parse("", 0).unwrap_err(), "result-limit");
-        assert_eq!(parse("", 21).unwrap_err(), "result-limit");
+        assert_eq!(parse("", 0).unwrap_err(), FailureCode::ResultLimit);
+        assert_eq!(parse("", 21).unwrap_err(), FailureCode::ResultLimit);
         let mut bytes = vec![0; MAX_BODY_BYTES - 1];
         append_body(&mut bytes, &[0]).unwrap();
-        assert_eq!(append_body(&mut bytes, &[1]).unwrap_err(), "body-limit");
+        assert_eq!(
+            append_body(&mut bytes, &[1]).unwrap_err(),
+            FailureCode::BodyLimit
+        );
         assert_eq!(bytes.len(), MAX_BODY_BYTES);
         assert_eq!(
             parse(&"x".repeat(MAX_BODY_BYTES + 1), 1).unwrap_err(),
-            "body-limit"
+            FailureCode::BodyLimit
         );
     }
     #[test]
@@ -326,7 +337,7 @@ mod tests {
                     &headers,
                     None
                 ),
-                Err("http-status")
+                Err(super::super::status_code(status))
             );
         }
         assert_eq!(
@@ -335,7 +346,7 @@ mod tests {
                 &headers,
                 Some(MAX_BODY_BYTES as u64 + 1)
             ),
-            Err("body-limit")
+            Err(FailureCode::BodyLimit)
         );
         headers.insert(
             header::CONTENT_ENCODING,
@@ -343,7 +354,7 @@ mod tests {
         );
         assert_eq!(
             validate_response(reqwest::StatusCode::OK, &headers, None),
-            Err("content-encoding")
+            Err(FailureCode::ContentEncoding)
         );
         headers.remove(header::CONTENT_ENCODING);
         headers.insert(
@@ -352,7 +363,7 @@ mod tests {
         );
         assert_eq!(
             validate_response(reqwest::StatusCode::OK, &headers, None),
-            Err("content-type")
+            Err(FailureCode::ContentType)
         );
     }
 
@@ -409,6 +420,9 @@ mod tests {
                     Err(error) => panic!("fixture accept: {error}"),
                 }
             };
+            // macOS may inherit the listener nonblocking flag on accept.
+            // Use the explicit bounded read/write timeouts for fixture I/O.
+            stream.set_nonblocking(false).unwrap();
             stream
                 .set_read_timeout(Some(Duration::from_secs(2)))
                 .unwrap();
@@ -472,31 +486,31 @@ mod tests {
                 "403 Forbidden",
                 "Content-Type: text/html\r\n",
                 Duration::ZERO,
-                "http-status",
+                FailureCode::HttpForbidden,
             ),
             (
                 "302 Found",
                 "Content-Type: text/html\r\nLocation: http://127.0.0.1:1/\r\n",
                 Duration::ZERO,
-                "http-status",
+                FailureCode::HttpRedirect,
             ),
             (
                 "200 OK",
                 "Content-Type: application/json\r\n",
                 Duration::ZERO,
-                "content-type",
+                FailureCode::ContentType,
             ),
             (
                 "200 OK",
                 "Content-Type: text/html\r\nContent-Encoding: deflate\r\n",
                 Duration::ZERO,
-                "content-encoding",
+                FailureCode::ContentEncoding,
             ),
             (
                 "200 OK",
                 "Content-Type: text/html\r\n",
                 Duration::from_millis(150),
-                "timeout",
+                FailureCode::Timeout,
             ),
         ] {
             let (url, server) = fixture(status, headers, b"some body".to_vec(), delay);
@@ -529,6 +543,20 @@ mod tests {
         );
         let outcome = search_at(&client(), &url, "fixture", 5, Duration::from_secs(2)).await;
         server.join().unwrap();
-        assert_eq!(outcome.unwrap_err(), "body-limit");
+        assert_eq!(outcome.unwrap_err(), FailureCode::BodyLimit);
+    }
+    #[tokio::test]
+    async fn reqwest_timeout_is_not_reported_as_generic_body_failure() {
+        let (url, server) = fixture(
+            "200 OK",
+            "Content-Type: text/html\r\n",
+            b"delayed body".to_vec(),
+            Duration::from_millis(300),
+        );
+        let client =
+            super::super::build_pinned_http_client(&[], Duration::from_millis(100)).unwrap();
+        let outcome = search_at(&client, &url, "fixture", 3, Duration::from_secs(2)).await;
+        server.join().unwrap();
+        assert_eq!(outcome.unwrap_err(), FailureCode::Timeout);
     }
 }

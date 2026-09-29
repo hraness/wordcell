@@ -86,6 +86,8 @@ export type {
   ArchiveTodayMemento,
   ArchiveTodayTimeMap,
   MetadataSearchResponse,
+  MetadataSearchEngineFailure,
+  MetadataSearchFailureCode,
   MetadataSearchResult,
   RankedMetadataSearchResult,
 } from "./clip/url-intelligence.js";

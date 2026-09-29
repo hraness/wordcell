@@ -483,6 +483,9 @@ function deterministicResponse(response: MetadataSearchResponse, maximumResults:
     enginesQueried,
     enginesFailed: Object.freeze([...response.enginesFailed].sort()),
     engineStatus: response.engineStatus,
+    ...(response.engineFailures === undefined ? {} : { engineFailures: Object.freeze(
+      [...response.engineFailures].sort((a, b) => compareText(a.engine, b.engine)),
+    ) }),
   });
 }
 
@@ -634,6 +637,7 @@ export function createRustMetadataSearchProvider(options: RustMetadataSearchProv
     try {
       const input = JSON.stringify({
         schema_version: REQUEST_SCHEMA_VERSION,
+        diagnostics: true,
         query: validated.query,
         max_results: validated.maxResults,
         timeout_ms: validated.timeoutMs,

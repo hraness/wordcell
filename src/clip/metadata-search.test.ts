@@ -7,6 +7,7 @@ import {
   linkSync,
   mkdtempSync,
   realpathSync,
+  readFileSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -380,4 +381,42 @@ describe("exact URL metadata query", () => {
     expect(createExactUrlSearchQuery("file:///tmp/article")).toBeNull();
     expect(createExactUrlSearchQuery("not a URL")).toBeNull();
   });
+});
+
+
+test("joined provider retains sorted categorical failures without exposing stderr", async () => {
+  const fixture = executable(`
+    const request = JSON.parse(await Bun.stdin.text());
+    if (request.diagnostics !== true) process.exit(2);
+    process.stderr.write("secret provider error https://private.invalid " + request.query);
+    process.stdout.write(JSON.stringify({ query: request.query, results: [],
+      engines_queried: ["yahoo", "brave"], engines_failed: ["yahoo", "brave"],
+      engine_failures: [{engine:"yahoo",code:"http-rate-limited"},{engine:"brave",code:"http-forbidden"}]
+    }));
+  `);
+  const outcome = await createRustMetadataSearchProvider({ binaryPath: fixture.path })({ query: "query" });
+  expect(outcome.status).toBe("success");
+  if (outcome.status !== "success") throw Error("Expected joined diagnostics");
+  expect(outcome.response.engineStatus).toBe("unavailable");
+  expect(outcome.response.engineFailures).toEqual([
+    { engine: "brave", code: "http-forbidden" }, { engine: "yahoo", code: "http-rate-limited" },
+  ]);
+  expect(JSON.stringify(outcome)).not.toContain("private.invalid");
+  expect(JSON.stringify(outcome)).not.toContain("secret provider");
+});
+
+
+test("old helper rejection is terminal and does not retry without diagnostics", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "metadata-search-attempts-"));
+  temporaryDirectories.push(directory);
+  const attempts = join(directory, "attempts");
+  const fixture = executable(`
+    const request = JSON.parse(await Bun.stdin.text());
+    const { appendFileSync } = await import("node:fs");
+    appendFileSync(${JSON.stringify(attempts)}, String(request.diagnostics) + "\\n");
+    if (Object.hasOwn(request, "diagnostics")) process.exit(2);
+  `);
+  const outcome = await createRustMetadataSearchProvider({ binaryPath: fixture.path })({ query: "query" });
+  expectFailure(outcome, "process");
+  expect(readFileSync(attempts, "utf8")).toBe("true\n");
 });

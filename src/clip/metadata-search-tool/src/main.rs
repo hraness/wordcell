@@ -18,7 +18,60 @@ use reqwest::{
     header::{self, HeaderMap, HeaderValue},
     redirect::Policy,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum FailureCode {
+    Timeout,
+    Http,
+    HttpBody,
+    HttpStatus,
+    HttpForbidden,
+    HttpRateLimited,
+    HttpRedirect,
+    Parse,
+    UnverifiedEmpty,
+    Challenge,
+    ContentType,
+    ContentEncoding,
+    BodyLimit,
+    BodyEncoding,
+    ResultLimit,
+    UnrecognizedHtml,
+}
+
+/// Only bounded categorical diagnostics cross the protocol boundary, never error text.
+#[derive(Serialize)]
+struct EngineFailure {
+    engine: String,
+    code: FailureCode,
+}
+
+#[derive(Serialize)]
+struct DiagnosticResponse {
+    #[serde(flatten)]
+    response: SearchResponse,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    engine_failures: Option<Vec<EngineFailure>>,
+}
+
+fn transport_code(error: &reqwest::Error, otherwise: FailureCode) -> FailureCode {
+    if error.is_timeout() {
+        FailureCode::Timeout
+    } else {
+        otherwise
+    }
+}
+
+fn status_code(status: u16) -> FailureCode {
+    match status {
+        403 => FailureCode::HttpForbidden,
+        429 => FailureCode::HttpRateLimited,
+        300..=399 => FailureCode::HttpRedirect,
+        _ => FailureCode::HttpStatus,
+    }
+}
 
 const MAX_INPUT_BYTES: u64 = 16 * 1024;
 const MAX_QUERY_BYTES: usize = 4 * 1024;
@@ -137,6 +190,8 @@ struct EngineHost {
 #[serde(deny_unknown_fields)]
 struct SearchRequest {
     schema_version: u8,
+    #[serde(default)]
+    diagnostics: bool,
     query: String,
     max_results: usize,
     timeout_ms: u64,
@@ -348,11 +403,16 @@ async fn run() {
     engines_queried.insert(0, "duckduckgo".to_string());
     let mut successes = Vec::new();
     let mut engines_failed = Vec::new();
+    let mut engine_failures = Vec::new();
     match duckduckgo::search(&client, request.query.trim(), request.max_results, timeout).await {
         Ok(results) => successes.push(("duckduckgo".to_string(), results)),
         Err(code) => {
-            eprintln!("metadata search engine duckduckgo: {code}");
+            eprintln!("metadata search engine duckduckgo: {code:?}");
             engines_failed.push("duckduckgo".to_string());
+            engine_failures.push(EngineFailure {
+                engine: "duckduckgo".to_string(),
+                code,
+            });
         }
     }
     // Run one upstream engine at a time so its unbounded internal `text()`
@@ -367,17 +427,25 @@ async fn run() {
             Ok(results) if !results.is_empty() => successes.push((name, results)),
             Ok(_) => {
                 eprintln!("metadata search engine {name}: unverified-empty");
+                engine_failures.push(EngineFailure {
+                    engine: name.clone(),
+                    code: FailureCode::UnverifiedEmpty,
+                });
                 engines_failed.push(name);
             }
             Err(error) => {
                 use metadata_search_engine_rs::error::EngineError;
                 let code = match error {
-                    EngineError::Timeout { .. } => "timeout",
-                    EngineError::Http { .. } => "http",
-                    EngineError::BadStatus { .. } => "http-status",
-                    EngineError::ParseFailed { .. } => "parse",
+                    EngineError::Timeout { .. } => FailureCode::Timeout,
+                    EngineError::Http { source, .. } => transport_code(&source, FailureCode::Http),
+                    EngineError::BadStatus { status, .. } => status_code(status),
+                    EngineError::ParseFailed { .. } => FailureCode::Parse,
                 };
-                eprintln!("metadata search engine {name}: {code}");
+                eprintln!("metadata search engine {name}: {code:?}");
+                engine_failures.push(EngineFailure {
+                    engine: name.clone(),
+                    code,
+                });
                 engines_failed.push(name);
             }
         }
@@ -396,7 +464,79 @@ async fn run() {
         engines_queried,
         engines_failed,
     };
-    if serde_json::to_writer(io::stdout().lock(), &response).is_err() {
+    if serde_json::to_writer(
+        io::stdout().lock(),
+        &DiagnosticResponse {
+            response,
+            engine_failures: request.diagnostics.then_some(engine_failures),
+        },
+    )
+    .is_err()
+    {
         fail("stdout-write");
+    }
+}
+
+#[cfg(test)]
+mod diagnostic_tests {
+    use super::*;
+    #[test]
+    fn emits_categorical_diagnostics_inside_search_protocol() {
+        let response = DiagnosticResponse {
+            response: SearchResponse {
+                query: "query".into(),
+                results: vec![],
+                engines_queried: vec!["brave".into()],
+                engines_failed: vec!["brave".into()],
+            },
+            engine_failures: Some(vec![EngineFailure {
+                engine: "brave".into(),
+                code: FailureCode::HttpForbidden,
+            }]),
+        };
+        let value = serde_json::to_value(response).unwrap();
+        assert_eq!(
+            value["engine_failures"],
+            serde_json::json!([{ "engine": "brave", "code": "http-forbidden" }])
+        );
+        assert_eq!(value.as_object().unwrap().len(), 5);
+        assert_eq!(status_code(429), FailureCode::HttpRateLimited);
+        assert_eq!(status_code(302), FailureCode::HttpRedirect);
+        assert_eq!(status_code(503), FailureCode::HttpStatus);
+    }
+    #[test]
+    fn diagnostics_are_an_explicit_boolean_opt_in() {
+        let legacy = serde_json::json!({"schema_version":1,"query":"query","max_results":3,"timeout_ms":15000,"engine_hosts":[]});
+        let old: SearchRequest = serde_json::from_value(legacy.clone()).unwrap();
+        assert!(!old.diagnostics);
+        for requested in [false, true] {
+            let mut input = legacy.clone();
+            input["diagnostics"] = serde_json::json!(requested);
+            let parsed: SearchRequest = serde_json::from_value(input).unwrap();
+            let output = DiagnosticResponse {
+                response: SearchResponse {
+                    query: "query".into(),
+                    results: vec![],
+                    engines_queried: vec![],
+                    engines_failed: vec![],
+                },
+                engine_failures: parsed.diagnostics.then_some(vec![]),
+            };
+            let encoded = serde_json::to_value(output).unwrap();
+            assert_eq!(
+                encoded.as_object().unwrap().len(),
+                if requested { 5 } else { 4 }
+            );
+            assert_eq!(encoded.get("engine_failures").is_some(), requested);
+        }
+        for invalid in [
+            serde_json::json!(null),
+            serde_json::json!(1),
+            serde_json::json!("true"),
+        ] {
+            let mut input = legacy.clone();
+            input["diagnostics"] = invalid;
+            assert!(serde_json::from_value::<SearchRequest>(input).is_err());
+        }
     }
 }
