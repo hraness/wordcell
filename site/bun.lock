@@ -6,7 +6,7 @@
       "name": "wordcell-site",
       "dependencies": {
         "@hraness/design-kit": "github:hraness/design-kit#v0.27.0",
-        "@hraness/site-footer": "github:hraness/site-footer#v0.20.0",
+        "@hraness/site-footer": "github:hraness/site-footer#v0.20.1",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
         "@hraness/web-discovery": "github:hraness/web-discovery#v0.10.0",
         "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.24.0/hraness-wordcell-0.24.0.tgz",
@@ -94,7 +94,7 @@
 
     "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-BHAzZHXAldhDCg/J2OGFjN0VSBzwmfzk6QjOLdh3vamOftvDHZXNtwOkPpKpXOag2hX4fEr0vrenG0bF07YGFA=="],
 
-    "@hraness/site-footer": ["@hraness/site-footer@github:hraness/site-footer#4244dc5", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "hraness-site-footer-4244dc5", "sha512-5F4KwQ0ZrjwQjHNDAkBuhI5U7d7+gPMSluyuP0ZHkKdpahbomcxr4UtmQVp7ZJcTHuodHyaRKkIz9SK5y82mOQ=="],
+    "@hraness/site-footer": ["@hraness/site-footer@github:hraness/site-footer#60d6ba5", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "hraness-site-footer-60d6ba5", "sha512-sWgYSo3dMoJrFXrE9UYeKsc/CvIHgn91IPW2tz1XgVgl+WaCDMb75NMxxqApqgW7leuKVnEnMrHdGqiRrvjE+Q=="],
 
     "@hraness/support-foundation": ["@hraness/support-foundation@github:hraness/support-foundation#b32c1c8", {}, "hraness-support-foundation-b32c1c8", "sha512-dkMiXCI9bIzcX63byMK/IQHYzZg+i4XlDiuwnpJXrSF4nc9boCk2zDkZPh6cSpueio4h3K+SprnVOWjYzXC77w=="],
 
