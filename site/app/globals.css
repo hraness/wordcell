@@ -288,6 +288,12 @@ a { text-underline-offset: 0.2em; }
 .release-preview { padding: 1.25rem; border: 0; box-shadow: var(--hraness-material-inset); border-radius: var(--radius-md, .65rem); background: var(--surface); }
 
 @media (forced-colors: active) {
+  .hraness-platform-install__tab[aria-selected="true"] {
+    forced-color-adjust: none;
+    background-color: Highlight;
+    border-color: Highlight;
+    color: HighlightText;
+  }
   .document-page pre:not(.hraness-platform-install__pre), .docs-list li, .release-preview { border: 1px solid CanvasText; box-shadow: none; }
 }
 
