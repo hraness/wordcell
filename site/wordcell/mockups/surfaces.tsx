@@ -16,6 +16,7 @@ import {
   type TerminalLine,
 } from "@hraness/design-kit/mockups";
 
+import { ESSAY, ESSAY_URL } from "../launch/facts";
 import { commandLine, NOTE_PATH, NOTE_RULE, noteFile, SOURCE_FILE, steps, type RecordedStep, type StepId } from "./transcript";
 
 export const ILLUSTRATION_CAPTION = "Illustration. Commands and output are from a recorded Wordcell session; the agent’s replies are made up.";
@@ -82,7 +83,7 @@ export function SaveAndFindTerminal({ height, theme }: Themed) {
       {...sized(height)}
       describe="Illustration: a terminal where wordcell init creates a vault, note create saves the parser rule as a Markdown note, and an exact search for “parser retries” returns that note and the line it is on."
       lines={stepLines(["init", "create", "exact"])}
-      title="Terminal — app"
+      title="Terminal · app"
     />
   );
 }
@@ -95,7 +96,7 @@ export function MeaningSearchTerminal({ height, theme }: Themed) {
       {...sized(height)}
       describe="Illustration: an exact search for “how many times do we retry” finds nothing, then a meaning search with the local model returns the parser contract note first."
       lines={stepLines(["exactMiss", "index", "hybrid"])}
-      title="Terminal — app"
+      title="Terminal · app"
     />
   );
 }
@@ -108,7 +109,7 @@ export function BacklinksTerminal({ height, theme }: Themed) {
       {...sized(height)}
       describe="Illustration: a plan note links to the parser contract, and a backlinks query lists the plan, the note it points to, and line 7 where the link is written."
       lines={stepLines(["plan", "backlinks"])}
-      title="Terminal — app"
+      title="Terminal · app"
     />
   );
 }
@@ -121,7 +122,7 @@ export function ModeTerminal({ height, mode, theme }: Themed & Readonly<{ mode: 
       {...sized(height)}
       describe={`Illustration: ${modeDescriptions[mode]}`}
       lines={stepLines(modeSteps[mode], { skipEmptySections: true })}
-      title="Terminal — app"
+      title="Terminal · app"
     />
   );
 }
@@ -176,7 +177,7 @@ export function AgentCitesNote({ height, mode, theme }: Themed & Readonly<{ mode
       {...sized(height)}
       agent="generic-cli"
       describe={`Illustration: a coding agent runs a Wordcell command, then answers by quoting ${NOTE_PATH}. ${modeDescriptions[mode]}`}
-      title="Coding agent — app"
+      title="Coding agent · app"
       turns={agentTurns(mode)}
     />
   );
@@ -209,5 +210,35 @@ export function AnswerBesideFile({ mode = "context", theme }: Readonly<{ mode?: 
       <AgentCitesNote mode={mode} {...themed(theme)} />
       <NoteFileWindow {...themed(theme)} />
     </div>
+  );
+}
+
+/**
+ * Why the name: a citation card for roon's essay, built from our own markup
+ * (no third-party embed or meme image), beside a cube that turns into lines of
+ * text. It credits the essay and implies no endorsement.
+ */
+export function NameCard() {
+  return (
+    <figure aria-label={`Illustration: a card citing ${ESSAY.author}'s essay ${ESSAY.title}, beside a cube that turns into lines of text.`} className="hkm-root wordcell-name-card" data-film="name-card">
+      <svg aria-hidden="true" className="wordcell-name-shape" focusable="false" viewBox="0 0 120 120">
+        <g fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2.5">
+          <path d="M60 14 98 34v44L60 98 22 78V34Z" />
+          <path d="M22 34l38 20 38-20M60 54v44" />
+        </g>
+      </svg>
+      <span aria-hidden="true" className="wordcell-name-arrow">→</span>
+      <div aria-hidden="true" className="wordcell-name-words">
+        <span>wordcel</span>
+        <span />
+        <span />
+        <span />
+      </div>
+      <figcaption className="wordcell-name-cite">
+        <span className="wordcell-name-kicker">Why the name</span>
+        <a href={ESSAY_URL} rel="noopener" target="_blank">{ESSAY.title}</a>
+        <span>{ESSAY.author} · {ESSAY.published} · {ESSAY.host}</span>
+      </figcaption>
+    </figure>
   );
 }

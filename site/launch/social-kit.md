@@ -48,10 +48,10 @@ Post 7 of 10, 207 characters
 Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
 ```
 
-Post 8 of 10, 198 characters
+Post 8 of 10, 235 characters
 
 ```text
-The aim is simple: when an agent session ends, what it learned should not end with it. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
 ```
 
 Post 9 of 10, 207 characters
@@ -112,10 +112,10 @@ Post 7 of 10, 207 characters
 Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
 ```
 
-Post 8 of 10, 198 characters
+Post 8 of 10, 235 characters
 
 ```text
-The aim is simple: when an agent session ends, what it learned should not end with it. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
 ```
 
 Post 9 of 10, 207 characters
@@ -176,10 +176,10 @@ Post 7 of 10, 207 characters
 Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
 ```
 
-Post 8 of 10, 198 characters
+Post 8 of 10, 235 characters
 
 ```text
-The aim is simple: when an agent session ends, what it learned should not end with it. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
 ```
 
 Post 9 of 10, 207 characters
@@ -213,7 +213,7 @@ Wordcell never moves your notes into a database of its own. Its search indexes a
 
 Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
 
-The aim is simple: when an agent session ends, what it learned should not end with it. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
 
 Wordcell returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows a file said something, not that it is right. Graph queries cover vaults of up to 4,000 notes.
 
@@ -257,7 +257,7 @@ Topics: Developer Tools, Productivity, Artificial Intelligence
 5. Links you write become a map of what depends on what
 6. Your notes stay ordinary Markdown files
 7. For people who keep notes in Markdown and code with agents
-8. Give the next session what this one learned
+8. Coding agents are wordcels, so give them a library
 9. It finds notes; your agent writes the answer
 10. Free and open source, on GitHub and npm
 

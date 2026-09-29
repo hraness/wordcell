@@ -5,7 +5,7 @@ import { publishedRelease } from "../../app/publication";
 /**
  * Every number the "Introducing Wordcell" beats, the social kit, and the
  * launch film captions use, each typed once with the record it comes from.
- * tests/launch.test.ts reads those records and fails when a value drifts.
+ * tests/launch-post.test.tsx reads those records and fails when a value drifts.
  */
 export const LAUNCH_STATUS: LaunchStatus = publishedRelease === null
   ? "In development"
@@ -29,5 +29,14 @@ export const launchFacts = {
     source: "package.json engines.bun >=1.3.14",
   },
 } as const satisfies LaunchFacts;
+
+/** roon's 2022 essay the name nods to. Cited, never quoted at length; no endorsement implied. */
+export const ESSAY = {
+  title: "A Song of Shapes and Words",
+  author: "roon",
+  published: "3 February 2022",
+  host: "read.roonscape.ai",
+} as const;
+export const ESSAY_URL = "https://read.roonscape.ai/p/a-song-of-shapes-and-words";
 
 export type LaunchFactKey = keyof typeof launchFacts;

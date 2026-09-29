@@ -81,10 +81,10 @@ const authoredBeats: readonly LaunchBeat[] = [
   {
     id: "vision",
     part: "vision",
-    headline: "Give the next session what this one learned",
-    post: "The aim is simple: when an agent session ends, what it learned should not end with it. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.",
-    visual: { kind: "mockup", id: "agent", state: { mode: "meaning" } },
-    alt: "Illustration: a coding agent searches by meaning when exact words miss, then cites the note it found.",
+    headline: "Coding agents are wordcels, so give them a library",
+    post: "The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.",
+    visual: { kind: "mockup", id: "name-card", state: {} },
+    alt: "Illustration: a card citing roon's essay A Song of Shapes and Words, beside a cube that turns into lines of text.",
   },
   {
     id: "limits",

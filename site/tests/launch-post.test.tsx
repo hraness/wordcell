@@ -16,11 +16,27 @@ describe("Introducing Wordcell launch beats", () => {
     expect(html.match(/class="wordcell-beat-visual"/gu)?.length).toBe(launchBeats.length);
   });
 
-  test("facts come from their sources", () => {
-    expect(launchFacts.graphNotes.value).toBe("4,000");
-    expect(launchFacts.bunVersion.value).toBe("1.3.14");
+  test("facts match the records they name", async () => {
+    const root = new URL("../../", import.meta.url);
+    const graphModel = await Bun.file(new URL("src/graph-authority-model.ts", root)).text();
+    const limit = (name: string) => Number(new RegExp(`\\b${name}: ([\\d_]+),`, "u").exec(graphModel)?.[1]?.replaceAll("_", ""));
+    expect<string>(launchFacts.graphNotes.value).toBe(limit("notes").toLocaleString("en-US"));
+    expect<string>(launchFacts.graphDepth.value).toBe(String(limit("depth")));
+    const pkg = await Bun.file(new URL("package.json", root)).json() as { engines: { bun: string } };
+    expect(`>=${launchFacts.bunVersion.value}`).toBe(pkg.engines.bun);
     expect(publishedRelease).not.toBeNull();
+    expect<string>(launchFacts.status.value).toBe(`Latest release: v${publishedRelease?.version ?? ""}`);
     expect(html).toContain(launchFacts.graphNotes.value);
+  });
+
+  test("the film's numbers are the launch facts", async () => {
+    const film = await Bun.file(new URL("../../video/film.json", import.meta.url)).json() as { copy: { proof: { items: { value: number }[] } } };
+    expect(film.copy.proof.items.map((item) => item.value.toLocaleString("en-US"))).toEqual([launchFacts.graphNotes.value, launchFacts.graphDepth.value]);
+  });
+
+  test("the vision beat cites the essay the name comes from", () => {
+    expect(html).toContain("https://read.roonscape.ai/p/a-song-of-shapes-and-words");
+    expect(html).toContain("A Song of Shapes and Words");
   });
 
   test("the social kit is cut from the beats and names no competitor", () => {

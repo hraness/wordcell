@@ -10,8 +10,8 @@
     "promise": "Give the next session what this one learned.",
     "url": "wordcell.io",
     "open": [
-      "Decisions get made in chats, calls and commits.",
-      "The next agent session starts without them."
+      "Coding agents are wordcels. They think in words.",
+      "Then the chat closes, and the words are gone."
     ],
     "steps": [
       {
@@ -56,7 +56,7 @@
       "body": "It finds notes. Your agent writes the answer, and a note can still be wrong."
     },
     "end": {
-      "line": "Free and open source."
+      "line": "Free and open source. Named for roon’s essay A Song of Shapes and Words."
     }
   },
   "productCss": [

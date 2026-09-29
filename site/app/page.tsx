@@ -26,6 +26,7 @@ import { Terminal } from "../wordcell/code-block";
 import { SetupLinks } from "../wordcell/setup-links";
 import { installPlatforms, runsOnPlatforms } from "../wordcell/install-platforms";
 import { SearchShowcase } from "../wordcell/mockups/search-showcase";
+import { ESSAY_URL } from "../wordcell/launch/facts";
 
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
@@ -96,6 +97,12 @@ const questions: readonly { question: string; answer: string; after?: React.Reac
   {
     question: "Do I need an embedding model or an account?",
     answer: "Not for the quick start. Exact search, backlinks, and publishing need neither. Hybrid and semantic search add an optional local model through QMD. Bun 1.3.14 or newer and Git are required to use the CLI.",
+  },
+
+  {
+    question: "Why is it called Wordcell?",
+    answer: "The name nods to roon’s essay A Song of Shapes and Words, which split thinking into wordcels, who think in words, and shape rotators. Coding agents are made of words, so Wordcell gives them a library of your notes.",
+    after: <>{" "}Read <a href={ESSAY_URL}>the essay</a>.</>,
   },
 
   {

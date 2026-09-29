@@ -79,7 +79,7 @@ export const blogArticles = [
     dek: "Wordcell keeps your notes as Markdown files and builds search and a link graph over them, so an agent can find a decision and trace it back to the file that says it.",
     eyebrow: "Release",
     published: "2026-09-24",
-    updated: edited,
+    updated: "2026-09-29",
     tags: ["wordcell", "markdown", "knowledge-base", "coding-agents", "obsidian"],
     sources: [
       { title: "Wordcell README", href: wordcellSource("README.md"), checkedOn: checked },
@@ -119,7 +119,8 @@ export const blogArticles = [
         "The Oh adoption preparer in src/oh-adoption.ts always returns status \"prepared\" and renders Markdown that calls itself a review candidate; nothing in that path opens a vault or writes a note, so outside memory can only enter Wordcell through a person authoring Markdown.",
         "2026-09-26 editorial pass: reordered the post to lead with the claim and moved the release status and KB rename history next to what they qualify; no fact, command, link, or version changed. By then site/published-release.json recorded 0.22.5, so the gap in the first observation had closed, and npm still lists @hraness/kb only through 0.19.2.",
         "2026-09-27 fact review (AI, Claude Opus 5.5): the 2026-09-26 pass had said every result that hits a limit is marked as truncated. docs/graph-authority.md says only row or proof truncation is marked (exit code 4) and work exhaustion fails, so the Limits paragraph now says both.",
-        "2026-09-30 launch beats (AI, Claude Opus 5.5, builder): the post now opens with ten short beats, each with one code-built illustration, that the X, Bluesky, Threads and LinkedIn posts are cut from (site/wordcell/launch/beats.ts). Numbers in the beats come from site/wordcell/launch/facts.ts: the status from site/published-release.json, the 4,000-note graph bound from src/graph-authority-model.ts, and Bun 1.3.14 from package.json engines. Every command and output line in the illustrations is replayed against the pinned CLI by site/tests/mockups.test.ts. The long-form walkthrough follows unchanged under The details. This pass needs an independent review before reviewedOn moves.",
+        "2026-09-29 launch beats (AI, Claude Opus 5.5, builder): the post now opens with ten short beats, each with one code-built illustration, that the X, Bluesky, Threads and LinkedIn posts are cut from (site/wordcell/launch/beats.ts). Numbers in the beats come from site/wordcell/launch/facts.ts: the status from site/published-release.json, the 4,000-note graph bound from src/graph-authority-model.ts, and Bun 1.3.14 from package.json engines; site/tests/launch-post.test.tsx reads those source files. Every command and output line in the illustrations is replayed against the pinned CLI by site/tests/mockups.test.ts. The long-form walkthrough follows unchanged under The details.",
+        "2026-09-29 independent review (AI, Claude Opus 5.5, reviewer, did not write the beats): checked each beat against the transcript replay and the facts sources, and the vision beat now carries the owner's naming brief, citing roon's essay A Song of Shapes and Words by title and link with no quotation and no implied endorsement. Scores unchanged at 10 of 12: original evidence stays 1 because the beats add no new measurement, and maintenance value stays 1 because the status beat and social kit must be regenerated on each release.",
       ],
       scores: {
         readerUtility: 2,
@@ -131,7 +132,7 @@ export const blogArticles = [
       },
       owner: "Hraness",
       drafting: "ai-from-source",
-      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: edited },
+      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: "2026-09-29" },
       humanReview: null,
       reassessOn: "2026-11-05",
       harmIfWrong: "A reader could install Wordcell expecting a guarantee it does not make, such as answers written for them, unlimited graph size, or capture that works behind a login wall.",

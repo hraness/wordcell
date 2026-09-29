@@ -9,6 +9,7 @@ import {
   ILLUSTRATION_CAPTION,
   MeaningSearchTerminal,
   ModeTerminal,
+  NameCard,
   NoteFileWindow,
   SaveAndFindTerminal,
   type SearchMode,
@@ -30,6 +31,7 @@ const SURFACE_IDS = [
   "backlinks",
   "note-file",
   "mode-terminal",
+  "name-card",
 ] as const;
 
 export type SurfaceId = (typeof SURFACE_IDS)[number];
@@ -64,6 +66,8 @@ export function BeatSurface({ beat }: Readonly<{ beat: LaunchBeat }>) {
       return <NoteFileWindow />;
     case "mode-terminal":
       return <ModeTerminal mode={mode} />;
+    case "name-card":
+      return <NameCard />;
   }
 }
 
