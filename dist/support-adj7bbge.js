@@ -2,7 +2,7 @@
 import {
   parseArguments as parseArguments2,
   parseUrlMetadataArguments
-} from "./index-m8jpvczw.js";
+} from "./index-1wccy765.js";
 import"./index-47893rgw.js";
 import {
   parsePdfArguments

@@ -382,7 +382,7 @@ describe("npm release workflows", () => {
       readonly version?: unknown;
     };
     expect(manifest).toEqual(expect.objectContaining({
-      version: "0.24.1",
+      version: "0.25.0",
       description: expect.any(String),
       keywords: [
         "knowledge-base",

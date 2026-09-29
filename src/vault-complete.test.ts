@@ -52,4 +52,4 @@ test("CLI check and refresh complete a 1070-note vault and leave every authored 
     expect(JSON.parse(output.join(""))).toMatchObject({ noteCount: 1070 });
   }
   expect(content(root)).toEqual(before);
-});
+}, 15_000); // Functional 1070-file round trip: ~2.6s alone, >5s in the aggregate; not a latency assertion.

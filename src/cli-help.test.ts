@@ -145,6 +145,21 @@ describe("wordcell help", () => {
     expect(lines(inspect.stderr).at(-1)).toBe("→ wordcell inspect --help");
   });
 
+  test("delegated parse errors honor the injected terminal locale and ASCII preference", async () => {
+    for (const [terminal, arrow] of [
+      [PIPE, "→"],
+      [DUMB, "->"],
+      [{ ...PIPE, env: { LANG: "en_US.UTF-8", HRANESS_ASCII: "1" } }, "->"],
+    ] as const) {
+      for (const command of ["doctor", "inspect", "pdf", "url-metadata"]) {
+        const result = await run([command, "--bogus"], terminal);
+        expect(result.exitCode).toBe(2);
+        expect(result.stdout).toBe("");
+        expect(lines(result.stderr).at(-1)).toBe(`${arrow} wordcell ${command} --help`);
+      }
+    }
+  });
+
   test("--json help wraps the text", async () => {
     const result = await run(["--help", "--json"]);
     expect(result.exitCode).toBe(0);

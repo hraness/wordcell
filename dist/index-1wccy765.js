@@ -7879,7 +7879,7 @@ async function main4(rawArguments = process.argv.slice(2), output = defaultOutpu
   }
   try {
     if (command.kind === "clip") {
-      return await (dependencies.runClipCommand ?? main)(command.arguments, process.env, output);
+      return await (dependencies.runClipCommand ?? main)(command.arguments, terminal.env, output);
     }
     if (command.kind === "capture-bundle")
       return await runCaptureBundle(command, output, dependencies);
@@ -7890,10 +7890,10 @@ async function main4(rawArguments = process.argv.slice(2), output = defaultOutpu
     if (command.kind === "portfolio-audit")
       return await runPortfolioAudit(command, output, dependencies);
     if (command.kind === "url-metadata") {
-      return await (dependencies.runUrlMetadataCommand ?? main3)(command.arguments, process.env, output);
+      return await (dependencies.runUrlMetadataCommand ?? main3)(command.arguments, terminal.env, output);
     }
     if (command.kind === "pdf") {
-      return await (dependencies.runPdfCommand ?? main2)(command.arguments, process.env, output);
+      return await (dependencies.runPdfCommand ?? main2)(command.arguments, terminal.env, output);
     }
     if (command.kind === "init") {
       return await runInit(command, output, dependencies.initVault ?? initVault, dependencies.terminal ?? processTerminal());

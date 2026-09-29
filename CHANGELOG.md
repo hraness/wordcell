@@ -14,6 +14,8 @@ Bing RSS and OpenAlex searches; both are disabled by default.
 - Capture extracts article bodies from the supported `jsonArticle` embedded
   JSON format when the record matches the page URL. Parsing does not execute
   scripts, and the text passes through the existing article sanitizer.
+- Capture, PDF, and URL-metadata help respects the caller's terminal locale
+  and ASCII preference.
 
 ## 0.24.1
 

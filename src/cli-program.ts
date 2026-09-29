@@ -4500,17 +4500,17 @@ export async function main(
   }
   try {
     if (command.kind === "clip") {
-      return await (dependencies.runClipCommand ?? runClipCommand)(command.arguments, process.env, output);
+      return await (dependencies.runClipCommand ?? runClipCommand)(command.arguments, terminal.env, output);
     }
     if (command.kind === "capture-bundle") return await runCaptureBundle(command, output, dependencies);
     if (command.kind === "capture-diff") return await runCaptureDiff(command, output, dependencies);
     if (command.kind === "portfolio-search") return await runPortfolioSearch(command, output, dependencies);
     if (command.kind === "portfolio-audit") return await runPortfolioAudit(command, output, dependencies);
     if (command.kind === "url-metadata") {
-      return await (dependencies.runUrlMetadataCommand ?? runUrlMetadataCommand)(command.arguments, process.env, output);
+      return await (dependencies.runUrlMetadataCommand ?? runUrlMetadataCommand)(command.arguments, terminal.env, output);
     }
     if (command.kind === "pdf") {
-      return await (dependencies.runPdfCommand ?? runPdfCommand)(command.arguments, process.env, output);
+      return await (dependencies.runPdfCommand ?? runPdfCommand)(command.arguments, terminal.env, output);
     }
     if (command.kind === "init") {
       return await runInit(command, output, dependencies.initVault ?? initVault, dependencies.terminal ?? processTerminal());
