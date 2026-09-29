@@ -6,7 +6,8 @@ export function WordcellContentFooter() {
   return (
     <MarketingSiteFooter
       ariaLabel="Wordcell"
-      brand={<img alt="" height={20} src="/icon.png" width={20} />}
+      brand={null}
+      brandMark="/marks/kb.svg"
       brandHref="/"
       brandLabel="Wordcell home"
       links={[

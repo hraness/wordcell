@@ -48,7 +48,7 @@ test("every public route has the in-flow content footer above the network footer
     const networkFooter = html.indexOf('data-slot="hraness-site-footer"');
     expect(contentFooter).toBeGreaterThan(-1);
     expect(networkFooter).toBeGreaterThan(contentFooter);
-    expect(html).toContain('<img alt="" height="20" src="/icon.png" width="20"/>');
+    expect(html).toContain('src="/marks/kb.svg"');
     expect(html).not.toContain("📝");
     expect(html).toContain("https://account.hraness.com/support?product=kb&amp;source=web#support");
     expect(html).toContain("Support ongoing development of Wordcell.");
