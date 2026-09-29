@@ -1,10 +1,12 @@
 # Public writing style
 
-This guide covers everything written for readers outside a repository: product pages, documentation, READMEs, interface text, metadata, and text a model writes for publication. Apply the voice rules in [`WRITING.md`](WRITING.md) first. The [documentation guidelines](DOCUMENTATION_GUIDELINES.md) choose a document's purpose and shape, and the [README guidelines](README_GUIDELINES.md) cover the repository front door.
+<!-- synced from hraness/.github STYLE.md sha256:3deac74f8ea07d749483d0b136de82b0ee9010abf4505509c7e22362b893b6de -->
+
+This guide covers everything written for readers outside a repository: product pages, documentation, READMEs, interface text, metadata, and text a model writes for publication. Apply the voice rules in [`WRITING.md`](WRITING.md) first. The [documentation guidelines](https://github.com/hraness/.github/blob/main/DOCUMENTATION_GUIDELINES.md) choose a document's purpose and shape, and the [README guidelines](https://github.com/hraness/.github/blob/main/README_GUIDELINES.md) cover the repository front door.
 
 Public prose must be precise, useful, and free of hype. Use a direct, natural voice that reads well aloud.
 
-This is the canonical copy. Repositories keep a synced copy so agents can read it offline; rules that apply to one repository go under “Repository additions” at the end of that copy.
+This copy is synced from [hraness/.github](https://github.com/hraness/.github/blob/main/STYLE.md). Change shared rules there; add rules for this repository under “Repository additions” below.
 
 ## Leave the reader with a clearer model
 

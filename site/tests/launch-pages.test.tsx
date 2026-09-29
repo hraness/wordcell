@@ -254,6 +254,7 @@ describe("Oh LongMemEval-S 500 evidence", () => {
     expect(record(raw.exposure, "exposure").inSample).toBe(true);
     const markup = renderToStaticMarkup(<Benchmarks />);
     const text = pageText(markup);
+    const commandText = text.replace(/\s*([<>])\s*/gu, "$1");
     // The in-sample figure appears once, inside the sentence that says it is not Oh's or Wordcell's score.
     expect(text.split("93.07").length - 1).toBe(1);
     expect(text).toMatch(/lab reading pipeline that scored 93\.07% on the mean of three runs and answered 474 of 500 questions correctly in at least two\. It is not charted here and is not Oh’s or Wordcell’s score/);
@@ -447,12 +448,13 @@ describe("agent setup prompt", () => {
 
   test("the setup block renders the prompt, the copy button, three links, and two commands", () => {
     const markup = renderToStaticMarkup(<SetupLinks />);
+    const visibleMarkup = markup.replace(/<\/?span\b[^>]*>/gu, "");
     expect(markup).toContain(">Copy prompt</button>");
     expect(markup).toContain('aria-live="polite"');
     expect(markup.match(/<a /g)?.length).toBe(3);
     for (const target of setupTargets()) {
       if (target.kind === "link") expect(markup).toContain(`href="${target.href.replaceAll("'", "&#x27;")}"`);
-      else expect(markup).toContain(`<code>${target.command}</code>`);
+      else expect(visibleMarkup).toContain(target.command);
     }
     expect(markup).toContain(SETUP_COMMANDS.skill);
     expect(markup).not.toContain("Copied the setup prompt");
@@ -786,6 +788,7 @@ describe("/migrate/supermemory", () => {
   test("renders the guide link first, the concepts, the steps, the setup links, and the release the commands need", async () => {
     const markup = renderToStaticMarkup(<MigrateSupermemory />);
     const text = pageText(markup);
+    const commandText = text.replace(/\s*([<>])\s*/gu, "$1");
     expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
     const firstDocsLink = /href="(\/docs\/[^"]*)"/.exec(markup)?.[1];
     expect(firstDocsLink).toBe(MIGRATION_GUIDE_PATH);
@@ -801,11 +804,15 @@ describe("/migrate/supermemory", () => {
       expect(markup).toContain(`<code>${literal}</code>`);
     }
     migrationSteps.forEach((step, index) => {
-      expect(text).toContain(`${index + 1} ${step.title} ${rendered(step.lead)} ${step.commands.join(" ")}`);
+      expect(text).toContain(`${index + 1} ${step.title}`);
+      expect(text).toContain(rendered(step.lead));
+      for (const command of step.commands) {
+        expect(commandText).toContain(command.replace(/\s*([<>])\s*/gu, "$1"));
+      }
       expect(markup).toContain(`href="${step.href}"`);
     });
     const exportStep = markup.slice(markup.indexOf('id="export"'), markup.indexOf('id="import"'));
-    expect(exportStep).toContain("sh export-supermemory.sh");
+    expect(exportStep.replace(/<\/?span\b[^>]*>/gu, "")).toContain("sh export-supermemory.sh");
     expect(markup).not.toMatch(/checkout|git clone|bun link/u);
     expect(text).toContain("Work in a directory outside any vault, so that the export files are never committed.");
     expect(text).toContain("The script saves your documents, and the memory entries for each container tag, as JSON pages.");

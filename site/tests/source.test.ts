@@ -59,7 +59,7 @@ describe("Wordcell site source contract", () => {
       read("app/readme.generated.ts"),
     ]);
     expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.18"');
-    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.24.0"');
+    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.27.0"');
     expect(home).toContain('import { AskAiAboutThis } from "@hraness/ui"');
     expect(home).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io" />');
     expect(docs).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />');
@@ -201,7 +201,7 @@ test("public payload numbers stay tied to the committed evidence receipt", async
   expect(readme).toContain(number(aggregate.selectedFullNoteBytes));
   expect(readme).toContain("80% fewer UTF-8 bytes");
   // The home page renders these figures from the receipt instead of typing them.
-  expect(home).toContain('from "../wordcell/handoff-evidence"');
+  expect(home).toContain('from "../wordcell/passage-evidence"');
   expect(home).not.toContain(number(aggregate.packedBytes));
   expect(Math.round(Number(aggregate.reductionVsSelectedFullNotesPercent))).toBe(80);
 });
