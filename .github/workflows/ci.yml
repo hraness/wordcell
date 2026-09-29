@@ -215,12 +215,14 @@ jobs:
 
   published-install:
     # Installs the published release with the documented Bun command on macOS
-    # and Windows (Linux is covered by the package smoke), then runs the quick
-    # start. Informational: not part of Required.
+    # (Linux is covered by the package smoke), then runs the quick start.
+    # Informational: not part of Required. Windows is not listed because note
+    # writes fsync their directory, which Windows refuses with EPERM; the site
+    # sends Windows users to WSL2 until that changes.
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     defaults:

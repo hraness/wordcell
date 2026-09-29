@@ -197,9 +197,9 @@ a { text-underline-offset: 0.2em; }
 .document-page h1, .document-page h2, .document-page h3 { text-wrap: balance; line-height: 1.2; }
 .document-page h2 { margin-top: 3rem; padding-top: 0.5rem; }
 .document-page p, .document-page li { text-wrap: pretty; }
-.document-page pre { max-inline-size: 100%; overflow-x: auto; padding: 1rem 1.15rem; border: 0; box-shadow: var(--hraness-material-inset); border-radius: var(--radius-md, .65rem); background: var(--surface); font-size: .875rem; line-height: 1.6; }
+.document-page pre:not(.hraness-platform-install__pre) { max-inline-size: 100%; overflow-x: auto; padding: 1rem 1.15rem; border: 0; box-shadow: var(--hraness-material-inset); border-radius: var(--radius-md, .65rem); background: var(--surface); font-size: .875rem; line-height: 1.6; }
 .document-page code { font-family: var(--font-mono); font-size: 0.92em; }
-.document-page pre code { font-size: inherit; }
+.document-page pre:not(.hraness-platform-install__pre) code { font-size: inherit; }
 .document-page :not(pre) > code { padding: .14em .38em; border-radius: .32rem; background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 .document-page blockquote { margin: 1.25rem 0; padding: .1rem 0 .1rem 1rem; border-inline-start: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); color: var(--muted); }
 .document-page blockquote p { margin: .5rem 0; }
@@ -212,7 +212,7 @@ a { text-underline-offset: 0.2em; }
 .document-page h2 { font-family: var(--font-text); font-size: var(--hraness-type-h2-size); font-weight: var(--hraness-type-h2-weight); margin-bottom: 1rem; }
 .document-page h3 { font-family: var(--font-text); font-size: var(--hraness-type-h3-size); font-weight: var(--hraness-type-h3-weight); margin: 1.75rem 0 0.75rem; }
 .document-page p { margin: 1rem 0; }
-.document-page pre { margin: 1.25rem 0; }
+.document-page pre:not(.hraness-platform-install__pre) { margin: 1.25rem 0; }
 .document-page article a:not([data-hraness-marketing="card"]) { text-decoration: underline; }
 /* Related-product cards keep design-kit's own name spacing. */
 .document-page article a[data-hraness-marketing="card"] :is(h2, h3, h4) { margin: 0; }
@@ -231,7 +231,9 @@ a { text-underline-offset: 0.2em; }
 .docs-list li { padding: 1.15rem 1.35rem; border-radius: var(--radius-md); background: var(--hraness-material-plane); box-shadow: var(--hraness-material-lift); }
 .docs-list li a { font-weight: 600; font-size: 1.05rem; }
 .docs-list li p { margin: 0.35rem 0 0; color: var(--muted); max-inline-size: 62ch; }
-.docs-install pre { margin: 0.75rem 0; }
+.docs-install pre:not(.hraness-platform-install__pre) { margin: 0.75rem 0; }
+.docs-install .hraness-platform-badges { margin: 0.75rem 0; }
+.docs-install .hraness-platform-install { margin: 0.75rem 0 1.25rem; }
 .document-nav-quadrant { color: var(--muted); }
 .document-source { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.92rem; }
 
@@ -265,7 +267,7 @@ a { text-underline-offset: 0.2em; }
   background-color: var(--hraness-material-warm-plane);
   color: var(--hraness-material-ink);
 }
-[data-hraness-material="lantern"] :is(.document-page pre, .install-command) {
+[data-hraness-material="lantern"] :is(.document-page pre:not(.hraness-platform-install__pre), .install-command) {
   background: var(--hraness-material-plane);
   border-color: var(--hraness-material-seam);
   color: var(--hraness-material-ink);
@@ -285,7 +287,7 @@ a { text-underline-offset: 0.2em; }
 .release-preview { padding: 1.25rem; border: 0; box-shadow: var(--hraness-material-inset); border-radius: var(--radius-md, .65rem); background: var(--surface); }
 
 @media (forced-colors: active) {
-  .document-page pre, .docs-list li, .release-preview { border: 1px solid CanvasText; box-shadow: none; }
+  .document-page pre:not(.hraness-platform-install__pre), .docs-list li, .release-preview { border: 1px solid CanvasText; box-shadow: none; }
 }
 
 /* Header links and appearance controls keep full phone-sized hit areas. */

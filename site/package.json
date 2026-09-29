@@ -25,7 +25,7 @@
     "sync:icons": "bun scripts/sync-icons.ts"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.27.0",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.29.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.20.1",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.10.0",

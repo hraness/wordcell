@@ -1,4 +1,6 @@
+import { PlatformBadges, PlatformInstall } from "@hraness/design-kit/react";
 import { Terminal } from "../../wordcell/code-block";
+import { installPlatforms, runsOnPlatforms } from "../../wordcell/install-platforms";
 import type { Metadata } from "next";
 import { AskAiAboutThis } from "@hraness/ui";
 
@@ -63,8 +65,9 @@ export default function Docs() {
             </p>
           ) : (
             <>
-              <Terminal code={`bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v${publishedRelease.version}/hraness-wordcell-${publishedRelease.version}.tgz
-wordcell --help`} />
+              <PlatformBadges platforms={runsOnPlatforms} />
+              <PlatformInstall platforms={installPlatforms(publishedRelease.version)} />
+              <Terminal code="wordcell --help" />
               <p className="install-note">
                 Requires <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git.{" "}
                 <a href="/docs/getting-started">Walk through the first vault</a> or{" "}
