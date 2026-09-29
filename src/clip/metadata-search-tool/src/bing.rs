@@ -1,7 +1,7 @@
 //! Opt-in fixed Bing RSS endpoint. No redirects, challenges, or HTML fallback.
 use super::FailureCode;
 use metadata_search_engine_rs::models::SearchResult;
-use quick_xml::{Reader, events::Event};
+use quick_xml::{Reader, events::{Event, BytesStart}};
 use reqwest::{Client, header};
 use std::time::Duration;
 use url::Url;
@@ -118,6 +118,7 @@ fn parse(xml: &str, limit: usize, expected_query: &str) -> Outcome {
     let mut channel_link = String::new();
     let mut results = Vec::new();
     loop {
+        let at_document_start = reader.buffer_position() == 0;
         match reader.read_event().map_err(|_| FailureCode::Parse)? {
             Event::Start(event) => {
                 let name = event.name().as_ref().to_string();
@@ -129,6 +130,9 @@ fn parse(xml: &str, limit: usize, expected_query: &str) -> Outcome {
                     .attributes()
                     .collect::<Result<_, _>>()
                     .map_err(|_| FailureCode::Parse)?;
+                for attribute in &attributes {
+                    attribute.normalized_value(quick_xml::XmlVersion::Explicit1_0).map_err(|_| FailureCode::Parse)?;
+                }
                 if attributes.len() > 32 {
                     return Err(FailureCode::BodyLimit);
                 }
@@ -223,10 +227,28 @@ fn parse(xml: &str, limit: usize, expected_query: &str) -> Outcome {
                 )?;
             }
             Event::DocType(_) | Event::PI(_) => return Err(FailureCode::Parse),
-            Event::Decl(_) => {
-                if roots != 0 {
+            Event::Decl(declaration) => {
+                // XML declarations occur once, at the start, with ordered pseudo-attributes.
+                if !at_document_start || roots != 0 {
                     return Err(FailureCode::Parse);
                 }
+                let content = BytesStart::from_content(declaration.as_ref(), 3);
+                let attributes: Vec<_> = content.attributes().collect::<Result<_, _>>()
+                    .map_err(|_| FailureCode::Parse)?;
+                let mut previous = 0;
+                for (index, attribute) in attributes.iter().enumerate() {
+                    let position = match attribute.key.as_ref() {
+                        "version" if index == 0 && attribute.value.as_ref() == "1.0" => 1,
+                        "encoding" if attribute.value.eq_ignore_ascii_case("utf-8") => 2,
+                        "standalone" if matches!(attribute.value.as_ref(), "yes" | "no") => 3,
+                        _ => return Err(FailureCode::Parse),
+                    };
+                    if position <= previous || (index == 0 && position != 1) {
+                        return Err(FailureCode::Parse);
+                    }
+                    previous = position;
+                }
+                if attributes.is_empty() { return Err(FailureCode::Parse); }
             }
             Event::Comment(_) => {}
             Event::Eof => break,
@@ -374,6 +396,27 @@ mod tests {
             );
         }
     }
+    #[test]
+    fn validates_all_attributes_and_single_ordered_xml_declaration() {
+        let good = rss(item());
+        for bad in [
+            good.replace("<rss", "<rss x=\"&undefined;\""),
+            good.replace("<item>", "<item ignored=\"&undefined;\">"),
+            format!("<?xml version=\"1.0\"?>{good}"),
+            good.replace("version=\"1.0\"", "version=\"9.9\""),
+            good.replace("version=\"1.0\"", "version=\"1.0\" version=\"1.0\""),
+            good.replace("version=\"1.0\"", "encoding=\"UTF-8\""),
+            good.replace("version=\"1.0\"", "version=\"1.0\" standalone=\"yes\" encoding=\"UTF-8\""),
+            good.replace("version=\"1.0\"", "version=\"1.0\" unknown=\"x\""),
+            good.replace("version=\"1.0\"", "version=\"1.0\" encoding=\"ISO-8859-1\""),
+            good.replace("version=\"1.0\"", "version=\"1.0\" standalone=\"maybe\""),
+            format!("<!--before-->{good}"),
+        ] { assert_eq!(parse(&bad, 3).unwrap_err(), FailureCode::Parse, "{bad}"); }
+        let valid = good.replace("version=\"1.0\"", "version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"")
+            .replace("<rss", "<rss x=\"valid &amp; escaped\"");
+        assert_eq!(parse(&valid, 3).unwrap().len(), 1);
+    }
+
     #[test]
     fn bounds_body_fields_depth_and_items() {
         assert_eq!(
