@@ -100,6 +100,7 @@ const metadataSearchToolFiles = [
   "src/clip/metadata-search-tool/Cargo.toml",
   "src/clip/metadata-search-tool/runner.ts",
   "src/clip/metadata-search-tool/src/main.rs",
+  "src/clip/metadata-search-tool/src/duckduckgo.rs",
 ] as const;
 const requiredPackageFiles = [
   "LICENSE",

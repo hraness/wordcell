@@ -8,6 +8,8 @@ publish = false
 metadata-search-engine-rs = { git = "https://github.com/MikeLuu99/searxng-rust", rev = "f40a00ea67a857ee996e1caba1ebab3ee7a14a47" }
 libc = "=0.2.189"
 reqwest = { version = "=0.12.28", features = ["brotli", "cookies", "gzip"] }
+scraper = "=0.20.0"
+url = "=2.5.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

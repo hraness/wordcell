@@ -897,9 +897,11 @@ dependencies = [
  "libc",
  "metadata-search-engine-rs",
  "reqwest",
+ "scraper",
  "serde",
  "serde_json",
  "tokio",
+ "url",
 ]
 
 [[package]]

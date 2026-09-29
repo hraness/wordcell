@@ -1,3 +1,5 @@
+mod duckduckgo;
+
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::io::{self, Read};
 use std::net::{IpAddr, SocketAddr};
@@ -8,9 +10,7 @@ use std::time::Duration;
 
 use metadata_search_engine_rs::{
     aggregator::aggregate,
-    engines::{
-        BraveEngine, DuckDuckGoEngine, SearchEngine, StartpageEngine, YahooEngine,
-    },
+    engines::{BraveEngine, SearchEngine, StartpageEngine, YahooEngine},
     models::SearchResponse,
 };
 use reqwest::{
@@ -225,8 +225,7 @@ fn is_private_or_reserved(address: IpAddr) -> bool {
         IpAddr::V6(address) => {
             let groups = address.segments();
             let ipv4_compatible = groups[..6].iter().all(|group| *group == 0);
-            let ipv4_mapped = groups[..5].iter().all(|group| *group == 0)
-                && groups[5] == 0xffff;
+            let ipv4_mapped = groups[..5].iter().all(|group| *group == 0) && groups[5] == 0xffff;
             if ipv4_compatible || ipv4_mapped {
                 let high = groups[6];
                 let low = groups[7];
@@ -291,17 +290,11 @@ fn build_pinned_http_client(
     );
     headers.insert(
         header::ACCEPT,
-        HeaderValue::from_static(
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        ),
+        HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
     );
     headers.insert(
         header::ACCEPT_LANGUAGE,
         HeaderValue::from_static("en-US,en;q=0.9"),
-    );
-    headers.insert(
-        header::ACCEPT_ENCODING,
-        HeaderValue::from_static("gzip, deflate, br"),
     );
     headers.insert("DNT", HeaderValue::from_static("1"));
     headers.insert("Sec-Fetch-Dest", HeaderValue::from_static("document"));
@@ -341,21 +334,27 @@ async fn run() {
     };
     let timeout = Duration::from_millis(request.timeout_ms / ENGINE_HOSTS.len() as u64);
     let client = Arc::new(
-        build_pinned_http_client(&request.engine_hosts, timeout)
-            .unwrap_or_else(|code| fail(code)),
+        build_pinned_http_client(&request.engine_hosts, timeout).unwrap_or_else(|code| fail(code)),
     );
     let engines: Vec<Arc<dyn SearchEngine>> = vec![
-        Arc::new(DuckDuckGoEngine::with_timeout(Arc::clone(&client), timeout)),
         Arc::new(BraveEngine::with_timeout(Arc::clone(&client), timeout)),
         Arc::new(StartpageEngine::with_timeout(Arc::clone(&client), timeout)),
         Arc::new(YahooEngine::with_timeout(Arc::clone(&client), timeout)),
     ];
-    let engines_queried = engines
+    let mut engines_queried = engines
         .iter()
         .map(|engine| engine.name().to_string())
         .collect::<Vec<_>>();
+    engines_queried.insert(0, "duckduckgo".to_string());
     let mut successes = Vec::new();
     let mut engines_failed = Vec::new();
+    match duckduckgo::search(&client, request.query.trim(), request.max_results, timeout).await {
+        Ok(results) => successes.push(("duckduckgo".to_string(), results)),
+        Err(code) => {
+            eprintln!("metadata search engine duckduckgo: {code}");
+            engines_failed.push("duckduckgo".to_string());
+        }
+    }
     // Run one upstream engine at a time so its unbounded internal `text()`
     // allocation is contained by the process memory ceiling rather than
     // multiplied across four concurrent responses.
@@ -365,8 +364,22 @@ async fn run() {
             .search(request.query.trim(), request.max_results)
             .await
         {
-            Ok(results) => successes.push((name, results)),
-            Err(_) => engines_failed.push(name),
+            Ok(results) if !results.is_empty() => successes.push((name, results)),
+            Ok(_) => {
+                eprintln!("metadata search engine {name}: unverified-empty");
+                engines_failed.push(name);
+            }
+            Err(error) => {
+                use metadata_search_engine_rs::error::EngineError;
+                let code = match error {
+                    EngineError::Timeout { .. } => "timeout",
+                    EngineError::Http { .. } => "http",
+                    EngineError::BadStatus { .. } => "http-status",
+                    EngineError::ParseFailed { .. } => "parse",
+                };
+                eprintln!("metadata search engine {name}: {code}");
+                engines_failed.push(name);
+            }
         }
     }
     let mut results = aggregate(successes, request.max_results);
