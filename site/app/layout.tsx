@@ -1,3 +1,4 @@
+import { SiteAnalytics } from "./site-analytics";
 import type { Metadata, Viewport } from "next";
 import { getDesignPaletteTheme } from "@hraness/design-kit";
 import { DesignPaletteProvider, ThemeColorSync } from "@hraness/design-kit/react";
@@ -64,6 +65,7 @@ export default function RootLayout({
         <script src="/theme-bootstrap.js" />
       </head>
       <body>
+        <SiteAnalytics />
         <DesignPaletteProvider defaultPreference={{ palette: "gruvbox", mode: "system" }}>
           <ThemeColorSync />
           {children}
