@@ -5,7 +5,7 @@
   "portfolio": {
     "contract": "hraness.portfolio-public/v1",
     "url": "https://hraness.com/portfolio.json",
-    "digest": "sha256:fef4d9d16e2d581cafa794043a31c39f46976955cd7fd64a71d86987d5c12452"
+    "digest": "sha256:f01d45d73a113aac6c7e19581bd9e919e84fdfff6ff41a1688f4ba1b406c74d9"
   },
   "messaging": {
     "formatVersion": 1,
@@ -416,7 +416,7 @@
     {
       "id": "sys1",
       "name": "Sys1",
-      "description": "answers an agent's small yes/no, choice, and score questions with probabilities",
+      "description": "saves repository check results and adds scoped code review",
       "canonicalUrl": "https://sys1.io",
       "surface": {
         "actionLabel": "explore Sys1",
@@ -424,15 +424,15 @@
           "CLI",
           "SDK"
         ],
-        "proof": "a local gateway and Node/Bun client for typed model decisions"
+        "proof": "saved repository checks, scoped code review, and structured model answers through a CLI and SDK"
       },
       "messaging": {
         "names": {
           "name": "Sys1",
           "command": "sys1"
         },
-        "short": "Answers an agent's small yes/no, choice, and score questions with probabilities",
-        "tagline": "Give your agent a System 1."
+        "short": "Saves repository check results and adds scoped code review",
+        "tagline": "Saved checks and code review"
       }
     },
     {
