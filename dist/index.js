@@ -20,6 +20,11 @@ import {
   initVault
 } from "./index-23z4zxgg.js";
 import {
+  DEFAULT_SYSTEMONE_ENDPOINT,
+  DEFAULT_SYSTEMONE_MODEL,
+  createTypeSafeReranker
+} from "./index-9rf81m0p.js";
+import {
   MAX_SOURCE_DISPOSITION_EVIDENCE,
   MAX_SOURCE_INBOX_CONNECTIONS,
   MAX_SOURCE_INBOX_NOTES,
@@ -28,16 +33,11 @@ import {
   sourceInbox
 } from "./index-pj501bh1.js";
 import {
-  DEFAULT_SYSTEMONE_ENDPOINT,
-  DEFAULT_SYSTEMONE_MODEL,
-  createTypeSafeReranker
-} from "./index-9rf81m0p.js";
-import {
   FrozenEvaluationSnapshotError,
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-59bcxqee.js";
+} from "./index-j2jt49gr.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -50,7 +50,7 @@ import {
   packUntrustedSearchContext,
   searchEvidenceRank,
   validateKnowledgeBaseSearchHistory
-} from "./index-mcpppwbq.js";
+} from "./index-9zkba8hr.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -69,6 +69,42 @@ import {
   sha256EmbeddingModelFile
 } from "./index-fp732bgg.js";
 import"./index-4j3tt0c3.js";
+import {
+  percolateWithGraph
+} from "./index-wqx1x32f.js";
+import {
+  createGraphSnapshot,
+  openGraphAuthority,
+  queryGraph,
+  rebuildGraph,
+  verifyGraph
+} from "./index-3gc2yk4k.js";
+import {
+  GRAPH_LIMITS,
+  GraphAuthorityError,
+  validateGraphQueryRequest
+} from "./index-pgtm2nhf.js";
+import {
+  DEFAULT_PERCOLATION_LIMIT,
+  DEFAULT_PERCOLATION_MIN_SUPPORT,
+  MAX_PERCOLATION_EVIDENCE_PER_CANDIDATE,
+  MAX_PERCOLATION_LIMIT,
+  MAX_PERCOLATION_MENTIONS,
+  MAX_PERCOLATION_MENTION_PAIRS,
+  MAX_PERCOLATION_NOTES,
+  MAX_PERCOLATION_RESULT_NODES,
+  MAX_PERCOLATION_RESULT_UTF8_BYTES,
+  MAX_PERCOLATION_TEXT_UTF8_BYTES,
+  MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
+  PERCOLATION_RESULT_SCHEMA_VERSION,
+  parsePercolationCliOutput,
+  parsePercolationCliOutputV1,
+  parsePercolationCliOutputV2,
+  parsePercolationResult,
+  parsePercolationResultV1,
+  parsePercolationResultV2,
+  percolateVault
+} from "./index-bdwcjvr4.js";
 import {
   MAX_RERANK_CANDIDATES,
   MAX_RERANK_SNIPPET_BYTES,
@@ -92,42 +128,6 @@ import {
   parseRetrievalEvaluationCorpus,
   runRetrievalEvaluation
 } from "./index-b88v3vtm.js";
-import {
-  percolateWithGraph
-} from "./index-e26mdwxz.js";
-import {
-  DEFAULT_PERCOLATION_LIMIT,
-  DEFAULT_PERCOLATION_MIN_SUPPORT,
-  MAX_PERCOLATION_EVIDENCE_PER_CANDIDATE,
-  MAX_PERCOLATION_LIMIT,
-  MAX_PERCOLATION_MENTIONS,
-  MAX_PERCOLATION_MENTION_PAIRS,
-  MAX_PERCOLATION_NOTES,
-  MAX_PERCOLATION_RESULT_NODES,
-  MAX_PERCOLATION_RESULT_UTF8_BYTES,
-  MAX_PERCOLATION_TEXT_UTF8_BYTES,
-  MAX_SCOPED_PERCOLATION_MENTION_PAIRS,
-  PERCOLATION_RESULT_SCHEMA_VERSION,
-  parsePercolationCliOutput,
-  parsePercolationCliOutputV1,
-  parsePercolationCliOutputV2,
-  parsePercolationResult,
-  parsePercolationResultV1,
-  parsePercolationResultV2,
-  percolateVault
-} from "./index-bdwcjvr4.js";
-import {
-  createGraphSnapshot,
-  openGraphAuthority,
-  queryGraph,
-  rebuildGraph,
-  verifyGraph
-} from "./index-3gc2yk4k.js";
-import {
-  GRAPH_LIMITS,
-  GraphAuthorityError,
-  validateGraphQueryRequest
-} from "./index-pgtm2nhf.js";
 import {
   GitHistoryError,
   MAX_GIT_HISTORY_COMMITS,

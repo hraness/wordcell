@@ -58,7 +58,7 @@ missing:
 ```sh
 command -v wordcell >/dev/null 2>&1 || {
   command -v bun >/dev/null 2>&1 || exit 1
-  bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.25.1/hraness-wordcell-0.25.1.tgz
+  bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.0/hraness-wordcell-0.26.0.tgz
 }
 wordcell --help
 ```
@@ -72,6 +72,15 @@ local semantic search.
 Installation ends after command verification. Never run `wordcell init`, create a
 vault, refresh a catalog, or edit Markdown as an installation side effect.
 Initialize or mutate a vault only when the user's request requires that change.
+
+Supported global installations check for verified releases daily before work.
+Use `wordcell update status`, `wordcell update check`, and `wordcell update`
+to inspect or update the installed version. `wordcell update disable` saves an
+opt-out; `wordcell update enable` restores updates. For offline or externally
+version-bound work, set `HRANESS_NO_UPDATE=1` for the invocation. Never override
+a saved opt-out or a consumer's version binding as part of task setup. Updates
+require `gh`, preserve `--ignore-scripts`, and wait for active commands to exit.
+SDK imports and help never check for updates.
 
 ## Preserve the Wordcell contract
 

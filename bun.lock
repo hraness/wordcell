@@ -5,6 +5,7 @@
     "": {
       "name": "@hraness/wordcell",
       "dependencies": {
+        "@hraness/cli-update": "https://github.com/hraness/cli-update/releases/download/v0.1.0/hraness-cli-update-0.1.0.tgz",
         "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz",
         "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0",
         "@steipete/sweet-cookie": "0.4.3",
@@ -27,6 +28,8 @@
     "@hono/node-server": ["@hono/node-server@1.19.17", "", { "peerDependencies": { "hono": "^4" } }, "sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ=="],
 
     "@hraness/build-governance": ["@hraness/build-governance@github:hraness/build-governance#d7436be", { "peerDependencies": { "typescript": "^6.0.3" } }, "hraness-build-governance-d7436be", "sha512-E35iWyOTAr83wolBYf4/vpPH0f3QsBA96ubY6XuGEc50fX6BVWIYQ37bYoAYEx4Owe6Ew1hSVRgTxdGOG4c9SA=="],
+
+    "@hraness/cli-update": ["@hraness/cli-update@https://github.com/hraness/cli-update/releases/download/v0.1.0/hraness-cli-update-0.1.0.tgz", {}, "sha512-g0Bg0FYiyJqEJC9JGtAZsZ+r599c8iSNDd7ADi6weFCKBGuRXa2tOnn93+pTfLe1tcayXiLuAtDPp8meFHgKbg=="],
 
     "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-BHAzZHXAldhDCg/J2OGFjN0VSBzwmfzk6QjOLdh3vamOftvDHZXNtwOkPpKpXOag2hX4fEr0vrenG0bF07YGFA=="],
 

@@ -24,6 +24,9 @@ Advanced commands for maintainers, evaluation, and several knowledge bases.
                               for saved links
   url-metadata backfill       Add title and archive metadata files next to saved
                               links
+  update [check|status|enable|disable]
+                              Update this global installation or change
+                              automatic update settings
   support                     Optional support settings
 
 Command help: wordcell help <command> · Everyday commands: wordcell --help

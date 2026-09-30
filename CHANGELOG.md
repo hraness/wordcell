@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.26.0
+
+Supported global Wordcell installations check for updates daily and install verified releases before starting a command.
+
+- Both commands share update settings and wait for active commands to finish before replacement.
+- Use `wordcell update`, `update check`, `update status`, `update enable`, or `update disable`; `HRANESS_NO_UPDATE=1` suppresses automatic checks for one invocation.
+- Source, project, copied, and pinned installations keep their version. SDK imports, help, and version output do not check for updates.
+- Updates preserve disabled lifecycle scripts and verify the GitHub archive, signatures, source tag, and release workflow before installation.
+
 ## 0.25.1
 
 Optional OpenAlex search omits works explicitly marked as retracted by the

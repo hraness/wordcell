@@ -108,7 +108,9 @@ const requiredPackageFiles = [
   "LICENSE",
   "README.md",
   "dist/cli.js",
+  "dist/cli-bin.js",
   "dist/evaluation-builder.js",
+  "dist/evaluation-builder-bin.js",
   "dist/publish.js",
   "dist/publish-reader/reader.js",
   "dist/publish-reader/reader.css",
@@ -755,10 +757,26 @@ try {
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], consumer);
   await run([nodeExecutable, "--input-type=module", "-e", `await import(${JSON.stringify(packageName)})`], npmConsumer);
   for (const installed of [consumer, npmConsumer]) {
+    await run([process.execPath, "--eval", `
+      globalThis.fetch = () => { throw new Error("SDK import attempted a network request"); };
+      await import("@hraness/wordcell/cli");
+      await import("@hraness/wordcell/evaluation-builder");
+    `], installed);
     await verifyInstalledHelp("wordcell", installed, "Usage: wordcell <command> [options]");
     await verifyInstalledFirstUse(installed);
     await verifyInstalledSupport(installed);
     await run([join(installed, "node_modules", ".bin", "wordcell-evaluation-builder"), "--help"], installed);
+    for (const name of ["wordcell", "wordcell-evaluation-builder"]) {
+      const child = Bun.spawn([join(installed, "node_modules", ".bin", name), "update", "status", "--json"], {
+        cwd: installed, env: environment, stdout: "pipe", stderr: "pipe",
+      });
+      const [exitCode, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
+      if (exitCode !== 0 || stderr !== "") throw new Error(`${name} update status failed: ${stderr}`);
+      const result: unknown = JSON.parse(stdout);
+      if (result === null || typeof result !== "object" || !("status" in result) || result.status !== "unsupported") {
+        throw new Error(`${name} must report project installations as unsupported before application work`);
+      }
+    }
     const graphRoot = join(installed, "graph-vault");
     await mkdir(graphRoot);
     await writeFile(join(graphRoot, "index.md"), "---\nkb_catalog: authored\n---\n# Graph\n");

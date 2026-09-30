@@ -11,7 +11,7 @@
 Copy this prompt into Codex, Claude Code, or another coding agent:
 
 ```text
-Install the `wordcell` Agent Skill from `hraness/wordcell#v0.25.1` with the standard skills
+Install the `wordcell` Agent Skill from `hraness/wordcell#v0.26.0` with the standard skills
 CLI. Use the skill's runtime instructions to install the exact
 versioned GitHub release archive only when the command is missing. Verify it
 with `wordcell doctor` and `wordcell --help`, but do not initialize or modify a vault until
@@ -21,8 +21,8 @@ I ask.
 Install the single public skill with either runner:
 
 ```sh
-npx skills add hraness/wordcell#v0.25.1
-bunx skills add hraness/wordcell#v0.25.1
+npx skills add hraness/wordcell#v0.26.0
+bunx skills add hraness/wordcell#v0.26.0
 ```
 
 Both commands discover the same `wordcell` skill and install it into the selected
@@ -39,7 +39,7 @@ installed skill is byte-identical to the repository source.
 Install the two global commands with Bun:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.25.1/hraness-wordcell-0.25.1.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.0/hraness-wordcell-0.26.0.tgz
 wordcell --help
 wordcell-evaluation-builder --help
 ```
@@ -47,7 +47,7 @@ wordcell-evaluation-builder --help
 The same GitHub archive can be installed with npm:
 
 ```sh
-npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.25.1/hraness-wordcell-0.25.1.tgz
+npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.0/hraness-wordcell-0.26.0.tgz
 wordcell --help
 ```
 
@@ -60,7 +60,7 @@ reviewed and enabled; run `wordcell doctor` to inspect the resulting capabilitie
 For programmatic use, add the versioned GitHub archive to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.25.1/hraness-wordcell-0.25.1.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.0/hraness-wordcell-0.26.0.tgz
 ```
 
 The resulting dependency should remain exact:
@@ -68,20 +68,55 @@ The resulting dependency should remain exact:
 ```json
 {
   "dependencies": {
-    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.25.1/hraness-wordcell-0.25.1.tgz"
+    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.26.0/hraness-wordcell-0.26.0.tgz"
   }
 }
 ```
 
-Wordcell uses three public GitHub dependencies: `@hraness/oh` at
+Wordcell uses four public GitHub dependencies: `@hraness/oh` at
 immutable release archive `v0.12.0` for graph projection and closure verification and `@tobilu/qmd` at commit
 `aa993dceb3ef8cfb71d470554ca437570f5a2b3c` for store-local model behavior, plus
 `@hraness/support-foundation` at commit
-`b32c1c81bb2444f50509ed54388758ecfab1f1c0` for standalone optional support.
+`b32c1c81bb2444f50509ed54388758ecfab1f1c0` for standalone optional support, and
+`@hraness/cli-update` at immutable release `v0.1.0` for CLI updates.
 Installation also needs Git and public GitHub access while it resolves those
 dependencies. Browser-cookie capture uses the exact upstream registry release
 `@steipete/sweet-cookie` `0.4.3`, which includes the host-scope, isolation, and
 explicit Chromium Keychain fixes previously carried by the Hraness fork.
+
+## CLI updates
+
+Supported global Bun and npm installations on macOS and Linux automatically
+check for a newer stable release once a day, before starting work. The GitHub
+CLI (`gh`) verifies the downloaded archive against its signatures, source tag,
+release metadata, and completed release workflow. Failed checks leave the
+installed version available. Updates keep dependency lifecycle scripts disabled.
+
+Both commands share the same update settings. `wordcell update` installs a newer
+verified release; `wordcell update check` only checks, and `wordcell update status`
+reports the local installation and policy. Add `--json` for structured output.
+Use `wordcell update disable` to save an opt-out, then `wordcell update enable`
+to restore automatic checks. The same subcommands work with
+`wordcell-evaluation-builder`.
+
+Set `HRANESS_NO_UPDATE=1` on an invocation for offline or externally pinned work.
+CI runs, help, version output, and SDK imports skip automatic checks. SDK calls
+never start the updater. A running command, MCP server, or preview server
+prevents replacement until that process exits; the updater does not stop it.
+
+Source checkouts, project dependencies, copied commands, linked installations,
+and Windows installations require manual upgrades. An exact Bun registry version
+stays pinned until you explicitly enable tracking. npm does not reliably retain
+the original global version constraint; use `update disable` for a fixed global
+version. A versioned GitHub archive tracks verified releases by default.
+
+Update settings and coordination files contain installation metadata, never
+vault contents. Each record is limited to 16 KiB. Downloaded package archives
+remain beside the global installation because Bun and npm may refer to those
+files for later installs; they are not disposable temporary downloads. The
+shared downloader caps an archive at 512 MiB, and Wordcell's release verifier
+requires its existing 128 MiB limit. Checks contact GitHub, and installation
+may download dependencies through the package manager's configured sources.
 
 ### Review lifecycle scripts before enabling optional adapters
 
@@ -755,9 +790,9 @@ companion skill for a distinct recurring ritual. The package smoke test keeps
 future tagged packages byte-identical to that source tree.
 
 ```sh
-npx skills add hraness/wordcell#v0.25.1
+npx skills add hraness/wordcell#v0.26.0
 # or
-bunx skills add hraness/wordcell#v0.25.1
+bunx skills add hraness/wordcell#v0.26.0
 ```
 
 The skill invokes the installed `wordcell` command without depending on a repository

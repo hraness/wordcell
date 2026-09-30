@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.25.1",
+  "version": "0.26.0",
   "description": "Wordcell keeps decisions, plans, and sources as Markdown beside your code, so coding agents can find them from the file they are about to change.",
   "license": "MIT",
   "type": "module",
@@ -311,8 +311,8 @@
     }
   },
   "bin": {
-    "wordcell": "./dist/cli.js",
-    "wordcell-evaluation-builder": "./dist/evaluation-builder.js"
+    "wordcell": "./dist/cli-bin.js",
+    "wordcell-evaluation-builder": "./dist/evaluation-builder-bin.js"
   },
   "main": "./dist/index.js",
   "types": "./src/index.ts",
@@ -472,14 +472,20 @@
     "assets/agent-skill.svg",
     "src/support.ts",
     "src/support-profile.ts",
-    "src/directory-sync.ts"
+    "src/directory-sync.ts",
+    "src/cli-bin.ts",
+    "src/cli-startup.ts",
+    "src/cli-update.ts",
+    "src/cli-release.ts",
+    "src/evaluation-builder-bin.ts",
+    "src/evaluation-builder-cli-args.ts"
   ],
   "scripts": {
     "kb:refresh": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell refresh --root kb",
     "kb:check:lane": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell check --root kb --no-catalog",
     "kb:check": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell check --root kb && bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell agents check --root kb --repo .",
     "kb:catalog": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell catalog --root kb",
-    "build": "bun -e 'await (await import(\"node:fs/promises\")).rm(\"./dist\", { recursive: true, force: true })' && bun build ./src/index.ts ./src/publish.ts ./src/publish-model.ts ./src/publish-search.ts ./src/agent-context.ts ./src/agent-guide-audit.ts ./src/attachments.ts ./src/authoring.ts ./src/benchmark.ts ./src/clip/browser-profiles.ts ./src/capture.ts ./src/cli.ts ./src/clip/acquire.ts ./src/clip/args.ts ./src/clip/bounded-byte-buffer.ts ./src/clip/bundle-reader.ts ./src/clip/cli.ts ./src/clip/cookies.ts ./src/clip/doctor.ts ./src/clip/jobs.ts ./src/clip/network.ts ./src/clip/network-proxy.ts ./src/clip/persist.ts ./src/clip/refresh.ts ./src/clip/terminal.ts ./src/evaluation.ts ./src/evaluation-builder.ts ./src/evaluation-kb.ts ./src/git.ts ./src/graph.ts ./src/graph-percolation.ts ./src/graph-authority.ts ./src/navigation.ts ./src/pdf.ts ./src/percolate.ts ./src/portfolio.ts ./src/query.ts ./src/rerank.ts ./src/rerank-typesafe.ts ./src/repository-memory.ts ./src/sdk.ts ./src/search.ts ./src/search-rules.ts ./src/semantic.ts ./src/source-inbox.ts ./src/untrusted-content.ts ./src/url-intelligence.ts ./src/workflow.ts ./src/workflows/index.ts ./src/workflows/decision-context.ts ./src/workflows/explain-change.ts ./src/workflows/plan-radar.ts ./src/clip/defuddle-worker.ts --outdir ./dist --root ./src --target bun --format esm --splitting --packages external && bun build ./src/publish-reader/reader.ts --outfile ./dist/publish-reader/reader.js --target browser --format esm && bun build ./src/publish-reader/theme.ts --outfile ./dist/publish-reader/theme.js --target browser --format iife && cp ./src/publish-reader/reader.css ./dist/publish-reader/reader.css",
+    "build": "bun -e 'await (await import(\"node:fs/promises\")).rm(\"./dist\", { recursive: true, force: true })' && bun build ./src/index.ts ./src/publish.ts ./src/publish-model.ts ./src/publish-search.ts ./src/agent-context.ts ./src/agent-guide-audit.ts ./src/attachments.ts ./src/authoring.ts ./src/benchmark.ts ./src/clip/browser-profiles.ts ./src/capture.ts ./src/cli.ts ./src/cli-bin.ts ./src/evaluation-builder-bin.ts ./src/clip/acquire.ts ./src/clip/args.ts ./src/clip/bounded-byte-buffer.ts ./src/clip/bundle-reader.ts ./src/clip/cli.ts ./src/clip/cookies.ts ./src/clip/doctor.ts ./src/clip/jobs.ts ./src/clip/network.ts ./src/clip/network-proxy.ts ./src/clip/persist.ts ./src/clip/refresh.ts ./src/clip/terminal.ts ./src/evaluation.ts ./src/evaluation-builder.ts ./src/evaluation-kb.ts ./src/git.ts ./src/graph.ts ./src/graph-percolation.ts ./src/graph-authority.ts ./src/navigation.ts ./src/pdf.ts ./src/percolate.ts ./src/portfolio.ts ./src/query.ts ./src/rerank.ts ./src/rerank-typesafe.ts ./src/repository-memory.ts ./src/sdk.ts ./src/search.ts ./src/search-rules.ts ./src/semantic.ts ./src/source-inbox.ts ./src/untrusted-content.ts ./src/url-intelligence.ts ./src/workflow.ts ./src/workflows/index.ts ./src/workflows/decision-context.ts ./src/workflows/explain-change.ts ./src/workflows/plan-radar.ts ./src/clip/defuddle-worker.ts --outdir ./dist --root ./src --target bun --format esm --splitting --packages external && bun build ./src/publish-reader/reader.ts --outfile ./dist/publish-reader/reader.js --target browser --format esm && bun build ./src/publish-reader/theme.ts --outfile ./dist/publish-reader/theme.js --target browser --format iife && cp ./src/publish-reader/reader.css ./dist/publish-reader/reader.css",
     "check:workflows": "bun ./scripts/check-workflow-yaml.ts",
     "check:installed-command-docs": "bun ./scripts/check-installed-command-docs.ts",
     "check:portfolio-inventory": "bun ./scripts/check-portfolio-inventory.ts",
@@ -506,7 +512,8 @@
     "yaml": "^2.9.0",
     "zod": "^4.4.3",
     "effect": "3.22.1",
-    "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0"
+    "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0",
+    "@hraness/cli-update": "https://github.com/hraness/cli-update/releases/download/v0.1.0/hraness-cli-update-0.1.0.tgz"
   },
   "devDependencies": {
     "@hraness/build-governance": "github:hraness/build-governance#v0.1.0",

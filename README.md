@@ -54,14 +54,14 @@ Wordcell keeps the record in Markdown files you own, rebuilds every index from t
 The CLI and TypeScript SDK run with Bun. Install the versioned GitHub archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.25.1/hraness-wordcell-0.25.1.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.0/hraness-wordcell-0.26.0.tgz
 wordcell --help
 ```
 
 Prefer npm? The same release is [mirrored there](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.25.1
+npm install --global --ignore-scripts @hraness/wordcell@0.26.0
 wordcell --help
 ```
 
@@ -70,10 +70,32 @@ add your package manager's global executable directory to `PATH` and reopen the
 terminal. Optional semantic search, browser capture, and PDF tools have
 [additional prerequisites](https://github.com/hraness/wordcell/blob/main/docs/reference.md#review-lifecycle-scripts-before-enabling-optional-adapters).
 
+Global Bun and npm installations on macOS and Linux check for updates daily
+before a command starts. Updates require the GitHub CLI (`gh`) to verify the
+release and preserve `--ignore-scripts`. An active command, MCP server, or
+preview server prevents replacement until it exits. Both installed commands
+share the same settings:
+
+```sh
+wordcell update status
+wordcell update check
+wordcell update
+wordcell update disable
+wordcell update enable
+```
+
+Use `HRANESS_NO_UPDATE=1 wordcell …` for an invocation without automatic update
+requests, including offline work. Help, version output, and SDK imports never
+check for updates. Source, project, copied, and Windows installations use manual
+upgrades. Exact Bun registry versions stay pinned until `update enable`; npm
+does not reliably retain the original global version constraint, so use
+`update disable` when you need a fixed global version. A versioned GitHub archive
+tracks verified releases by default. See the [update reference](docs/reference.md#cli-updates).
+
 ## Keep one decision available to the next session
 
 Run this from a directory where you want a new `kb/` folder. It creates one
-Markdown note and finds it without downloading a model or contacting a service:
+Markdown note and finds it without a search model or hosted search service:
 
 ```sh
 wordcell init kb
@@ -103,7 +125,7 @@ After trying the CLI, install the public Agent Skill into a compatible agent,
 such as Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.25.1 --skill wordcell
+bunx skills add hraness/wordcell#v0.26.0 --skill wordcell
 ```
 
 Then ask:
@@ -175,7 +197,7 @@ provider failure retains the baseline order with a diagnostic. See the
 
 | Task | Command | Evidence and effects |
 | --- | --- | --- |
-| Find a saved decision | `wordcell search "parser retries" --root kb --mode exact` | Reads current Markdown; no model or network request. |
+| Find a saved decision | `wordcell search "parser retries" --root kb --mode exact` | Reads current Markdown; no model or hosted search request. |
 | Recover context for code | `wordcell context packages/parser/src/index.ts --root kb --repo .` | Returns scoped notes, plans, and inherited `AGENTS.md` rules. |
 | Inspect explicit connections | `wordcell backlinks notes/parser-contract --root kb` | Returns notes that link to the decision. |
 | Search by meaning | `wordcell search "retry policy" --root kb --mode hybrid` | Adds optional local QMD keyword and vector retrieval; model setup is required. |
@@ -314,7 +336,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.25.1/hraness-wordcell-0.25.1.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.0/hraness-wordcell-0.26.0.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph

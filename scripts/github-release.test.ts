@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { access, chmod, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import fc from "fast-check";
 
-import { changelogSection, isPreStandardRelease, legacyReleaseBody, parseReleaseBody, parseReleaseManifest, publishVerifiedRelease, releaseBody, releaseIdentity, releaseNotes, releaseTitle, stableVersion, uniqueReleaseId, verifyAttestationRun, verifyProviderRelease, verifyReleaseBody, verifyReleaseFiles, type ReleaseManifest } from "./github-release.js";
+import { changelogSection, isPreStandardRelease, legacyReleaseBody, parseReleaseBody, parseReleaseManifest, publishVerifiedRelease, releaseBody, releaseIdentity, releaseNotes, releaseTitle, stableVersion, uniqueReleaseId, verifyAttestationRun, verifyProviderRelease, verifyReleaseBody, verifyReleaseFiles, verifyUpdateArtifact, type ReleaseManifest } from "./github-release.js";
 
 const archive = Buffer.from("Synthetic packed-byte identity fixture; real USTAR admission is covered by package-artifact tests.");
 const digest = (bytes: Uint8Array, algorithm = "sha256") => createHash(algorithm).update(bytes).digest("hex");
@@ -25,6 +25,77 @@ const changelog = [
   "- `wordcell search` prints each match's path.", "- `--json` adds a `path` field;", "  older readers ignore it.", "",
   "## 0.22.5", "", "Older notes.", "",
 ].join("\n");
+
+test("installed updater reuses canonical files, tag, signatures, and publication checks", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "wordcell-update-proof-test-"));
+  try {
+    const path = join(directory, "selected.tgz");
+    await writeFile(path, archive);
+    const pack = [{ name: current.package, version: current.version, filename: current.archive.name, size: archive.length, integrity: `sha512-${createHash("sha512").update(archive).digest("base64")}`, shasum: digest(archive, "sha1") }];
+    const files = new Map([
+      [current.archive.name, archive], ["npm-pack.json", Buffer.from(JSON.stringify(pack))],
+      ["release-manifest.json", Buffer.from(JSON.stringify(current))], ["provenance.jsonl", Buffer.from("signature fixture")],
+    ]);
+    files.set("SHA256SUMS", Buffer.from([current.archive.name, "npm-pack.json", "release-manifest.json"].map(name => `${digest(files.get(name)!)}  ${name}\n`).join("")));
+    const assets = [...files].map(([name, bytes], index) => ({
+      id: index + 1, name, size: bytes.length, digest: `sha256:${digest(bytes)}`, state: "uploaded",
+      url: `https://api.github.com/repos/hraness/wordcell/releases/assets/${index + 1}`,
+      browser_download_url: `https://github.com/hraness/wordcell/releases/download/${current.tag}/${name}`,
+    }));
+    const release = { id: 77, tag_name: current.tag, target_commitish: current.sourceSha, name: releaseTitle(current), body: releaseBody(current, changelog), draft: false, prerelease: false, immutable: true, author: { id: 41898282, login: "github-actions[bot]", type: "Bot" }, assets };
+    const requests: string[] = [];
+    const read = (endpoint: string): unknown => {
+      requests.push(endpoint);
+      if (endpoint.endsWith(`/git/ref/tags/${current.tag}`)) return { object: { type: "tag", sha: "c".repeat(40) } };
+      if (endpoint.endsWith(`/git/tags/${"c".repeat(40)}`)) return { tag: current.tag, object: { type: "commit", sha: current.sourceSha } };
+      if (endpoint.endsWith(`/releases/tags/${current.tag}`)) return release;
+      if (endpoint.endsWith(`/contents/CHANGELOG.md?ref=${current.sourceSha}`)) return { type: "file", encoding: "base64", size: Buffer.byteLength(changelog), content: Buffer.from(changelog).toString("base64") };
+      throw new Error(`Unexpected read ${endpoint}`);
+    };
+    const events: string[] = [];
+    let proofDirectory = "";
+    const dependencies = {
+      read,
+      download: (id: number, maximumBytes: number) => { const asset = assets.find(asset => asset.id === id)!; expect(maximumBytes).toBe(asset.size); return files.get(asset.name)!; },
+      attest: (directory: string, manifest: ReleaseManifest) => { proofDirectory = directory; expect(manifest).toEqual(current); events.push("attest"); },
+      publication: (manifest: ReleaseManifest) => { expect(manifest).toEqual(current); events.push("publication"); },
+    };
+    const artifact = { path, version: current.version, sha256: current.archive.sha256 };
+    await verifyUpdateArtifact(artifact, dependencies);
+    expect(events).toEqual(["attest", "publication"]);
+    expect(requests.filter(path => path.endsWith(`/releases/tags/${current.tag}`))).toHaveLength(2);
+    await expect(access(proofDirectory)).rejects.toThrow();
+    events.length = 0;
+    await expect(verifyUpdateArtifact(artifact, { ...dependencies, attest: () => { throw new Error("invalid signature"); } })).rejects.toThrow("invalid signature");
+    expect(events).toEqual([]);
+    const count = requests.length;
+    await expect(verifyUpdateArtifact({ ...artifact, sha256: "f".repeat(64) }, dependencies)).rejects.toThrow("changed");
+    expect(requests).toHaveLength(count);
+    await expect(verifyUpdateArtifact(artifact, { ...dependencies, read: () => ({ object: { type: "commit", sha: "a".repeat(40) } }) })).rejects.toThrow("not annotated");
+    await expect(verifyUpdateArtifact(artifact, { ...dependencies, download: () => Buffer.from("foreign metadata") })).rejects.toThrow("digest differs");
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test.skipIf(process.platform === "win32")("release API and signature checks stay on github.com under an enterprise GH_HOST", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "wordcell-update-host-test-"));
+  try {
+    const log = join(directory, "gh-calls.jsonl");
+    const gh = join(directory, "gh");
+    await writeFile(gh, `#!${process.execPath}\nimport {appendFileSync} from "node:fs"; appendFileSync(process.env.GH_TEST_LOG, JSON.stringify({host:process.env.GH_HOST,prompt:process.env.GH_PROMPT_DISABLED,args:process.argv.slice(2)})+"\\n"); console.log("[]");\n`);
+    await chmod(gh, 0o755);
+    for (const name of [current.archive.name, "npm-pack.json", "release-manifest.json", "SHA256SUMS"]) await writeFile(join(directory, name), "fixture");
+    const child = Bun.spawn([process.execPath, "--eval", `
+      const {verifyCanonicalPublication,verifyAttestations} = await import(${JSON.stringify(new URL("../src/cli-release.ts", import.meta.url).href)});
+      try { verifyCanonicalPublication(${JSON.stringify(current)}); } catch {}
+      try { verifyAttestations(${JSON.stringify(directory)}, ${JSON.stringify(current)}); } catch {}
+    `], { env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, GH_HOST: "enterprise.example.test", GH_PROMPT_DISABLED: "0", GH_TEST_LOG: log }, stdout: "pipe", stderr: "pipe" });
+    const [code, stderr] = await Promise.all([child.exited, new Response(child.stderr).text()]);
+    expect({ code, stderr }).toEqual({ code: 0, stderr: "" });
+    const calls = (await readFile(log, "utf8")).trim().split("\n").map(line => JSON.parse(line) as { host: string; prompt: string; args: string[] });
+    expect(new Set(calls.map(call => call.args[0]))).toEqual(new Set(["api", "attestation"]));
+    expect(calls.every(call => call.host === "github.com" && call.prompt === "1")).toBe(true);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 test("manifest admits only exact bounded package, source, and run identity", () => {
   expect(parseReleaseManifest(manifest)).toEqual(manifest);

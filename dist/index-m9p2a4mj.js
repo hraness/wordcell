@@ -12,15 +12,15 @@ import {
   yamlString
 } from "./index-cd75vky9.js";
 import {
+  redactSensitiveText,
+  sanitizeArtifactUrl
+} from "./index-mxxxytys.js";
+import {
   safeFetch
 } from "./index-e5fbsywq.js";
 import {
   BoundedByteBuffer
 } from "./index-gh719d91.js";
-import {
-  redactSensitiveText,
-  sanitizeArtifactUrl
-} from "./index-mxxxytys.js";
 import {
   sanitizeTerminalLine,
   sanitizeTerminalText

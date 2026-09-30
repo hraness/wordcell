@@ -638,6 +638,22 @@ Options
 Example
   wordcell evaluate eval/manifest.json --root kb --repo .
 
+# update
+Usage: wordcell update [check|status|enable|disable] [--json]
+
+Update this global installation or change automatic update settings.
+Supported global installs on macOS and Linux update daily before work.
+Set HRANESS_NO_UPDATE=1 to skip automatic checks for one invocation.
+Active commands prevent replacement. SDK imports never check for updates.
+
+Options
+  --json   Print machine-readable output
+  --check  Check the latest release without installing
+
+Examples
+  wordcell update status
+  wordcell update disable
+
 # support
 Usage: wordcell support [status | enable | dismiss | snooze] [--json]
 

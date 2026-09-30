@@ -657,6 +657,7 @@ jobs:
               scripts/package-artifact.ts \
               scripts/npm-package-identity.ts \
               scripts/github-release.ts \
+              src/cli-release.ts \
               scripts/package-smoke.ts \
               scripts/prepare-npm-package.ts; then
               echo "::error::Current release verifier controls changed after verification" >&2
@@ -1103,7 +1104,7 @@ jobs:
             status="$(gh api --method GET "/repos/$GITHUB_REPOSITORY/compare/$source...$current_main" --jq .status)"
             [[ "$status" == ahead || "$status" == identical ]]
           done
-          for path in .github/workflows/release.yml scripts/package-artifact.ts scripts/npm-package-identity.ts scripts/npm-release-attestation.ts scripts/github-release.ts scripts/package-smoke.ts scripts/prepare-npm-package.ts; do
+          for path in .github/workflows/release.yml scripts/package-artifact.ts scripts/npm-package-identity.ts scripts/npm-release-attestation.ts scripts/github-release.ts src/cli-release.ts scripts/package-smoke.ts scripts/prepare-npm-package.ts; do
             reviewed="$(gh api --method GET "/repos/$GITHUB_REPOSITORY/contents/$path?ref=$WORKFLOW_SHA" --jq .sha)"
             current="$(gh api --method GET "/repos/$GITHUB_REPOSITORY/contents/$path?ref=$current_main" --jq .sha)"
             [[ "$reviewed" =~ ^[a-f0-9]{40}$ && "$reviewed" == "$current" ]]

@@ -1,11 +1,16 @@
 #!/usr/bin/env bun
 // @bun
 import {
+  isEvaluationBuilderHelp,
+  kbEvidenceRoutingBuildUsage,
+  parseKbEvidenceRoutingBuildCliArguments
+} from "./index-3t0v457d.js";
+import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-59bcxqee.js";
-import"./index-mcpppwbq.js";
+} from "./index-j2jt49gr.js";
+import"./index-9zkba8hr.js";
 import"./index-adx6khj5.js";
 import {
   indexSemanticVault,
@@ -13,16 +18,16 @@ import {
   recommendedEmbeddingModelSha256
 } from "./index-fp732bgg.js";
 import"./index-4j3tt0c3.js";
+import"./index-wqx1x32f.js";
+import"./index-3gc2yk4k.js";
+import"./index-pgtm2nhf.js";
+import"./index-bdwcjvr4.js";
 import"./index-j70m75wd.js";
 import {
   MAX_EVALUATION_DIAGNOSTICS,
   MAX_EVALUATION_EVIDENCE_BYTES,
   MAX_EVALUATION_RESULTS_PER_QUERY
 } from "./index-b88v3vtm.js";
-import"./index-e26mdwxz.js";
-import"./index-bdwcjvr4.js";
-import"./index-3gc2yk4k.js";
-import"./index-pgtm2nhf.js";
 import {
   runGitCommand
 } from "./index-1gwbassd.js";
@@ -12055,16 +12060,6 @@ async function buildKbEvidenceRoutingEvaluation(configPath, dependencies = {}) {
     }
   };
 }
-var kbEvidenceRoutingBuildUsage = "Usage: wordcell-evaluation-builder <--anchor-seal|--build> --config <checked-config.json> --artifact-root <artifact-B>";
-function parseKbEvidenceRoutingBuildCliArguments(arguments_) {
-  const mode = arguments_[0];
-  const configPath = arguments_[2];
-  const artifactRoot = arguments_[4];
-  if (arguments_.length !== 5 || mode !== "--anchor-seal" && mode !== "--build" || arguments_[1] !== "--config" || arguments_[3] !== "--artifact-root" || configPath === undefined || configPath.trim() === "" || artifactRoot === undefined || artifactRoot.trim() === "") {
-    throw new Error(kbEvidenceRoutingBuildUsage);
-  }
-  return Object.freeze({ mode: mode.slice(2), configPath, artifactRoot });
-}
 async function runKbEvidenceRoutingBuildCli(arguments_, dependencies = {}) {
   const options = parseKbEvidenceRoutingBuildCliArguments(arguments_);
   if (options.mode === "anchor-seal") {
@@ -12096,7 +12091,7 @@ async function runKbEvidenceRoutingBuildCli(arguments_, dependencies = {}) {
 }
 if (import.meta.main) {
   const arguments_ = process.argv.slice(2);
-  if (arguments_.length === 1 && (arguments_[0] === "--help" || arguments_[0] === "-h")) {
+  if (isEvaluationBuilderHelp(arguments_)) {
     console.log(kbEvidenceRoutingBuildUsage);
   } else {
     await runKbEvidenceRoutingBuildCli(arguments_);

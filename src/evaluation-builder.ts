@@ -1,4 +1,6 @@
 #!/usr/bin/env bun
+import { isEvaluationBuilderHelp, kbEvidenceRoutingBuildUsage, parseKbEvidenceRoutingBuildCliArguments } from "./evaluation-builder-cli-args.js";
+export { kbEvidenceRoutingBuildUsage, parseKbEvidenceRoutingBuildCliArguments } from "./evaluation-builder-cli-args.js";
 
 import { createHash, randomBytes } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -2459,32 +2461,6 @@ export async function buildKbEvidenceRoutingEvaluation(
   };
 }
 
-export const kbEvidenceRoutingBuildUsage =
-  "Usage: wordcell-evaluation-builder <--anchor-seal|--build> --config <checked-config.json> --artifact-root <artifact-B>";
-
-export function parseKbEvidenceRoutingBuildCliArguments(arguments_: readonly string[]): {
-  readonly mode: "anchor-seal" | "build";
-  readonly configPath: string;
-  readonly artifactRoot: string;
-} {
-  const mode = arguments_[0];
-  const configPath = arguments_[2];
-  const artifactRoot = arguments_[4];
-  if (
-    arguments_.length !== 5
-    || (mode !== "--anchor-seal" && mode !== "--build")
-    || arguments_[1] !== "--config"
-    || arguments_[3] !== "--artifact-root"
-    || configPath === undefined
-    || configPath.trim() === ""
-    || artifactRoot === undefined
-    || artifactRoot.trim() === ""
-  ) {
-    throw new Error(kbEvidenceRoutingBuildUsage);
-  }
-  return Object.freeze({ mode: mode.slice(2) as "anchor-seal" | "build", configPath, artifactRoot });
-}
-
 export async function runKbEvidenceRoutingBuildCli(
   arguments_: readonly string[],
   dependencies: Pick<KbEvidenceRoutingEvaluationBuildDependencies, "runGit"> = {},
@@ -2518,7 +2494,7 @@ export async function runKbEvidenceRoutingBuildCli(
 
 if (import.meta.main) {
   const arguments_ = process.argv.slice(2);
-  if (arguments_.length === 1 && (arguments_[0] === "--help" || arguments_[0] === "-h")) {
+  if (isEvaluationBuilderHelp(arguments_)) {
     console.log(kbEvidenceRoutingBuildUsage);
   } else {
     await runKbEvidenceRoutingBuildCli(arguments_);

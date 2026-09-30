@@ -2,7 +2,7 @@
 import {
   acquireArchiveTodaySnapshot,
   discoverArchiveTodaySnapshot
-} from "./index-hxyjer3x.js";
+} from "./index-hacpnaew.js";
 import {
   canonicalizeUrl,
   chooseBestExtraction,
@@ -18,7 +18,7 @@ import {
   inspectClipEnvironment,
   renderAdapterCapabilities,
   renderDoctorReport
-} from "./index-nwrehke7.js";
+} from "./index-nd8v7r0z.js";
 import {
   cloneBrowserProfile
 } from "./index-5n05se68.js";
@@ -34,7 +34,7 @@ import {
   renderCookiePermissionNotice,
   renderCookiePermissionRecovery,
   setCookiePermissionReporter
-} from "./index-xwxy71ew.js";
+} from "./index-ncwzmsge.js";
 import {
   CONTENT_REWRITE_TRUNCATION_WARNING,
   buildClipMarkdown,
@@ -61,22 +61,6 @@ import {
   renderNetscapeCookieJar
 } from "./index-2gv8y733.js";
 import {
-  startNetworkProxy
-} from "./index-w2zc0vwa.js";
-import {
-  FetchFailure,
-  decodeBytes,
-  safeFetch
-} from "./index-e5fbsywq.js";
-import {
-  captureUrl,
-  parseArguments,
-  usage
-} from "./index-byz4kzww.js";
-import {
-  BoundedByteBuffer
-} from "./index-gh719d91.js";
-import {
   abortCaptureBundle,
   beginCaptureBundle,
   commitCaptureBundle,
@@ -85,6 +69,22 @@ import {
   sanitizeArtifactUrl,
   writeCaptureBundle
 } from "./index-mxxxytys.js";
+import {
+  startNetworkProxy
+} from "./index-w2zc0vwa.js";
+import {
+  FetchFailure,
+  decodeBytes,
+  safeFetch
+} from "./index-e5fbsywq.js";
+import {
+  BoundedByteBuffer
+} from "./index-gh719d91.js";
+import {
+  captureUrl,
+  parseArguments,
+  usage
+} from "./index-byz4kzww.js";
 import {
   sanitizeTerminalLine,
   sanitizeTerminalText

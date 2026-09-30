@@ -1,59 +1,23 @@
-/**
- * Command help for the `wordcell` executable: the short bare-invocation
- * screen, grouped root help, `help advanced`, and one help page per command.
- * The command table is the single public command inventory; the package
- * contract test and the parse-error renderer both read it.
- */
-
-export type HelpGroup =
-  | "start"
-  | "notes"
-  | "search"
-  | "capture"
-  | "publish"
-  | "agents"
-  | "diagnostics"
-  | "advanced";
-
-export type HelpOption = readonly [spelling: string, description: string];
-
-export type CommandHelp = {
-  /** Command words after `wordcell`, such as `note create`. */
-  readonly id: string;
-  /** Short form for the grouped list, such as `note create <id>`. */
-  readonly label: string;
-  readonly usage: string;
-  readonly summary: string;
-  readonly group: HelpGroup;
-  readonly options: readonly HelpOption[];
-  readonly examples: readonly string[];
-  /** Extra plain-language lines shown after the summary. */
-  readonly notes?: readonly string[];
-  /** Hide from the grouped root list (still listed in its family help). */
-  readonly unlisted?: true;
-  /** A help page for a command family, such as `relation`, not a command. */
-  readonly family?: true;
-};
-
-const ROOT: HelpOption = ["--root <directory>", "Knowledge base folder (default: current directory)"];
-const INDEX: HelpOption = ["--index <path>", "Catalog note to use (default: index.md)"];
-const JSON_OPTION: HelpOption = ["--json", "Print machine-readable output"];
-const REPO: HelpOption = ["--repo <repository>", "Git repository the notes describe"];
-const WHERE: HelpOption = ["--where <path=value>", "Keep notes whose metadata field has this value"];
-const HAS: HelpOption = ["--has <path>", "Keep notes that set this metadata field"];
-const TAG: HelpOption = ["--tag <tag>", "Keep notes with this tag"];
-const SCOPE: HelpOption = ["--scope <repository-path>", "Keep notes about this code path"];
-const DATABASE: HelpOption = ["--database <path>", "Use this search index file"];
-const MODE: HelpOption = [
+// @bun
+// src/cli-help.ts
+var ROOT = ["--root <directory>", "Knowledge base folder (default: current directory)"];
+var INDEX = ["--index <path>", "Catalog note to use (default: index.md)"];
+var JSON_OPTION = ["--json", "Print machine-readable output"];
+var REPO = ["--repo <repository>", "Git repository the notes describe"];
+var WHERE = ["--where <path=value>", "Keep notes whose metadata field has this value"];
+var HAS = ["--has <path>", "Keep notes that set this metadata field"];
+var TAG = ["--tag <tag>", "Keep notes with this tag"];
+var SCOPE = ["--scope <repository-path>", "Keep notes about this code path"];
+var DATABASE = ["--database <path>", "Use this search index file"];
+var MODE = [
   "--mode <hybrid|exact|keyword|semantic>",
-  "Match exact words, the keyword index, meaning, or keywords and meaning together",
+  "Match exact words, the keyword index, meaning, or keywords and meaning together"
 ];
-const RULES: HelpOption = ["--rules <file>", "Apply reviewed search aliases from a JSON file"];
-const PRIORITY: HelpOption = ["--priority", "Order results by the rules file first"];
-const DEPTH: HelpOption = ["--depth <count>", "How many links to follow (1 to 10)"];
-const DIRECTION: HelpOption = ["--direction <in|out|both>", "Follow incoming links, outgoing links, or both"];
-
-export const commandHelp: readonly CommandHelp[] = [
+var RULES = ["--rules <file>", "Apply reviewed search aliases from a JSON file"];
+var PRIORITY = ["--priority", "Order results by the rules file first"];
+var DEPTH = ["--depth <count>", "How many links to follow (1 to 10)"];
+var DIRECTION = ["--direction <in|out|both>", "Follow incoming links, outgoing links, or both"];
+var commandHelp = [
   {
     id: "init",
     label: "init [directory]",
@@ -61,7 +25,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Create a knowledge base folder (default: kb). It never merges into an existing folder.",
     group: "start",
     options: [JSON_OPTION],
-    examples: ["wordcell init kb"],
+    examples: ["wordcell init kb"]
   },
   {
     id: "note create",
@@ -76,11 +40,11 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--body <markdown>", "Note body"],
       ["--body-file <path|->", "Read the body from a file, or from piped input with -"],
       ROOT,
-      JSON_OPTION,
+      JSON_OPTION
     ],
     examples: [
-      'wordcell note create notes/first --title "First note" --body "Keep retries bounded." --root kb',
-    ],
+      'wordcell note create notes/first --title "First note" --body "Keep retries bounded." --root kb'
+    ]
   },
   {
     id: "search",
@@ -90,7 +54,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "start",
     notes: [
       "Exact mode needs no index or model. Keyword, semantic, and hybrid modes",
-      "use the local index from `wordcell index`.",
+      "use the local index from `wordcell index`."
     ],
     options: [
       ROOT,
@@ -115,9 +79,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--rerank <typesafe>", "Rerank results with the hosted TypeSafe service"],
       ["--rerank-limit <2..25>", "How many results the reranker sees"],
       ["--selected-passage", "Add a local source excerpt to each result"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ['wordcell search "retries" --root kb --mode exact', 'wordcell search "retry policy" --root kb --limit 5'],
+    examples: ['wordcell search "retries" --root kb --mode exact', 'wordcell search "retry policy" --root kb --limit 5']
   },
   {
     id: "check",
@@ -130,9 +94,9 @@ export const commandHelp: readonly CommandHelp[] = [
       INDEX,
       ["--no-catalog", "Skip the catalog check"],
       ["--repo <repository>", "Also report notes whose code paths no longer exist"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell check --root kb", "wordcell check --root kb --repo ."],
+    examples: ["wordcell check --root kb", "wordcell check --root kb --repo ."]
   },
   {
     id: "list",
@@ -150,9 +114,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--sort <field>", "Sort by a metadata field, title, path, or link counts"],
       ["--order <asc|desc>", "Sort direction"],
       ["--limit <count>", "Show at most this many notes"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell list --root kb --tag decision", "wordcell list --root kb --where status=active"],
+    examples: ["wordcell list --root kb --tag decision", "wordcell list --root kb --where status=active"]
   },
   {
     id: "links",
@@ -161,7 +125,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Follow links into and out of a note.",
     group: "notes",
     options: [ROOT, INDEX, DIRECTION, DEPTH, ["--limit <count>", "Show at most this many notes"], JSON_OPTION],
-    examples: ["wordcell links notes/first --root kb --direction both --depth 2"],
+    examples: ["wordcell links notes/first --root kb --direction both --depth 2"]
   },
   {
     id: "backlinks",
@@ -170,7 +134,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Show the notes that link to a note.",
     group: "notes",
     options: [ROOT, INDEX, JSON_OPTION],
-    examples: ["wordcell backlinks notes/first --root kb"],
+    examples: ["wordcell backlinks notes/first --root kb"]
   },
   {
     id: "relation",
@@ -181,7 +145,7 @@ export const commandHelp: readonly CommandHelp[] = [
     family: true,
     options: [],
     examples: ["wordcell relation add notes/first supersedes notes/old --root kb"],
-    notes: ["Run `wordcell relation add --help` for each action."],
+    notes: ["Run `wordcell relation add --help` for each action."]
   },
   {
     id: "relation add",
@@ -191,7 +155,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "notes",
     unlisted: true,
     options: [ROOT, ["--expected-revision <sha256:...>", "Only write if the note is still at this revision"], JSON_OPTION],
-    examples: ["wordcell relation add notes/first supersedes notes/old --root kb"],
+    examples: ["wordcell relation add notes/first supersedes notes/old --root kb"]
   },
   {
     id: "relation remove",
@@ -201,7 +165,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "notes",
     unlisted: true,
     options: [ROOT, ["--expected-revision <sha256:...>", "Only write if the note is still at this revision"], JSON_OPTION],
-    examples: ["wordcell relation remove notes/first supersedes notes/old --root kb"],
+    examples: ["wordcell relation remove notes/first supersedes notes/old --root kb"]
   },
   {
     id: "relation list",
@@ -211,7 +175,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "notes",
     unlisted: true,
     options: [ROOT, JSON_OPTION],
-    examples: ["wordcell relation list notes/first --root kb"],
+    examples: ["wordcell relation list notes/first --root kb"]
   },
   {
     id: "refresh",
@@ -220,7 +184,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Update the catalog in index.md. It also reports link problems.",
     group: "notes",
     options: [ROOT, INDEX, JSON_OPTION],
-    examples: ["wordcell refresh --root kb"],
+    examples: ["wordcell refresh --root kb"]
   },
   {
     id: "catalog",
@@ -229,7 +193,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Print a catalog of every note. It writes nothing.",
     group: "notes",
     options: [ROOT, INDEX, JSON_OPTION],
-    examples: ["wordcell catalog --root kb"],
+    examples: ["wordcell catalog --root kb"]
   },
   {
     id: "import supermemory",
@@ -241,9 +205,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ROOT,
       ["--prefix <directory>", "Put every imported note in this folder"],
       ["--dry-run", "Show what would be written without writing"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell import supermemory export.json --root kb --dry-run"],
+    examples: ["wordcell import supermemory export.json --root kb --dry-run"]
   },
   {
     id: "index",
@@ -253,7 +217,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "search",
     notes: ["The first run downloads a local embedding model (about 300 MB) once."],
     options: [ROOT, DATABASE, ["--force", "Rebuild the index from scratch"], JSON_OPTION],
-    examples: ["wordcell index --root kb"],
+    examples: ["wordcell index --root kb"]
   },
   {
     id: "context",
@@ -265,9 +229,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--root <vault>", "Knowledge base folder (default: current directory)"],
       REPO,
       ["--kind <auto|file|directory>", "Treat the path as a file or a folder"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell context src/index.ts --root kb --repo ."],
+    examples: ["wordcell context src/index.ts --root kb --repo ."]
   },
   {
     id: "history",
@@ -280,9 +244,9 @@ export const commandHelp: readonly CommandHelp[] = [
       REPO,
       ["--limit <count>", "Show at most this many commits"],
       ["--cochanged-limit <count>", "Show at most this many files changed alongside"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell history notes/first --root kb --repo ."],
+    examples: ["wordcell history notes/first --root kb --repo ."]
   },
   {
     id: "history search",
@@ -297,9 +261,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--limit <count>", "Show at most this many results"],
       ["--commit-limit <count>", "Read at most this many commits"],
       ["--cochanged-limit <count>", "Show at most this many files changed alongside"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ['wordcell history search "retry" --root kb --repo .'],
+    examples: ['wordcell history search "retry" --root kb --repo .']
   },
   {
     id: "inbox",
@@ -312,9 +276,9 @@ export const commandHelp: readonly CommandHelp[] = [
       INDEX,
       ["--source-prefix <directory>", "Look for sources in this folder (repeatable)"],
       ["--limit <count>", "Show at most this many sources"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell inbox --root kb"],
+    examples: ["wordcell inbox --root kb"]
   },
   {
     id: "clip",
@@ -324,7 +288,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "capture",
     options: [],
     examples: ["wordcell clip https://example.com/article --output kb/articles"],
-    notes: ["Run `wordcell clip --help` for every capture option."],
+    notes: ["Run `wordcell clip --help` for every capture option."]
   },
   {
     id: "inspect",
@@ -333,7 +297,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Preview a capture. It writes no files.",
     group: "capture",
     options: [],
-    examples: ["wordcell inspect https://example.com/article"],
+    examples: ["wordcell inspect https://example.com/article"]
   },
   {
     id: "pdf",
@@ -342,7 +306,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Save a PDF as Markdown. The original file and its images are kept.",
     group: "capture",
     options: [],
-    examples: ["wordcell pdf paper.pdf --output kb/articles"],
+    examples: ["wordcell pdf paper.pdf --output kb/articles"]
   },
   {
     id: "capture",
@@ -353,7 +317,7 @@ export const commandHelp: readonly CommandHelp[] = [
     family: true,
     options: [],
     examples: ["wordcell capture verify kb/articles/example"],
-    notes: ["Run `wordcell capture show --help` for each action. `wordcell capture <url>` is the same as clip."],
+    notes: ["Run `wordcell capture show --help` for each action. `wordcell capture <url>` is the same as clip."]
   },
   {
     id: "capture show",
@@ -365,9 +329,9 @@ export const commandHelp: readonly CommandHelp[] = [
     options: [
       ["--verify-assets", "Also check saved images and files"],
       ["--include-source-html", "Include the original page HTML"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell capture show kb/articles/example"],
+    examples: ["wordcell capture show kb/articles/example"]
   },
   {
     id: "capture verify",
@@ -377,7 +341,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "capture",
     unlisted: true,
     options: [["--verify-assets", "Also check saved images and files"], JSON_OPTION],
-    examples: ["wordcell capture verify kb/articles/example --verify-assets"],
+    examples: ["wordcell capture verify kb/articles/example --verify-assets"]
   },
   {
     id: "capture diff",
@@ -387,7 +351,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "capture",
     unlisted: true,
     options: [REPO, ["--ref <ref>", "Git version to compare with (default: HEAD)"], JSON_OPTION],
-    examples: ["wordcell capture diff kb/articles/example --repo . --ref main"],
+    examples: ["wordcell capture diff kb/articles/example --repo . --ref main"]
   },
   {
     id: "publish",
@@ -420,9 +384,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--dry-run", "Show what would be published without writing"],
       ["--list-limit <0-1000>", "How many paths to list in the report"],
       ["--force", "Replace an existing output folder"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell publish --root kb --out site", "wordcell publish --root kb --out site --tag public"],
+    examples: ["wordcell publish --root kb --out site", "wordcell publish --root kb --out site --tag public"]
   },
   {
     id: "serve",
@@ -434,9 +398,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--root <directory>", "Published site folder (required)"],
       ["--host <host>", "Address to listen on (default: 127.0.0.1)"],
       ["--port <port>", "Port to listen on"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell serve --root site --port 8080"],
+    examples: ["wordcell serve --root site --port 8080"]
   },
   {
     id: "mcp",
@@ -448,9 +412,9 @@ export const commandHelp: readonly CommandHelp[] = [
     options: [
       ["--root <vault>", "Knowledge base folder (required)"],
       REPO,
-      ["--read-only", "Offer only the read tools"],
+      ["--read-only", "Offer only the read tools"]
     ],
-    examples: ["wordcell mcp --root /absolute/path/to/kb --read-only"],
+    examples: ["wordcell mcp --root /absolute/path/to/kb --read-only"]
   },
   {
     id: "agents",
@@ -462,7 +426,7 @@ export const commandHelp: readonly CommandHelp[] = [
     unlisted: true,
     options: [],
     examples: ["wordcell agents check --root kb --repo ."],
-    notes: ["Run `wordcell agents check --help` for each action."],
+    notes: ["Run `wordcell agents check --help` for each action."]
   },
   {
     id: "agents check",
@@ -471,7 +435,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Check AGENTS.md context notes against the code.",
     group: "agents",
     options: [["--root <vault>", "Knowledge base folder"], REPO, JSON_OPTION],
-    examples: ["wordcell agents check --root kb --repo ."],
+    examples: ["wordcell agents check --root kb --repo ."]
   },
   {
     id: "agents audit",
@@ -480,7 +444,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Find long or repeated AGENTS.md rules. It runs agents check first.",
     group: "agents",
     options: [["--root <vault>", "Knowledge base folder"], REPO, JSON_OPTION],
-    examples: ["wordcell agents audit --root kb --repo ."],
+    examples: ["wordcell agents audit --root kb --repo ."]
   },
   {
     id: "doctor",
@@ -489,7 +453,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Check optional tools for capture and search. It changes nothing.",
     group: "diagnostics",
     options: [JSON_OPTION],
-    examples: ["wordcell doctor"],
+    examples: ["wordcell doctor"]
   },
   {
     id: "adapters",
@@ -498,7 +462,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "List the sites and platforms clip supports.",
     group: "diagnostics",
     options: [JSON_OPTION],
-    examples: ["wordcell adapters"],
+    examples: ["wordcell adapters"]
   },
   {
     id: "graph",
@@ -508,7 +472,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "diagnostics",
     notes: ["See `wordcell help advanced` for graph rebuild, verify, and query."],
     options: [ROOT, INDEX, JSON_OPTION],
-    examples: ["wordcell graph --root kb"],
+    examples: ["wordcell graph --root kb"]
   },
   {
     id: "agents identity",
@@ -517,7 +481,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Print the context note name and marker for a code folder, without writing.",
     group: "advanced",
     options: [JSON_OPTION],
-    examples: ["wordcell agents identity packages/parser"],
+    examples: ["wordcell agents identity packages/parser"]
   },
   {
     id: "graph rebuild",
@@ -526,7 +490,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Rebuild the local graph cache from the Markdown files.",
     group: "advanced",
     options: [["--fresh", "Discard the old cache first"], ROOT, INDEX, JSON_OPTION],
-    examples: ["wordcell graph rebuild --root kb"],
+    examples: ["wordcell graph rebuild --root kb"]
   },
   {
     id: "graph verify",
@@ -535,7 +499,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Check that the local graph cache matches the Markdown files.",
     group: "advanced",
     options: [ROOT, INDEX, JSON_OPTION],
-    examples: ["wordcell graph verify --root kb"],
+    examples: ["wordcell graph verify --root kb"]
   },
   {
     id: "graph query",
@@ -553,9 +517,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--persisted", "Read the saved graph cache"],
       ROOT,
       INDEX,
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell graph query --program backlinks --note notes/first --root kb"],
+    examples: ["wordcell graph query --program backlinks --note notes/first --root kb"]
   },
   {
     id: "percolate",
@@ -568,9 +532,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--min-support <count>", "Require this many supporting notes"],
       ["--limit <count>", "Show at most this many suggestions"],
       ROOT,
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell percolate --root kb"],
+    examples: ["wordcell percolate --root kb"]
   },
   {
     id: "portfolio search",
@@ -588,9 +552,9 @@ export const commandHelp: readonly CommandHelp[] = [
       PRIORITY,
       ["--limit <count>", "Show at most this many results"],
       ["--require-all", "Fail when any selected knowledge base is missing"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ['wordcell portfolio search "retries" --registry kb-portfolio.json --workspace .. --shared'],
+    examples: ['wordcell portfolio search "retries" --registry kb-portfolio.json --workspace .. --shared']
   },
   {
     id: "portfolio audit",
@@ -605,9 +569,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--shared", "Audit every shared entry"],
       ["--vault <owner/id>", "Audit this entry (repeatable)"],
       ["--strict", "Fail on warnings"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell portfolio audit --registry kb-portfolio.json --workspace .. --all"],
+    examples: ["wordcell portfolio audit --registry kb-portfolio.json --workspace .. --all"]
   },
   {
     id: "evaluate",
@@ -627,9 +591,9 @@ export const commandHelp: readonly CommandHelp[] = [
       ["--baseline <id>", "Compare every method with this one"],
       ["--model-file <path>", "Record the embedding model file used"],
       ["--cache-state <cold|mixed|warm>", "Record how warm the caches were"],
-      JSON_OPTION,
+      JSON_OPTION
     ],
-    examples: ["wordcell evaluate eval/manifest.json --root kb --repo ."],
+    examples: ["wordcell evaluate eval/manifest.json --root kb --repo ."]
   },
   {
     id: "url-metadata tool",
@@ -638,7 +602,7 @@ export const commandHelp: readonly CommandHelp[] = [
     summary: "Build or check the helper that looks up metadata for saved links. Needs Rust.",
     group: "advanced",
     options: [],
-    examples: ["wordcell url-metadata tool build"],
+    examples: ["wordcell url-metadata tool build"]
   },
   {
     id: "url-metadata backfill",
@@ -648,7 +612,7 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "advanced",
     options: [],
     examples: ["wordcell url-metadata backfill --root kb"],
-    notes: ["Run `wordcell url-metadata --help` for every option."],
+    notes: ["Run `wordcell url-metadata --help` for every option."]
   },
   {
     id: "update",
@@ -658,9 +622,11 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "advanced",
     options: [JSON_OPTION, ["--check", "Check the latest release without installing"]],
     examples: ["wordcell update status", "wordcell update disable"],
-    notes: ["Supported global installs on macOS and Linux update daily before work.",
+    notes: [
+      "Supported global installs on macOS and Linux update daily before work.",
       "Set HRANESS_NO_UPDATE=1 to skip automatic checks for one invocation.",
-      "Active commands prevent replacement. SDK imports never check for updates."],
+      "Active commands prevent replacement. SDK imports never check for updates."
+    ]
   },
   {
     id: "support",
@@ -670,41 +636,31 @@ export const commandHelp: readonly CommandHelp[] = [
     group: "advanced",
     notes: ["Set HRANESS_SUPPORT=off to turn off support invitations."],
     options: [JSON_OPTION],
-    examples: ["wordcell support status"],
-  },
+    examples: ["wordcell support status"]
+  }
 ];
-
-/** Alternative first words that reach the same help page. */
-const COMMAND_ALIASES: Readonly<Record<string, string>> = {
+var COMMAND_ALIASES = {
   notes: "list",
-  "source-inbox": "inbox",
+  "source-inbox": "inbox"
 };
-
-
-
-const byId = new Map(commandHelp.map((entry) => [entry.id, entry]));
-
-const GROUP_TITLES: readonly (readonly [HelpGroup, string])[] = [
+var byId = new Map(commandHelp.map((entry) => [entry.id, entry]));
+var GROUP_TITLES = [
   ["start", "Start here"],
   ["notes", "Notes and links"],
   ["search", "Search"],
   ["capture", "Capture"],
   ["publish", "Publish and serve"],
   ["agents", "Agents"],
-  ["diagnostics", "Diagnostics"],
+  ["diagnostics", "Diagnostics"]
 ];
-
-export const DESCRIPTION = [
+var DESCRIPTION = [
   "Wordcell keeps decisions, plans, and sources as Markdown beside your code,",
-  "so coding agents can find them from the file they are about to change.",
+  "so coding agents can find them from the file they are about to change."
 ];
-
-const LABEL_WIDTH = 28;
-
-const MAX_COLUMNS = 80;
-
-function wrapWords(text: string, width: number): string[] {
-  const lines: string[] = [];
+var LABEL_WIDTH = 28;
+var MAX_COLUMNS = 80;
+function wrapWords(text, width) {
+  const lines = [];
   let current = "";
   for (const word of text.split(" ")) {
     if (current !== "" && current.length + 1 + word.length > width) {
@@ -714,37 +670,31 @@ function wrapWords(text: string, width: number): string[] {
       current = current === "" ? word : `${current} ${word}`;
     }
   }
-  if (current !== "") lines.push(current);
+  if (current !== "")
+    lines.push(current);
   return lines;
 }
-
-/** A two-column row that wraps the summary so no line passes 80 columns. */
-function row(label: string, summary: string, indent = "  ", width = LABEL_WIDTH): string {
+function row(label, summary, indent = "  ", width = LABEL_WIDTH) {
   const column = indent.length + width;
   const padded = `${indent}${label}`;
   const summaryLines = wrapWords(summary, Math.max(20, MAX_COLUMNS - column));
   const continuation = summaryLines.slice(1).map((line) => `${" ".repeat(column)}${line}`);
-  if (label === "") return [`${" ".repeat(column)}${summaryLines[0] ?? ""}`, ...continuation].join("\n");
-  const head = padded.length < column
-    ? [`${padded.padEnd(column)}${summaryLines[0] ?? ""}`]
-    : [padded, `${" ".repeat(column)}${summaryLines[0] ?? ""}`];
-  return [...head, ...continuation].join("\n");
+  if (label === "")
+    return [`${" ".repeat(column)}${summaryLines[0] ?? ""}`, ...continuation].join(`
+`);
+  const head = padded.length < column ? [`${padded.padEnd(column)}${summaryLines[0] ?? ""}`] : [padded, `${" ".repeat(column)}${summaryLines[0] ?? ""}`];
+  return [...head, ...continuation].join(`
+`);
 }
-
-function firstSentence(summary: string): string {
+function firstSentence(summary) {
   const end = summary.search(/\.(\s|$)/u);
   return end === -1 ? summary : summary.slice(0, end);
 }
-
-function listGroup(group: HelpGroup): string[] {
-  return commandHelp
-    .filter((entry) => entry.group === group && entry.unlisted !== true)
-    .map((entry) => row(entry.label, firstSentence(entry.summary)));
+function listGroup(group) {
+  return commandHelp.filter((entry) => entry.group === group && entry.unlisted !== true).map((entry) => row(entry.label, firstSentence(entry.summary)));
 }
-
-/** Bare `wordcell`: what it is and the first commands to run, in at most 25 lines. */
-export function startHelp(version: string | undefined): string {
-  const start = (command: string, summary: string): string => row(command, summary, "  ", 40);
+function startHelp(version) {
+  const start = (command, summary) => row(command, summary, "  ", 40);
   const lines = [
     ...DESCRIPTION,
     "",
@@ -759,34 +709,25 @@ export function startHelp(version: string | undefined): string {
     start("wordcell context <path> --root kb", "Find notes about a code path"),
     start("wordcell index --root kb", "Turn on meaning-based search"),
     "",
-    "All commands: wordcell --help · Command help: wordcell help <command>",
+    "All commands: wordcell --help \xB7 Command help: wordcell help <command>"
   ];
-  if (version !== undefined) lines.push(`wordcell ${version}`);
-  return `${lines.join("\n")}\n`;
+  if (version !== undefined)
+    lines.push(`wordcell ${version}`);
+  return `${lines.join(`
+`)}
+`;
 }
-
-/** `wordcell --help`: every everyday command, grouped, in at most 60 lines. */
-export function rootHelp(): string {
+function rootHelp() {
   const lines = ["Usage: wordcell <command> [options]", "", ...DESCRIPTION];
   for (const [group, title] of GROUP_TITLES) {
     lines.push("", title, ...listGroup(group));
   }
-  lines.push(
-    "",
-    "Options",
-    row("-h, --help", "Show help. Also: wordcell help <command>", "  ", 22),
-    row("-V, --version", "Print the version", "  ", 22),
-    row("--root <directory>", "Knowledge base folder (default: current directory)", "  ", 22),
-    row("--json", "Print machine-readable output", "  ", 22),
-    "",
-    "More commands: wordcell help advanced · Docs: https://wordcell.io/docs",
-    "Optional support: wordcell support · Turn off: HRANESS_SUPPORT=off",
-  );
-  return `${lines.join("\n")}\n`;
+  lines.push("", "Options", row("-h, --help", "Show help. Also: wordcell help <command>", "  ", 22), row("-V, --version", "Print the version", "  ", 22), row("--root <directory>", "Knowledge base folder (default: current directory)", "  ", 22), row("--json", "Print machine-readable output", "  ", 22), "", "More commands: wordcell help advanced \xB7 Docs: https://wordcell.io/docs", "Optional support: wordcell support \xB7 Turn off: HRANESS_SUPPORT=off");
+  return `${lines.join(`
+`)}
+`;
 }
-
-/** `wordcell help advanced`: maintainer, evaluation, and multi-vault commands. */
-export function advancedHelp(): string {
+function advancedHelp() {
   const lines = [
     "Usage: wordcell <command> [options]",
     "",
@@ -794,17 +735,19 @@ export function advancedHelp(): string {
     "",
     ...listGroup("advanced"),
     "",
-    "Command help: wordcell help <command> · Everyday commands: wordcell --help",
+    "Command help: wordcell help <command> \xB7 Everyday commands: wordcell --help"
   ];
-  return `${lines.join("\n")}\n`;
+  return `${lines.join(`
+`)}
+`;
 }
-
-/** Per-command help page, or undefined for an unknown command. */
-export function commandHelpText(id: string): string | undefined {
+function commandHelpText(id) {
   const entry = byId.get(id);
-  if (entry === undefined) return undefined;
+  if (entry === undefined)
+    return;
   const lines = [`Usage: ${entry.usage}`, "", ...wrapWords(entry.summary, MAX_COLUMNS)];
-  if (entry.notes !== undefined) lines.push(...entry.notes);
+  if (entry.notes !== undefined)
+    lines.push(...entry.notes);
   const family = commandHelp.filter((candidate) => candidate.id.startsWith(`${entry.id} `));
   if (family.length > 0) {
     lines.push("", "Commands", ...family.map((candidate) => row(`${candidate.label}`, firstSentence(candidate.summary))));
@@ -816,66 +759,65 @@ export function commandHelpText(id: string): string | undefined {
   if (entry.examples.length > 0) {
     lines.push("", entry.examples.length === 1 ? "Example" : "Examples", ...entry.examples.map((example) => `  ${example}`));
   }
-  return `${lines.join("\n")}\n`;
+  return `${lines.join(`
+`)}
+`;
 }
-
-function canonicalFirstWord(word: string): string {
+function canonicalFirstWord(word) {
   return COMMAND_ALIASES[word] ?? word;
 }
-
-/**
- * The help id for command words, preferring the two-word form
- * (`note create`) over the family (`note`). Returns undefined when the words
- * name no command.
- */
-export function resolveCommandId(words: readonly string[]): string | undefined {
+function resolveCommandId(words) {
   const first = words[0];
-  if (first === undefined) return undefined;
+  if (first === undefined)
+    return;
   const head = canonicalFirstWord(first);
   const second = words[1];
-  if (second !== undefined && byId.has(`${head} ${second}`)) return `${head} ${second}`;
-  if (byId.has(head)) return head;
-  if (head === "note") return "note create";
-  if (head === "import") return "import supermemory";
-  if (head === "portfolio") return "portfolio search";
-  if (head === "url-metadata") return "url-metadata backfill";
-  return undefined;
+  if (second !== undefined && byId.has(`${head} ${second}`))
+    return `${head} ${second}`;
+  if (byId.has(head))
+    return head;
+  if (head === "note")
+    return "note create";
+  if (head === "import")
+    return "import supermemory";
+  if (head === "portfolio")
+    return "portfolio search";
+  if (head === "url-metadata")
+    return "url-metadata backfill";
+  return;
 }
-
-/** Number of command words `resolveCommandId` consumed. */
-export function commandWordCount(id: string): number {
+function commandWordCount(id) {
   return id.split(" ").length;
 }
-
-export function knownCommandWords(): readonly string[] {
-  const words = new Set<string>();
-  for (const entry of commandHelp) words.add(entry.id.split(" ")[0] ?? entry.id);
-  for (const alias of Object.keys(COMMAND_ALIASES)) words.add(alias);
-  for (const word of ["help", "version", "note", "import", "portfolio", "url-metadata"]) words.add(word);
+function knownCommandWords() {
+  const words = new Set;
+  for (const entry of commandHelp)
+    words.add(entry.id.split(" ")[0] ?? entry.id);
+  for (const alias of Object.keys(COMMAND_ALIASES))
+    words.add(alias);
+  for (const word of ["help", "version", "note", "import", "portfolio", "url-metadata"])
+    words.add(word);
   return [...words].toSorted();
 }
-
-/** Options with a `<value>` in their spelling take the next argument. */
-export function valueOptions(id: string): ReadonlySet<string> {
+function valueOptions(id) {
   const entry = byId.get(id);
-  const names = new Set<string>();
+  const names = new Set;
   for (const [spelling] of entry?.options ?? []) {
-    if (spelling.includes("<")) names.add(spelling.split(" ")[0] ?? spelling);
+    if (spelling.includes("<"))
+      names.add(spelling.split(" ")[0] ?? spelling);
   }
   return names;
 }
-
-export function optionNames(id: string): readonly string[] {
+function optionNames(id) {
   const entry = byId.get(id);
   return (entry?.options ?? []).map(([spelling]) => spelling.split(" ")[0] ?? spelling);
 }
-
-function editDistance(left: string, right: string): number {
+function editDistance(left, right) {
   const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
-  for (let row_ = 1; row_ <= left.length; row_ += 1) {
+  for (let row_ = 1;row_ <= left.length; row_ += 1) {
     let diagonal = previous[0] ?? 0;
     previous[0] = row_;
-    for (let column = 1; column <= right.length; column += 1) {
+    for (let column = 1;column <= right.length; column += 1) {
       const above = previous[column] ?? 0;
       const cost = left[row_ - 1] === right[column - 1] ? 0 : 1;
       previous[column] = Math.min(above + 1, (previous[column - 1] ?? 0) + 1, diagonal + cost);
@@ -884,11 +826,9 @@ function editDistance(left: string, right: string): number {
   }
   return previous[right.length] ?? Number.MAX_SAFE_INTEGER;
 }
-
-/** Closest candidate close enough to be a likely typo, for "Did you mean" hints. */
-export function closestMatch(input: string, candidates: readonly string[]): string | undefined {
+function closestMatch(input, candidates) {
   const letters = input.replace(/^-+/u, "").length;
-  let best: string | undefined;
+  let best;
   let bestDistance = Math.max(1, Math.floor(letters / 3)) + 1;
   for (const candidate of candidates) {
     const distance = editDistance(input, candidate);
@@ -900,7 +840,70 @@ export function closestMatch(input: string, candidates: readonly string[]): stri
   return best;
 }
 
-/** Every command id, for inventory checks. */
-export function commandIds(): readonly string[] {
-  return commandHelp.filter((entry) => entry.family !== true).map(({ id }) => id).toSorted();
+// src/cli-startup.ts
+function isHelpFlag(argument) {
+  return argument === "--help" || argument === "-h";
 }
+function delegatedHelp(first) {
+  if (first === "clip" || first === "inspect")
+    return { kind: "clip", arguments: ["help"] };
+  if (first === "pdf")
+    return { kind: "pdf", arguments: ["--help"] };
+  if (first === "url-metadata")
+    return { kind: "url-metadata", arguments: ["--help"] };
+  return;
+}
+function parseHelpTopic(words) {
+  const topic = words.filter((word) => !isHelpFlag(word) && word !== "--json");
+  if (topic.length === 0)
+    return { ok: true, value: { kind: "help" } };
+  if (topic.length === 1 && topic[0] === "advanced")
+    return { ok: true, value: { kind: "help", topic: "advanced" } };
+  const delegated = delegatedHelp(topic[0] ?? "");
+  if (delegated !== undefined)
+    return { ok: true, value: delegated };
+  const id = resolveCommandId(topic);
+  if (id === undefined)
+    return { ok: false, message: "unknown help topic" };
+  return { ok: true, value: { kind: "help", topic: id } };
+}
+function embeddedHelp(arguments_) {
+  const separator = arguments_.indexOf("--");
+  const end = separator === -1 ? arguments_.length : separator;
+  const index = arguments_.slice(0, end).findIndex(isHelpFlag);
+  if (index <= 0)
+    return;
+  const delegated = delegatedHelp(arguments_[0] ?? "");
+  if (delegated !== undefined) {
+    return index === 1 || index === end - 1 ? { ok: true, value: delegated } : undefined;
+  }
+  const id = resolveCommandId(arguments_.slice(0, index).filter((word) => !word.startsWith("-")));
+  if (id === undefined)
+    return;
+  const words = commandWordCount(id);
+  const previous = arguments_[index - 1] ?? "";
+  const flag = arguments_[index];
+  const lastArgument = index === end - 1 && (flag === "--help" || !valueOptions(id).has(previous));
+  if (index !== words && !lastArgument)
+    return;
+  return { ok: true, value: { kind: "help", topic: id } };
+}
+function parseCliStartupCommand(arguments_) {
+  const command = arguments_[0];
+  if (command === undefined)
+    return { ok: true, value: { kind: "help", topic: "start" } };
+  if (command === "help" || isHelpFlag(command))
+    return parseHelpTopic(arguments_.slice(1));
+  if (command === "--version" || command === "-V" || command === "-v" || command === "version") {
+    return { ok: true, value: { kind: "version", json: arguments_.includes("--json") } };
+  }
+  const help = embeddedHelp(arguments_);
+  if (help !== undefined)
+    return help;
+  if ((command === "clip" || command === "capture" || command === "inspect") && ["--help", "-h", "help"].includes(arguments_[1] ?? "")) {
+    return { ok: true, value: { kind: "clip", arguments: ["help"] } };
+  }
+  return;
+}
+
+export { startHelp, rootHelp, advancedHelp, commandHelpText, resolveCommandId, knownCommandWords, optionNames, closestMatch, parseCliStartupCommand };

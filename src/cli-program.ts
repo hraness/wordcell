@@ -1,15 +1,14 @@
+import { parseCliStartupCommand } from "./cli-startup.js";
 import { terminalIntro } from "./cli-intro.js";
 import {
   advancedHelp,
   closestMatch,
   commandHelpText,
-  commandWordCount,
   knownCommandWords,
   optionNames,
   resolveCommandId,
   rootHelp,
   startHelp,
-  valueOptions,
 } from "./cli-help.js";
 import { detectAudience, renderFailure, sentence, symbol, terminalOutput, terminalStyle, type TerminalEnvironment } from "./cli-style.js";
 import { open, realpath, stat } from "node:fs/promises";
@@ -2280,10 +2279,6 @@ function parsePortfolioCommand(arguments_: readonly string[]): ParseResult {
   };
 }
 
-function isHelpFlag(argument: string | undefined): boolean {
-  return argument === "--help" || argument === "-h";
-}
-
 /** True for the help request a delegated parser answers itself. */
 function isDelegatedHelp(command: ParsedCommand): boolean {
   if (command.kind === "clip") return command.arguments.length === 1 && command.arguments[0] === "help";
@@ -2293,59 +2288,10 @@ function isDelegatedHelp(command: ParsedCommand): boolean {
   return false;
 }
 
-/** Help for delegated commands comes from their own parsers. */
-function delegatedHelp(first: string): ParsedCommand | undefined {
-  if (first === "clip" || first === "inspect") return { kind: "clip", arguments: ["help"] };
-  if (first === "pdf") return { kind: "pdf", arguments: ["--help"] };
-  if (first === "url-metadata") return { kind: "url-metadata", arguments: ["--help"] };
-  return undefined;
-}
-
-/** `help`, `help advanced`, and `help <command...>`. */
-function parseHelpTopic(words: readonly string[]): ParseResult {
-  const topic = words.filter((word) => !isHelpFlag(word) && word !== "--json");
-  if (topic.length === 0) return { ok: true, value: { kind: "help" } };
-  if (topic.length === 1 && topic[0] === "advanced") return { ok: true, value: { kind: "help", topic: "advanced" } };
-  const delegated = delegatedHelp(topic[0] ?? "");
-  if (delegated !== undefined) return { ok: true, value: delegated };
-  const id = resolveCommandId(topic);
-  if (id === undefined) return { ok: false, message: "unknown help topic" };
-  return { ok: true, value: { kind: "help", topic: id } };
-}
-
-/**
- * `<command> --help` anywhere a person would type it: right after the command
- * words, or as the last argument when it is not the value of an option.
- */
-function embeddedHelp(arguments_: readonly string[]): ParseResult | undefined {
-  const separator = arguments_.indexOf("--");
-  const end = separator === -1 ? arguments_.length : separator;
-  const index = arguments_.slice(0, end).findIndex(isHelpFlag);
-  if (index <= 0) return undefined;
-  const delegated = delegatedHelp(arguments_[0] ?? "");
-  if (delegated !== undefined) {
-    return index === 1 || index === end - 1 ? { ok: true, value: delegated } : undefined;
-  }
-  const id = resolveCommandId(arguments_.slice(0, index).filter((word) => !word.startsWith("-")));
-  if (id === undefined) return undefined;
-  const words = commandWordCount(id);
-  const previous = arguments_[index - 1] ?? "";
-  // `--help` is never an option value; `-h` could be one, as in `--body -h`.
-  const flag = arguments_[index];
-  const lastArgument = index === end - 1 && (flag === "--help" || !valueOptions(id).has(previous));
-  if (index !== words && !lastArgument) return undefined;
-  return { ok: true, value: { kind: "help", topic: id } };
-}
-
 export function parseArguments(arguments_: readonly string[]): ParseResult {
+  const startup = parseCliStartupCommand(arguments_);
+  if (startup !== undefined) return startup;
   const command = arguments_[0];
-  if (command === undefined) return { ok: true, value: { kind: "help", topic: "start" } };
-  if (command === "help" || isHelpFlag(command)) return parseHelpTopic(arguments_.slice(1));
-  if (command === "--version" || command === "-V" || command === "-v" || command === "version") {
-    return { ok: true, value: { kind: "version", json: arguments_.includes("--json") } };
-  }
-  const help = embeddedHelp(arguments_);
-  if (help !== undefined) return help;
   if (command === "capture" && arguments_[1] === "diff") {
     return parseCaptureDiffCommand(arguments_.slice(2));
   }

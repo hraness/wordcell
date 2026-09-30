@@ -13,13 +13,8 @@ import {
   createUntrustedToolResult
 } from "./index-4j3tt0c3.js";
 import {
-  MAX_RERANK_CANDIDATES,
-  MAX_RERANK_SNIPPET_BYTES,
-  applyRerank
-} from "./index-j70m75wd.js";
-import {
   percolateWithGraph
-} from "./index-e26mdwxz.js";
+} from "./index-wqx1x32f.js";
 import {
   openGraphAuthority
 } from "./index-3gc2yk4k.js";
@@ -27,6 +22,11 @@ import {
   validateGraphPercolationOptions,
   validateGraphQueryRequest
 } from "./index-pgtm2nhf.js";
+import {
+  MAX_RERANK_CANDIDATES,
+  MAX_RERANK_SNIPPET_BYTES,
+  applyRerank
+} from "./index-j70m75wd.js";
 import {
   GitHistoryError,
   gitHistoryForNotes,

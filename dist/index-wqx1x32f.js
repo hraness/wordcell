@@ -1,8 +1,5 @@
 // @bun
 import {
-  percolateVault
-} from "./index-bdwcjvr4.js";
-import {
   createGraphSnapshot,
   openGraphAuthority
 } from "./index-3gc2yk4k.js";
@@ -10,6 +7,9 @@ import {
   GraphAuthorityError,
   validateGraphPercolationOptions
 } from "./index-pgtm2nhf.js";
+import {
+  percolateVault
+} from "./index-bdwcjvr4.js";
 import {
   analyzeVault,
   lookupNote,

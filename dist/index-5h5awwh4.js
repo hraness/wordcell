@@ -5,15 +5,15 @@ import {
   parseArchiveTodayMementoUrl,
   parseMetadataSearchResponse,
   rankMetadataSearchResults
-} from "./index-hxyjer3x.js";
+} from "./index-hacpnaew.js";
+import {
+  sanitizeArtifactUrl
+} from "./index-mxxxytys.js";
 import {
   assertSafeNetworkUrl,
   isPrivateHostname,
   resolveSafeNetworkTarget
 } from "./index-e5fbsywq.js";
-import {
-  sanitizeArtifactUrl
-} from "./index-mxxxytys.js";
 import {
   syncsDirectories
 } from "./index-qkesh4c6.js";
