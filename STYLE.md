@@ -115,10 +115,11 @@ Most Hraness copy is drafted by agents working inside repository guides full of 
 - Make each section answer the next question a visitor is likely to have. Remove a section when it repeats the introduction or explains internal work without helping that decision.
 - Use a preview to show a recognizable task and a useful result. A CLI help dump, test log, checksum, or release-verification link does not show a product's value unless that is the product's actual task. Omit a preview that adds no useful example.
 - Keep release inspection, protocol contracts, configuration details, and maintainer evidence in the install guide or reference. Label links by what readers can do there, such as “Get started” or “See an example”.
-- Keep examples truthful. Label illustrations as examples, and never present invented output, timings, customer data, or completion claims as a recorded run.
+- Keep examples truthful. Use accurate accessible descriptions and recognizable sample content. Never present invented output, timings, customer data, or completion claims as a recorded run.
 - Render code and executable commands with the shared syntax highlighter and the correct language. Do not bypass it with a bare code block or manually colored text. Keep natural-language prompts and non-code output readable as text.
 - Use the shared terminal frame for shell commands and terminal interactions. Use a code block for source files and structured data; do not dress ordinary prose in terminal chrome. Apply the same treatment to equivalent examples across sites.
 - Copy controls copy executable input without shell prompts or displayed output. Preserve complete commands, keyboard access, readable colors in both themes, and horizontal scrolling for long lines on narrow screens.
+- Use shared foreground and surface pairs for interactive controls. Control text and glyphs must reach at least 4.5:1 contrast in both themes, including selected, hover, and focus states. Never assume white is readable on a brand accent.
 - Review the page as a new visitor at desktop and phone widths. Confirm that the headline, example, and next action make sense before reading the documentation, and that essential limits appear beside the claims they qualify.
 
 ## State each limit once
@@ -173,7 +174,9 @@ Readers trust a page that states its limits plainly. They skim a page that repea
 ## Write captions, alt text, and credits
 
 - Write alt text for what the image shows in its context. Do not repeat the headline or start with “Image of”.
-- Use a caption to connect the image to the text. Do not explain what the image is not, and do not end on an epigram.
+- Make visible captions optional. Add one only when it helps the reader understand a result, use a control, or make a decision. Remove generic “Illustration” labels, invented-fixture notices, and hints that repeat an obvious label.
+- Keep accessible descriptions accurate and specific to the rendered state. Use “example” when that distinction matters; it does not require a visible disclaimer.
+- Preserve meaningful evidence captions, legal notices, and actual feature limits. State each once beside the claim it qualifies.
 - Credit tools and models by their current names.
 
 ## Write focused documentation

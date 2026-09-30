@@ -94,11 +94,9 @@ See [the design](design.md) and [agent workflow](agent-workflow.md).
 
 If all you need is local retrieval, standalone QMD may be the shorter path.
 Choose Wordcell when maintaining and reusing the knowledge around retrieval
-matters too. We have not published a head-to-head retrieval-quality or latency
-benchmark. The [measured evidence](evidence.md) compares full-note and
-snippet handoffs within Wordcell, and older snippets with selected passages:
-on eight sealed questions, passages held the labeled answer for six and
-snippets for one.
+matters too. The [SciFact study](reranking.md#evidence-and-limits) compares
+Wordcell exact search with optional Jev reranking on scientific abstracts.
+There is no matched retrieval-quality or latency benchmark against QMD.
 
 ## Consider Basic Memory for an MCP-centered knowledge graph
 
@@ -120,17 +118,18 @@ does not imply identical metadata conventions.
 
 ## Keep Obsidian as an editor
 
-[Obsidian](https://obsidian.md/) is a local note-taking application with linked
-notes and a plugin ecosystem. Wordcell is headless. You can edit an
-Obsidian-compatible Markdown vault in Obsidian while using Wordcell for agent
-queries and repository context; Wordcell does not replace Obsidian's editor.
+[Obsidian](https://help.obsidian.md/data-storage) stores notes as local Markdown
+and picks up changes made by other tools. Use it to write and browse linked
+notes. Its [CLI](https://help.obsidian.md/cli) reads, searches, and creates notes
+through the running desktop app.
 
-[Obsidian Publish](https://obsidian.md/help/publish/publish) lets you select
-content for a hosted site. Its
-[headless publishing commands](https://obsidian.md/help/publish/headless) also
-support automation and require a Publish subscription. Wordcell instead emits
-ordinary static files that you can host with a provider you choose. The hosting
-provider may still charge you.
+Point Wordcell at the same folder to give your coding agent repository context,
+linked decisions, and Git history. [Wordcell and Obsidian](https://wordcell.io/compare/obsidian)
+shows how the workflows fit together.
+
+[Obsidian Publish](https://help.obsidian.md/publish) hosts selected notes through
+an optional subscription. Wordcell emits ordinary static files that you can host
+with a provider you choose. The hosting provider may still charge you.
 
 ## Consider Quartz when the website is the main product
 

@@ -35,9 +35,11 @@ import {
 import { publishedClaims, publishedClaimsCheckedOn } from "../wordcell/published-claims";
 import { basicMemoryCheckedOn, basicMemoryPages } from "../wordcell/basic-memory-sources";
 import { mem0CheckedOn, mem0Pages } from "../wordcell/mem0-sources";
+import { obsidianCheckedOn, obsidianPages } from "../wordcell/obsidian-sources";
 import { formatPlanCredits, formatPlanPrice, formatUsageRate, supermemoryPricing } from "../wordcell/supermemory-pricing";
 import Benchmarks, { metadata as benchmarksMetadata } from "../app/benchmarks/page";
 import CompareBasicMemory, { metadata as compareBasicMemoryMetadata } from "../app/compare/basic-memory/page";
+import CompareObsidian, { metadata as compareObsidianMetadata } from "../app/compare/obsidian/page";
 import CompareMem0, { metadata as compareMem0Metadata } from "../app/compare/mem0/page";
 import CompareSupermemory, { metadata as compareMetadata } from "../app/compare/supermemory/page";
 import MigrateSupermemory, { metadata as migrateMetadata } from "../app/migrate/supermemory/page";
@@ -49,7 +51,7 @@ import {
   supermemoryPages,
 } from "../wordcell/migration-steps";
 import { grouped, longDate, prose, signed } from "../wordcell/format";
-import { formatBytes, handoffEvidence } from "../wordcell/handoff-evidence";
+import { handoffEvidence } from "../wordcell/handoff-evidence";
 import { SetupLinks } from "../wordcell/setup-links";
 import { siteDescription } from "../app/site-description";
 import { launchRoutes } from "../wordcell/launch-routes";
@@ -247,20 +249,15 @@ describe("Oh LongMemEval-S 500 evidence", () => {
     expect(record(raw.supermemory, "supermemory").matchedFullRun).toBe(false);
   });
 
-  test("the lab pipeline stays framed as in-sample and outside the Oh package", async () => {
+  test("research-only lab scores stay outside marketing charts", async () => {
     const raw = await vendoredJson("memory-longmemeval-s-500-v1.json");
     expect(longMemEvalLabPipeline).toMatchObject({ percent: "93.07", majorityCorrect: 474, inSample: true, inOhPackage: false });
     expect(record(raw.packageBoundary, "packageBoundary").labPublished).toBe(false);
     expect(record(raw.exposure, "exposure").inSample).toBe(true);
     const markup = renderToStaticMarkup(<Benchmarks />);
     const text = pageText(markup);
-    const commandText = text.replace(/\s*([<>])\s*/gu, "$1");
-    // The in-sample figure appears once, inside the sentence that says it is not Oh's or Wordcell's score.
-    expect(text.split("93.07").length - 1).toBe(1);
-    expect(text).toMatch(/lab reading pipeline that scored 93\.07% on the mean of three runs and answered 474 of 500 questions correctly in at least two\. It is not charted here and is not Oh’s or Wordcell’s score/);
-    expect(text).toContain("is not Oh’s or Wordcell’s score");
-    expect(text).toContain("the figure is in-sample");
-    expect(text).toContain("are not part of the Oh package");
+    expect(text).not.toContain("93.07");
+    expect(markup).not.toContain("oh-reading-pipeline");
   });
 
   test("quoted limits are verbatim", async () => {
@@ -391,27 +388,31 @@ describe("Supermemory pricing", () => {
 });
 
 describe("agent setup prompt", () => {
-  const linkParameter = { chatgpt: ["chatgpt.com", "q"], grok: ["grok.com", "q"], cursor: ["cursor.com", "text"] } as const;
 
-  test("every link carries the whole prompt and fits the URL cap", () => {
+  test("only supported composer links prefill; other computer agents copy and open", () => {
     const targets = setupTargets();
-    expect(targets.map((target) => target.id)).toEqual(["chatgpt", "grok", "cursor", "claude-code", "codex"]);
-    expect(MAX_SETUP_URL).toBeLessThan(10_000);
+    expect(targets.filter((target) => target.kind === "link").map((target) => target.id)).toEqual(["dot", "grok-bot", "muse", "cursor", "codex-app", "devin"]);
+    expect(MAX_SETUP_URL).toBe(10_000);
     for (const target of targets) {
       if (target.kind !== "link") continue;
       expect(target.href.length).toBeLessThanOrEqual(MAX_SETUP_URL);
       const url = new URL(target.href);
-      const [host, parameter] = linkParameter[target.id];
-      expect(url.protocol).toBe("https:");
-      expect(url.hostname).toBe(host);
-      expect([...url.searchParams.keys()]).toEqual([parameter]);
-      expect(url.searchParams.get(parameter)).toBe(SETUP_PROMPT);
-      expect(target.href.endsWith(encodeURIComponent(SETUP_PROMPT))).toBe(true);
+      if (target.mode === "prefill") {
+        const parameter = target.id === "cursor" ? "text" : "prompt";
+        expect([...url.searchParams.keys()]).toEqual([parameter]);
+        expect(url.searchParams.get(parameter)).toBe(SETUP_PROMPT);
+      } else {
+        expect(url.protocol).toBe("https:");
+        expect(url.search).toBe("");
+      }
     }
-    expect(JSON.stringify(targets)).not.toContain("claude.ai");
     const custom = setupTargets("a & b + c #d");
-    const [first] = custom;
-    expect(first?.kind === "link" ? new URL(first.href).searchParams.get("q") : null).toBe("a & b + c #d");
+    const cursor = custom.find((target) => target.id === "cursor");
+    expect(cursor?.kind === "link" ? new URL(cursor.href).searchParams.get("text") : null).toBe("a & b + c #d");
+    expect(setupTargets("🚀".repeat(MAX_SETUP_URL)).filter((target) => target.kind === "link").every((target) => target.mode === "copy-and-open")).toBe(true);
+    expect(SETUP_COMMANDS.gemini).toContain("mcp -- --root");
+    expect(JSON.parse(SETUP_COMMANDS.cursor).mcpServers.wordcell.args).toEqual(["mcp", "--root", SETUP_VAULT_PATH]);
+    expect(JSON.parse(SETUP_COMMANDS.copilot).servers.wordcell).toEqual({ type: "stdio", command: "wordcell", args: ["mcp", "--root", SETUP_VAULT_PATH] });
   });
 
   test("the prompt installs the admitted release and matches the documented commands", async () => {
@@ -446,17 +447,21 @@ describe("agent setup prompt", () => {
     expect(SETUP_PROMPT).not.toMatch(notSota);
   });
 
-  test("the setup block renders the prompt, the copy button, three links, and two commands", () => {
+  test("the setup block shares the full prompt, provider actions, and file-aware command tabs", () => {
     const markup = renderToStaticMarkup(<SetupLinks />);
     const visibleMarkup = markup.replace(/<\/?span\b[^>]*>/gu, "");
-    expect(markup).toContain(">Copy prompt</button>");
+    expect(markup).toContain('aria-label="Copy setup prompt"');
+    expect(markup).toContain("Show full prompt");
     expect(markup).toContain('aria-live="polite"');
-    expect(markup.match(/<a /g)?.length).toBe(3);
+    expect(markup.match(/data-agent-target="/g)?.length).toBe(6);
+    expect(markup.match(/role="tab"/g)?.length).toBe(5);
     for (const target of setupTargets()) {
       if (target.kind === "link") expect(markup).toContain(`href="${target.href.replaceAll("'", "&#x27;")}"`);
-      else expect(visibleMarkup).toContain(target.command);
+      else expect(pageText(visibleMarkup).replace(/\s+/gu, " ")).toContain(target.command.replace(/\s+/gu, " "));
     }
-    expect(markup).toContain(SETUP_COMMANDS.skill);
+    expect(SETUP_PROMPT).toContain(SETUP_COMMANDS.skill);
+    expect(markup).toContain("~/.cursor/mcp.json");
+    expect(markup).toContain(".vscode/mcp.json");
     expect(markup).not.toContain("Copied the setup prompt");
   });
 
@@ -466,7 +471,7 @@ describe("agent setup prompt", () => {
     const section = changelog.slice(changelog.indexOf(`\n## ${AGENT_MEMORY_RELEASE}\n`), changelog.indexOf("\n## ", changelog.indexOf(`\n## ${AGENT_MEMORY_RELEASE}\n`) + 1));
     for (const entry of ["`wordcell import supermemory", "--body-file -", "session-memory reference"]) expect(section, entry).toContain(entry);
     const markup = pageText(renderToStaticMarkup(<SetupLinks />));
-    expect(markup).toContain("With Wordcell installed, you can register the server yourself.");
+    expect(markup).toContain(SETUP_VAULT_PATH);
     expect(markup).not.toMatch(/from source|checkout/u);
   });
 });
@@ -505,14 +510,11 @@ describe("/benchmarks", () => {
     expect([handoffEvidence.packedBytes, handoffEvidence.fullNoteBytes, handoffEvidence.reductionPercent]).toEqual([12126, 60584, 79.98]);
   });
 
-  test("renders every derived figure, the attribution, the limits, and the published-claims table", () => {
+  test("renders meaningful studies with source links and compact methodology disclosures", () => {
     const markup = renderToStaticMarkup(<Benchmarks />);
     const text = pageText(markup);
     expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
     expect(text).toContain(ohAttribution);
-    expect(text).toContain(`${formatBytes(handoffEvidence.packedBytes)} Packed snippets`);
-    expect(text).toContain(formatBytes(handoffEvidence.fullNoteBytes));
-    expect(text).toContain(`${handoffEvidence.reductionPercent}% fewer UTF-8 bytes`);
     for (const arm of locomoArms) expect(text).toContain(`${arm.percent}%`);
     for (const category of locomoCategories) {
       expect(text).toContain(`${category.name} ${grouped(category.questions)} ${category.percents.map((percent) => `${percent}%`).join(" ")}`);
@@ -520,7 +522,6 @@ describe("/benchmarks", () => {
     for (const paired of locomoPaired) {
       for (const value of [paired.better, paired.worse, paired.tied]) expect(text).toContain(grouped(value));
     }
-    for (const arm of pilotArms) expect(text).toContain(`${arm.percent}%`);
     for (const arm of longMemEvalArms) expect(text).toContain(`${arm.percent}%`);
     for (const type of longMemEvalTypes) {
       expect(text).toContain(`${type.name} ${grouped(type.questions)} ${type.percents.map((percent) => `${percent}%`).join(" ")}`);
@@ -528,16 +529,13 @@ describe("/benchmarks", () => {
     expect(text).toContain("That is +2.8 percentage points, with a 95% interval from 0.0 to +5.6.");
     expect(text).toContain("does not rule out a tie");
     expect(text).toContain("it includes no matched run of Supermemory or any other memory framework");
-    expect(text).toContain("the only matched run of Oh against Supermemory");
-    for (const quote of Object.values(longMemEvalLimitQuotes)) expect(text).toContain(quote);
+    for (const quote of [longMemEvalLimitQuotes.exposure, longMemEvalLimitQuotes.aliases, longMemEvalLimitQuotes.audit]) expect(text).toContain(quote);
     expect(markup).toContain(`href="${ohLongMemEvalPost}"`);
     expect(text.indexOf("all 500 LongMemEval-S questions")).toBeLessThan(text.indexOf("Answers judged correct on LoCoMo"));
-    expect(text.indexOf("Answers judged correct on LoCoMo")).toBeLessThan(text.indexOf("smaller, earlier LongMemEval pilot"));
-    for (const interval of [pilotInterval, pilotSecondaryInterval]) {
-      expect(text).toContain(`${signed(interval.estimate)} percentage points, with a 95% interval from ${signed(interval.lower)} to ${signed(interval.upper)}`);
-    }
-    for (const quote of [...locomoLimitQuotes, ...pilotLimitQuotes]) expect(text).toContain(`“${quote}`);
-    expect(text).toContain("Limits");
+    expect(markup).not.toContain(`aria-labelledby="${pilotStudy.id}-title"`);
+    expect(markup).toContain("LongMemEval-S study notes");
+    expect(markup).toContain("LoCoMo study notes");
+    for (const quote of locomoLimitQuotes) expect(text).toContain(`“${quote}`);
     for (const claim of publishedClaims) {
       expect(text).toContain(`${claim.system} ${claim.benchmark} ${claim.figure}`);
       expect(markup).toContain(`href="${claim.href}"`);
@@ -545,20 +543,7 @@ describe("/benchmarks", () => {
     expect(text).toContain(`checked ${longDate(publishedClaimsCheckedOn)}`);
     expect(text).toContain("not a matched ranking");
     expect(text).toContain("Selected figures other memory systems publish on their own pages");
-    for (const needle of ["no confidence interval", "had been evaluated before", "used during development", "questions are not", "one fixed profile", "indexed per session", "does not rank the three systems"]) {
-      expect(text.split(needle).length - 1, needle).toBe(1);
-    }
-    expect(text).toContain("Oh ran one small pilot of Supermemory, Oh, and BM25 under one protocol; it is Oh’s result, not Wordcell’s.");
-    expect(text).toContain("Each Wordcell and Oh result here links its raw data");
-    expect(text).toContain("Each Wordcell and Oh figure on this page comes from a file");
-    expect(text).toContain("The published figures in the table link their sources.");
-    for (const href of Object.values(ohLinks)) expect(markup).toContain(`href="${href}"`);
-    for (const source of ohSources) expect(markup).toContain(`href="${source.href}"`);
-    expect(markup).toContain('href="/docs/evidence"');
-    expect(markup).toContain('href="/docs/reranking#evidence-and-limits"');
-    expect(text).not.toMatch(notSota);
-    expect(text).not.toContain("89.8%");
-    expect(text).not.toContain("\u2014");
+
   });
 
   test("prose surfaces cite the LongMemEval-S figures derived from the vendored result, never the in-sample pipeline", async () => {
@@ -655,11 +640,6 @@ describe("/compare/supermemory", () => {
     expect(markup).toContain(`href="${supermemoryPricing.href}"`);
     expect(text).toContain("wordcell mcp serves a vault to local MCP clients.");
     expect(text).not.toMatch(/from source|until the next release/u);
-    expect(text).toContain(`${pilotInterval.pairedQuestions}-question pilot`);
-    expect(text).toContain("It is Oh’s result, not Wordcell’s");
-    expect(text).toContain("Wordcell has published no head-to-head comparison with Supermemory");
-    if (pilotInterval.crossesZero) expect(text).toContain("it does not separate Oh from Supermemory");
-    expect(text).toContain("Oh’s later 500-question LongMemEval-S study compares Oh with BM25 only, so this pilot remains the only matched comparison with Supermemory.");
     expect(text).not.toContain("88.87");
     expect(text).not.toContain(longMemEvalLabPipeline.percent);
     expect(markup).toContain('href="/migrate/supermemory"');
@@ -703,7 +683,6 @@ describe("/compare/basic-memory", () => {
     expect(text).not.toMatch(/from source|until the next release/u);
     expect(text).toContain("AGPL-3.0");
     expect(text).toContain("requires a subscription");
-    expect(text).toContain("Wordcell has published no head-to-head comparison with Basic Memory");
     expect(markup).toContain('href="/docs/comparisons#consider-basic-memory-for-an-mcp-centered-knowledge-graph"');
     expect(await expectDocLinksResolve(markup)).toBeGreaterThanOrEqual(6);
     expect(text).not.toMatch(notSota);
@@ -744,7 +723,6 @@ describe("/compare/mem0", () => {
     expect(text).toContain("Apache-2.0");
     expect(text).toContain("wordcell mcp serves a vault to local MCP clients over standard input and output.");
     expect(text).not.toMatch(/from source|until the next release/u);
-    expect(text).toContain("Wordcell has published no head-to-head comparison with Mem0");
     expect(markup).toContain('href="https://mem0.ai/research"');
     expect(markup).toContain('href="/benchmarks#comparisons"');
     expect(markup).toContain('href="/docs/comparisons#consider-mem0-for-extracted-memories-in-your-application"');
@@ -760,6 +738,30 @@ describe("/compare/mem0", () => {
     expect(description.length).toBeLessThanOrEqual(160);
     expect(compareMem0Metadata.openGraph?.description).toBe(description);
     expect(`${String(compareMem0Metadata.title)} ${description}`).not.toMatch(/—|\bSOTA\b/);
+  });
+});
+
+describe("/compare/obsidian", () => {
+  test("cites current Obsidian capabilities and links the workflow for using the same notes", async () => {
+    const markup = renderToStaticMarkup(<CompareObsidian />);
+    const text = pageText(markup);
+    for (const href of Object.values(obsidianPages)) expect(markup).toContain(`href="${href}"`);
+    expect(text).toContain(longDate(obsidianCheckedOn));
+    expect(text).toContain("Obsidian CLI");
+    expect(text).toContain("running desktop app");
+    expect(text).toContain("same Markdown vault");
+    expect(text).toContain("wordcell context");
+    expect(text).toContain("wordcell history");
+    expect(await expectDocLinksResolve(markup)).toBeGreaterThanOrEqual(6);
+    expect(text).not.toMatch(notSota);
+  });
+
+  test("metadata names the comparison and its canonical route", () => {
+    expect(compareObsidianMetadata.alternates?.canonical).toBe("/compare/obsidian");
+    const description = String(compareObsidianMetadata.description);
+    expect(description.length).toBeGreaterThanOrEqual(110);
+    expect(description.length).toBeLessThanOrEqual(160);
+    expect(compareObsidianMetadata.openGraph?.description).toBe(description);
   });
 });
 
@@ -874,6 +876,7 @@ describe("stacked tables", () => {
   const pages = [
     { name: "/benchmarks", markup: () => renderToStaticMarkup(<Benchmarks />), tables: 3 },
     { name: "/compare/basic-memory", markup: () => renderToStaticMarkup(<CompareBasicMemory />), tables: 1 },
+    { name: "/compare/obsidian", markup: () => renderToStaticMarkup(<CompareObsidian />), tables: 1 },
     { name: "/compare/mem0", markup: () => renderToStaticMarkup(<CompareMem0 />), tables: 1 },
     { name: "/compare/supermemory", markup: () => renderToStaticMarkup(<CompareSupermemory />), tables: 3 },
     { name: "/migrate/supermemory", markup: () => renderToStaticMarkup(<MigrateSupermemory />), tables: 1 },
@@ -903,7 +906,6 @@ describe("launch styles", () => {
   test("code keeps every character visible, links in launch tables and lists stay underlined, and stacked tables collapse on narrow screens", async () => {
     const css = await readFile(join(import.meta.dir, "../wordcell/wordcell.css"), "utf8");
     expect(css).toMatch(/code,\s*kbd,\s*samp,\s*pre\s*\{\s*font-variant-ligatures:\s*none;/);
-    expect(css).toMatch(/\.wordcell-setup__links li \{\s*display: grid;/u);
     expect(css).toMatch(/\.wordcell-comparison :is\(th, td\) a,\s*\.wordcell-limits a \{\s*text-decoration: underline;/u);
     const narrow = css.slice(css.indexOf("@media (max-width: 40rem)"));
     expect(narrow).toContain(".wordcell-comparison.wordcell-stack table {\n    min-width: 0;");

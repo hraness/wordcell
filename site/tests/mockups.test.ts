@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 import sitePackage from "../package.json";
-import { NOTE_PATH, noteFile, RECORDED_VERSION, SOURCE_FILE, steps, type RecordedStep } from "../wordcell/mockups/transcript";
+import { NOTE_PATH, NOTE_RULE, noteFile, RECORDED_VERSION, SOURCE_FILE, steps, type RecordedStep } from "../wordcell/mockups/transcript";
 
 const cli = resolve(import.meta.dir, "../node_modules/.bin/wordcell");
 let repo = "";
@@ -62,4 +62,18 @@ test("every replayed step prints what the mockups show", () => {
 test("the note file in the mockups is the note on disk", () => {
   const onDisk = readFileSync(join(repo, "kb", NOTE_PATH), "utf8").trimEnd().split("\n").map(shape);
   expect(onDisk).toEqual(noteFile.map(shape));
+});
+
+test("the publish preview shows the reader produced from the recorded vault", () => {
+  run({ id: "publish", command: ["wordcell", "publish", "--root", "kb", "--out", "site"], output: [], replay: true });
+  const note = readFileSync(join(repo, "site/n/notes/parser-contract/index.html"), "utf8");
+  expect(note).toContain(NOTE_RULE);
+  expect(note).toContain("Parser contract");
+  expect(note).toContain("Parser timeouts");
+  expect(note).toContain("Linked from");
+  expect(note).toContain('class="site-title"');
+  expect(note).toContain(">kb</a>");
+  expect(note).toContain('class="search-button"');
+  expect(note).toContain('class="graph-link"');
+  expect(note).toContain('class="site-nav"');
 });

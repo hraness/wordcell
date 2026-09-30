@@ -4,7 +4,6 @@ import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server"
 
 import { basicMemoryCheckedOn, basicMemoryPages } from "../../../wordcell/basic-memory-sources";
 import { longDate } from "../../../wordcell/format";
-import { WordcellEvidenceStrip } from "../../../wordcell/evidence-strip";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
 import { routeTitles } from "../../route-titles";
 
@@ -152,18 +151,11 @@ export default function CompareBasicMemory() {
       </MarketingSection>
 
       <MarketingSection
-        heading="What has been measured"
+        heading="Try Wordcell with your notes"
         headingId="evidence-title"
         id="evidence"
-        summary="Wordcell has published no head-to-head comparison with Basic Memory of retrieval quality or speed."
       >
-        <p>Both tools keep the record in files on your machine, so this page compares documented capabilities. Each Basic Memory claim links the page it comes from.</p>
-        <p>Wordcell does publish measurements against its own baseline, each with raw results you can rerun:</p>
-        <WordcellEvidenceStrip />
-        <ul className="wordcell-limits">
-          <li><a href="/docs/getting-started">Set up a vault on your own notes</a></li>
-          <li><a href="/docs/comparisons">The comparisons guide covers QMD, Obsidian, Mem0, and more</a></li>
-        </ul>
+        <p className="record-link"><a href="/docs/getting-started">Set up a vault</a> · <a href="/benchmarks#wordcell">Read the search study</a> · <a href="/docs/comparisons">Compare more tools</a></p>
       </MarketingSection>
     </WordcellPageChrome>
   );

@@ -27,6 +27,7 @@ import { createServer } from "node:net";
 import { availableParallelism, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { browserOwner, ownedChromiumLaunchOptions, pinnedBrowserExecutable, pinnedChromiumDefinition, verifyOwnedChromium } from "./owned-browser.mjs";
 
 const WIDTHS = [360, 390, 1440];
 const THEMES = ["light", "dark"];
@@ -158,20 +159,54 @@ async function main(argv) {
   let output = "";
   let browser;
   let fatal;
+  let launchOptions;
+  let chromium;
+  let browserIdentity;
+  let interruption;
+  const owner = browserOwner({
+    launch: () => chromium.launch(launchOptions),
+    close: acquired => acquired.close(),
+    stopServer: async () => {
+      if (!server) return;
+      if (server.exitCode === null && server.signalCode === null) server.kill("SIGTERM");
+      const timer = setTimeout(() => { if (server.exitCode === null && server.signalCode === null) server.kill("SIGKILL"); }, 5_000);
+      try { await exited; } finally { clearTimeout(timer); }
+    },
+  });
+  const interrupted = signal => {
+    interruption ??= new Error(`Browser verification interrupted by ${signal}.`);
+    process.exitCode = signal === "SIGINT" ? 130 : signal === "SIGHUP" ? 129 : 143;
+    void owner.stop().catch(error => { console.error(error); process.exitCode = 1; });
+  };
+  const onSIGINT = () => interrupted("SIGINT");
+  const onSIGTERM = () => interrupted("SIGTERM");
+  const onSIGHUP = () => interrupted("SIGHUP");
+  process.once("SIGINT", onSIGINT);
+  process.once("SIGTERM", onSIGTERM);
+  process.once("SIGHUP", onSIGHUP);
   try {
+    ({ chromium } = await import("playwright-core"));
+    const definition = pinnedChromiumDefinition();
+    const executablePath = await pinnedBrowserExecutable(chromium.executablePath(), process.env.WORDCELL_BROWSER_EXECUTABLE);
+    launchOptions = { ...ownedChromiumLaunchOptions(executablePath, definition.defaultArgs), timeout: 15_000,
+      handleSIGHUP: false, handleSIGINT: false, handleSIGTERM: false };
+    if (interruption) throw interruption;
     if (!production) {
       const reservation = createServer();
       reservation.listen(0, "127.0.0.1");
       await once(reservation, "listening");
       const port = reservation.address().port;
       await new Promise((done, reject) => reservation.close(error => error ? reject(error) : done()));
+      if (interruption) throw interruption;
       origin = `http://127.0.0.1:${port}`;
       server = spawn(process.execPath, [resolve(root, "node_modules/next/dist/bin/next"), "start", "--hostname", "127.0.0.1", "--port", String(port)], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
       exited = new Promise((done, reject) => { server.once("exit", done); server.once("error", reject); });
+      void exited.catch(() => undefined);
       for (const stream of [server.stdout, server.stderr]) stream.on("data", chunk => { output = (output + chunk).slice(-32_768); });
       const deadline = Date.now() + 45_000;
       let ready = false;
       while (Date.now() < deadline) {
+        if (interruption) throw interruption;
         if (server.exitCode !== null || server.signalCode !== null) throw new Error(`Next exited: ${output}`);
         try { if ((await fetch(origin, { signal: AbortSignal.timeout(2_000) })).ok) { ready = true; break; } } catch { /* Wait for the server to bind. */ }
         await new Promise(done => setTimeout(done, 100));
@@ -179,8 +214,9 @@ async function main(argv) {
       assert.ok(ready, `Next did not become ready: ${output}`);
     }
 
-    const { chromium } = await import("playwright-core");
-    browser = await chromium.launch({ args: ["--mute-audio", "--disable-features=PaintHolding,MacAppCodeSignClone"] });
+    browser = await owner.start();
+    browserIdentity = await verifyOwnedChromium(browser, executablePath, definition.expectedVersion);
+    console.log(`Verification browser: ${browserIdentity.browserVersion}; executable: ${browserIdentity.executable}; source: pinned Playwright`);
     const settled = await pool(contexts, concurrency, async ({ width, theme, name }, index) => {
       const context = await browser.newContext({ viewport: { width, height: HEIGHTS[width] ?? 900 }, colorScheme: theme, hasTouch: width < 600 });
       try {
@@ -251,19 +287,18 @@ async function main(argv) {
   } catch (error) {
     fatal = error;
   } finally {
-    try { await browser?.close(); }
+    try { await owner.stop(); }
     finally {
-      if (server) {
-        if (server.exitCode === null && server.signalCode === null) server.kill("SIGTERM");
-        const timer = setTimeout(() => { if (server.exitCode === null && server.signalCode === null) server.kill("SIGKILL"); }, 5_000);
-        try { await exited; } finally { clearTimeout(timer); }
-      }
+      process.removeListener("SIGINT", onSIGINT);
+     process.removeListener("SIGTERM", onSIGTERM);
+      process.removeListener("SIGHUP", onSIGHUP);
     }
   }
 
+  if (interruption) fatal ??= interruption;
   failures.sort((a, b) => a.context.localeCompare(b.context) || String(a.route).localeCompare(String(b.route)));
   const passed = !fatal && failures.length === 0;
-  await writeFile(resolve(artifacts, "results.json"), JSON.stringify({ passed, fatal: fatal?.message ?? null, failures, origin, production, concurrency, sample: sample ?? null, source: process.env.GITHUB_SHA ?? null, capturedAt: new Date().toISOString(), cleanup: "browser and owned server closed", results: sortResults(results) }, null, 2) + "\n");
+  await writeFile(resolve(artifacts, "results.json"), JSON.stringify({ passed, fatal: fatal?.message ?? null, failures, origin, production, concurrency, sample: sample ?? null, browserIdentity, source: process.env.GITHUB_SHA ?? null, capturedAt: new Date().toISOString(), cleanup: "browser and owned server closed", results: sortResults(results) }, null, 2) + "\n");
   console.log(`Artifacts: ${artifacts}`);
   if (fatal) throw fatal;
   if (failures.length > 0) throw new Error(formatFailures(failures));

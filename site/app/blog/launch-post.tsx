@@ -6,7 +6,6 @@ import {
   AgentCitesNote,
   AnswerBesideFile,
   BacklinksTerminal,
-  ILLUSTRATION_CAPTION,
   MeaningSearchTerminal,
   ModeTerminal,
   NameCard,
@@ -83,7 +82,6 @@ export function launchBeatToc(): ArticleTocItem[] {
 export function LaunchPostBeats() {
   return (
     <>
-      <p className="wordcell-beats-note">{ILLUSTRATION_CAPTION}</p>
       <LaunchBeats beats={launchBeats} renderVisual={(beat) => <div className="wordcell-beat-visual"><BeatSurface beat={beat} /></div>} />
       <SocialKitDetails />
       <h2 id={DETAILS_HEADING.id}>{DETAILS_HEADING.label}</h2>

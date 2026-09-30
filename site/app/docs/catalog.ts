@@ -157,9 +157,9 @@ export const docCatalog = [
   },
   {
     slug: "evidence",
-    title: "Measure the context an agent receives",
-    summary: "Reproducible studies of handoff size and whether excerpts contain the answer, with inputs, results, and limits.",
-    card: "Reproducible studies of handoff size.",
+    title: "Reproduce Wordcell’s context experiments",
+    summary: "Reproduce source-level experiments on excerpt selection and packed context, using the frozen inputs and recorded results.",
+    card: "Frozen inputs and recorded context experiments.",
     quadrant: "explanation",
   },
   {

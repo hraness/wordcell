@@ -52,6 +52,11 @@ export const socialPages = {
     headline: routeTitles.compareBasicMemory.card,
     path: "/compare/basic-memory",
   },
+  compareObsidian: {
+    description: "Write in Obsidian; give your coding agent context with Wordcell.",
+    headline: routeTitles.compareObsidian.card,
+    path: "/compare/obsidian",
+  },
   compareMem0: {
     description: "Facts about each user of your app, or agent memory as notes you own.",
     headline: routeTitles.compareMem0.card,

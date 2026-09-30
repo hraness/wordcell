@@ -2,13 +2,14 @@
  * Code-built illustrations of Wordcell's real surfaces: a terminal, a coding
  * agent session, and the Markdown note on disk. Every command and every line of
  * tool output comes from ./transcript, which tests/mockups.test.ts replays
- * against the pinned CLI. The agent's own words are made up and labelled so.
+ * against the pinned CLI. The agent's dialogue is a scripted example.
  *
  * Plain server-safe React: the launch film renders these with
  * renderToStaticMarkup, and the homepage showcase wraps them in a client shell.
  */
 import {
   AgentSession,
+  BrowserFrame,
   MacWindow,
   TerminalFrame,
   type AgentTurn,
@@ -18,8 +19,6 @@ import {
 
 import { ESSAY, ESSAY_URL } from "../launch/facts";
 import { commandLine, NOTE_PATH, NOTE_RULE, noteFile, SOURCE_FILE, steps, type RecordedStep, type StepId } from "./transcript";
-
-export const ILLUSTRATION_CAPTION = "Illustration. Commands and output are from a recorded Wordcell session; the agent’s replies are made up.";
 
 export type SearchMode = "exact" | "meaning" | "context";
 
@@ -210,6 +209,44 @@ export function AnswerBesideFile({ mode = "context", theme }: Readonly<{ mode?: 
       <AgentCitesNote mode={mode} {...themed(theme)} />
       <NoteFileWindow {...themed(theme)} />
     </div>
+  );
+}
+
+/** The published reader's navigation, note, and backlinks for the recorded parser vault. */
+export function PublishedNotesWindow({ theme }: Readonly<{ theme?: MockupTheme }>) {
+  return (
+    <BrowserFrame
+      {...themed(theme)}
+      className="wordcell-published-window"
+      describe={`Published notes with search, a graph, folder navigation, and the parser contract: “${NOTE_RULE}” The Parser timeouts plan links to this note.`}
+      url="notes.example/n/notes/parser-contract/"
+    >
+      <div aria-hidden="true" className="wordcell-published-preview">
+        <div className="wordcell-published-preview__header">
+          <strong>kb</strong>
+          <span>Graph</span>
+          <span className="wordcell-published-preview__search">Search <kbd>/</kbd></span>
+        </div>
+        <div className="wordcell-published-preview__body">
+          <div className="wordcell-published-preview__nav">
+            <span>notes</span>
+            <span className="wordcell-published-preview__current">Parser contract</span>
+            <span>plans</span>
+            <span>Parser timeouts</span>
+          </div>
+          <div className="wordcell-published-preview__note">
+            <span className="wordcell-published-preview__breadcrumb">Home / notes / Parser contract</span>
+            <div className="wordcell-published-preview__title">Parser contract</div>
+            <span className="wordcell-published-preview__type">concept</span>
+            <p>{NOTE_RULE}</p>
+            <div className="wordcell-published-preview__backlinks">
+              <strong>Linked from</strong>
+              <span>Parser timeouts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </BrowserFrame>
   );
 }
 

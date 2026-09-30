@@ -46,6 +46,114 @@
   margin-block: 0;
 }
 
+.wordcell-published-preview {
+  min-inline-size: 0;
+  background: var(--hkm-bg);
+  color: var(--hkm-fg);
+  font-family: var(--hkm-font);
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+
+.wordcell-published-preview__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-block-end: 1px solid var(--hkm-line);
+}
+
+.wordcell-published-preview__header > strong {
+  margin-inline-end: auto;
+  font-size: .9375rem;
+}
+
+.wordcell-published-preview__search {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .25rem .5rem;
+  border: 1px solid var(--hkm-line);
+  border-radius: 5px;
+}
+
+.wordcell-published-preview__body {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, .6fr) minmax(0, 1.4fr);
+  min-block-size: 18rem;
+}
+
+.wordcell-published-preview__nav {
+  display: grid;
+  align-content: start;
+  gap: .6rem;
+  padding: 1rem;
+  border-inline-end: 1px solid var(--hkm-line);
+  color: var(--hkm-muted);
+}
+
+.wordcell-published-preview__nav > :nth-child(even) {
+  padding-inline-start: .5rem;
+}
+
+.wordcell-published-preview__current {
+  color: var(--hkm-fg);
+  font-weight: 600;
+}
+
+.wordcell-published-preview__note {
+  min-inline-size: 0;
+  padding: 1rem 1.5rem;
+}
+
+.wordcell-published-preview__breadcrumb {
+  color: var(--hkm-muted);
+  font-size: .6875rem;
+}
+
+.wordcell-published-preview__title {
+  margin-block: 1.1rem .35rem;
+  font-size: 1.5rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
+
+.wordcell-published-preview__type {
+  padding: .2rem .45rem;
+  border: 1px solid var(--hkm-line);
+  border-radius: 4px;
+  color: var(--hkm-muted);
+  font-size: .6875rem;
+}
+
+.wordcell-published-preview__note > p {
+  margin-block: 1.35rem;
+}
+
+.wordcell-published-preview__backlinks {
+  display: grid;
+  gap: .4rem;
+  margin-block-start: 1.6rem;
+  padding-block-start: .9rem;
+  border-block-start: 1px solid var(--hkm-line);
+}
+
+.wordcell-published-preview__backlinks > span {
+  color: var(--hkm-fg);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+@media (max-width: 40rem) {
+  .wordcell-published-preview__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wordcell-published-preview__nav {
+    display: none;
+  }
+}
+
 .wordcell-launch-figure {
   margin: 1.5rem 0;
 }
@@ -54,11 +162,6 @@
 .wordcell-beat-visual {
   max-width: 100%;
   overflow-x: auto;
-}
-
-.wordcell-beats-note {
-  color: var(--color-muted, currentColor);
-  font-size: 0.875rem;
 }
 
 /* Why the name: a citation card, cube into words. Kit tokens keep both themes. */

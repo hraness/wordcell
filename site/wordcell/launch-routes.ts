@@ -1,7 +1,7 @@
 /** The launch pages that sit outside the docs and blog catalogs. The blog link
  * check, the sitemap and llms.txt tests, and the runtime route test read this
  * one list, so a page added here must be served and listed everywhere. */
-export const launchRoutes = ["/benchmarks", "/compare/basic-memory", "/compare/mem0", "/compare/supermemory", "/migrate/supermemory"] as const;
+export const launchRoutes = ["/benchmarks", "/compare/basic-memory", "/compare/obsidian", "/compare/mem0", "/compare/supermemory", "/migrate/supermemory"] as const;
 
 export type LaunchRoute = (typeof launchRoutes)[number];
 

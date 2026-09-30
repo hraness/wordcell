@@ -169,7 +169,7 @@ describe("Wordcell blog", () => {
   test("the scale, unfinished-question, and interval-level figures match what /benchmarks shows", async () => {
     expect(scifactStudy.evaluator).toContain(`over ${evidenceFigures["scifact.corpus"]} abstracts`);
     expect(pilotStudy.evaluator).toContain(`Oh and BM25 each did not finish ${evidenceFigures["oh-pilot.incomplete"]} of the ${evidenceFigures["oh-pilot.questions"]} questions`);
-    expect(await read("app/benchmarks/page.tsx")).toContain(`with a ${evidenceFigures["oh-pilot.level"]} interval from`);
+    expect(await read("app/benchmarks/page.tsx")).not.toContain("<BenchmarkComparison study={pilotStudy}");
   });
 
   test("only bound figures may appear as percentages or decimals", () => {
@@ -222,12 +222,12 @@ describe("Wordcell blog", () => {
     expect(figureTokens(blogHtml[launchSlug] ?? "").length).toBeGreaterThan(0);
   });
 
-  test("the launch post keeps Oh's results attributed, states its status once, and makes no ranking claim", async () => {
+  test("the launch post leads the Wordcell workflow and links actual Wordcell search evidence", async () => {
     const source = await read(`content/blog/${launchSlug}.md`);
-    expect(blogHtml[launchSlug]).toContain(ohAttribution);
+    expect(blogHtml[launchSlug]).toContain(evidenceFigures["scifact.queries"]);
     // The in-sample lab pipeline is never cited in the post, so its figure cannot read as a product score.
     expect(blogHtml[launchSlug]).not.toContain("93.07");
-    expect(blogHtml[launchSlug]).toContain("does not rule out a tie");
+    expect(blogHtml[launchSlug]).not.toContain("Oh’s conversation-memory studies");
     expect(source.match(/Latest release: /gu)?.length).toBe(1);
     // The launch commands shipped in a release, so the post points to the release install and the release-pinned skill.
     expect(source).not.toMatch(/from source|source build|source install|until the next release|main branch/iu);
@@ -250,9 +250,7 @@ describe("Wordcell blog", () => {
       expect(hrefs.some((href) => href === route || href.startsWith(`${route}#`)), route).toBe(true);
     }
     const ohHrefs = hrefs.filter((href) => href.startsWith("https://github.com/hraness/oh/"));
-    expect(ohHrefs).toContain(ohLinks.locomoResult);
-    expect(ohHrefs).toContain(ohLinks.pilotResult);
-    expect(ohHrefs).toContain(ohLinks.longMemEvalResult);
+    expect(ohHrefs).toHaveLength(0);
     const ohValues: string[] = Object.values(ohLinks);
     for (const href of ohHrefs) expect(ohValues).toContain(href);
     const sourceHrefs: string[] = article.sources.map((source) => source.href);

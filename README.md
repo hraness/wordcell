@@ -249,39 +249,19 @@ keeps one vault current on several machines.
 
 ## Evidence and comparisons
 
-On eight questions sealed before the passage selector was finished,
-`wordcell search --selected-passage` returned an excerpt holding the labeled
-answer for **6 of 8**, versus **1 of 8** for the older search snippets, at the
-same 512-byte limit and from the same retrieved notes. It runs locally with no
-model. The corpus is small and consists of Wordcell's own notes; containing the
-answer is not the same as an agent answering correctly.
-[Method, raw results, and reproduction](https://github.com/hraness/wordcell/blob/main/docs/evidence.md#measure-whether-excerpts-contain-the-answer).
+On the public SciFact dataset of scientific abstracts, optional hosted Jev
+reranking placed a relevant result first for **161 of 300 queries**, versus
+**101** with Wordcell exact search alone. Hosted reranking is optional and uses
+a paid provider. [Results and method](https://github.com/hraness/wordcell/blob/main/docs/reranking.md#evidence-and-limits).
 
-In a four-query example over a seven-note public vault, packed search snippets
-used **80% fewer UTF-8 bytes** than passing the same matching notes in full:
-12,126 versus 60,584 bytes. This measures context payload size, not tokenizer
-counts, answer quality, latency, or a win over another search tool.
-
-In a separate public SciFact study, optional hosted Jev reranking placed a
-judged relevant result first for **161 of 300 queries**, versus **101** with
-Wordcell exact search alone. It sends bounded context to a paid provider;
-this is evidence on scientific abstracts, not a comparison with QMD or a
-guarantee for repository notes. [Results and limits](https://github.com/hraness/wordcell/blob/main/docs/reranking.md#evidence-and-limits).
-
-Wordcell's benefit is selecting relevant context and keeping its sources
-inspectable. Local ownership is also available in other tools, and Wordcell
-does not claim to beat QMD's retrieval quality or every Markdown workflow.
-
-[Measured evidence](https://wordcell.io/docs/evidence)
-shows a reproducible public-vault example, with the inputs, output sizes, and
-limits beside each result. [The comparison guide](https://wordcell.io/docs/comparisons)
+[The comparison guide](https://wordcell.io/docs/comparisons)
 covers Markdown alone, QMD, Basic Memory, Obsidian, static publishing tools,
 Supermemory, Mem0, and Zep using their own documentation. Choose the smallest
 workflow that meets your needs.
 
-The [benchmarks page](https://wordcell.io/benchmarks) shows the excerpt, payload,
-and SciFact results beside the published results of Oh, the embedded memory
-framework, each with its source data and limits. On all 500 LongMemEval-S
+The [benchmarks page](https://wordcell.io/benchmarks) shows the SciFact results
+and the published results of Oh, the embedded memory framework, each with its
+source data and method. On all 500 LongMemEval-S
 questions, Oh semantic retrieval scored 88.87% and BM25 86.13% with the same
 reader and budget; on the measure Oh named before the run, its interval does
 not rule out a tie. Oh's scores measure its own memory-retrieval path, not a

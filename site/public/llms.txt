@@ -24,17 +24,13 @@ When to use this site:
 ## Pages
 
 - [Wordcell](https://wordcell.io/): Quick start, connecting a local agent, how
-  notes, links, and search work, the selected-passage, context-size, and
-  SciFact reranking measurements, how Wordcell uses Oh, comparisons, publishing selected
+  notes, links, and search work, how Wordcell uses Oh, comparisons, publishing selected
   notes, what stays local, and the install command.
 - [For developers](https://wordcell.io/developers): The coding-agent workflow:
   code-path context, scoped rules, note history, and the Agent Skill.
-- [Benchmarks](https://wordcell.io/benchmarks): Wordcell's selected-passage,
-  context-size, and SciFact reranking measurements with their limits; the Oh kernel's
-  500-question LongMemEval-S study of Oh semantic retrieval against BM25, its
-  LoCoMo run, and its earlier 60-question pilot with Supermemory and BM25, all
-  measured by Oh rather than through a Wordcell vault; and figures that other
-  memory systems publish, each with its source.
+- [Benchmarks](https://wordcell.io/benchmarks): Wordcell exact search and optional
+  reranking on 300 SciFact queries, with methods and raw results; separate
+  sourced memory-retrieval studies from Oh and other systems.
 - [Wordcell vs Basic Memory: two Markdown knowledge graphs](https://wordcell.io/compare/basic-memory):
   Where notes live, how notes form, note structure, search, repository
   context, and cost, with Basic Memory's documentation checked on
@@ -42,6 +38,8 @@ When to use this site:
 - [Wordcell vs Mem0: agent notes or per-user app memory](https://wordcell.io/compare/mem0): Where memory
   lives, how memories form, whose memory it is, the Platform and open-source
   split, and cost, with Mem0's documentation checked on September 26, 2026.
+- [Wordcell vs Obsidian](https://wordcell.io/compare/obsidian): Coding-agent
+  context and typed relationships alongside Obsidian’s editor, CLI, and Publish.
 - [Wordcell vs Supermemory: files or a hosted memory API](https://wordcell.io/compare/supermemory):
   Where memory lives, how memories form, cost with Supermemory's pricing
   checked on September 26, 2026, connectors, compliance, agent access, and
@@ -74,8 +72,8 @@ When to use this site:
   claude-mem, and agent memory services such as Supermemory, Mem0, and Zep,
   compared with Wordcell from primary sources.
 - [Evidence](https://wordcell.io/docs/evidence): The reproducible
-  context-payload study and the study of whether selected passages contain the
-  answer.
+  development fixtures used to check passage selection and context size, with
+  their raw reports; source-ranking benchmarks are on /benchmarks.
 
 ## Blog
 
@@ -96,7 +94,6 @@ When to use this site:
 - Repository and packaged Agent Skill: https://github.com/hraness/wordcell
 - README as Markdown: https://github.com/hraness/wordcell/blob/main/README.md
 - Wordcell retrieval study: https://wordcell.io/docs/reranking#evidence-and-limits
-- Wordcell selected-passage study: https://wordcell.io/docs/evidence#measure-whether-excerpts-contain-the-answer
 - Wordcell and Oh integration: https://wordcell.io/docs/graph-authority#how-wordcell-and-oh-fit-together
 - Oh's separate memory framework and benchmark evidence: https://oh.computer/#benchmarks
 - Immutable releases: https://github.com/hraness/wordcell/releases

@@ -1,5 +1,6 @@
 import {
   MarketingCallToAction,
+  MarketingActionLink,
   MarketingInstallPanel,
   MarketingPage,
   MarketingPrimitives,
@@ -21,11 +22,12 @@ import { publishedRelease } from "./publication";
 import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { siteDescription } from "./site-description";
 import { site } from "./blog/discovery";
-import { passageDetails } from "../wordcell/passage-evidence";
 import { Terminal } from "../wordcell/code-block";
 import { SetupLinks } from "../wordcell/setup-links";
 import { installPlatforms, runsOnPlatforms } from "../wordcell/install-platforms";
 import { SearchShowcase } from "../wordcell/mockups/search-showcase";
+import { PublishedNotesWindow } from "../wordcell/mockups/surfaces";
+import { ComparisonLinks, SupermemoryMigrationLink } from "../wordcell/comparison-links";
 import { ESSAY_URL } from "../wordcell/launch/facts";
 
 const releaseVersion = publishedRelease?.version;
@@ -58,7 +60,7 @@ const trust = [
   },
   {
     label: "Sources stay inspectable",
-    detail: "Open the note, authored link, or commit behind a result. Saved context can be incomplete or out of date; Wordcell does not prove a note is true or recover unsaved conversations.",
+    detail: "Open the note, authored link, or commit behind a result.",
   },
 ] as const;
 
@@ -113,8 +115,8 @@ const questions: readonly { question: string; answer: string; after?: React.Reac
 ] as const;
 
 const navigation = [
-  { href: "#model", label: "Why Wordcell" },
-  { href: "#evidence", label: "Evidence" },
+  { href: "#memory", label: "Why Wordcell" },
+  { href: "/benchmarks", label: "Benchmarks" },
   { href: "/developers", label: "Developers" },
   { href: "#install", label: "Install" },
   { href: "/docs", label: "Docs" },
@@ -191,6 +193,31 @@ export default function Home() {
           </div>
 
           <MarketingSection
+            heading="Your coding agent starts with what you already decided"
+            headingId="memory-title"
+            id="memory"
+            label="Memory for your coding agent"
+            summary="Give your agent a memory of past decisions, the reasons behind them, and the sources you relied on. Wordcell keeps that knowledge in Markdown beside your code, ready for the next session."
+          >
+            <p>Search by exact words, or add a local model to search by meaning. Starting from the file it is changing, your agent gets the notes and AGENTS.md rules that apply, then follows Git history to see why a decision was made.</p>
+            <p>Link decisions with named relationships such as <code>depends-on</code> and <code>supersedes</code>. <a href="/docs/graph-authority">Oh, Wordcell’s graph engine</a>, follows those connections and returns the notes that support each result.</p>
+            <Terminal code={`wordcell context packages/parser/src/index.ts --root kb --repo .
+wordcell history notes/parser-contract --root kb --repo .`} />
+            <p className="record-link"><a href="/developers">Explore the developer workflow</a></p>
+          </MarketingSection>
+
+          <MarketingSection
+            heading="How Wordcell compares"
+            headingId="compare-title"
+            id="compare"
+            label="Choose your tools"
+            summary="Built for coding agents that need lasting decisions, semantic search, and Git context. All in Markdown you control."
+          >
+            <ComparisonLinks />
+            <p className="record-link"><a href="/docs/comparisons">Compare more Markdown and memory tools</a></p>
+          </MarketingSection>
+
+          <MarketingSection
             className="wordcell-showcase-section"
             heading="Your agent finds the rule and names the file"
             headingId="showcase-title"
@@ -245,10 +272,10 @@ wordcell note create notes/parser-contract \\
             headingId="agent-memory-title"
             id="agent-memory"
             label="Agent memory"
-            summary="Wordcell’s local MCP server serves a vault to an agent such as Claude Code, Codex, or Cursor over standard input and output. Each note the agent adds or edits is a Markdown file you review in Git."
+            summary="Connect your coding agent to the vault. Every note it adds is Markdown you can review in Git."
           >
             <SetupLinks />
-            <p className="record-link"><a href="/migrate/supermemory">Move your Supermemory documents and memories into Markdown notes</a></p>
+            <SupermemoryMigrationLink />
           </MarketingSection>
 
           <MarketingPrimitives
@@ -265,53 +292,23 @@ wordcell note create notes/parser-contract \\
           />
 
           <MarketingSection
-            heading="Find the passage with the answer"
-            headingId="memory-title"
-            id="evidence"
-            label="Measured September 27, 2026"
-            summary={`On ${passageDetails.questions} sealed questions about Wordcell’s public notes, selected passages contained the labeled answer ${passageDetails.passageAnswers} times, compared with ${passageDetails.snippetAnswers} for older snippets. Both used the same retrieved notes and 512-byte limit.`}
-          >
-            <span aria-hidden="true" id="memory" style={{ position: "absolute" }} />
-            <p>Passages are chosen locally, with no model. This measures whether an excerpt contains the answer on one small corpus; it does not establish that an agent will answer correctly.</p>
-            <p className="record-link"><a href="/benchmarks">Explore the search measurements and their limits</a></p>
-          </MarketingSection>
-
-          <MarketingSection
-            heading="At home beside a repository"
-            headingId="developers-title"
-            id="developers"
-            label="For agents"
-            summary="Beside a repository, the same vault gives a coding agent the notes tied to the file it is changing, the AGENTS.md rules that apply, and the commits behind a decision."
-          >
-            <Terminal code={`wordcell context packages/parser/src/index.ts --root kb --repo .
-wordcell history notes/parser-contract --root kb --repo .`} />
-            <p className="record-link"><a href="/developers">Wordcell for developers and their agents</a></p>
-          </MarketingSection>
-
-          <MarketingSection
-            heading="Where Wordcell fits"
-            headingId="compare-title"
-            id="compare"
-            label="Compare"
-            summary="Use the lightest tool that holds what your agent needs. Wordcell fits when that memory outgrows one file and should be reviewed in Git like code."
-          >
-            <p className="record-link"><a href="/docs/comparisons">Compare capabilities, tradeoffs, and primary sources</a> · <a href="/compare/supermemory">Compare Wordcell and Supermemory</a> · <a href="/compare/basic-memory">Compare Wordcell and Basic Memory</a> · <a href="/compare/mem0">Compare Wordcell and Mem0</a></p>
-          </MarketingSection>
-
-          <MarketingSection
-            heading="Publish exactly the slice you choose"
+            heading="Publish your notes as a website"
             headingId="publish-title"
             id="publish"
+            layout="split"
             label="Publish"
-            summary="Select notes, preview the selection, and build a static site with readable pages and search that runs in the browser. Publishing needs no model or hosted service."
+            summary="Turn your Markdown notes into a readable website with navigation, search, and backlinks. Build static files locally, then host them where you choose."
+            headingContent={(
+              <div className="wordcell-publish-actions">
+                {releaseSupports0220 ? (
+                  <Terminal code="wordcell publish --root kb --out site" />
+                ) : <p className="install-note">Static publishing is introduced in v0.22.0. The current verified install above predates this feature; check the release notes before using it.</p>}
+                <MarketingActionLink href="/docs/publish" label="Publish your notes" />
+                <p className="install-note">Review notes and attachments before sharing.</p>
+              </div>
+            )}
           >
-            {releaseSupports0220 ? (
-              <Terminal code={`wordcell publish --root kb --out site \\
-  --include notes/parser-contract --include plans/parser-v2 \\
-  --dry-run --json`} />
-            ) : <p className="install-note">Static publishing is introduced in v0.22.0. The current verified install above predates this feature; check the release notes before using it.</p>}
-            <p className="install-note">Publishing writes a local folder, and you choose when and where to upload it. Selection does not remove secrets, so review the selected text and attachments before you share the site.</p>
-            <p className="record-link"><a href="/docs/publish">Select notes, inspect the output, and host your site</a></p>
+            <PublishedNotesWindow />
           </MarketingSection>
 
           <MarketingTrustBoundary

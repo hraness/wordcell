@@ -109,7 +109,7 @@ Existing catalog, context, and maintenance commands retain their own roles.
 <!-- hraness-launch:start -->
 - Launch posts, their social posts, product mockups, and launch films follow the launch beats and social posts addendum in `GENERATION_STYLE.md` and the beats shape under “Introducing a product” in `ARTICLE_COPY.md` in `@hraness/design-kit`. Channel limits are in the launch posts section of `MESSAGING.md`.
 - Build them with the `product-launch` agent skill, the `./mockups` and `./launch` exports of `@hraness/design-kit`, and `slopcamera html init --template launch-film`.
-- Take every number in a beat, social post, film caption, or store listing from the product's launch facts module, and the status from the release record. Label mockups as illustrations.
+- Take every number in a beat, social post, film caption, or store listing from the product's launch facts module, and the status from the release record. Keep mockup accessible descriptions accurate; visible captions are optional and must add useful context.
 - The social kit emits posts for X, Bluesky, Threads, and LinkedIn, and a fact sheet for the Show HN post and the Product Hunt first comment. A person writes those two.
 <!-- hraness-launch:end -->
 

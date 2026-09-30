@@ -1,19 +1,20 @@
-# Measure the context an agent receives
+# Reproduce Wordcell’s context experiments
 
-Wordcell can pass selected snippets to an agent before the agent opens full notes.
-In the four-query example below, those handoffs contained **79.98% fewer UTF-8
-bytes than the same matching notes in full**: 12,126 bytes instead of 60,584.
-This is a small, reproducible payload-size demonstration on Wordcell's public
-seven-note knowledge base. It does not measure tokens, answer quality, speed,
-or an advantage over another search tool.
+These source-level experiments compare how Wordcell selects excerpts and packs
+context for an agent. They use small, frozen vaults to investigate implementation
+changes. The inputs, protocol, and recorded results below let you reproduce
+each experiment.
 
-A smaller excerpt helps only if it holds the answer. On eight questions written
-and sealed before the passage selector was finished, **selected passages held the
-labeled answer for six; the older snippets held it for one**, at the same
-512-byte limit. [That study](#measure-whether-excerpts-contain-the-answer)
-follows the handoff measurement.
+For a search-ranking study on 300 questions about scientific abstracts, see
+[Wordcell’s SciFact results](reranking.md#evidence-and-limits).
 
-## What was measured
+## Compare packed snippets with full notes
+
+Wordcell can pass selected snippets to an agent before the agent opens full
+notes. This experiment compares the size of those handoffs with the same
+matching notes in full, across four queries on a seven-note public vault.
+
+### What was measured
 
 Each query uses the real `openKnowledgeBase().search()` API in `exact` mode,
 with up to five results and graph and Git context disabled. The results pass
@@ -48,7 +49,7 @@ describe what crosses the context boundary, not reduced disk I/O. Passing every
 note for every query would total 130,456 bytes; the raw report also records that
 separate, less selective baseline.
 
-## Reproduce the result
+### Reproduce the result
 
 The [raw report](product-evidence.json) contains every selected path, each source
 file's byte count and SHA-256, the full packed output, output hashes, the exact
@@ -92,7 +93,7 @@ The `tool` field reports the installed source version, so a later release may
 have a different version field even when its measured output is identical.
 Hardware is not specified because this report makes no timing measurement.
 
-## Use the measurement correctly
+### Scope
 
 This demonstrates the cost of the first context handoff. It leaves the original
 notes available for follow-up reading. If an agent then reads every selected
