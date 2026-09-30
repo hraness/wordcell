@@ -10,6 +10,7 @@
 //   .next/prerender-manifest.json     prerendered routes (after `next build`)
 // Options (flags or environment):
 //   --production                      check config.origin instead of a local server
+//   --local-origin=http://127.0.0.1:N  use an existing local server owned by the caller
 //   --concurrency=N  SITE_BROWSER_CONCURRENCY  contexts at once (default 3 on 4+ CPUs, else 2)
 //   --sample=N       SITE_BROWSER_SAMPLE       at most N routes per context; each context
 //                                              takes a different slice, config.routes always run
@@ -27,7 +28,7 @@ import { createServer } from "node:net";
 import { availableParallelism, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { browserOwner, ownedChromiumLaunchOptions, pinnedBrowserExecutable, pinnedChromiumDefinition, verifyOwnedChromium } from "./owned-browser.mjs";
+import { localVerificationOrigin as localBrowserOrigin, browserOwner, ownedChromiumLaunchOptions, pinnedBrowserExecutable, pinnedChromiumDefinition, verifyOwnedChromium } from "./owned-browser.mjs";
 
 const WIDTHS = [360, 390, 1440];
 const THEMES = ["light", "dark"];
@@ -45,6 +46,8 @@ export function positiveInteger(value, label) {
   assert.ok(Number.isInteger(parsed) && parsed > 0, `${label} must be a positive integer, got ${JSON.stringify(value)}`);
   return parsed;
 }
+
+export { localVerificationOrigin as localBrowserOrigin } from "./owned-browser.mjs";
 
 // Public GitHub-hosted runners have 4 vCPUs, private ones 2. One Chromium
 // context per spare core keeps `next start` responsive.
@@ -100,6 +103,13 @@ async function selfTest() {
   assert.equal(positiveInteger("3", "x"), 3);
   assert.throws(() => positiveInteger("0", "x"));
   assert.equal(option(["--sample=5", "--production"], "sample"), "5");
+  assert.equal(localBrowserOrigin(undefined), undefined);
+  assert.equal(localBrowserOrigin(undefined, true), undefined);
+  assert.throws(() => localBrowserOrigin("http://127.0.0.1:12345", true));
+  assert.equal(localBrowserOrigin("http://127.0.0.1:12345"), "http://127.0.0.1:12345");
+  for (const origin of ["http://127.0.0.1:0", "http://127.0.0.1:80", "http://127.0.0.1:65536", "http://localhost:12345", "https://127.0.0.1:12345", "http://127.0.0.1:12345/path", "http://127.0.0.1:12345?redirect=https://example.com"]) {
+    assert.throws(() => localBrowserOrigin(origin));
+  }
 
   let inFlight = 0;
   let peak = 0;
@@ -134,7 +144,8 @@ async function selfTest() {
 async function main(argv) {
   const root = fileURLToPath(new URL("../", import.meta.url));
   const production = argv.includes("--production");
-  assert.ok(argv.every(argument => argument === "--production" || /^--(concurrency|sample)=/u.test(argument)), `Unknown argument in ${argv.join(" ")}`);
+  assert.ok(argv.every(argument => argument === "--production" || /^--(concurrency|sample|local-origin)=/u.test(argument)), `Unknown argument in ${argv.join(" ")}`);
+  const existingOrigin = localBrowserOrigin(option(argv, "local-origin"), production);
   const concurrency = positiveInteger(option(argv, "concurrency") ?? process.env.SITE_BROWSER_CONCURRENCY, "concurrency") ?? defaultConcurrency();
   const sample = positiveInteger(option(argv, "sample") ?? process.env.SITE_BROWSER_SAMPLE, "sample");
 
@@ -148,8 +159,8 @@ async function main(argv) {
 
   const artifacts = process.env.SITE_BROWSER_ARTIFACTS ? resolve(process.env.SITE_BROWSER_ARTIFACTS) : await mkdtemp(join(tmpdir(), "public-site-browser-"));
   await mkdir(artifacts, { recursive: true });
-  let origin = config.origin;
-  assert.match(origin, /^https:\/\/[a-z0-9.-]+$/u);
+  let origin = existingOrigin ?? config.origin;
+  assert.match(config.origin, /^https:\/\/[a-z0-9.-]+$/u);
 
   const contexts = WIDTHS.flatMap(width => THEMES.map(theme => ({ width, theme, name: `${width}-${theme}` })));
   const results = [];
@@ -191,7 +202,7 @@ async function main(argv) {
     launchOptions = { ...ownedChromiumLaunchOptions(executablePath, definition.defaultArgs), timeout: 15_000,
       handleSIGHUP: false, handleSIGINT: false, handleSIGTERM: false };
     if (interruption) throw interruption;
-    if (!production) {
+    if (!production && existingOrigin === undefined) {
       const reservation = createServer();
       reservation.listen(0, "127.0.0.1");
       await once(reservation, "listening");
@@ -298,7 +309,7 @@ async function main(argv) {
   if (interruption) fatal ??= interruption;
   failures.sort((a, b) => a.context.localeCompare(b.context) || String(a.route).localeCompare(String(b.route)));
   const passed = !fatal && failures.length === 0;
-  await writeFile(resolve(artifacts, "results.json"), JSON.stringify({ passed, fatal: fatal?.message ?? null, failures, origin, production, concurrency, sample: sample ?? null, browserIdentity, source: process.env.GITHUB_SHA ?? null, capturedAt: new Date().toISOString(), cleanup: "browser and owned server closed", results: sortResults(results) }, null, 2) + "\n");
+  await writeFile(resolve(artifacts, "results.json"), JSON.stringify({ passed, fatal: fatal?.message ?? null, failures, origin, production, externalLocalServer: existingOrigin !== undefined, concurrency, sample: sample ?? null, browserIdentity, source: process.env.GITHUB_SHA ?? null, capturedAt: new Date().toISOString(), cleanup: "browser and owned server closed", results: sortResults(results) }, null, 2) + "\n");
   console.log(`Artifacts: ${artifacts}`);
   if (fatal) throw fatal;
   if (failures.length > 0) throw new Error(formatFailures(failures));

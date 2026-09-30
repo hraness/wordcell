@@ -3,7 +3,7 @@ import { chmod, mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { Browser } from 'playwright-core';
-import { browserOwner, ownedChromiumLaunchOptions, pinnedBrowserExecutable, verifyOwnedChromium } from './owned-browser.mjs';
+import { localVerificationOrigin, browserOwner, ownedChromiumLaunchOptions, pinnedBrowserExecutable, verifyOwnedChromium } from './owned-browser.mjs';
 
 let directory: string;
 let pinned: string;
@@ -199,5 +199,25 @@ describe('owned browser collection', () => {
     await failedClose.start();
     await expect(failedClose.stop()).rejects.toThrow('close');
     expect(stops).toBe(2);
+  });
+});
+
+describe('local verification origin', () => {
+  test('absence preserves default and production verification', () => {
+    expect(localVerificationOrigin(undefined)).toBeUndefined();
+    expect(localVerificationOrigin(undefined, true)).toBeUndefined();
+  });
+  for (const origin of ["http://127.0.0.1:1","http://127.0.0.1:12345","http://127.0.0.1:65535"]) {
+    test('accepts exact canonical loopback origin ' + origin, () => {
+      expect(localVerificationOrigin(origin)).toBe(origin);
+    });
+  }
+  for (const origin of ["https://127.0.0.1:12345","http://localhost:12345","http://0.0.0.0:12345","http://[::1]:12345","http://127.0.0.1","http://127.0.0.1:0","http://127.0.0.1:80","http://127.0.0.1:01","http://127.0.0.1:65536","http://127.0.0.1:12345/","http://127.0.0.1:12345/docs","http://127.0.0.1:12345?x=1","http://127.0.0.1:12345#x","http://name@127.0.0.1:12345","http://127.0.0.1:12345@elsewhere.test","http://elsewhere.test:12345",null,false,1,{}]) {
+    test('rejects foreign or noncanonical local origin ' + JSON.stringify(origin), () => {
+      expect(() => localVerificationOrigin(origin)).toThrow();
+    });
+  }
+  test('rejects local input in production mode', () => {
+    expect(() => localVerificationOrigin('http://127.0.0.1:12345', true)).toThrow('production');
   });
 });

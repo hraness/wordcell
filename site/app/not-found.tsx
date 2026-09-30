@@ -21,6 +21,7 @@ function routeLabel(title: string): string {
 const launchLabels: Readonly<Record<LaunchRoute, string>> = {
   "/benchmarks": "Wordcell and Oh benchmarks",
   "/compare/basic-memory": "Wordcell and Basic Memory compared",
+  "/compare/obsidian": "Wordcell and Obsidian compared",
   "/compare/mem0": "Wordcell and Mem0 compared",
   "/compare/supermemory": "Wordcell and Supermemory compared",
   "/migrate/supermemory": "Migrate from Supermemory to Wordcell",

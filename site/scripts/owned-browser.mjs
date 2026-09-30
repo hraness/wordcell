@@ -132,3 +132,14 @@ export function browserOwner({ launch, close, stopServer }) {
     },
   };
 }
+
+export function localVerificationOrigin(value, production = false) {
+  if (value === undefined) return undefined;
+  assert.equal(production, false, 'Local verification origin cannot be combined with production.');
+  assert.equal(typeof value, 'string', 'Local verification origin must be a string.');
+  const match = /^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})$/u.exec(value);
+  assert.ok(match && Number(match[1]) <= 65535, 'Use an explicit canonical HTTP loopback port without credentials, path, query or fragment.');
+  const origin = new URL(value).origin;
+  assert.equal(origin, value, 'Local verification origin must retain its explicit canonical port.');
+  return origin;
+}

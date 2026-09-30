@@ -554,9 +554,8 @@ describe("/benchmarks", () => {
       expect(prose, path.join("/")).toContain(`${semantic?.percent}% and BM25 ${bm25?.percent}%`);
       expect(prose, path.join("/")).toContain("on the measure Oh named before the run, its interval does not rule out a tie");
     }
-    for (const path of [["docs", "evidence.md"], ["site", "public", "llms.txt"]]) {
-      expect(await read(...path), path.join("/")).toContain(`${longMemEvalFacts.questions}-question LongMemEval-S`);
-    }
+    expect(await read("docs", "evidence.md")).toContain(`${longMemEvalFacts.questions}-question LongMemEval-S`);
+    expect(await read("site", "public", "llms.txt")).toContain("https://wordcell.io/benchmarks");
     for (const path of [["README.md"], ["CHANGELOG.md"], ["docs", "evidence.md"], ["docs", "comparisons.md"], ["site", "public", "llms.txt"]]) {
       const prose = await read(...path);
       expect(prose, path.join("/")).not.toContain(longMemEvalLabPipeline.percent);
@@ -828,7 +827,7 @@ describe("/migrate/supermemory", () => {
     expect(markup).not.toMatch(/<p[^>]*>wordcell (mcp|import)/u);
     expect(text).not.toMatch(/from source|until the next release/u);
     expect(text).toContain(SETUP_PROMPT.replace(/\s+/g, " "));
-    expect(text).toContain("Copy prompt");
+    expect(markup).toContain('aria-label="Copy setup prompt"');
     expect(markup).toContain('href="/compare/supermemory"');
     expect(markup).toContain("skills/wordcell/references/session-memory.md#keep-a-profile-note");
     expect(await expectDocLinksResolve(markup)).toBeGreaterThanOrEqual(6);

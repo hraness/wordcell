@@ -17,3 +17,4 @@ export function browserOwner<T>(operations: {
   close: (browser: T) => Promise<void>;
   stopServer: () => Promise<void>;
 }): { start(): Promise<T>; stop(): Promise<void> };
+export function localVerificationOrigin(value: unknown, production?: boolean): string | undefined;

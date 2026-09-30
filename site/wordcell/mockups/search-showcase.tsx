@@ -22,7 +22,7 @@ export function SearchShowcase() {
   return (
     <ModeShowcase
       className="wordcell-showcase"
-      height={430}
+      height={600}
       label={(surface) => `Find a Wordcell note with ${surface.label.toLowerCase()}`}
       minWidth={560}
       modeLabel="Find by"

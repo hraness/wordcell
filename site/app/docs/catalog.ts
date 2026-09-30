@@ -119,6 +119,12 @@ export const docCatalog = [
     quadrant: "reference",
   },
   {
+    slug: "agent-handoffs",
+    title: "Agent setup links",
+    summary: "Supported composer links, setup commands, and storage requirements for coding agents.",
+    quadrant: "reference",
+  },
+  {
     slug: "platform-submission",
     title: "Hosted publication API",
     summary: "Endpoints, MCP tools, tokens, and limits for hosting a site built from selected notes on wordcell.io.",
@@ -159,7 +165,7 @@ export const docCatalog = [
     slug: "evidence",
     title: "Reproduce Wordcell’s context experiments",
     summary: "Reproduce source-level experiments on excerpt selection and packed context, using the frozen inputs and recorded results.",
-    card: "Frozen inputs and recorded context experiments.",
+    card: "Frozen inputs and recorded results.",
     quadrant: "explanation",
   },
   {

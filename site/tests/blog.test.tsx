@@ -28,7 +28,7 @@ import {
 } from "../scripts/sync-blog";
 import { scifactStudy } from "../wordcell/benchmark-evidence";
 import { launchRoutes } from "../wordcell/launch-routes";
-import { ohAttribution, ohLinks, pilotStudy } from "../wordcell/oh-evidence";
+import { ohLinks } from "../wordcell/oh-evidence";
 
 const site = join(import.meta.dir, "..");
 const read = async (path: string): Promise<string> => await readFile(join(site, path), "utf8");
@@ -73,7 +73,7 @@ describe("Wordcell blog", () => {
       expect(sentence, article.slug).toBe(
         article.admission.review === null
           ? "Drafted with AI from the source code. It has not been reviewed yet."
-          : "Drafted with AI from the source code and reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.",
+          : `Drafted with AI from the source code and reviewed by ${article.admission.review.reviewer}.`,
       );
       expect(html).toContain(sentence);
       expect(html).toContain("By");
@@ -146,19 +146,15 @@ describe("Wordcell blog", () => {
   });
 
   test("the evidence binder replaces known keys, rejects unknown ones, and leaves other text alone", () => {
-    const bound = bindEvidence("{{evidence.handoff.reduction}} then {{evidence.oh-pilot.estimate}} and {{evidence.handoff.reduction}}");
-    expect(bound.text).toBe(`${evidenceFigures["handoff.reduction"]} then ${evidenceFigures["oh-pilot.estimate"]} and ${evidenceFigures["handoff.reduction"]}`);
-    expect(bound.figures).toEqual([evidenceFigures["handoff.reduction"], evidenceFigures["oh-pilot.estimate"]]);
+    const bound = bindEvidence("{{evidence.scifact.exact}} then {{evidence.scifact.reranked}} and {{evidence.scifact.exact}}");
+    expect(bound.text).toBe(`${evidenceFigures["scifact.exact"]} then ${evidenceFigures["scifact.reranked"]} and ${evidenceFigures["scifact.exact"]}`);
+    expect(bound.figures).toEqual([evidenceFigures["scifact.exact"], evidenceFigures["scifact.reranked"]]);
     expect(bindEvidence("{{evidence.x}}.", { x: "1.5%" })).toEqual({ text: "1.5%.", figures: ["1.5%"] });
     expect(() => bindEvidence("{{evidence.missing}}")).toThrow("Unknown evidence figure {{evidence.missing}}.");
     expect(() => bindEvidence("{{evidence.toString}}")).toThrow("Unknown evidence figure {{evidence.toString}}.");
     expect(bindEvidence("no figures, {{release.version}}")).toEqual({ text: "no figures, {{release.version}}", figures: [] });
-    expect(evidenceFigures["oh-locomo.attribution"]).toBe(ohAttribution);
-    expect(evidenceFigures["oh-locomo.url"]).toBe(ohLinks.locomoResult);
-    expect(evidenceFigures["oh-pilot.url"]).toBe(ohLinks.pilotResult);
-    expect(evidenceFigures["oh-longmemeval.url"]).toBe(ohLinks.longMemEvalResult);
-    expect([evidenceFigures["oh-longmemeval.semantic"], evidenceFigures["oh-longmemeval.bm25"]]).toEqual(["88.87%", "86.13%"]);
-    expect([evidenceFigures["oh-longmemeval.estimate"], evidenceFigures["oh-longmemeval.lower"], evidenceFigures["oh-longmemeval.upper"], evidenceFigures["oh-longmemeval.level"]]).toEqual(["+2.8", "0.0", "+5.6", "95%"]);
+    expect(evidenceFigures["scifact.queries"]).toBe(scifactStudy.sampleSize.toLocaleString("en-US"));
+    expect([evidenceFigures["scifact.exact"], evidenceFigures["scifact.reranked"]]).toEqual(scifactStudy.rows.map((row) => `${Number(row.value).toFixed(1)}%`));
     for (const [key, value] of Object.entries(evidenceFigures)) {
       expect(value, key).not.toBe("");
       expect(value, key).not.toContain("{{");
@@ -166,9 +162,8 @@ describe("Wordcell blog", () => {
     }
   });
 
-  test("the scale, unfinished-question, and interval-level figures match what /benchmarks shows", async () => {
+  test("the study scale matches /benchmarks and the in-sample pilot stays off that page", async () => {
     expect(scifactStudy.evaluator).toContain(`over ${evidenceFigures["scifact.corpus"]} abstracts`);
-    expect(pilotStudy.evaluator).toContain(`Oh and BM25 each did not finish ${evidenceFigures["oh-pilot.incomplete"]} of the ${evidenceFigures["oh-pilot.questions"]} questions`);
     expect(await read("app/benchmarks/page.tsx")).not.toContain("<BenchmarkComparison study={pilotStudy}");
   });
 

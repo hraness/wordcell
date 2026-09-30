@@ -5,24 +5,9 @@ import { blogArticles } from "../app/blog/articles.ts";
 import { docCatalog } from "../app/docs/catalog.ts";
 import { publishedRelease } from "../app/publication.ts";
 import { scifactStudy } from "../wordcell/benchmark-evidence.ts";
-import { grouped, longDate, prose, signed } from "../wordcell/format.ts";
-import { formatBytes, handoffEvidence } from "../wordcell/handoff-evidence.ts";
+import { grouped, longDate } from "../wordcell/format.ts";
 import { isLaunchRoute } from "../wordcell/launch-routes.ts";
-import {
-  locomoArms,
-  locomoFacts,
-  locomoLimitQuotes,
-  longMemEvalArms,
-  longMemEvalComparison,
-  longMemEvalFacts,
-  ohAttribution,
-  ohLinks,
-  pilotArms,
-  pilotInterval,
-  pilotStudy,
-} from "../wordcell/oh-evidence.ts";
 import { renderMarkdownHtml, type RelativeTargetResolver } from "./readme-html.ts";
-import pilotJson from "../../docs/evaluations/oh/memory-framework-pilot-v1.json";
 import scifactJson from "../../docs/evaluations/wordcell-scifact-20260919.json";
 
 const siteRoot = resolve(import.meta.dir, "..");
@@ -63,72 +48,16 @@ function scifactCorpus(): string {
   return grouped(corpusDocuments);
 }
 
-/** Questions each unfinished pilot arm left; the launch post names Oh and BM25 as the only arms short, by the same count. */
-function pilotIncomplete(): string {
-  const short = pilotArms.filter((arm) => arm.incomplete > 0);
-  const counts = new Set(short.map((arm) => arm.incomplete));
-  const [count] = counts;
-  if (short.map((arm) => arm.id).join(",") !== "oh,bm25" || count === undefined || counts.size !== 1) {
-    throw new TypeError("The pilot's unfinished arms are no longer Oh and BM25 short by the same count; update the launch post.");
-  }
-  return prose(count);
-}
-
-/** The confidence level of the pilot's primary interval, read from the artifact's own field name (`interval95`). */
-function pilotIntervalLevel(): string {
-  const levels = Object.keys(pilotJson.quality.comparisons.primary).flatMap((key) => /^interval(\d{2})$/u.exec(key)?.[1] ?? []);
-  if (levels.length !== 1) throw new TypeError("The pilot's primary comparison must record exactly one interval level.");
-  return `${levels[0]}%`;
-}
-
 /**
  * Every figure a post may show, read from the same evidence modules as /benchmarks and formatted the same way,
  * so a post and the page cannot disagree. A post writes `{{evidence.<key>}}`; it never types the figure.
  */
 export const evidenceFigures = {
-  "handoff.queries": prose(handoffEvidence.queries),
-  "handoff.notes": prose(handoffEvidence.noteCount),
-  "handoff.packed": formatBytes(handoffEvidence.packedBytes),
-  "handoff.full": formatBytes(handoffEvidence.fullNoteBytes),
-  "handoff.reduction": `${handoffEvidence.reductionPercent}%`,
-  "handoff.version": handoffEvidence.toolVersion,
   "scifact.queries": grouped(scifactStudy.sampleSize),
   "scifact.measured": longDate(scifactStudy.measuredAt),
   "scifact.exact": percentText(pick(scifactStudy.rows, "exact").value, 1),
   "scifact.reranked": percentText(pick(scifactStudy.rows, "reranked").value, 1),
   "scifact.corpus": scifactCorpus(),
-  "oh-locomo.questions": grouped(locomoFacts.selectedQuestions),
-  "oh-locomo.published": longDate(locomoFacts.publishedOn),
-  "oh-locomo.semantic-mini": percentText(pick(locomoArms, "semantic-mini").percent, 1),
-  "oh-locomo.window-mini": percentText(pick(locomoArms, "window-mini").percent, 1),
-  "oh-locomo.semantic-nano": percentText(pick(locomoArms, "semantic-nano").percent, 1),
-  "oh-locomo.window-nano": percentText(pick(locomoArms, "window-nano").percent, 1),
-  "oh-locomo.conversations": grouped(locomoFacts.conversations),
-  "oh-locomo.exposed": grouped(locomoFacts.evaluatedBefore.questions),
-  "oh-locomo.development": grouped(locomoFacts.development.questions),
-  "oh-locomo.attribution": ohAttribution,
-  "oh-locomo.limit": locomoLimitQuotes[0],
-  "oh-locomo.url": ohLinks.locomoResult,
-  "oh-longmemeval.questions": grouped(longMemEvalFacts.questions),
-  "oh-longmemeval.completed": longDate(longMemEvalFacts.completed),
-  "oh-longmemeval.semantic": percentText(pick(longMemEvalArms, "oh-semantic-96k").percent, 2),
-  "oh-longmemeval.bm25": percentText(pick(longMemEvalArms, "bm25-96k").percent, 2),
-  "oh-longmemeval.estimate": signed(longMemEvalComparison.primary.difference, 1),
-  "oh-longmemeval.lower": signed(longMemEvalComparison.primary.lower, 1),
-  "oh-longmemeval.upper": signed(longMemEvalComparison.primary.upper, 1),
-  "oh-longmemeval.level": longMemEvalComparison.primary.level,
-  "oh-longmemeval.url": ohLinks.longMemEvalResult,
-  "oh-pilot.questions": grouped(pilotStudy.sampleSize),
-  "oh-pilot.date": longDate(pilotStudy.measuredAt),
-  "oh-pilot.supermemory": percentText(pick(pilotArms, "supermemory").percent, 2),
-  "oh-pilot.oh": percentText(pick(pilotArms, "oh").percent, 2),
-  "oh-pilot.bm25": percentText(pick(pilotArms, "bm25").percent, 2),
-  "oh-pilot.incomplete": pilotIncomplete(),
-  "oh-pilot.estimate": signed(pilotInterval.estimate),
-  "oh-pilot.lower": signed(pilotInterval.lower),
-  "oh-pilot.upper": signed(pilotInterval.upper),
-  "oh-pilot.level": pilotIntervalLevel(),
-  "oh-pilot.url": ohLinks.pilotResult,
 } as const satisfies Readonly<Record<string, string>>;
 
 export type EvidenceKey = keyof typeof evidenceFigures;
