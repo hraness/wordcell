@@ -11,6 +11,7 @@ export function ComparisonLinks() {
   return (
     <MarketingCardRow
       ariaLabel="Compare Wordcell with other tools"
+      columns={2}
       cards={comparisonLinks.map((item) => ({
         art: <ProviderMark mark={item.label} size={44} tone="solid" />,
         href: item.href,
