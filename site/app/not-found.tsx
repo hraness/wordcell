@@ -1,3 +1,4 @@
+import { SiteNotFoundAnalytics } from "./site-analytics";
 import type { Metadata } from "next";
 import { RouteNotFoundPage } from "@hraness/design-kit/react";
 
@@ -42,6 +43,7 @@ const knownPages = [
 export default function NotFound() {
   return (
     <div data-hraness-marketing-preset="editorial">
+      <SiteNotFoundAnalytics />
       <a className="skip-link" href="#main">Skip to content</a>
       <WordcellSiteHeader />
       <main id="main" tabIndex={-1}>

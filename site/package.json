@@ -19,7 +19,7 @@
     "postbuild": "bun test ./tests/runtime.test.ts",
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
-    "test": "bun test ./tests/source.test.ts ./tests/home.test.tsx ./scripts/readme-html.test.ts ./tests/ui-styles.test.tsx ./tests/hosted.test.ts ./tests/blog.test.tsx ./tests/launch-pages.test.tsx ./tests/social-image.test.ts ./tests/mockups.test.ts ./tests/launch-post.test.tsx ./tests/passage-evidence.test.tsx ./scripts/owned-browser.test.ts",
+    "test": "bun test ./tests/source.test.ts ./tests/home.test.tsx ./scripts/readme-html.test.ts ./tests/ui-styles.test.tsx ./tests/hosted.test.ts ./tests/blog.test.tsx ./tests/launch-pages.test.tsx ./tests/social-image.test.ts ./tests/mockups.test.ts ./tests/launch-post.test.tsx ./tests/passage-evidence.test.tsx ./scripts/owned-browser.test.ts ./analytics.test.ts",
     "typecheck": "tsc --noEmit",
     "check": "bun run check:theme && bun run sync:icons && bun run sync:readme && bun run sync:docs && bun run sync:blog && bun run sync:reader && bun run build:theme && bun run test && bun run lint && bun run typecheck && bun run build",
     "sync:icons": "bun scripts/sync-icons.ts",
@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.33.0",
+    "@hraness/posthog": "github:hraness/posthog#f0e9f89bcca2b8f4536d6bec2eef8762a688502c",
     "@hraness/site-footer": "github:hraness/site-footer#v0.20.1",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.13.0",
