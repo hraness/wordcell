@@ -1,15 +1,9 @@
 # Wordcell website identity
 
-The header switches from the opaque `public/icon.png` favicon to the checked transparent `public/marks/kb.svg` artwork adopted
-in PR #83. `MarketingSiteHeader` paints metallic foil with a subtle rainbow
-reflection on that original silhouette and the Wordcell name. The image remains
-as the fallback when masking is unavailable or forced colors are active; the
-enclosing home link names the product once.
+The favicon silhouette comes from the actual header mark, `public/marks/kb.svg`. Browser variants render it in pure white on transparency. Apple touch variants use the same white mark on black. The visible bounds are centered horizontally and vertically and fill the square on their longest axis, preserving the aspect ratio with no added padding.
 
-Preserve the mark geometry and the browser/touch PNG bytes. The header uses the
-transparent SVG instead of the opaque favicon; the content footer retains its
-existing image. The `kb` asset filename is the catalog’s stable product key.
-
-| File | SHA-256 |
-| --- | --- |
-| marks/kb.svg | `0558395c7a0e4abf94735c710a23ff9348be623fca5bc0587b3d41552a63711f` |
+| File | Size | SHA-256 |
+| --- | --- | --- |
+| public/marks/kb.svg | SVG | `0558395c7a0e4abf94735c710a23ff9348be623fca5bc0587b3d41552a63711f` |
+| public/icon.png | 512×512 | `0b1384790d78b8b7e75fbd9158cfca8ee27275141145d6d8f94df23618652d48` |
+| public/apple-icon.png | 180×180 | `00d0c68d60e9b73dcb34d9fb844e4c33c9d2d904b349a75c5c6dd14bb585b529` |
