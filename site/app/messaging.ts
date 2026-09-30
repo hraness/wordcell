@@ -1,4 +1,4 @@
-import snapshot from "../../portfolio-messaging.generated.json";
+import snapshot from "../portfolio-messaging.generated.json";
 
 if (snapshot.contract !== "hraness.product-messaging/v1" || snapshot.productId !== "kb") {
   throw new Error("The website requires the canonical kb messaging snapshot.");

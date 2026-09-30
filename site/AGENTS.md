@@ -21,4 +21,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-- Website names, product descriptions, hero copy, and named headings read the repository-root `portfolio-messaging.generated.json` projection of `https://hraness.com/portfolio.json`. Edit the canonical Jungle portfolio registry and refresh that snapshot; ordinary builds never fetch or rewrite it.
+- Website names, product descriptions, hero copy, and named headings read the website-local `portfolio-messaging.generated.json` projection of `https://hraness.com/portfolio.json`. Edit the canonical Jungle portfolio registry and refresh that snapshot; ordinary builds never fetch or rewrite it.
