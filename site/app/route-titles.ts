@@ -1,10 +1,12 @@
+import { productMessaging } from "./messaging";
+
 /**
  * Page titles and share-card headlines for routes outside the docs catalog.
  * Each page's metadata reads `title`; its share card in `social.ts` reads
  * `card` as the headline.
  */
 export const routeTitles = {
-  home: { title: "Wordcell: Markdown memory for coding agents", card: "Markdown memory for coding agents" },
+  home: { title: productMessaging.headings["home-search-title"], card: productMessaging.hero.heading },
   developers: { title: "Wordcell for developers and coding agents", card: "Rules in AGENTS.md, reasons in the vault" },
   benchmarks: { title: "Wordcell and Oh benchmarks, with their limits", card: "Results, with their sources and limits" },
   docs: { title: "Wordcell documentation", card: "Guides and reference" },

@@ -7,6 +7,7 @@ import { WordcellContentFooter } from "./site-footer";
 import { siteDescription } from "./site-description";
 import { routeTitles } from "./route-titles";
 import { FoilController } from "./foil-controller";
+import { productName } from "./messaging";
 import "./globals.css";
 
 /** Gruvbox follows the system until a reader chooses a saved appearance. */
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title,
     description,
-    siteName: "Wordcell",
+    siteName: productName,
     type: "website",
     url: "/",
   },

@@ -28,23 +28,24 @@ import { installPlatforms, runsOnPlatforms } from "../wordcell/install-platforms
 import { SearchShowcase } from "../wordcell/mockups/search-showcase";
 import { ESSAY_URL } from "../wordcell/launch/facts";
 
+import { productMessaging, productName, relatedProduct } from "./messaging";
+
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
 const repository = "https://github.com/hraness/wordcell";
 const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases/download/v${releaseVersion}/hraness-wordcell-${releaseVersion}.tgz`;
 
-const heading = "Give coding agents the decisions behind your code.";
-const summary =
-  "Wordcell is a free, open-source CLI and local MCP server. It gives Claude Code, Codex, and Cursor the notes, plans, and AGENTS.md rules for the file they are about to change, from plain Markdown you review in Git.";
+const heading = productMessaging.hero.heading;
+const summary = productMessaging.hero.summary;
 const footnote = releaseVersion === undefined
   ? "Free under the MIT license. Exact search needs no account or model. First Wordcell release in preparation."
   : `Latest release: v${releaseVersion} · Free under the MIT license · Exact search needs no account or model.`;
 
 const primitives = [
-  { icon: "markdown", label: "Files you own", summary: "Notes stay plain Markdown. Read them in any editor, review changes in Git, and rebuild every index from the files." },
-  { icon: "search", label: "Find a past decision", summary: "Search by exact words without a model or account. Add an optional local model to search by meaning, and follow named links between notes." },
-  { icon: "scopes", label: "Context for the file at hand", summary: "Tie notes to repository paths. Starting from a file, get the related notes, plans, and AGENTS.md rules before the next edit." },
-  { icon: "capture", label: "Sources you can reopen", summary: "Save a web page or PDF as Markdown with its assets and capture details. Keep the source beside the decision it informed." },
+  { icon: "markdown", label: productMessaging.headings["home-primitive-files"], summary: "Notes stay plain Markdown. Read them in any editor, review changes in Git, and rebuild every index from the files." },
+  { icon: "search", label: productMessaging.headings["home-primitive-decisions"], summary: "Search by exact words without a model or account. Add an optional local model to search by meaning, and follow named links between notes." },
+  { icon: "scopes", label: productMessaging.headings["home-primitive-context"], summary: "Tie notes to repository paths. Starting from a file, get the related notes, plans, and AGENTS.md rules before the next edit." },
+  { icon: "capture", label: productMessaging.headings["home-primitive-sources"], summary: "Save a web page or PDF as Markdown with its assets and capture details. Keep the source beside the decision it informed." },
 ] as const;
 
 const trust = [
@@ -63,20 +64,17 @@ const trust = [
 ] as const;
 
 // Sibling cards show each product's registry mark, link, and one-line description.
-const related = (id: PortfolioProductId, name: string) => {
-  const { canonicalUrl, mark, oneLiner } = product(id);
-  return { href: canonicalUrl, mark, name, role: oneLiner };
-};
+const related = (id: PortfolioProductId) => ({ ...relatedProduct(id), mark: product(id).mark });
 
 // Only products with a registered relationship to Wordcell appear here.
 const relatedGroups = [
   {
-    heading: "Works with Wordcell",
+    heading: productMessaging.headings["home-related-group"],
     headingId: "related-tools",
     items: [
-      related("wrench", "Ghostget"),
-      related("xcb", "xcb"),
-      related("oh-computer", "Oh"),
+      related("wrench"),
+      related("xcb"),
+      related("oh-computer"),
     ],
   },
 ];
@@ -129,7 +127,7 @@ export default function Home() {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "@id": "https://wordcell.io/#software",
-      name: "Wordcell",
+      name: productName,
       url: "https://wordcell.io/",
       description: siteDescription,
       applicationCategory: "DeveloperApplication",
@@ -145,7 +143,7 @@ export default function Home() {
       codeRepository: repository,
       description: siteDescription,
       license: "https://opensource.org/license/mit",
-      name: "Wordcell",
+      name: productName,
       programmingLanguage: "TypeScript",
       runtimePlatform: "Bun",
       targetProduct: { "@id": "https://wordcell.io/#software" },
@@ -162,10 +160,10 @@ export default function Home() {
       <a className="skip-link" href="#main">Skip to content</a>
       <MarketingSiteHeader
         className="hraness-material-chrome"
-        action={{ href: "#install", label: "Install Wordcell" }}
-        brand="Wordcell"
+        action={{ href: "#install", label: productMessaging.hero.primaryAction }}
+        brand={productName}
         brandMark="/marks/kb.svg"
-        brandLabel="Wordcell home"
+        brandLabel={`${productName} home`}
         links={navigation}
         trailing={<ThemeMenuButton aria-label="Appearance" />}
       />
@@ -177,12 +175,12 @@ export default function Home() {
             backdrop={false}
             align="start"
             actions={[
-              { href: "#install", label: "Install Wordcell" },
-              { href: "/docs/getting-started", label: "See an example" },
+              { href: "#install", label: productMessaging.hero.primaryAction },
+              { href: "/docs/getting-started", label: productMessaging.hero.secondaryAction },
             ]}
             boundary={footnote}
             className="wordcell-hero"
-            eyebrow="Markdown knowledge base"
+            eyebrow={productMessaging.category}
             heading={heading}
             headingId="hero-title"
             name=""
@@ -192,7 +190,7 @@ export default function Home() {
 
           <MarketingSection
             className="wordcell-showcase-section"
-            heading="Your agent finds the rule and names the file"
+            heading={productMessaging.headings["home-preview"]}
             headingId="showcase-title"
             id="showcase"
             label="How it looks"
@@ -203,7 +201,7 @@ export default function Home() {
 
           <MarketingInstallPanel
             eyebrow="Get started"
-            heading="Save and find your first decision"
+            heading={productMessaging.headings["home-install"]}
             headingId="install-title"
             id="install"
           >
@@ -241,7 +239,7 @@ wordcell note create notes/parser-contract \\
           </MarketingInstallPanel>
 
           <MarketingSection
-            heading="Let your agent search and add notes"
+            heading={productMessaging.headings["home-agent-search"]}
             headingId="agent-memory-title"
             id="agent-memory"
             label="Agent memory"
@@ -252,7 +250,7 @@ wordcell note create notes/parser-contract \\
           </MarketingSection>
 
           <MarketingPrimitives
-            heading="What a vault gives you"
+            heading={productMessaging.headings["home-primitives"]}
             headingId="model-title"
             id="model"
             items={primitives.map((primitive) => ({
@@ -265,7 +263,7 @@ wordcell note create notes/parser-contract \\
           />
 
           <MarketingSection
-            heading="Find the passage with the answer"
+            heading={productMessaging.headings["home-passages"]}
             headingId="memory-title"
             id="evidence"
             label="Measured September 27, 2026"
@@ -277,7 +275,7 @@ wordcell note create notes/parser-contract \\
           </MarketingSection>
 
           <MarketingSection
-            heading="At home beside a repository"
+            heading={productMessaging.headings["home-scopes"]}
             headingId="developers-title"
             id="developers"
             label="For agents"
@@ -289,7 +287,7 @@ wordcell history notes/parser-contract --root kb --repo .`} />
           </MarketingSection>
 
           <MarketingSection
-            heading="Where Wordcell fits"
+            heading={productMessaging.headings["home-fit"]}
             headingId="compare-title"
             id="compare"
             label="Compare"
@@ -299,7 +297,7 @@ wordcell history notes/parser-contract --root kb --repo .`} />
           </MarketingSection>
 
           <MarketingSection
-            heading="Publish exactly the slice you choose"
+            heading={productMessaging.headings["home-publish"]}
             headingId="publish-title"
             id="publish"
             label="Publish"
@@ -315,7 +313,7 @@ wordcell history notes/parser-contract --root kb --repo .`} />
           </MarketingSection>
 
           <MarketingTrustBoundary
-            heading="The record stays yours"
+            heading={productMessaging.headings["home-trust"]}
             headingId="boundary-title"
             id="boundary"
             items={trust}
@@ -323,7 +321,7 @@ wordcell history notes/parser-contract --root kb --repo .`} />
           />
 
           <MarketingQuestionList
-            heading="Before you install"
+            heading={productMessaging.headings["home-questions"]}
             headingId="questions-title"
             id="questions"
             label="FAQ"
@@ -335,7 +333,7 @@ wordcell history notes/parser-contract --root kb --repo .`} />
 
           <MarketingRelated
             groups={relatedGroups}
-            heading="Related Hraness tools"
+            heading={productMessaging.headings["home-related"]}
             headingId="related-title"
             label="Related"
             summary="Tools that capture into, search, or back a Wordcell vault."
@@ -343,11 +341,11 @@ wordcell history notes/parser-contract --root kb --repo .`} />
 
           <MarketingCallToAction
             actions={[
-              { href: "#install", label: "Install Wordcell" },
-              { href: "/docs/getting-started", label: "See an example" },
+              { href: "#install", label: productMessaging.hero.primaryAction },
+              { href: "/docs/getting-started", label: productMessaging.hero.secondaryAction },
             ]}
             footnote={footnote}
-            heading="Give the next session what this one learned."
+            heading={productMessaging.headings["home-closing"]}
             headingId="cta-title"
             summary="Save one decision beside the code, then let the agent find it."
           />

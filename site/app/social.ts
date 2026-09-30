@@ -1,6 +1,7 @@
 import { defineSocialImageSite, type SocialImagePage } from "@hraness/web-discovery/social-image/card";
 
 import { type DocEntry, docCatalog, docOverview } from "./docs/catalog";
+import { productMessaging, productName } from "./messaging";
 import { routeTitles } from "./route-titles";
 import { socialMarkDataUrl } from "./social-icon";
 
@@ -10,11 +11,11 @@ import { socialMarkDataUrl } from "./social-icon";
  * its page copy; the card design lives in that package.
  */
 export const wordcellSocialSite = defineSocialImageSite({
-  description: "Markdown knowledge base that gives agents the decisions behind code.",
+  description: productMessaging.short,
   keepTogether: ["Basic Memory"],
   domain: "wordcell.io",
   icon: { kind: "mark", src: socialMarkDataUrl },
-  name: "Wordcell",
+  name: productName,
   theme: {
     accent: "#076678",
     background: "#FBF1C7",
