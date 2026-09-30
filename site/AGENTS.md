@@ -9,7 +9,7 @@
 
 # Guidelines
 
-- Share images come only from the shared `@hraness/web-discovery` social-image template, rendered from the single `defineSocialImageSite` declaration in `app/social.ts` (real app icon, brand theme, registry description). Routes pass page copy only (`headline`, `description`, and `path` for the default eyebrow, or an explicit `eyebrow`) and take alt text from `socialImageAlt`; never add per-site drawing code.
+- Share images come only from the shared `@hraness/web-discovery` social-image template, rendered from the single `defineSocialImageSite` declaration in `app/social.ts` (the header's foil mark `public/marks/kb.svg`, the `gruvbox` palette from `data-palette`, and the registry copy). Routes pass page copy only (`headline`, `description`, and `path` for the default eyebrow, or an explicit `eyebrow`) and take alt text from `socialImageAlt`; never add per-site drawing code.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -20,19 +20,18 @@ import { metadata as migrateMetadata } from "../app/migrate/supermemory/page";
 import * as migrateImage from "../app/migrate/supermemory/opengraph-image";
 import * as docImage from "../app/docs/[slug]/opengraph-image";
 import { docCatalog, docOverview, docTitle } from "../app/docs/catalog";
-import { docSocialPage, socialPages, wordcellSocialSite } from "../app/social";
+import { docSocialPage, homeSocialPage, socialPages, wordcellSocialSite } from "../app/social";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
   socialImageAlt,
   socialImageFit,
-  socialImageIconShape,
   socialImageSiteDetails,
 } from "@hraness/web-discovery/social-image/card";
 
 const routes = [
-  ["/", homeMetadata, homeImage, undefined],
+  ["/", homeMetadata, homeImage, homeSocialPage],
   ["/developers", developersMetadata, developersImage, socialPages.developers],
   ["/benchmarks", benchmarksMetadata, benchmarksImage, socialPages.benchmarks],
   ["/docs", docsMetadata, docsImage, socialPages.docs],
@@ -43,17 +42,19 @@ const routes = [
   ["/migrate/supermemory", migrateMetadata, migrateImage, socialPages.migrateSupermemory],
 ] as const;
 
-test("the site declares one share card with the pinned Wordcell mark and brand", () => {
+test("the site declares one share card with the header's foil mark, brand, and palette", () => {
   expect(wordcellSocialSite.name).toBe("Wordcell");
+  expect(wordcellSocialSite.brand).toBe("Wordcell");
   expect(wordcellSocialSite.domain).toBe("wordcell.io");
-  expect(wordcellSocialSite.icon?.kind).toBe("mark");
+  expect(wordcellSocialSite.palette).toBe("gruvbox");
+  const layout = readFileSync(join(import.meta.dir, "../app/layout.tsx"), "utf8");
+  expect(layout).toContain(`data-palette="${wordcellSocialSite.palette}"`);
   const prefix = "data:image/svg+xml;base64,";
-  expect(wordcellSocialSite.icon?.src).toStartWith(prefix);
-  const embedded = Buffer.from(wordcellSocialSite.icon!.src.slice(prefix.length), "base64");
+  expect(wordcellSocialSite.brandMark).toStartWith(prefix);
+  const embedded = Buffer.from(wordcellSocialSite.brandMark!.slice(prefix.length), "base64");
   expect(embedded.equals(readFileSync(join(import.meta.dir, "../public/marks/kb.svg")))).toBe(true);
-  expect(socialImageIconShape(wordcellSocialSite.icon!)).toBe("open");
-  expect(Object.keys(wordcellSocialSite.theme ?? {}).sort()).toEqual(["accent", "background", "foreground", "muted"]);
-  for (const color of Object.values(wordcellSocialSite.theme ?? {})) expect(color).toMatch(/^#[0-9A-F]{6}$/i);
+  expect(wordcellSocialSite.icon).toBeUndefined();
+  expect(wordcellSocialSite.theme).toBeUndefined();
 });
 
 test("each route renders the shared template from the site declaration", () => {
@@ -95,18 +96,26 @@ test("every documentation route passes its own page copy", () => {
 
 test("every card fits as written with no review findings, and every page card has an eyebrow", () => {
   const pages = [
-    undefined,
+    homeSocialPage,
     ...Object.values(socialPages),
     ...[docOverview, ...docCatalog].map((entry) => docSocialPage(entry.slug)),
   ];
   for (const page of pages) {
     const fit = socialImageFit(socialImageSiteDetails(wordcellSocialSite, page));
-    expect({ headline: page?.headline ?? "home", findings: fit.findings }).toEqual({
-      headline: page?.headline ?? "home",
+    expect({ headline: page.headline, findings: fit.findings }).toEqual({
+      headline: page.headline,
       findings: [],
     });
-    if (page !== undefined) expect(fit.eyebrow).toBeString();
+    expect(fit.eyebrow).toBeString();
   }
+});
+
+test("the home card sets the hero headline over the tagline, as the hero does", () => {
+  const fit = socialImageFit(socialImageSiteDetails(wordcellSocialSite, homeSocialPage));
+  expect(fit.headline.lines.join(" ")).toBe("Give coding agents the decisions behind your code.");
+  expect(fit.headline.threeLine).toBe(false);
+  expect(fit.description?.lines.join(" ")).toBe("Give the next session what this one learned.");
+  expect(fit.eyebrow).toBe("Markdown knowledge base");
 });
 
 test("page cards describe their own page instead of repeating the site tagline", () => {

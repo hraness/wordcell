@@ -14,19 +14,26 @@ export const wordcellSocialSite = defineSocialImageSite({
   description: productMessaging.short,
   keepTogether: ["Basic Memory"],
   domain: "wordcell.io",
-  icon: { kind: "mark", src: socialMarkDataUrl },
+  brand: productName,
+  brandMark: socialMarkDataUrl,
   name: productName,
-  theme: {
-    accent: "#076678",
-    background: "#FBF1C7",
-    foreground: "#3C3836",
-    muted: "#665C54",
-  },
+  palette: "gruvbox",
 });
 
 /**
- * Page copy for each route with its own card. The home card uses the site
- * alone. Each description is a short form of that page's meta description
+ * The home card, set like the hero: its eyebrow and short headline, with the
+ * canonical tagline beneath. The site description alone would run to three
+ * lines as a home headline.
+ */
+export const homeSocialPage = {
+  description: productMessaging.tagline,
+  eyebrow: productMessaging.category,
+  headline: productMessaging.hero.heading,
+  layout: "product",
+} as const satisfies SocialImagePage;
+
+/**
+ * Page copy for each route with its own card. Each description is a short form of that page's meta description
  * that fits two lines, so no page card repeats the site tagline;
  * tests/social-image.test.ts checks every card fits as written.
  */
