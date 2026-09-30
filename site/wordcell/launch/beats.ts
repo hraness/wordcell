@@ -75,6 +75,7 @@ const authoredBeats: readonly LaunchBeat[] = [
     part: "who",
     headline: "For people who keep notes in Markdown and code with agents",
     post: "Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.",
+    socialPost: "Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.",
     visual: { kind: "mockup", id: "agent", state: { mode: "exact" } },
     alt: "Illustration: a coding agent answers a question about retries by quoting the note and its line number.",
   },

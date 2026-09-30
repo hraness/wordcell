@@ -6,61 +6,55 @@ Posts go out from the @hraness account. The status label reads "Latest release: 
 
 ## X thread
 
-Post 1 of 10, 197 characters
+Post 1 of 9, 197 characters
 
 ```text
 Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
 ```
 
-Post 2 of 10, 182 characters
+Post 2 of 9, 182 characters
 
 ```text
 Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
 ```
 
-Post 3 of 10, 157 characters
+Post 3 of 9, 157 characters
 
 ```text
 Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
 ```
 
-Post 4 of 10, 179 characters
+Post 4 of 9, 179 characters
 
 ```text
 Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
 ```
 
-Post 5 of 10, 161 characters
+Post 5 of 9, 161 characters
 
 ```text
 Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
 ```
 
-Post 6 of 10, 197 characters
+Post 6 of 9, 197 characters
 
 ```text
 Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
 ```
 
-Post 7 of 10, 207 characters
+Post 7 of 9, 110 characters
 
 ```text
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
+Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
 ```
 
-Post 8 of 10, 235 characters
+Post 8 of 9, 235 characters
 
 ```text
 The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
 ```
 
-Post 9 of 10, 207 characters
-
-```text
-Wordcell returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows a file said something, not that it is right. Graph queries cover vaults of up to 4,000 notes.
-```
-
-Post 10 of 10, 243 characters
+Post 9 of 9, 243 characters
 
 ```text
 Latest release: v0.24.1. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
@@ -70,61 +64,55 @@ https://wordcell.io/blog/introducing-wordcell
 
 ## Bluesky thread
 
-Post 1 of 10, 197 characters
+Post 1 of 9, 197 characters
 
 ```text
 Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
 ```
 
-Post 2 of 10, 182 characters
+Post 2 of 9, 182 characters
 
 ```text
 Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
 ```
 
-Post 3 of 10, 157 characters
+Post 3 of 9, 157 characters
 
 ```text
 Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
 ```
 
-Post 4 of 10, 179 characters
+Post 4 of 9, 179 characters
 
 ```text
 Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
 ```
 
-Post 5 of 10, 161 characters
+Post 5 of 9, 161 characters
 
 ```text
 Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
 ```
 
-Post 6 of 10, 197 characters
+Post 6 of 9, 197 characters
 
 ```text
 Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
 ```
 
-Post 7 of 10, 207 characters
+Post 7 of 9, 110 characters
 
 ```text
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
+Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
 ```
 
-Post 8 of 10, 235 characters
+Post 8 of 9, 235 characters
 
 ```text
 The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
 ```
 
-Post 9 of 10, 207 characters
-
-```text
-Wordcell returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows a file said something, not that it is right. Graph queries cover vaults of up to 4,000 notes.
-```
-
-Post 10 of 10, 243 characters
+Post 9 of 9, 243 characters
 
 ```text
 Latest release: v0.24.1. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
@@ -134,61 +122,55 @@ https://wordcell.io/blog/introducing-wordcell
 
 ## Threads thread
 
-Post 1 of 10, 197 characters
+Post 1 of 9, 197 characters
 
 ```text
 Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
 ```
 
-Post 2 of 10, 182 characters
+Post 2 of 9, 182 characters
 
 ```text
 Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
 ```
 
-Post 3 of 10, 157 characters
+Post 3 of 9, 157 characters
 
 ```text
 Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
 ```
 
-Post 4 of 10, 179 characters
+Post 4 of 9, 179 characters
 
 ```text
 Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
 ```
 
-Post 5 of 10, 161 characters
+Post 5 of 9, 161 characters
 
 ```text
 Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
 ```
 
-Post 6 of 10, 197 characters
+Post 6 of 9, 197 characters
 
 ```text
 Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
 ```
 
-Post 7 of 10, 207 characters
+Post 7 of 9, 110 characters
 
 ```text
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
+Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
 ```
 
-Post 8 of 10, 235 characters
+Post 8 of 9, 235 characters
 
 ```text
 The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
 ```
 
-Post 9 of 10, 207 characters
-
-```text
-Wordcell returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows a file said something, not that it is right. Graph queries cover vaults of up to 4,000 notes.
-```
-
-Post 10 of 10, 243 characters
+Post 9 of 9, 243 characters
 
 ```text
 Latest release: v0.24.1. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
@@ -211,11 +193,9 @@ Link one note to another and Wordcell can tell you what depends on it. Each answ
 
 Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
 
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
+Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
 
 The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
-
-Wordcell returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows a file said something, not that it is right. Graph queries cover vaults of up to 4,000 notes.
 
 Latest release: v0.24.1. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
 
@@ -243,8 +223,7 @@ Topics: Developer Tools, Productivity, Artificial Intelligence
 - Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
 - Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
 - Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
-- Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor. A handful of notes may need only a text search, and Wordcell keeps only what you choose to save.
-- Wordcell returns notes, snippets, and graph rows, and your agent writes the answer from them. A graph proof shows a file said something, not that it is right. Graph queries cover vaults of up to 4,000 notes.
+- Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
 - Latest release: v0.24.1. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
 - Latest release: v0.24.1. https://wordcell.io/blog/introducing-wordcell
 

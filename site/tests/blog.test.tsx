@@ -281,9 +281,9 @@ describe("Wordcell blog", () => {
     // Design-kit v0.19.0 carries Wordcell's runtime relation to Oh and xcb's
     // relation to Wordcell. Posts show one card per relation: the product's
     // mark, name, and one-line description.
-    expect(portfolioDigest).toBe("sha256:566462ae34618442d01b4be2be73347a0c491e29c1238600ec8d4ffb2b1a62e5");
+    expect(portfolioDigest).toBe("sha256:d43bbc1113c077b872d2e11a4a70490cd537d5734951d0c3c4bd8e061ce583a9");
     const related = relatedFor("kb");
-    expect(related.map((entry) => entry.productId)).toEqual(["oh-computer", "xcb"]);
+    expect(related.map((entry) => entry.productId)).toEqual(["oh-computer", "xcb", "sponge"]);
     for (const entry of related) {
       expect(entry.mark).toStartWith("data:image/svg+xml,");
       expect(entry.role.length).toBeGreaterThan(0);
