@@ -277,6 +277,7 @@ wordcell note create notes/parser-contract \\
           </MarketingSection>
 
           <MarketingPrimitives
+            columns={2}
             heading={productMessaging.headings["home-primitives"]}
             headingId="model-title"
             id="model"

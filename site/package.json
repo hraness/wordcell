@@ -26,12 +26,12 @@
     "launch:kit": "bun scripts/write-social-kit.ts"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.32.0",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.33.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.20.1",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.13.0",
     "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz",
-    "next": "16.3.3",
+    "next": "16.3.8",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
@@ -42,7 +42,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.3.8",
     "playwright-core": "1.58.2",
     "postcss": "8.5.28",
     "tailwindcss": "4.2.1",
