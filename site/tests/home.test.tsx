@@ -1,3 +1,4 @@
+import { productMessaging } from "../app/messaging";
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -137,9 +138,9 @@ test("the homepage describes the software and site without FAQ markup", () => {
 test("the homepage leads with the README identity and the verified install command", () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
-  expect(html).toMatch(/<h1\b[^>]*>Give coding agents the decisions behind your code\.<\/h1>/u);
+  expect(html).toContain(renderToStaticMarkup(<h1>{productMessaging.hero.heading}</h1>).replace("<h1>", ""));
   expect(html).toContain("Markdown knowledge base");
-  expect(html).toContain("free, open-source CLI and local MCP server");
+  expect(html).toContain(renderToStaticMarkup(<p>{productMessaging.hero.summary}</p>).replace(/<\/?p>/gu, ""));
   if (publishedRelease === null) {
     expect(html).toContain("First Wordcell release in preparation");
     expect(html).not.toContain(".tgz");

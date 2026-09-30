@@ -1,0 +1,1489 @@
+{
+  "contract": "hraness.product-messaging/v1",
+  "productId": "kb",
+  "canonicalUrl": "https://wordcell.io",
+  "portfolio": {
+    "contract": "hraness.portfolio-public/v1",
+    "url": "https://hraness.com/portfolio.json",
+    "digest": "sha256:28638557fb2323fce51b23d8e94b9f141f2adac771ea22e1d3f50efafdfa47e1"
+  },
+  "messaging": {
+    "formatVersion": 1,
+    "product": "wordcell",
+    "names": {
+      "name": "Wordcell",
+      "command": "wordcell",
+      "formerly": [
+        "KB"
+      ]
+    },
+    "category": "Markdown knowledge base",
+    "tagline": "Give the next session what this one learned.",
+    "short": "Markdown knowledge base that gives agents the decisions behind code",
+    "meta": "Wordcell keeps decisions, plans, and sources as Markdown beside your code, so coding agents can find them from the file they are about to change.",
+    "medium": "Wordcell keeps decisions, plans, and sources as Markdown files beside your code. Coding agents find them by exact words, by meaning with an optional local model, or from the file they are about to change.",
+    "long": "A new coding-agent session can read your code, but not the decisions that stayed in the last session's chat. Wordcell keeps those decisions as Markdown files beside the repository, with the plans that depend on them and the web pages and PDFs that informed them. Tie a note to the paths it explains, and an agent about to change that code runs one command to get the notes and plans for that path. Exact search, backlinks, and Git history run on your machine with no account or model, and every index rebuilds from files you can read in any editor. Wordcell is free and open source.",
+    "hero": {
+      "heading": "Give coding agents the decisions behind your code.",
+      "summary": "Decisions, plans, and sources kept as Markdown beside your repository, one command away from the agent about to change a file.",
+      "primaryAction": "Install Wordcell",
+      "secondaryAction": "See an example"
+    },
+    "headings": {
+      "home-related-group": "Works with Wordcell",
+      "home-preview": "Your agent finds the rule and names the file",
+      "home-install": "Save and find your first decision",
+      "home-agent-search": "Let your agent search and add notes",
+      "home-primitives": "What a vault gives you",
+      "home-passages": "Find the passage with the answer",
+      "home-scopes": "Your coding agent starts with what you already decided",
+      "home-fit": "How Wordcell compares",
+      "home-publish": "Publish your notes as a website",
+      "home-trust": "The record stays yours",
+      "home-questions": "Before you install",
+      "home-related": "Related Hraness tools",
+      "home-closing": "Give the next session what this one learned.",
+      "home-search-title": "Wordcell: Markdown memory for coding agents",
+      "home-primitive-files": "Files you own",
+      "home-primitive-decisions": "Find a past decision",
+      "home-primitive-context": "Context for the file at hand",
+      "home-primitive-sources": "Sources you can reopen"
+    },
+    "status": {
+      "default": "proposed"
+    },
+    "reviewedOn": "2026-09-24"
+  },
+  "projects": [
+    {
+      "id": "gobstopper",
+      "name": "Gobstopper",
+      "description": "compacts long agent sessions into smaller copies, keeping every byte",
+      "canonicalUrl": "https://gobstopper.sh",
+      "surface": {
+        "actionLabel": "explore Gobstopper",
+        "interfaces": [
+          "CLI",
+          "MCP"
+        ],
+        "proof": "automatic context compaction that snapshots each transcript before changing it"
+      },
+      "messaging": {
+        "names": {
+          "name": "Gobstopper",
+          "command": "gobstopper"
+        },
+        "short": "Compacts long agent sessions into smaller copies, keeping every byte",
+        "tagline": "Context compaction you can undo."
+      }
+    },
+    {
+      "id": "xcb",
+      "name": "Excalibur (xcb)",
+      "description": "routes coding tasks across the claude, codex, and devin plans you have",
+      "canonicalUrl": "https://xcb.sh",
+      "surface": {
+        "actionLabel": "explore Excalibur (xcb)",
+        "interfaces": [
+          "CLI",
+          "SDK"
+        ],
+        "proof": "a customizable terminal workspace, provider account management, and token usage tracking"
+      },
+      "messaging": {
+        "names": {
+          "name": "Excalibur (xcb)",
+          "command": "xcb",
+          "formerly": [
+            "AgentMixer",
+            "OOMPA",
+            "HRA"
+          ]
+        },
+        "short": "Routes coding tasks across the Claude, Codex, and Devin plans you have",
+        "tagline": "Use your Claude, Codex, and Devin plans from one agent."
+      }
+    },
+    {
+      "id": "aicharts",
+      "name": "aicharts",
+      "description": "model benchmark scores plotted against cost and tokens per task",
+      "canonicalUrl": "https://aicharts.io",
+      "surface": {
+        "actionLabel": "compare models",
+        "interfaces": [
+          "web app"
+        ],
+        "proof": "interactive Pareto frontier and model benchmark charts"
+      },
+      "messaging": {
+        "names": {
+          "name": "aicharts",
+          "command": "aicharts",
+          "formerly": [
+            "CodingChart"
+          ]
+        },
+        "short": "Model benchmark scores plotted against cost and tokens per task",
+        "tagline": "See which model wins at each price."
+      }
+    },
+    {
+      "id": "kb",
+      "name": "Wordcell",
+      "description": "markdown knowledge base that gives agents the decisions behind code",
+      "canonicalUrl": "https://wordcell.io",
+      "surface": {
+        "actionLabel": "open Wordcell",
+        "interfaces": [
+          "CLI",
+          "SDK",
+          "Agent Skill"
+        ],
+        "proof": "Markdown recovered through backlinks, search, and Git context"
+      },
+      "messaging": {
+        "names": {
+          "name": "Wordcell",
+          "command": "wordcell",
+          "formerly": [
+            "KB"
+          ]
+        },
+        "short": "Markdown knowledge base that gives agents the decisions behind code",
+        "tagline": "Give the next session what this one learned."
+      }
+    },
+    {
+      "id": "oh-computer",
+      "name": "Oh",
+      "description": "memory for agents that stores each fact with its sources and history",
+      "canonicalUrl": "https://oh.computer",
+      "surface": {
+        "actionLabel": "research with Oh",
+        "interfaces": [
+          "CLI",
+          "SDK",
+          "Agent Skill"
+        ],
+        "proof": "an inspectable question-to-citation research trace"
+      },
+      "messaging": {
+        "names": {
+          "name": "Oh",
+          "command": "oh"
+        },
+        "short": "Memory for agents that stores each fact with its sources and history",
+        "tagline": "Agent memory that shows its work."
+      }
+    },
+    {
+      "id": "sponge",
+      "name": "Sponge",
+      "description": "local research service that keeps its sources and writes cited reports",
+      "canonicalUrl": "https://sponge.computer",
+      "surface": {
+        "actionLabel": "Explore Sponge",
+        "interfaces": [
+          "CLI",
+          "terminal UI"
+        ],
+        "proof": "cited reports from saved sources, with strategy changes tested in a sealed evaluation before you adopt them"
+      },
+      "messaging": {
+        "names": {
+          "name": "Sponge",
+          "command": "spongev2"
+        },
+        "short": "Local research service that keeps its sources and writes cited reports",
+        "tagline": "Deep research that runs on your own machine."
+      }
+    },
+    {
+      "id": "algal",
+      "name": "ALGAL",
+      "description": "language and vm for agent programs that wait for approval and resume",
+      "canonicalUrl": "https://algal.computer",
+      "surface": {
+        "actionLabel": "explore ALGAL",
+        "interfaces": [
+          "CLI",
+          "SDK"
+        ],
+        "proof": "content-addressed programs, capabilities with declared limits, and replayable run receipts"
+      },
+      "messaging": {
+        "names": {
+          "name": "ALGAL",
+          "command": "algal",
+          "formerly": [
+            "Morphogen"
+          ]
+        },
+        "short": "Language and VM for agent programs that wait for approval and resume",
+        "tagline": "Write agent programs that wait, resume, and replay."
+      }
+    },
+    {
+      "id": "valhalla",
+      "name": "Valhalla",
+      "description": "peer-to-peer rooms where agents and their owners share signed work",
+      "canonicalUrl": "https://vhalla.com",
+      "surface": {
+        "actionLabel": "explore Valhalla",
+        "interfaces": [
+          "CLI",
+          "web app"
+        ],
+        "proof": "an early Rust project for signed agent chat and browser participation"
+      },
+      "messaging": {
+        "names": {
+          "name": "Valhalla",
+          "command": "vhalla"
+        },
+        "short": "Peer-to-peer rooms where agents and their owners share signed work",
+        "tagline": "A meeting place for agents, run by the people in it."
+      }
+    },
+    {
+      "id": "peopleblade",
+      "name": "PeopleBlade",
+      "description": "the contact book you own, built for your agent",
+      "canonicalUrl": "https://peopleblade.com",
+      "surface": {
+        "actionLabel": "open PeopleBlade",
+        "interfaces": [
+          "CLI",
+          "Agent Skill"
+        ],
+        "proof": "your contacts in one local database, each record kept with its source"
+      },
+      "messaging": {
+        "names": {
+          "name": "PeopleBlade",
+          "command": "peopleblade"
+        },
+        "short": "The contact book you own, built for your agent",
+        "tagline": "A local personal CRM for everyone you know."
+      }
+    },
+    {
+      "id": "message-like-me",
+      "name": "TextButler",
+      "description": "ai butler for the imessage, whatsapp, and beeper chats you choose",
+      "canonicalUrl": "https://textbutler.app",
+      "surface": {
+        "actionLabel": "open TextButler",
+        "interfaces": [
+          "CLI"
+        ],
+        "proof": "marked replies in the one-to-one chats you turn on, with notes kept on your Mac"
+      },
+      "messaging": {
+        "names": {
+          "name": "TextButler",
+          "command": "textbutler",
+          "formerly": [
+            "Message Like Me"
+          ]
+        },
+        "short": "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
+        "tagline": "An AI butler in your messaging apps."
+      }
+    },
+    {
+      "id": "wrench",
+      "name": "GhostGet",
+      "description": "named web actions for ai agents: read pages, save media, use connected accounts",
+      "canonicalUrl": "https://ghostget.com",
+      "surface": {
+        "actionLabel": "open GhostGet",
+        "interfaces": [
+          "CLI",
+          "SDK",
+          "Agent Skill"
+        ],
+        "proof": "signed web captures and provider actions within declared limits"
+      },
+      "messaging": {
+        "names": {
+          "name": "GhostGet",
+          "command": "ghostget",
+          "formerly": [
+            "Wrench"
+          ]
+        },
+        "short": "Named web actions for AI agents: read pages, save media, use connected accounts",
+        "tagline": "Your agent calls web actions by name and holds no password."
+      }
+    },
+    {
+      "id": "soulscrape",
+      "name": "Soulscrape",
+      "description": "free agent skill that writes dated dossiers on people, sources cited",
+      "canonicalUrl": "https://soulscrape.com",
+      "surface": {
+        "actionLabel": "open Soulscrape",
+        "interfaces": [
+          "Agent Skill"
+        ],
+        "proof": "a dated person model with cited evidence and open questions"
+      },
+      "messaging": {
+        "names": {
+          "name": "Soulscrape",
+          "command": "@hraness/soulscrape",
+          "formerly": [
+            "Ensoul"
+          ]
+        },
+        "short": "Free agent skill that writes dated dossiers on people, sources cited",
+        "tagline": "See how someone thinks, and where every claim comes from."
+      }
+    },
+    {
+      "id": "iconplace",
+      "name": "icon.place",
+      "description": "editable vector icons and illustrations, with an editor in your browser",
+      "canonicalUrl": "https://icon.place",
+      "surface": {
+        "actionLabel": "open icon.place",
+        "interfaces": [
+          "web app"
+        ],
+        "proof": "9,518 concept pages and 8,965 drawn icons that export as SVG, PNG, or a recipe"
+      },
+      "messaging": {
+        "names": {
+          "name": "icon.place"
+        },
+        "short": "Editable vector icons and illustrations, with an editor in your browser",
+        "tagline": "Icons and illustrations you can edit as vectors."
+      }
+    },
+    {
+      "id": "slopcamera",
+      "name": "SlopCamera",
+      "description": "a multimedia studio for your coding agent",
+      "canonicalUrl": "https://slopcamera.com",
+      "surface": {
+        "actionLabel": "open SlopCamera",
+        "interfaces": [
+          "CLI",
+          "SDK",
+          "MCP",
+          "Agent Skill"
+        ],
+        "proof": "generated media with operation records that identify inputs and outputs"
+      },
+      "messaging": {
+        "names": {
+          "name": "SlopCamera",
+          "command": "slopcamera",
+          "formerly": [
+            "Atet",
+            "Graphics"
+          ]
+        },
+        "short": "A multimedia studio for your coding agent",
+        "tagline": "A multimedia studio for your coding agent."
+      }
+    },
+    {
+      "id": "soundfish",
+      "name": "Soundfish",
+      "description": "album pages with a waveform player and comments pinned to moments",
+      "canonicalUrl": "https://sound.fish",
+      "surface": {
+        "actionLabel": "open the editor",
+        "interfaces": [
+          "web app",
+          "CLI",
+          "Agent Skill"
+        ],
+        "proof": "a MIDI composition encoded in a content-addressed URL"
+      },
+      "messaging": {
+        "names": {
+          "name": "Soundfish",
+          "command": "soundfish"
+        },
+        "short": "Album pages with a waveform player and comments pinned to moments",
+        "tagline": "Give your album a page of its own."
+      }
+    },
+    {
+      "id": "sys1",
+      "name": "Sys1",
+      "description": "saves repository check results and adds scoped code review",
+      "canonicalUrl": "https://sys1.io",
+      "surface": {
+        "actionLabel": "explore Sys1",
+        "interfaces": [
+          "CLI",
+          "SDK"
+        ],
+        "proof": "saved repository checks, scoped code review, and structured model answers through a CLI and SDK"
+      },
+      "messaging": {
+        "names": {
+          "name": "Sys1",
+          "command": "sys1"
+        },
+        "short": "Saves repository check results and adds scoped code review",
+        "tagline": "Saved checks and code review"
+      }
+    },
+    {
+      "id": "sloptrade",
+      "name": "SlopTrade",
+      "description": "build prompt that turns a coding agent into a trading-system designer",
+      "canonicalUrl": "https://sloptrade.com",
+      "surface": {
+        "actionLabel": "explore Sloptrade",
+        "interfaces": [
+          "website",
+          "publication"
+        ],
+        "proof": "a citation-backed architecture dossier with system and research notes"
+      },
+      "messaging": {
+        "names": {
+          "name": "SlopTrade",
+          "command": "sloptrade",
+          "formerly": [
+            "Invest"
+          ]
+        },
+        "short": "Build prompt that turns a coding agent into a trading-system designer",
+        "tagline": "Design an AI trading system that fails closed."
+      }
+    },
+    {
+      "id": "hraness",
+      "name": "Hraness",
+      "description": "software studio making tools for ai agents and for people",
+      "canonicalUrl": "https://hraness.com",
+      "surface": {
+        "actionLabel": "open Hraness",
+        "interfaces": [
+          "website"
+        ],
+        "proof": "organization statement with project, writing, reference, and Reading indexes"
+      },
+      "messaging": {
+        "names": {
+          "name": "Hraness"
+        },
+        "short": "Software studio making tools for AI agents and for people",
+        "tagline": "Tools for agents and humans."
+      }
+    },
+    {
+      "id": "sleepyland",
+      "name": "Sleepyland",
+      "description": "free sleep sounds made in your browser, with sourced sleep guides",
+      "canonicalUrl": "https://sleepy.land",
+      "surface": {
+        "actionLabel": "explore Sleepyland",
+        "interfaces": [
+          "web app",
+          "publication"
+        ],
+        "proof": "a browser sound machine beside cited sleep research"
+      },
+      "messaging": {
+        "names": {
+          "name": "Sleepyland"
+        },
+        "short": "Free sleep sounds made in your browser, with sourced sleep guides",
+        "tagline": "Steady sound for sleep, made in your browser."
+      }
+    },
+    {
+      "id": "roughday",
+      "name": "Rough Day",
+      "description": "daily front page that says why each story ranked and links its source",
+      "canonicalUrl": "https://rough.day",
+      "surface": {
+        "actionLabel": "read today's archive",
+        "interfaces": [
+          "archive"
+        ],
+        "proof": "a dated, source-linked daily news archive"
+      },
+      "messaging": {
+        "names": {
+          "name": "Rough Day"
+        },
+        "short": "Daily front page that says why each story ranked and links its source",
+        "tagline": "A daily front page that says why each story ranked."
+      }
+    },
+    {
+      "id": "stripe-history",
+      "name": "Stripe History",
+      "description": "independent history of stripe where every event is dated and sourced",
+      "canonicalUrl": "https://hraness.com/stripe",
+      "surface": {
+        "actionLabel": "explore the timeline",
+        "interfaces": [
+          "archive"
+        ],
+        "proof": "a source-linked company timeline and charts"
+      },
+      "messaging": {
+        "names": {
+          "name": "Stripe History",
+          "formerly": [
+            "Stripe Guide",
+            "Stripedex"
+          ]
+        },
+        "short": "Independent history of Stripe where every event is dated and sourced",
+        "tagline": "Every event in Stripe's history, dated and sourced."
+      }
+    },
+    {
+      "id": "eds-research",
+      "name": "EDS Research Index",
+      "description": "ehlers-danlos evidence stratified by kind, every record linked to sources",
+      "canonicalUrl": "https://hraness.com/eds",
+      "surface": {
+        "actionLabel": "explore the index",
+        "interfaces": [
+          "archive"
+        ],
+        "proof": "an Ehlers-Danlos research index where every record names its sources and evidence tier"
+      },
+      "messaging": {
+        "names": {
+          "name": "EDS Research Index"
+        },
+        "short": "Ehlers-Danlos evidence stratified by kind, every record linked to sources",
+        "tagline": "Ehlers-Danlos research, sorted by kind of evidence."
+      }
+    },
+    {
+      "id": "act60",
+      "name": "act60.me",
+      "description": "estimate act 60 savings after real costs, with sourced guides and a day tracker",
+      "canonicalUrl": "https://act60.me",
+      "surface": {
+        "actionLabel": "estimate Act 60 savings",
+        "interfaces": [
+          "web app"
+        ],
+        "proof": "an Act 60 savings calculator that shows its assumptions and the date the law was last checked"
+      },
+      "messaging": {
+        "names": {
+          "name": "act60.me",
+          "shortName": "ACT60"
+        },
+        "short": "Estimate Act 60 savings after real costs, with sourced guides and a day tracker",
+        "tagline": "Model the move to Puerto Rico before you make it."
+      }
+    },
+    {
+      "id": "direct",
+      "name": "Direct",
+      "description": "repeatable app states for browser agents, opened by url",
+      "canonicalUrl": "https://hraness.com/direct",
+      "surface": {
+        "actionLabel": "open Direct",
+        "interfaces": [
+          "library",
+          "Agent Skill"
+        ],
+        "proof": "a fixture, scenario, and deterministic browser trace"
+      },
+      "messaging": {
+        "names": {
+          "name": "Direct",
+          "command": "@hraness/direct"
+        },
+        "short": "Repeatable app states for browser agents, opened by URL",
+        "tagline": "Give each app state you test its own URL."
+      }
+    },
+    {
+      "id": "clankdar",
+      "name": "Clankdar",
+      "description": "fresh puzzles for ai agents, scored exactly, with a signed receipt",
+      "canonicalUrl": "https://clankdar.com",
+      "surface": {
+        "actionLabel": "explore Clankdar",
+        "interfaces": [
+          "website"
+        ],
+        "proof": "reproducible capability checks with verifiable results"
+      },
+      "messaging": {
+        "names": {
+          "name": "Clankdar",
+          "command": "clankdar",
+          "formerly": [
+            "botcaptcha"
+          ]
+        },
+        "short": "Fresh puzzles for AI agents, scored exactly, with a signed receipt",
+        "tagline": "Check what your agent can solve."
+      }
+    },
+    {
+      "id": "lifedaysleft",
+      "name": "Lifecharts",
+      "description": "turn the chapters of your life into one timeline you can share",
+      "canonicalUrl": "https://lifecharts.io",
+      "surface": {
+        "actionLabel": "make a timeline",
+        "interfaces": [
+          "web app",
+          "CLI"
+        ],
+        "proof": "editable life chapters with shareable links and website embeds"
+      },
+      "messaging": {
+        "names": {
+          "name": "Lifecharts",
+          "command": "lifecharts",
+          "formerly": [
+            "Life Days Left",
+            "lifedaysleft"
+          ]
+        },
+        "short": "Turn the chapters of your life into one timeline you can share",
+        "tagline": "Chart your life in chapters."
+      }
+    },
+    {
+      "id": "swft",
+      "name": "SWFT",
+      "description": "free publication about how companies put ai agents to work",
+      "canonicalUrl": "https://swft.io",
+      "surface": {
+        "actionLabel": "read SWFT",
+        "interfaces": [
+          "publication"
+        ],
+        "proof": "reported software-factory stories with source notes"
+      },
+      "messaging": {
+        "names": {
+          "name": "SWFT"
+        },
+        "short": "Free publication about how companies put AI agents to work",
+        "tagline": "How companies put AI agents to work."
+      }
+    },
+    {
+      "id": "pattern-language",
+      "name": "Pattern Language",
+      "description": "tests whether alexander-inspired patterns help agents write better code",
+      "canonicalUrl": "https://github.com/hraness/pattern-language",
+      "surface": {
+        "actionLabel": "read the studies",
+        "interfaces": [
+          "archive"
+        ],
+        "proof": "executable code-design studies that record when pattern guidance helps and when it does not"
+      },
+      "messaging": {
+        "names": {
+          "name": "Pattern Language"
+        },
+        "short": "Tests whether Alexander-inspired patterns help agents write better code",
+        "tagline": "Alexander's notes, sketched as runnable ALGAL form."
+      }
+    },
+    {
+      "id": "system-one-skills",
+      "name": "System One Skills",
+      "description": "runs a check once, returns a short result, and keeps the full log",
+      "canonicalUrl": "https://sys1.io/skills",
+      "surface": {
+        "actionLabel": "install the skill",
+        "interfaces": [
+          "Agent Skill",
+          "CLI"
+        ],
+        "proof": "one deterministic skill that cut validation-log text 35.20 percent across 563 replayed outputs"
+      },
+      "messaging": {
+        "names": {
+          "name": "System One Skills",
+          "command": "system-one-skills"
+        },
+        "short": "Runs a check once, returns a short result, and keeps the full log",
+        "tagline": "Cut noisy validation logs without a model call."
+      }
+    },
+    {
+      "id": "ghostget-skills",
+      "name": "GhostGet Skills",
+      "description": "packages provider reads and plan checks as programs with no model calls",
+      "canonicalUrl": "https://github.com/hraness/ghostget-skills",
+      "surface": {
+        "actionLabel": "install the skills",
+        "interfaces": [
+          "Agent Skill",
+          "CLI"
+        ],
+        "proof": "ALGAL programs for GhostGet reads, plan checks, and drift watch, with zero model calls"
+      },
+      "messaging": {
+        "names": {
+          "name": "GhostGet Skills",
+          "command": "ghostget-skills"
+        },
+        "short": "Packages provider reads and plan checks as programs with no model calls",
+        "tagline": "GhostGet workflows as programs you can replay."
+      }
+    }
+  ],
+  "relations": [
+    {
+      "source": "hraness",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "hraness",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "hraness",
+      "target": "posthog-sdk",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "hraness",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "hraness",
+      "target": "web-discovery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "aicharts",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "aicharts",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "aicharts",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "aicharts",
+      "target": "web-discovery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "swft",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "swft",
+      "target": "web-discovery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "lifedaysleft",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "lifedaysleft",
+      "target": "result",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "lifedaysleft",
+      "target": "slopcamera",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sleepyland",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sleepyland",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sleepyland",
+      "target": "posthog-sdk",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sleepyland",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sleepyland",
+      "target": "web-discovery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "roughday",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "roughday",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "roughday",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "roughday",
+      "target": "direct",
+      "kind": "development",
+      "label": "develops with",
+      "direction": "forward"
+    },
+    {
+      "source": "stripe-history",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "stripe-history",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "stripe-history",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "stripe-history",
+      "target": "web-discovery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "stripe-history",
+      "target": "hraness",
+      "kind": "delivery",
+      "label": "published at /stripe",
+      "direction": "forward",
+      "detail": "Hraness proxies the standalone Stripe History data application under its canonical /stripe route."
+    },
+    {
+      "source": "eds-research",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "eds-research",
+      "target": "web-discovery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "eds-research",
+      "target": "hraness",
+      "kind": "delivery",
+      "label": "published at /eds",
+      "direction": "forward",
+      "detail": "Hraness proxies the standalone EDS research index under its canonical /eds route."
+    },
+    {
+      "source": "act60",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "act60",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "act60",
+      "target": "result",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "act60",
+      "target": "convex-toolkit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "act60",
+      "target": "suite-accounts",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "act60",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "wrench",
+      "target": "kb",
+      "kind": "runtime",
+      "label": "ships KB workflows",
+      "direction": "forward"
+    },
+    {
+      "source": "wrench",
+      "target": "message-like-me",
+      "kind": "contract",
+      "label": "exports private bundles",
+      "direction": "forward",
+      "detail": "GhostGet produces bounded multi-account Beeper bundles that TextButler verifies and ingests locally."
+    },
+    {
+      "source": "peopleblade",
+      "target": "wrench",
+      "kind": "runtime",
+      "label": "provider transport",
+      "direction": "forward",
+      "detail": "PeopleBlade uses GhostGet to read contacts and search results from connected accounts such as Beeper and WhatsApp, and checks each result before saving it locally."
+    },
+    {
+      "source": "message-like-me",
+      "target": "peopleblade",
+      "kind": "contract",
+      "label": "shared bundle format",
+      "direction": "shared",
+      "detail": "Both tools implement the versioned message-like-me.local-message-bundle interchange without importing each other's private state."
+    },
+    {
+      "source": "gobstopper",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "gobstopper",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "gobstopper",
+      "target": "xcb",
+      "kind": "runtime",
+      "label": "compacts sessions for",
+      "direction": "forward",
+      "detail": "Excalibur (xcb) uses Gobstopper's elision policy to drop stale tool output from Claude Code and Codex prompts once context passes a threshold, and keeps the original output in local history. It is on by default."
+    },
+    {
+      "source": "xcb",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "xcb",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "xcb",
+      "target": "aicharts",
+      "kind": "contract",
+      "label": "exports sessions for",
+      "direction": "forward",
+      "detail": "Excalibur (xcb) measures subscription usage locally and, when you turn on exports, writes session files in the aicharts format. Automatic upload is not available."
+    },
+    {
+      "source": "soulscrape",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "soulscrape",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "soulscrape",
+      "target": "peopleblade",
+      "kind": "contract",
+      "label": "exports dossier packets",
+      "direction": "forward",
+      "detail": "Soulscrape exports dated dossier packets that PeopleBlade imports and rebinds to contacts during local merge review."
+    },
+    {
+      "source": "wrench",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "wrench",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "message-like-me",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "message-like-me",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "slopcamera",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "slopcamera",
+      "target": "direct",
+      "kind": "development",
+      "label": "develops with",
+      "direction": "forward"
+    },
+    {
+      "source": "peopleblade",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "peopleblade",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "peopleblade",
+      "target": "posthog-sdk",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sponge",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sponge",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sponge",
+      "target": "convex-toolkit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sponge",
+      "target": "posthog-sdk",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sponge",
+      "target": "suite-accounts",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sponge",
+      "target": "vercel-delivery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "sponge",
+      "target": "web-discovery",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "kb",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "kb",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "direct",
+      "target": "hraness",
+      "kind": "delivery",
+      "label": "README-backed /direct",
+      "direction": "forward",
+      "detail": "Hraness renders the pinned public Direct README and Agent Skill at /direct."
+    },
+    {
+      "source": "soundfish",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "soundfish",
+      "target": "result",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "soundfish",
+      "target": "direct",
+      "kind": "development",
+      "label": "develops with",
+      "direction": "forward"
+    },
+    {
+      "source": "oh-computer",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "oh-computer",
+      "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "oh-computer",
+      "target": "oh",
+      "kind": "delivery",
+      "label": "publishes kernel specification",
+      "direction": "forward",
+      "detail": "The public Oh site publishes the versioned specification for the @hraness/oh kernel from the same repository."
+    },
+    {
+      "source": "design-kit",
+      "target": "ui",
+      "kind": "runtime",
+      "label": "builds on",
+      "direction": "forward"
+    },
+    {
+      "source": "suite-accounts",
+      "target": "result",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "suite-accounts",
+      "target": "accounts",
+      "kind": "contract",
+      "label": "OAuth protocol",
+      "direction": "forward",
+      "detail": "The public Suite Accounts package validates the protocol spoken by products and the Accounts authority."
+    },
+    {
+      "source": "message-like-me",
+      "target": "xcb",
+      "kind": "runtime",
+      "label": "drafts replies through",
+      "direction": "forward",
+      "detail": "TextButler can classify messages and draft replies through Excalibur (xcb) on the Claude Code or Codex subscription you already pay for, with xcb holding the sign-in; a separately billed API route also exists."
+    },
+    {
+      "source": "message-like-me",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "runs reply habitats on",
+      "direction": "forward",
+      "detail": "TextButler's opt-in per-contact habitats run as ALGAL programs: a candidate reply plan replaces the current one only after a blind replay shows no regression, and no plan can change the recipient, provider, or permissions."
+    },
+    {
+      "source": "sponge",
+      "target": "oh-computer",
+      "kind": "runtime",
+      "label": "keeps its hosted library's agent working memory in",
+      "direction": "forward",
+      "detail": "Sponge's hosted library at sponge.computer keeps its research agents' working memory in a server-side Oh store, separate from the reviewed knowledge in its product database."
+    },
+    {
+      "source": "kb",
+      "target": "oh-computer",
+      "kind": "runtime",
+      "label": "answers graph queries with",
+      "direction": "forward",
+      "detail": "Wordcell rebuilds a disposable Oh graph from your Markdown to answer named graph queries with source proofs; Markdown and Git stay the record, and search does not use Oh's memory retrieval."
+    },
+    {
+      "source": "xcb",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "replays task history with",
+      "direction": "forward",
+      "detail": "Excalibur (xcb) embeds the ALGAL runtime for task transitions, route and settle reflexes, and resumable controllers, and its task verifier replays a task's recorded history offline; the managed harness is experimental."
+    },
+    {
+      "source": "xcb",
+      "target": "kb",
+      "kind": "runtime",
+      "label": "searches project notes with",
+      "direction": "forward",
+      "detail": "Excalibur (xcb) can bind one explicit Wordcell vault through a hash-pinned CLI, giving workers a read-only memory search with citations; saving a note back to the vault is always an explicit step."
+    },
+    {
+      "source": "clankdar",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "scores puzzles with",
+      "direction": "forward",
+      "detail": "Clankdar's default puzzles are small programs in ALGAL's expression language, and ALGAL's official evaluator, pinned by commit and hash, computes each reference answer, so no judge model decides."
+    },
+    {
+      "source": "slopcamera",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "bakes character behavior with",
+      "direction": "forward",
+      "detail": "SlopCamera's scene behavior bake runs character behavior as ALGAL organisms with no executors or side effects."
+    },
+    {
+      "source": "sponge",
+      "target": "wrench",
+      "kind": "runtime",
+      "label": "captures signed-in pages through",
+      "direction": "forward",
+      "detail": "Sponge captures signed-in pages through GhostGet, storing only a login name, and the hosted library at sponge.computer imports GhostGet's text-only capture bundles offline."
+    },
+    {
+      "source": "sponge",
+      "target": "soulscrape",
+      "kind": "contract",
+      "label": "imports research exchanges into its hosted library from",
+      "direction": "forward",
+      "detail": "Sponge's hosted library at sponge.computer converts a public Soulscrape research exchange offline into an Oh research packet that it does not treat as established fact."
+    },
+    {
+      "source": "xcb",
+      "target": "relay",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward",
+      "detail": "Excalibur (xcb) depends on @hraness/relay and instantiates its Convex relay modules for devices, commands, envelopes, invites, projections, and maintenance."
+    },
+    {
+      "source": "pattern-language",
+      "target": "algal",
+      "kind": "development",
+      "label": "runs studies with",
+      "direction": "forward",
+      "detail": "Pattern Language uses ALGAL so its design experiments stay inspectable: content-addressed manifests and records you can replay."
+    },
+    {
+      "source": "system-one-skills",
+      "target": "sys1",
+      "kind": "delivery",
+      "label": "skills guide hosted by",
+      "direction": "forward",
+      "detail": "The System One Skills guide is published at sys1.io/skills on the Sys1 site; the skill pack does not require Sys1 at runtime."
+    },
+    {
+      "source": "ghostget-skills",
+      "target": "wrench",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward",
+      "detail": "GhostGet Skills wraps the GhostGet CLI for catalog, plan check, invoke, read, doctor, and auth list, and pins @hraness/ghostget."
+    },
+    {
+      "source": "ghostget-skills",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "runs programs on",
+      "direction": "forward",
+      "detail": "Each GhostGet Skills workflow is an ALGAL program the ALGAL runtime executes; the package pins @hraness/algal."
+    },
+    {
+      "source": "message-like-me",
+      "target": "wrench",
+      "kind": "runtime",
+      "label": "reads and sends messages through",
+      "direction": "forward",
+      "detail": "Messages reach TextButler through GhostGet, a separate Mac tool you install first for messaging sign-in and permissions, and TextButler's marked replies go back the same way."
+    },
+    {
+      "source": "sponge",
+      "target": "kb",
+      "kind": "runtime",
+      "label": "keeps documents in",
+      "direction": "forward",
+      "detail": "Sponge uses Wordcell for documents and PDF text, renders a static Wordcell edition when you publish, and can put selected documents on a wordcell.io site."
+    },
+    {
+      "source": "sponge",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "evolves research strategies with",
+      "direction": "forward",
+      "detail": "Sponge runs on ALGAL, and a candidate strategy for brief research must pass a sealed evaluation that ALGAL replays; nothing changes until you adopt it or restore the previous one."
+    },
+    {
+      "source": "sponge",
+      "target": "xcb",
+      "kind": "runtime",
+      "label": "reaches models through",
+      "direction": "forward",
+      "detail": "Sponge reaches every model through a hash-pinned Excalibur (xcb) executable, so provider sign-ins stay in xcb."
+    },
+    {
+      "source": "algal",
+      "target": "xcb",
+      "kind": "runtime",
+      "label": "delegates coding tasks to",
+      "direction": "forward",
+      "detail": "ALGAL's xcb executor hands coding tasks to Excalibur (xcb) through its JSON run command, and ALGAL never copies credentials or reimplements account switching."
+    },
+    {
+      "source": "soundfish",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "evolves loops with",
+      "direction": "forward",
+      "detail": "Soundfish's evolve command turns a loop into an evolving recipe that a bundled ALGAL evaluator, pinned by SHA-256, runs offline."
+    },
+    {
+      "source": "aicharts",
+      "target": "gobstopper",
+      "kind": "runtime",
+      "label": "reads compaction telemetry from",
+      "direction": "forward",
+      "detail": "The aicharts collector parses Gobstopper's numeric compaction telemetry and never reads transcript content."
+    },
+    {
+      "source": "iconplace",
+      "target": "algal",
+      "kind": "runtime",
+      "label": "records drawing runs with",
+      "direction": "forward",
+      "detail": "The icon.place drawing lab runs each experiment as an ALGAL program in the browser and records the proposal, candidates, and selection as receipts it can replay; the live site does not use ALGAL yet."
+    }
+  ]
+}

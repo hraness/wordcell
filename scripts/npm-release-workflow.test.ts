@@ -408,11 +408,8 @@ describe("npm release workflows", () => {
     // description; the README opening backs the same claim.
     expect(String(manifest.description)).toContain("Markdown");
     expect(String(manifest.description)).toContain("coding agents");
-    const siteDescriptionSource = await readFile(
-      new URL("../site/app/site-description.ts", import.meta.url),
-      "utf8",
-    );
-    expect(siteDescriptionSource).toContain(String(manifest.description));
+    const { siteDescription } = await import("../site/app/site-description");
+    expect(siteDescription).toBe(String(manifest.description));
     const opening = readme.slice(0, 1_500).replace(/\s+/gu, " ").toLowerCase();
     expect(opening).toContain("decisions, plans, and sources as markdown");
     expect(opening).toContain("coding agents");
