@@ -10,7 +10,8 @@ import { socialMarkDataUrl } from "./social-icon";
  * its page copy; the card design lives in that package.
  */
 export const wordcellSocialSite = defineSocialImageSite({
-  description: "Markdown knowledge base that gives agents the decisions behind code",
+  description: "Markdown knowledge base that gives agents the decisions behind code.",
+  keepTogether: ["Basic Memory"],
   domain: "wordcell.io",
   icon: { kind: "mark", src: socialMarkDataUrl },
   name: "Wordcell",
@@ -30,39 +31,42 @@ export const wordcellSocialSite = defineSocialImageSite({
  */
 export const socialPages = {
   developers: {
-    description: "Save decisions, tie them to code paths, and let the next agent look them up from the file it edits.",
+    description: "Save decisions and tie them to code paths.",
     eyebrow: "For developers",
     headline: routeTitles.developers.card,
+    path: "/developers",
   },
   benchmarks: {
-    description: "Wordcell’s excerpt, payload, and reranking results, and Oh’s memory studies.",
+    description: "Wordcell’s retrieval and Oh’s memory studies.",
     eyebrow: "Benchmarks",
     headline: routeTitles.benchmarks.card,
+    path: "/benchmarks",
   },
   docs: {
     description: "Learn the loop on a first vault, finish a task, or look up an exact interface.",
-    eyebrow: "Docs",
     headline: routeTitles.docs.card,
+    path: "/docs",
   },
   compareBasicMemory: {
-    description: "Wordcell adds typed relations, vault checks, and notes tied to code paths.",
-    eyebrow: "Comparison",
+    description: "Wordcell adds typed relations and checks.",
     headline: routeTitles.compareBasicMemory.card,
+    path: "/compare/basic-memory",
   },
   compareMem0: {
-    description: "Facts about each user of your app, or your own agents’ memory as Markdown notes you own.",
-    eyebrow: "Comparison",
+    description: "Facts about each user of your app, or agent memory as notes you own.",
     headline: routeTitles.compareMem0.card,
+    path: "/compare/mem0",
   },
   compareSupermemory: {
-    description: "A hosted memory API that extracts facts, or Markdown files you own and review in Git.",
-    eyebrow: "Comparison",
+    description: "A hosted memory API, or files you own.",
     headline: routeTitles.compareSupermemory.card,
+    path: "/compare/supermemory",
   },
   migrateSupermemory: {
-    description: "Export documents and memory entries, import them as Markdown notes, and verify the result.",
-    eyebrow: "Migration guide",
+    description: "Export, import as Markdown, and verify.",
+    eyebrow: "Guide",
     headline: routeTitles.migrateSupermemory.card,
+    path: "/migrate/supermemory",
   },
 } as const satisfies Record<string, SocialImagePage>;
 
@@ -73,5 +77,5 @@ export function docSocialPage(slug: string): SocialImagePage {
   if (entry === undefined) return socialPages.docs;
   const description = "card" in entry && entry.card !== undefined ? entry.card : entry.summary;
   const headline = "cardTitle" in entry && entry.cardTitle !== undefined ? entry.cardTitle : entry.title;
-  return { description, eyebrow: "Documentation", headline };
+  return { description, headline, path: `/docs/${entry.slug}` };
 }

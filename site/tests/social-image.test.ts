@@ -82,26 +82,27 @@ test("every documentation route passes its own page copy", () => {
     const cardTitle = "cardTitle" in entry ? entry.cardTitle : undefined;
     expect(docSocialPage(entry.slug)).toEqual({
       description: card ?? entry.summary,
-      eyebrow: "Documentation",
       headline: cardTitle ?? entry.title,
+      path: `/docs/${entry.slug}`,
     });
   }
   expect(docTitle("missing")).toBeNull();
   expect(docSocialPage("missing")).toBe(socialPages.docs);
 });
 
-test("every card fits as written: no cut description, smaller headline, or stripped text", () => {
+test("every card fits as written with no review findings, and every page card has an eyebrow", () => {
   const pages = [
     undefined,
     ...Object.values(socialPages),
     ...[docOverview, ...docCatalog].map((entry) => docSocialPage(entry.slug)),
   ];
   for (const page of pages) {
-    const details = socialImageSiteDetails(wordcellSocialSite, page);
-    expect({ headline: page?.headline ?? "home", issues: socialImageFit(details).issues }).toEqual({
+    const fit = socialImageFit(socialImageSiteDetails(wordcellSocialSite, page));
+    expect({ headline: page?.headline ?? "home", findings: fit.findings }).toEqual({
       headline: page?.headline ?? "home",
-      issues: [],
+      findings: [],
     });
+    if (page !== undefined) expect(fit.eyebrow).toBeString();
   }
 });
 

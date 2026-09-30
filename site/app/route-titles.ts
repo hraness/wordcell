@@ -6,8 +6,8 @@
 export const routeTitles = {
   home: { title: "Wordcell: Markdown memory for coding agents", card: "Markdown memory for coding agents" },
   developers: { title: "Wordcell for developers and coding agents", card: "Rules in AGENTS.md, reasons in the vault" },
-  benchmarks: { title: "Wordcell and Oh benchmarks, with their limits", card: "Benchmarks, with their sources and limits" },
-  docs: { title: "Wordcell documentation", card: "Wordcell documentation" },
+  benchmarks: { title: "Wordcell and Oh benchmarks, with their limits", card: "Results, with their sources and limits" },
+  docs: { title: "Wordcell documentation", card: "Guides and reference" },
   compareBasicMemory: { title: "Wordcell vs Basic Memory: two Markdown knowledge graphs", card: "Wordcell vs Basic Memory" },
   compareMem0: { title: "Wordcell vs Mem0: agent notes or per-user app memory", card: "Wordcell vs Mem0" },
   compareSupermemory: { title: "Wordcell vs Supermemory: files or a hosted memory API", card: "Wordcell vs Supermemory" },
