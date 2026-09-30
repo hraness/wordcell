@@ -6,7 +6,7 @@ import {
   parseArguments,
   runExecutable,
   usage
-} from "./index-3391g0k1.js";
+} from "./index-8w1zsgcm.js";
 import"./index-5h5awwh4.js";
 import"./index-m9p2a4mj.js";
 import"./index-9paxge84.js";
@@ -64,7 +64,7 @@ import {
 
 // src/cli.ts
 async function runStandaloneCli(args = process.argv.slice(2)) {
-  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-6s1jes9g.js");
+  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-ym4mpf7w.js");
   const env = standaloneSupportEnvironment();
   if (args[0] === "support") {
     return await runProductSupportCommand(args.slice(1), { env });

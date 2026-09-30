@@ -2040,7 +2040,10 @@ function occupancyKey(value) {
   return value.normalize("NFC").toLowerCase();
 }
 function normalizePrefix(prefix) {
-  const trimmed = prefix.replace(/\/+$/u, "");
+  let end = prefix.length;
+  while (end > 0 && prefix.charCodeAt(end - 1) === 47)
+    end -= 1;
+  const trimmed = prefix.slice(0, end);
   let canonical;
   try {
     canonical = canonicalNoteId(trimmed);

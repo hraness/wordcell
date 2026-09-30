@@ -828,7 +828,9 @@ export function occupancyKey(value: string): string {
 
 /** Validate `--prefix` as a vault-relative directory note-ID prefix. */
 export function normalizePrefix(prefix: string): string {
-  const trimmed = prefix.replace(/\/+$/u, "");
+  let end = prefix.length;
+  while (end > 0 && prefix.charCodeAt(end - 1) === 47) end -= 1;
+  const trimmed = prefix.slice(0, end);
   let canonical: string | undefined;
   try {
     canonical = canonicalNoteId(trimmed);

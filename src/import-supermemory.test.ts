@@ -38,6 +38,7 @@ import {
   provenanceLine,
   localImportedText,
   occupancyKey,
+  normalizePrefix,
   type RawItem,
   readExportFile,
   slugFor,
@@ -50,6 +51,13 @@ import {
 import { scanVault } from "./vault.js";
 
 const FIXTURES = join(import.meta.dir, "fixtures", "supermemory");
+
+test("prefix normalization handles long slash runs without backtracking", () => {
+  const slashes = "/".repeat(100_000);
+  expect(normalizePrefix(`notes/imported${slashes}`)).toBe("notes/imported");
+  expect(() => normalizePrefix(`notes/${slashes}invalid`)).toThrow("--prefix must be");
+  expect(() => normalizePrefix(slashes)).toThrow("--prefix must be");
+});
 
 async function fixtureItems(name: string): Promise<readonly RawItem[]> {
   const text = await readExportFile(join(FIXTURES, name), name);

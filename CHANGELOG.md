@@ -8,6 +8,7 @@ Supported global Wordcell installations check for updates daily and install veri
 - Use `wordcell update`, `update check`, `update status`, `update enable`, or `update disable`; `HRANESS_NO_UPDATE=1` suppresses automatic checks for one invocation.
 - Source, project, copied, and pinned installations keep their version. SDK imports, help, and version output do not check for updates.
 - Updates preserve disabled lifecycle scripts and verify the GitHub archive, signatures, source tag, and release workflow before installation.
+- Long runs of slashes in a supermemory import prefix no longer cause excessive processing time.
 
 ## 0.25.1
 

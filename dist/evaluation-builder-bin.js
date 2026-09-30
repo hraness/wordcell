@@ -2,7 +2,7 @@
 // @bun
 import {
   runWordcellBin
-} from "./index-r39gbvkx.js";
+} from "./index-ncgdaja4.js";
 import"./index-3t0v457d.js";
 import"./index-8pabwzqg.js";
 import"./index-4knsp9qj.js";
