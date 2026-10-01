@@ -67,6 +67,9 @@ When to use this site:
 - [Sync a vault with Git](https://wordcell.io/docs/sync): Keep one vault
   current on several machines with a private repository and a scheduled
   commit and push.
+- [Set up repository KB search](https://wordcell.io/docs/consumer-search):
+  Install a pinned search tool, choose local or hosted processing for each
+  vault, and inspect reranking results.
 - [Comparisons](https://wordcell.io/docs/comparisons): Markdown tools such as
   QMD, Basic Memory, and Obsidian, Claude Code's built-in memory and
   claude-mem, and agent memory services such as Supermemory, Mem0, and Zep,
