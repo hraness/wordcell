@@ -6,7 +6,7 @@
       "name": "wordcell-site",
       "dependencies": {
         "@hraness/design-kit": "github:hraness/design-kit#v0.36.1",
-        "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.9/hraness-posthog-0.3.9.tgz",
+        "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz",
         "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
         "@hraness/web-discovery": "github:hraness/web-discovery#v0.13.0",
@@ -95,7 +95,7 @@
 
     "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-BHAzZHXAldhDCg/J2OGFjN0VSBzwmfzk6QjOLdh3vamOftvDHZXNtwOkPpKpXOag2hX4fEr0vrenG0bF07YGFA=="],
 
-    "@hraness/posthog": ["@hraness/posthog@https://github.com/hraness/posthog/releases/download/v0.3.9/hraness-posthog-0.3.9.tgz", { "dependencies": { "@posthog/nextjs-config": "1.10.0", "posthog-js": "1.422.5", "posthog-node": "5.51.4" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.2.0 <20.0.0" }, "optionalPeers": ["next", "react"] }, "sha512-faPyaByfdEEY5lSL32XXrGEtJ1PCiuRi0xE+7l7AR4FlPDFVjpd6jfl0/0KL8qtl/BkE6JvCpzWwd/W6V8Wkug=="],
+    "@hraness/posthog": ["@hraness/posthog@https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz", { "dependencies": { "@posthog/nextjs-config": "1.10.0", "posthog-js": "1.422.5", "posthog-node": "5.51.4" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.2.0 <20.0.0" }, "optionalPeers": ["next", "react"] }, "sha512-XIHWP+tivJOUAw7KVbdPYO3UteM4O0IYf/mD4ZJZugPPJ5ZEHP033Xh/qbAIDv2lSVI245UE4CLpzkznDT/pVg=="],
 
     "@hraness/site-footer": ["@hraness/site-footer@https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "sha512-TjjjT7cZeg73p9PKzDIJUGvWdV6eYt8IMDI4LtKswwYNzRceedsBnuuRnYb5FcLEyrV3TweEs1eAyqHGYt1XoA=="],
 
