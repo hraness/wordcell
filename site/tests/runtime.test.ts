@@ -165,11 +165,13 @@ describe("built Wordcell site", () => {
       expect(intro).toContain('<link rel="canonical" href="https://wordcell.io/blog/introducing-wordcell"');
       expect(intro).toContain('<meta property="og:type" content="article"');
       expect(intro).toContain('"@type":"BlogPosting"');
-      expect(intro).toContain("reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
+      expect(intro).toContain("reviewed by Codex independent AI editorial review.");
+      expect(intro).toContain('data-reviewer-type="ai"');
       expect(intro).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
       expect(ohPost).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
       expect(ohPost).toContain('<link rel="canonical" href="https://wordcell.io/blog/how-wordcell-uses-oh"');
-      expect(ohPost).toContain("reviewed by Claude Opus 5.5 (claude-opus-5-5) editorial review.");
+      expect(ohPost).toContain("reviewed by Codex independent AI editorial review.");
+      expect(ohPost).toContain('data-reviewer-type="ai"');
       expect(feedResponse.headers.get("content-type")).toContain("application/atom+xml");
       expect(feed).toContain("<id>https://wordcell.io/blog/introducing-wordcell</id>");
       expect(feed).toContain("<id>https://wordcell.io/blog/how-wordcell-uses-oh</id>");

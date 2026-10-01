@@ -5,7 +5,7 @@
     "": {
       "name": "wordcell-site",
       "dependencies": {
-        "@hraness/design-kit": "github:hraness/design-kit#v0.35.0",
+        "@hraness/design-kit": "github:hraness/design-kit#v0.36.1",
         "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.9/hraness-posthog-0.3.9.tgz",
         "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
@@ -91,7 +91,7 @@
 
     "@hono/node-server": ["@hono/node-server@1.19.17", "", { "peerDependencies": { "hono": "^4" } }, "sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ=="],
 
-    "@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#1f4aa08", { "dependencies": { "@hugeicons/core-free-icons": "4.2.3", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.16 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-1f4aa08", "sha512-3Xa04ZJGeSFcwWJ+ncG5opo2lp8op4dLqdzjVokoVe4Itd3YUHNtJbOk9wb5t9TF8EX1T7jWfWlJCkSTmejkPA=="],
+    "@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#7332039", { "dependencies": { "@hugeicons/core-free-icons": "4.2.3", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.16 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-7332039", "sha512-A9cTz2xEYb3wTRmDg7dG3R4O0xxnZhKzkQKwlUAE9R+voJGD/Z4MkYlHaUTM2NPxYgFwmBKtrP2vqENTJ8THFw=="],
 
     "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-BHAzZHXAldhDCg/J2OGFjN0VSBzwmfzk6QjOLdh3vamOftvDHZXNtwOkPpKpXOag2hX4fEr0vrenG0bF07YGFA=="],
 

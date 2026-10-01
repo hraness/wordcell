@@ -74,6 +74,7 @@ When to use this site:
 - [Evidence](https://wordcell.io/docs/evidence): The reproducible
   development fixtures used to check passage selection and context size, with
   their raw reports; source-ranking benchmarks are on /benchmarks.
+- [Markdown-memory retrieval pilot](https://wordcell.io/docs/markdown-memory-pilot): Historical measurements and methods on a frozen repository corpus.
 
 ## Blog
 

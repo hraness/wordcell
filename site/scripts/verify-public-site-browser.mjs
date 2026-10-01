@@ -28,6 +28,8 @@ import { createServer } from "node:net";
 import { availableParallelism, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { inspectComparisonLayout, inspectComparisonReflow } from "./check-comparison-layout.mjs";
+import { inspectSearchLayout } from "./check-search-layout.mjs";
 import { localVerificationOrigin as localBrowserOrigin, browserOwner, ownedChromiumLaunchOptions, pinnedBrowserExecutable, pinnedChromiumDefinition, verifyOwnedChromium } from "./owned-browser.mjs";
 
 const WIDTHS = [360, 390, 1440];
@@ -243,6 +245,12 @@ async function main(argv) {
             assert.equal(response?.status(), 200, `${route}: status`);
             await page.locator("main").waitFor();
             await page.evaluate(() => document.fonts.ready);
+            let searchLayout;
+            if (route === "/") {
+              searchLayout = await inspectSearchLayout(page, width === 1440);
+              await inspectComparisonLayout(page);
+              if (width === 1440) await inspectComparisonReflow(page);
+            }
             const state = await page.evaluate(() => {
               const footer = document.querySelector("#hraness-site-footer");
               return {
@@ -254,8 +262,10 @@ async function main(argv) {
               };
             });
             const file = `${name}-${route === "/" ? "home" : route.slice(1).replaceAll("/", "_")}`;
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             const screenshot = await page.screenshot({ path: resolve(artifacts, `${file}.png`), fullPage: true, animations: "disabled" });
-            await writeFile(resolve(artifacts, `${file}.json`), JSON.stringify({ route, state, errors }, null, 2));
+            await writeFile(resolve(artifacts, `${file}.json`), JSON.stringify({ route, state, searchLayout, errors }, null, 2));
             assert.equal(screenshot.readUInt32BE(16), width, `${route}: full-page screenshot width`);
             assert.ok(!state.overflow, `${route}: horizontal overflow at ${width}`);
             assert.ok(state.heading || config.minimalRoutes?.includes(route), `${route}: missing heading`);

@@ -1,0 +1,67 @@
+{
+  "reviewer": "Codex independent AI editorial review",
+  "reviewerType": "ai",
+  "reviewedAt": "2026-10-01T06:04:42.231267+00:00",
+  "scope": "Three complete article bodies and agent-memory guide; changed encoder claim checked against current implementation and tests; verbatim historical pilot relocation verified",
+  "files": {
+    "site/content/blog/introducing-wordcell.md": "a73e03c7738d145a9f428d43dd9cf2ed42cbe3c7a7ff26083d9209df75fda16d",
+    "site/content/blog/how-wordcell-uses-oh.md": "02effa1ff54f4d56d0937b94f8270f8e22a78f1fe70cace53ae2940be457de55",
+    "site/content/blog/free-local-agent-memory.md": "4faf8424f887da7d9e77b02b62c9cbc310a480b5792709bad82e28d77ce1764a",
+    "docs/agent-memory.md": "30c0d3bcc5cc09b7fe7ef51a7162416e60b14cdb2b6daf6d45f5add480ec1c73",
+    "docs/markdown-memory-pilot.md": "546ed964408de1838e83e8601ec81637aa2ece08bf05d2221a863c9e3d7b1d30",
+    "site/app/docs/catalog.ts": "e5e4223dd6685e47b1179eebc241a5c39e8bf50c98b9f7e4079ce2d54969280b"
+  },
+  "verdict": "CONTENT_APPROVED_PENDING_FINAL_SITE_AND_RENDER_GATES",
+  "observations": [
+    "canonicalJsonRust returns null on mismatch and generated comparisons skip null; revised paragraph no longer claims those tests establish total parity.",
+    "Retained study preserves every original measurement, hardware and limitation verbatim while the main guide teaches study design.",
+    "The MCP/import article now separates retrieval studies from private-memory answer quality and preserves the hosted-reranking data boundary.",
+    "Setup links replace volatile release announcements; original source dates must not be rewritten as fresh checks."
+  ],
+  "sourceEvidence": [
+    "src/oh/canonical-rust.ts",
+    "src/oh/canonical-rust.test.ts",
+    "HEAD:docs/agent-memory.md"
+  ],
+  "scores": {
+    "introducing-wordcell": {
+      "readerUtility": 2,
+      "originalEvidence": 1,
+      "factualConfidence": 2,
+      "hostFit": 2,
+      "voiceIntegrity": 2,
+      "maintenanceValue": 1
+    },
+    "how-wordcell-uses-oh": {
+      "readerUtility": 2,
+      "originalEvidence": 1,
+      "factualConfidence": 2,
+      "hostFit": 2,
+      "voiceIntegrity": 2,
+      "maintenanceValue": 2
+    },
+    "free-local-agent-memory": {
+      "readerUtility": 2,
+      "originalEvidence": 1,
+      "factualConfidence": 2,
+      "hostFit": 2,
+      "voiceIntegrity": 2,
+      "maintenanceValue": 2
+    }
+  },
+  "pending": [
+    "Truthful metadata update from this independent review",
+    "Final site checks and responsive render review"
+  ],
+  "resolvedFindings": [
+    {
+      "file": "site/app/docs/catalog.ts",
+      "issue": "New historical pilot currently leads Explanation group; place after practical explanation guides."
+    },
+    {
+      "file": "site/content/blog/how-wordcell-uses-oh.md",
+      "issue": "Replace only-safe absolute with interchangeable accepted-input agreement; fallback already safely handles mismatches."
+    }
+  ],
+  "externalSourceDates": "No new external claims; author confirms vendor paraphrases retain original check dates. This review does not relabel those as new checks."
+}

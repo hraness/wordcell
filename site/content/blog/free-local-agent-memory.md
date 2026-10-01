@@ -1,8 +1,8 @@
-Wordcell now serves a Markdown vault to local Model Context Protocol (MCP) clients, imports Supermemory exports, and gives agents a workflow for saving what a session decided as a note. The memory stays in files you can read, diff, and commit, with no hosted service, no account, and no usage bill.
+Wordcell gives coding agents memory in Markdown files you can read, diff, and commit. A local Model Context Protocol (MCP) server connects an agent to the vault, and an importer can bring in records exported from Supermemory.
 
-On Monday a coding agent works out why the release script pins an older compiler. On Tuesday a new session opens in the same repository and starts without that reason, unless someone wrote it where the agent looks. Wordcell keeps that kind of record as Markdown notes in a folder you control, and this launch lets agents read and write those notes through their own tools.
+On Monday a coding agent works out why the release script pins an older compiler. On Tuesday a new session opens in the same repository and starts without that reason, unless someone wrote it where the agent looks. Wordcell keeps that record in a folder you control and lets connected agents read and update it through their own tools.
 
-Latest release: v{{release.version}}. The [migration page](/migrate/supermemory#steps) starts with the release install, and `bunx skills add hraness/wordcell#v{{release.version}} --skill wordcell` adds the skill from that release.
+The [migration guide](/migrate/supermemory#steps) covers installation, importing an export, and connecting an agent.
 
 ## An MCP server, a Supermemory importer, and a session-memory workflow
 
@@ -14,19 +14,21 @@ The `wordcell` skill includes a session-memory workflow. When you ask, the agent
 
 Two guides cover the rest of a move. [Migrate from Supermemory](/docs/migration-from-supermemory) exports your data, imports it, and lists what does not transfer. [Sync a vault with Git](/docs/sync) keeps one vault current on several machines through a private repository.
 
-## Search ranking on public scientific abstracts
+## Evaluate retrieval on the notes you need
 
-On {{evidence.scifact.queries}} BEIR SciFact queries over {{evidence.scifact.corpus}} public scientific abstracts, Wordcell exact search put a relevant abstract first for {{evidence.scifact.exact}} of queries. Optional Jev reranking raised that to {{evidence.scifact.reranked}} in a study run on {{evidence.scifact.measured}}. Reranking sends each query and candidate snippets to a paid provider. The [benchmarks page](/benchmarks#wordcell) has the method and raw results.
+Try questions whose answers you can identify in the vault: an exact name, a design decision, a superseded plan, and a question with no recorded answer. Check the source passages the agent receives, including whether they describe current behavior. The [benchmarks page](/benchmarks#wordcell) reports a separate study on public scientific abstracts; it does not measure the quality of answers from your private notes.
+
+Exact search runs locally. Search by meaning uses a local embedding model. Optional hosted reranking sends the query and candidate snippets to a paid provider, so choose it according to the vault's data policy and the improvement you measure.
 
 ## Supermemory extracts memory for you; a Wordcell agent writes it as files
 
-Supermemory builds user profiles automatically through ingestion: a model reads your content for facts about you and adds, updates, or removes them. Its graph memory goes further and “infers a fact you never stated in one place, from patterns across memories” ([graph memory](https://supermemory.ai/docs/concepts/graph-memory) and [user profiles](https://supermemory.ai/docs/concepts/user-profiles), checked September 26, 2026). That suits an application that wants memory built for it. It also means a stored fact can come from a step you never saw.
+Supermemory describes automatic profile building through ingestion: a model reads content for facts and updates the profile. Its [graph-memory documentation](https://supermemory.ai/docs/concepts/graph-memory) also describes inferences drawn across records; its [profile guide](https://supermemory.ai/docs/concepts/user-profiles) explains how those facts become a user profile. That suits an application that wants an extraction service. A stored fact may be an inference rather than something the person explicitly stated.
 
-In Wordcell the agent writes the memory as Markdown, and the file is the memory. You can read a note, diff it, and revert it with Git. `update_note_body` applies an edit only at the revision the agent read, so an edit based on an older copy is refused instead of overwriting a newer one. A `supersedes` relation keeps the older claim readable beside the newer one. Supermemory marks the latest fact for retrieval, and its documentation says the history “can remain for audit” ([graph memory](https://supermemory.ai/docs/concepts/graph-memory), checked September 26, 2026). Graph answers carry a proof that names each source note and a digest of its content, so an edited note no longer matches the proof ([Query the derived graph](/docs/graph-authority)). Search by meaning uses an embedding model that runs on your machine. When a memory is wrong, it is a line in a file you can find and fix. [Markdown memory for coding agents](/docs/agent-memory) covers the approach.
+In Wordcell the agent writes the memory as Markdown, and the file is the memory. You can read a note, diff it, and revert it with Git. `update_note_body` applies an edit only at the revision the agent read, so an edit based on an older copy is refused. A `supersedes` relation keeps an older claim linked to its replacement. Graph answers carry a proof naming each source note and a digest of its content, so an edited note no longer matches the proof ([graph reference](/docs/graph-authority)). When a memory is wrong, it is a line in a file you can find and fix. [Markdown memory for coding agents](/docs/agent-memory) covers the approach.
 
 ## When Supermemory fits better
 
-Choose Supermemory when you want extraction and connectors run for you: its documentation points to the hosted platform for “connectors, MCP, and the best-tuned extraction pipeline” ([self-hosting overview](https://supermemory.ai/docs/self-hosting/overview), checked September 26, 2026). [When Supermemory fits better](/compare/supermemory#choose-supermemory) lists more cases.
+Consider Supermemory when you want hosted extraction and connectors. Its [self-hosting overview](https://supermemory.ai/docs/self-hosting/overview) distinguishes the hosted platform from the edition you operate yourself. [When Supermemory fits better](/compare/supermemory#choose-supermemory) compares those choices.
 
 Price does not separate the two. Wordcell is MIT licensed, and the commands above run on your machine without an account. The same self-hosting overview says Supermemory’s self-hosted edition is free and open source.
 

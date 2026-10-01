@@ -2,10 +2,6 @@
 
 [Back to Wordcell](../README.md) · [Practical agent workflow](agent-workflow.md)
 
-## A knowledge base for your coding agents
-
-> Give coding agents durable, searchable memory beside the repository with plain Markdown, Git history, and replaceable local search.
-
 Coding agents lose useful context when a session ends. The next agent can search the code again, but it cannot recover a source that was never saved, a decision that stayed in chat, or the relationship between two notes that nobody recorded. Repeating that work costs time and produces inconsistent answers.
 
 Search alone cannot preserve agent memory. The system also needs a write path into inspectable files under version control: evidence can be captured, current understanding can be revised, plans can accumulate outcomes, and mandatory edit rules can move onto the instruction path. Search indexes, graph views, and embeddings used for meaning-based similarity should remain derived and replaceable.
@@ -128,13 +124,11 @@ Local attachment checks cover Markdown and Obsidian references to images, PDFs, 
 
 ### Measure retrieval on a frozen corpus
 
-The August 2, 2026 pilot froze one repository snapshot and 18 questions whose graded relevance judgments were written before the rankings were inspected. The evaluator scanned 156 Markdown records and projected 155 searchable notes into QMD after excluding the authored vault index and agent guides. Nine questions formed the development set, and nine were held out for the test. The test covered exact identity, conceptual recall, active plans, current decisions, code-path context, source evidence, historical rationale, stale-versus-current conflicts, and one no-answer case.
+Choose questions and identify their supporting notes before inspecting the search results. Include exact names, conceptual questions, current decisions, older plans, and questions the vault cannot answer. Keep some questions out of tuning so the final comparison tests more than the examples used to choose a configuration.
 
-At a cutoff of 10 results, exact search recorded `Recall@10` of 0.833333, `MRR@10` of 0.892857, and `nDCG@10` of 0.790377. Hybrid search recorded 0.833333, 0.937500, and 0.833884, respectively. Recall measures how much of the judged relevant set appeared; mean reciprocal rank rewards an earlier first relevant result; normalized discounted cumulative gain also accounts for graded relevance and position.
+Measure whether the relevant notes appear, how early they appear, and whether stale records crowd out current ones. Record cold and warm search times separately. A high ranking score cannot tell you whether the agent used the passage correctly; evaluating the final answer is another step.
 
-Eight test questions had an answer. A 10,000-resample paired bootstrap, which repeatedly samples those same questions to estimate the stability of the difference, measured hybrid minus exact. The `Recall@10` difference was 0 with a 95% confidence interval of \[0, 0\]; the `MRR@10` difference was +0.044643 with \[0, 0.133929\]; and the `nDCG@10` difference was +0.043508 with \[-0.012752, 0.111832\]. Both retrievers returned a result for the one no-answer question instead of abstaining, so their no-answer accuracy was 0.
-
-The same mixed-cache, single-run test recorded p95 latencies of 44.345 milliseconds for exact, 62.834 for hybrid, 821.370 for keyword, and 41,000.524 for semantic retrieval. The semantic figure includes the first in-process model load. The run used [QMD 2.5.3 at Hraness compatibility commit aa993dc](<https://github.com/hraness/qmd/commit/aa993dceb3ef8cfb71d470554ca437570f5a2b3c>) and a locally verified EmbeddingGemma 300M Q8 model on Bun 1.3.14 and Node 24.3.0 under arm64 Darwin 25.5.0, with an Apple M4 Max, 16 logical CPUs, and 128 GiB of memory. Each p95 summarizes only nine queries with mixed cold and warm state, so these are local diagnostics, not speed claims. The corpus is too small to establish that hybrid is generally superior to exact search or to compare Wordcell with industry retrieval systems.
+The [repository-memory pilot](markdown-memory-pilot.md) retains a small frozen-corpus comparison, including its measurements, hardware, uncertainty, and failed no-answer cases. Use it as an example of a study design, not a promise about another vault.
 
 Search finds candidates. Similarity does not establish that a passage is current, correct, or supported by its sources. The Markdown, cited captures, explicit relationships, and requested Git history supply the material a reader must inspect.
 
@@ -155,21 +149,11 @@ access, or couple application code to the Wordcell. An exact repeat is a no-op;
 divergence, path escape, symbolic links, partial writes, and unapproved
 external surfaces stop the workflow.
 
-The repository's fake-capability suite exercises those transitions. It is a
-tested contract example, not proof that every agent or host integration
-complies.
-
 This workflow builds on Frank Chen's public notes about [designing a personal
 knowledge base with an
 agent](https://gist.github.com/fxchen/773397095d7a6bffda621e4237da0da9)
 and [extending it with
 skills](https://gist.github.com/fxchen/09cb410b22c9c5256d80243ee925b57e).
-
-Wordcell ships no `kb_role` metadata, lifecycle resolver or API, lifecycle CLI,
-compatibility diagnostic, or metadata migration. A frozen Phase 0 value gate
-must show that those surfaces improve deterministic agent decisions before they
-are introduced. Current and historical plan routing remains derived from
-existing type, path, and status conventions.
 
 ### Adopt the smallest useful split
 

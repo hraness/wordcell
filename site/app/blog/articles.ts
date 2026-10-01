@@ -18,7 +18,6 @@ import { ohLinks } from "../../wordcell/oh-evidence";
 
 const WORDCELL_COMMIT = "7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10";
 const OH_COMMIT = "73da154e7d16d6d3883b85110eaad30381df7a54";
-const REVIEWER = "Claude Opus 5.5 (claude-opus-5-5) editorial review";
 
 // The commit that added /benchmarks, /compare/supermemory, and /migrate/supermemory (PR #137); the launch post pins its Wordcell sources there.
 const LAUNCH_COMMIT = "d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc";
@@ -72,7 +71,7 @@ export const blogArticles = [
     dek: "Wordcell keeps your notes as Markdown files and builds search and a link graph over them, so an agent can find a decision and trace it back to the file that says it.",
     eyebrow: "Release",
     published: "2026-09-24",
-    updated: "2026-09-29",
+    updated: "2026-10-01",
     tags: ["wordcell", "markdown", "knowledge-base", "coding-agents", "obsidian"],
     sources: [
       { title: "Wordcell README", href: wordcellSource("README.md"), checkedOn: checked },
@@ -108,12 +107,8 @@ export const blogArticles = [
         { title: "Wordcell repository guidelines", url: wordcellSource("AGENTS.md"), checkedOn: checked },
       ],
       observations: [
-        "The published release record (site/published-release.json, 0.22.4) trails package.json (0.22.5) on main at 7b6cb5e, so a version typed from package.json or the README install line would claim a release the site has not recorded.",
-        "The Oh adoption preparer in src/oh-adoption.ts always returns status \"prepared\" and renders Markdown that calls itself a review candidate; nothing in that path opens a vault or writes a note, so outside memory can only enter Wordcell through a person authoring Markdown.",
-        "2026-09-26 editorial pass: reordered the post to lead with the claim and moved the release status and KB rename history next to what they qualify; no fact, command, link, or version changed. By then site/published-release.json recorded 0.22.5, so the gap in the first observation had closed, and npm still lists @hraness/kb only through 0.19.2.",
-        "2026-09-27 fact review (AI, Claude Opus 5.5): the 2026-09-26 pass had said every result that hits a limit is marked as truncated. docs/graph-authority.md says only row or proof truncation is marked (exit code 4) and work exhaustion fails, so the Limits paragraph now says both.",
-        "2026-09-29 launch beats (AI, Claude Opus 5.5, builder): the post now opens with ten short beats, each with one code-built illustration, that the X, Bluesky, Threads and LinkedIn posts are cut from (site/wordcell/launch/beats.ts). Numbers in the beats come from site/wordcell/launch/facts.ts: the status from site/published-release.json, the 4,000-note graph bound from src/graph-authority-model.ts, and Bun 1.3.14 from package.json engines; site/tests/launch-post.test.tsx reads those source files. Every command and output line in the illustrations is replayed against the pinned CLI by site/tests/mockups.test.ts. The long-form walkthrough follows unchanged under The details.",
-        "2026-09-29 independent review (AI, Claude Opus 5.5, reviewer, did not write the beats): checked each beat against the transcript replay and the facts sources, and the vision beat now carries the owner's naming brief, citing roon's essay A Song of Shapes and Words by title and link with no quotation and no implied endorsement. Scores unchanged at 10 of 12: original evidence stays 1 because the beats add no new measurement, and maintenance value stays 1 because the status beat and social kit must be regenerated on each release.",
+        "Preparing an adoption candidate does not itself write authoritative notes; proposal preparation and adoption expose separate authority boundaries.",
+        "Graph rebuilds replace a derived view while proof and source identities remain tied to the Markdown records; rebuilding is not permission to change those records.",
       ],
       scores: {
         readerUtility: 2,
@@ -125,12 +120,12 @@ export const blogArticles = [
       },
       owner: "Hraness",
       drafting: "ai-from-source",
-      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: "2026-09-29" },
+      review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-01" },
       humanReview: null,
-      reassessOn: "2026-11-05",
+      reassessOn: "2026-11-12",
       harmIfWrong: "A reader could install Wordcell expecting a guarantee it does not make, such as answers written for them, unlimited graph size, or capture that works behind a login wall.",
       refreshTriggers: [
-        "Wordcell release record bump (site/published-release.json), including publication of 0.22.5",
+        "Wordcell release record bump (site/published-release.json)",
         "Change to graph query programs, the 4,000-note limit, truncation marking, or proof contents (docs/graph-authority.md)",
         "Change to wordcell clip signed-in capture options, profile copying, or the Archive.today fallback (docs/capture.md, src/clip)",
         "Change to the Oh adoption preparer or its review-candidate output (src/oh-adoption.ts)",
@@ -146,9 +141,11 @@ export const blogArticles = [
     dek: "Wordcell stores your links as Oh records, so every graph answer carries a proof back to the Markdown files that support it.",
     eyebrow: "Integration",
     published: "2026-09-24",
-    updated: edited,
+    updated: "2026-10-01",
     tags: ["wordcell", "oh", "markdown", "knowledge-graph", "proofs"],
     sources: [
+      { title: "Canonical encoder wrapper", href: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.ts", checkedOn: "2026-10-01" },
+      { title: "Encoder comparison checks", href: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.test.ts", checkedOn: "2026-10-01" },
       { title: "Query the derived graph", href: wordcellSource("docs/graph-authority.md"), checkedOn: checked },
       { title: "Oh adoption preparer", href: wordcellSource("src/oh-adoption.ts"), checkedOn: checked },
       { title: "Rust and TypeScript canonical encoder parity test", href: wordcellSource("src/oh/canonical-rust.test.ts"), checkedOn: checked },
@@ -174,6 +171,8 @@ export const blogArticles = [
         { url: "https://wordcell.io/blog/introducing-wordcell", distinction: "The introduction covers the whole product; this post covers only the graph and its proofs." },
       ],
       sources: [
+        { title: "Canonical encoder wrapper", url: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.ts", checkedOn: "2026-10-01" },
+        { title: "Encoder comparison checks", url: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.test.ts", checkedOn: "2026-10-01" },
         { title: "Query the derived graph", url: wordcellSource("docs/graph-authority.md"), checkedOn: checked },
         { title: "Oh adoption preparer", url: wordcellSource("src/oh-adoption.ts"), checkedOn: checked },
         { title: "Rust and TypeScript canonical encoder parity test", url: wordcellSource("src/oh/canonical-rust.test.ts"), checkedOn: checked },
@@ -188,23 +187,22 @@ export const blogArticles = [
         { title: "Oh holds its Rust encoder to the TypeScript reference byte for byte", url: "https://oh.computer/blog/oh-rust-typescript-parity", checkedOn: edited },
       ],
       observations: [
-        "In Wordcell the Rust canonical encoder is called only by the Oh adoption preparer (src/oh-adoption.ts); graph snapshots and fact keys are fingerprinted with Oh's TypeScript canonicalJson and canonicalSha256 (src/oh/snapshot.ts), and the graph path's Rust preference applies to query evaluation (src/oh/projection-rust.ts).",
-        "A note's own fingerprint is a SHA-256 of the note's text (src/graph-facts.ts), not canonical JSON, so editing whitespace or front matter formatting in a note changes its proof even when no link changed.",
-        "2026-09-26 editorial pass: the post named Oh's parity post by a working title that no longer matches the live page; it now links https://oh.computer/blog/oh-rust-typescript-parity under its published title. Sections were retitled and the limits gathered next to what they limit; no fact, command, or limit changed.",
+        "Verifying the WebAssembly artifact and comparing encoded values address separate questions: which code loaded and how it behaved on an input.",
+        "A wrapper that falls back on disagreement protects the caller, but a generated test that skips that fallback has not checked parity on the skipped input.",
       ],
       scores: {
         readerUtility: 2,
-        originalEvidence: 2,
+        originalEvidence: 1,
         factualConfidence: 2,
         hostFit: 2,
         voiceIntegrity: 2,
-        maintenanceValue: 1,
+        maintenanceValue: 2,
       },
       owner: "Hraness",
       drafting: "ai-from-source",
-      review: { reviewer: REVIEWER, reviewerType: "ai", reviewedOn: edited },
+      review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-01" },
       humanReview: null,
-      reassessOn: "2026-11-05",
+      reassessOn: "2026-11-12",
       harmIfWrong: "A reader could treat a graph proof as proof that a note is correct, or believe Wordcell keeps agent memory in Oh.",
       refreshTriggers: [
         "runtime:kb:oh-computer:answers-graph-queries-with is registered, changes its detail sentence, or is removed",
@@ -222,16 +220,15 @@ export const blogArticles = [
     dek: "Wordcell serves a Markdown vault to local MCP clients and imports Supermemory exports, so agent memory stays in files you can read and commit.",
     eyebrow: "Launch",
     published: launchChecked,
-    updated: "2026-09-30",
+    updated: "2026-10-01",
     tags: ["wordcell", "agent-memory", "mcp", "supermemory", "markdown"],
     sources: launchSources.map((source) => ({ ...source, checkedOn: launchChecked })),
     admission: {
       href: "/blog/free-local-agent-memory",
-      // An independent AI review checked this revision on 2026-09-30; original source checks retain their dates.
       lifecycle: "indexable",
-      readerJob: "I keep agent memory in Supermemory or a similar service and want to know what Wordcell offers instead, what its numbers show, and what I would give up by switching.",
-      nonObviousAnswer: "The agent records decisions and sources as Markdown you can read, diff, and revert. The SciFact study measures Wordcell source ranking, while the migration workflow preserves exported Supermemory records as notes.",
-      originalContribution: "Puts the launch commands next to Wordcell's 300-query SciFact study and walks through local MCP access, revision-checked notes, and Supermemory import.",
+      readerJob: "I keep agent memory in Supermemory or a similar service and want to know what Wordcell offers instead, how to evaluate retrieval, and what I would give up by switching.",
+      nonObviousAnswer: "The agent records decisions and sources as Markdown you can read, diff, and revert. Retrieval can be evaluated against known answers in the intended vault, while migration preserves exported Supermemory records as notes.",
+      originalContribution: "Connects local MCP access, revision-checked notes, and Supermemory import with a practical method for evaluating retrieval on a vault.",
       hostFit: "The launch post for the local MCP server, the Supermemory importer, and the session-memory workflow, on the Wordcell blog.",
       nearestUrls: [
         { url: "https://wordcell.io/benchmarks", distinction: "The benchmarks page lists every study with its setup and limits; the post says what those results mean for someone choosing an agent memory tool." },
@@ -240,27 +237,22 @@ export const blogArticles = [
       ],
       sources: launchSources.map(({ title, href }) => ({ title, url: href, checkedOn: launchChecked })),
       observations: [
-        "2026-09-30 independent AI editorial review: the post now leads local MCP, revision-checked notes, and migration. Only the 300-query SciFact source-ranking study is promoted; deleted Oh and small-fixture digressions remain in the raw research. The source-ranking metric is not a claim about private-vault or answer quality. Third-party quotations retain their recorded 2026-09-26 source checks.",
-        "Supermemory's self-hosted edition is also free and open source, so price alone does not separate it from Wordcell; the post argues from who writes the memory and where it lives.",
-        "When the post was first reviewed, neither the launch commands nor the skill's session-memory workflow was in the published 0.22.5 release, so the post sent readers to the source install and the main-branch skill.",
-        "2026-09-26 editorial pass: retitled to name the query it answers, led with what the launch adds, stated each study's limits beside that study, and cut a closing paragraph that stated a goal rather than a fact; no figure, link, quotation, or status changed.",
-        "2026-09-26 release update: Wordcell 0.23.0 carries the launch commands and the session-memory reference, so the opening sentence, the dek, and the status paragraph drop the source-build wording and point to the release install and the release-pinned skill; no figure or quotation changed.",
+        "Retrieval rankings on scientific abstracts do not measure answers from a personal vault; representative questions and known source notes make that evaluation concrete.",
+        "Revision checks protect an edit based on a particular note version, while explicit supersession preserves the relationship between an older claim and its replacement.",
       ],
-      // The review's accuracy, sourcing, and style reports raised no problem that sets any score to zero, and the
-      // separate verification review on 2026-09-26 scored the fixed post independently and gave these same six scores.
       scores: {
         readerUtility: 2,
         originalEvidence: 1,
         factualConfidence: 2,
         hostFit: 2,
         voiceIntegrity: 2,
-        maintenanceValue: 1,
+        maintenanceValue: 2,
       },
       owner: "Hraness",
       drafting: "ai-from-source",
-      review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-09-30" },
+      review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-01" },
       humanReview: null,
-      reassessOn: "2026-11-11",
+      reassessOn: "2026-11-12",
       harmIfWrong: "A reader could treat scientific-abstract ranking as a guarantee for their own notes or switch from Supermemory expecting hosted extraction and connectors.",
       refreshTriggers: [
         "A release that changes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",

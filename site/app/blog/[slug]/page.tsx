@@ -53,7 +53,7 @@ export default async function BlogPostPage(
         <MarketingArticle
           after={(
             <>
-              <ArticleSources headingId="sources" sources={article.sources} />
+              <ArticleSources headingId="sources" showDates={false} sources={article.sources} />
               {related.length === 0 ? null : <ArticleRelatedProducts headingId="related" items={related} />}
             </>
           )}
@@ -63,6 +63,7 @@ export default async function BlogPostPage(
           heading={article.title}
           provenance={articleProvenanceFromAdmission(article.admission)}
           published={article.published}
+          showDates={false}
           toc={toc}
           {...(article.updated === undefined ? {} : { updated: article.updated })}
         >

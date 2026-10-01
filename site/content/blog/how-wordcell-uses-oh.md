@@ -6,7 +6,7 @@ The Markdown files stay the record. The graph is a copy Wordcell can delete and 
 
 Oh is a memory framework that applications embed as a library. It stores typed records, derives new facts from rules, and returns each derived answer with the chain of facts and rules that produced it. Wordcell uses the part that stores records and answers graph questions. There is no Oh account to create and no service to run. Wordcell pins one released version of Oh and upgrades only by changing that pin.
 
-Oh writes every record in one exact text form, which it calls canonical JSON, and names the record by the SHA-256 fingerprint of that text. Two programs holding the same record produce the same bytes and the same fingerprint, whatever order they assembled its fields in, so a fingerprint in a proof names exactly one record.
+Oh writes records in a defined text form, called canonical JSON, and identifies those contents with a SHA-256 fingerprint. Programs that follow the same encoding rules produce the same bytes and fingerprint, whatever order they assembled the object's fields in. A proof uses that fingerprint to identify the record it depends on.
 
 ## How a query turns notes into rows
 
@@ -55,7 +55,7 @@ A proof shows that a file said something at a given version. It does not show th
 
 Oh ships its canonical encoder and its query engine twice: a TypeScript reference and a Rust version compiled to WebAssembly. Wordcell's graph queries use the Rust engine when it loads and fall back to TypeScript when it does not, with the same source revision and the same limits either way. If the Rust engine is unavailable, the notes are unchanged and give the same answers.
 
-Two encoders are only safe if they agree on every input, because one differing character changes a fingerprint and breaks every proof that cites it. The rule they share is short. Object keys are sorted, array order is kept, there is no extra whitespace, and numbers are written the way JavaScript's JSON writer writes them:
+Two encoders are interchangeable only when they agree on the accepted inputs: a different byte sequence changes the fingerprint a proof uses to identify its evidence. The rule they share is short. Object keys are sorted, array order is kept, there is no extra whitespace, and numbers are written the way JavaScript's JSON writer writes them:
 
 ```ts
 import { canonicalJson } from "@hraness/oh";
@@ -63,7 +63,9 @@ import { canonicalJson } from "@hraness/oh";
 canonicalJson({ b: 1, a: [2, 1] }); // '{"a":[2,1],"b":1}'
 ```
 
-Wordcell's own tests hold the Rust encoder it loads from Oh to that rule. They confirm that the WebAssembly bytes Wordcell loads match the SHA-256 recorded in the Oh package, then generate random JSON values, including nested arrays and objects and very large and very small numbers, and require the Rust and TypeScript encoders to return the same text and the same fingerprint for each. Fixed cases such as `1e21`, `5e-324`, an empty key, and an emoji key are checked on every run. Oh runs its own version of this test, described in [Oh holds its Rust encoder to the TypeScript reference byte for byte](https://oh.computer/blog/oh-rust-typescript-parity).
+Checking the artifact and checking its behavior answer different questions. A fingerprint identifies the WebAssembly bytes being loaded. Encoder comparisons establish whether those bytes produce the expected text for the inputs exercised, including extreme numbers, Unicode keys, and nested values.
+
+For a useful cross-language comparison, exercise both implementations directly and account for every accepted input. A runtime fallback can preserve application behavior when an encoder fails, but a test that skips fallback cases cannot establish agreement on those cases. The [Oh encoder article](https://oh.computer/blog/oh-rust-typescript-parity) explains the encoding rules and testing approach.
 
 ## Oh records become notes only when a person writes them
 
@@ -71,8 +73,6 @@ Wordcell does not keep an agent's memory in Oh. Its SDK can turn selected record
 
 ## What Oh does not do for Wordcell
 
-Wordcell runs only its six named queries; there is no free-form query language. Absences, orphan notes, and counts are computed by Wordcell from the complete snapshot, not proved by Oh. Graph queries accept a vault of up to 4,000 notes, 100,000 facts, and 64 MiB of text, and a query that runs out of work fails instead of returning a partial answer as complete. A truncated result says so in its JSON and exits with code 4.
+Wordcell runs named graph queries; there is no free-form query language. Absences, orphan notes, and counts are computed by Wordcell from the complete snapshot, not proved by Oh. A query that exhausts its work budget fails. A result clipped by its row or proof limit is marked as truncated, so the caller can distinguish it from a complete answer. The [graph reference](/docs/graph-authority) lists the supported queries, limits, and exit codes.
 
 Wordcell's search does not use Oh. Exact search and optional local search by meaning are Wordcell's own, so Oh's memory benchmarks say nothing about Wordcell's search or answers.
-
-Latest release: v{{release.version}}. For the full query reference, see [Query the derived graph](/docs/graph-authority) in the Wordcell documentation. [Oh](https://oh.computer) is the library behind the graph.

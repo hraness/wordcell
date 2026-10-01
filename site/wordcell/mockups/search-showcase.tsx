@@ -14,7 +14,7 @@ const modes: readonly ShowcaseChoice<SearchMode>[] = [
 
 const surfaces: readonly ShowcaseSurface<Surface, SearchMode>[] = [
   { id: "agent", label: "Coding agent", render: ({ mode, theme }) => <AgentCitesNote mode={mode} {...(theme === undefined ? {} : { theme })} /> },
-  { id: "terminal", label: "Terminal", render: ({ mode, theme }) => <ModeTerminal mode={mode} {...(theme === undefined ? {} : { theme })} /> },
+  { id: "terminal", label: "Terminal", render: ({ mode, theme }) => <ModeTerminal density="presentation" mode={mode} {...(theme === undefined ? {} : { theme })} /> },
 ];
 
 /** The homepage's interactive illustration: three ways an agent finds the same note. */
@@ -22,9 +22,9 @@ export function SearchShowcase() {
   return (
     <ModeShowcase
       className="wordcell-showcase"
+      fit="fill"
       height={600}
       label={(surface) => `Find a Wordcell note with ${surface.label.toLowerCase()}`}
-      minWidth={560}
       modeLabel="Find by"
       modes={modes}
       surfaces={surfaces}

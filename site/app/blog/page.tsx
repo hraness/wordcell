@@ -46,6 +46,7 @@ export default function BlogIndex() {
           <a href={BLOG_FEED_PATH}>Atom feed</a>
         </nav>
         <ArticleIndex
+          showDates={false}
           heading={BLOG_TITLE}
           headingId="blog-title"
           headingLevel={1}

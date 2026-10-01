@@ -1,0 +1,339 @@
+[
+  {
+    "slug": "introducing-wordcell",
+    "admission": {
+      "href": "/blog/introducing-wordcell",
+      "lifecycle": "indexable",
+      "readerJob": "Decide whether Wordcell fits a Markdown or Obsidian vault used with coding agents, and get from one saved rule to a cited search and graph answer.",
+      "nonObviousAnswer": "The Markdown files stay the only record: exact search names the note and line, graph rows carry a proof tied to the file's content digest, context groups current notes apart from superseded ones, clipped pages and PDFs land in the same folder as source material, and Oh records enter only as a review candidate a person turns into a note.",
+      "originalContribution": "Walks one saved rule through exact search, a backlinks graph query, and code-path context with the real commands, and states the limits (4,000-note graph bound, truncation, local model download, opt-in hosted reranking) from source.",
+      "hostFit": "The product introduction for Wordcell on its own host.",
+      "nearestUrls": [
+        {
+          "url": "https://wordcell.io/",
+          "distinction": "The home page lists features; the post explains why Markdown stays the record and walks one rule end to end."
+        },
+        {
+          "url": "https://wordcell.io/docs/getting-started",
+          "distinction": "The tutorial teaches every step; the post decides fit and shows the result in a few commands."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Wordcell README",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/README.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Query the derived graph",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/docs/graph-authority.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Oh adoption preparer",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/src/oh-adoption.ts",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Oh adoption stops at a review candidate",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/docs/design.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Capture web content",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/docs/capture.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Release procedure and rename from KB",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/docs/publishing.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Changelog, 0.20.0 rename",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/CHANGELOG.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Published release record",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/site/published-release.json",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Wordcell repository guidelines",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/AGENTS.md",
+          "checkedOn": "2026-09-24"
+        }
+      ],
+      "observations": [
+        "The published release record (site/published-release.json, 0.22.4) trails package.json (0.22.5) on main at 7b6cb5e, so a version typed from package.json or the README install line would claim a release the site has not recorded.",
+        "The Oh adoption preparer in src/oh-adoption.ts always returns status \"prepared\" and renders Markdown that calls itself a review candidate; nothing in that path opens a vault or writes a note, so outside memory can only enter Wordcell through a person authoring Markdown.",
+        "2026-09-26 editorial pass: reordered the post to lead with the claim and moved the release status and KB rename history next to what they qualify; no fact, command, link, or version changed. By then site/published-release.json recorded 0.22.5, so the gap in the first observation had closed, and npm still lists @hraness/kb only through 0.19.2.",
+        "2026-09-27 fact review (AI, Claude Opus 5.5): the 2026-09-26 pass had said every result that hits a limit is marked as truncated. docs/graph-authority.md says only row or proof truncation is marked (exit code 4) and work exhaustion fails, so the Limits paragraph now says both.",
+        "2026-09-29 launch beats (AI, Claude Opus 5.5, builder): the post now opens with ten short beats, each with one code-built illustration, that the X, Bluesky, Threads and LinkedIn posts are cut from (site/wordcell/launch/beats.ts). Numbers in the beats come from site/wordcell/launch/facts.ts: the status from site/published-release.json, the 4,000-note graph bound from src/graph-authority-model.ts, and Bun 1.3.14 from package.json engines; site/tests/launch-post.test.tsx reads those source files. Every command and output line in the illustrations is replayed against the pinned CLI by site/tests/mockups.test.ts. The long-form walkthrough follows unchanged under The details.",
+        "2026-09-29 independent review (AI, Claude Opus 5.5, reviewer, did not write the beats): checked each beat against the transcript replay and the facts sources, and the vision beat now carries the owner's naming brief, citing roon's essay A Song of Shapes and Words by title and link with no quotation and no implied endorsement. Scores unchanged at 10 of 12: original evidence stays 1 because the beats add no new measurement, and maintenance value stays 1 because the status beat and social kit must be regenerated on each release."
+      ],
+      "scores": {
+        "readerUtility": 2,
+        "originalEvidence": 1,
+        "factualConfidence": 2,
+        "hostFit": 2,
+        "voiceIntegrity": 2,
+        "maintenanceValue": 1
+      },
+      "owner": "Hraness",
+      "drafting": "ai-from-source",
+      "review": {
+        "reviewer": "Claude Opus 5.5 (claude-opus-5-5) editorial review",
+        "reviewerType": "ai",
+        "reviewedOn": "2026-09-29"
+      },
+      "humanReview": null,
+      "reassessOn": "2026-11-05",
+      "harmIfWrong": "A reader could install Wordcell expecting a guarantee it does not make, such as answers written for them, unlimited graph size, or capture that works behind a login wall.",
+      "refreshTriggers": [
+        "Wordcell release record bump (site/published-release.json), including publication of 0.22.5",
+        "Change to graph query programs, the 4,000-note limit, truncation marking, or proof contents (docs/graph-authority.md)",
+        "Change to wordcell clip signed-in capture options, profile copying, or the Archive.today fallback (docs/capture.md, src/clip)",
+        "Change to the Oh adoption preparer or its review-candidate output (src/oh-adoption.ts)",
+        "Change to the runtime:kb:oh-computer or runtime:xcb:kb relation detail, or a product rename",
+        "Publication of how-wordcell-uses-oh or xcb's how-xcb-uses-wordcell",
+        "Change to install prerequisites (Bun version, Git) or the package name"
+      ]
+    }
+  },
+  {
+    "slug": "how-wordcell-uses-oh",
+    "admission": {
+      "href": "/blog/how-wordcell-uses-oh",
+      "lifecycle": "indexable",
+      "readerJob": "I ask questions over my Markdown notes and want each answer to show which files support it, so I can check it myself.",
+      "nonObviousAnswer": "Wordcell builds a disposable Oh graph in canonical JSON from the Markdown, so each answer row carries file fingerprints and the rules applied, and any edit to a cited note makes the old proof fail verification.",
+      "originalContribution": "Traces a backlinks query from note fingerprint to Oh record to answer row, and reports from source which Wordcell paths use Oh's Rust encoder and query engine.",
+      "hostFit": "The registered runtime:kb:oh-computer:answers-graph-queries-with relation carries the detail sentence this post explains, on Wordcell's own host.",
+      "nearestUrls": [
+        {
+          "url": "https://wordcell.io/docs/graph-authority",
+          "distinction": "The reference lists every flag and limit; the post explains what a proof means to a reader checking an answer."
+        },
+        {
+          "url": "https://wordcell.io/blog/introducing-wordcell",
+          "distinction": "The introduction covers the whole product; this post covers only the graph and its proofs."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Query the derived graph",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/docs/graph-authority.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Oh adoption preparer",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/src/oh-adoption.ts",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Rust and TypeScript canonical encoder parity test",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/src/oh/canonical-rust.test.ts",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Graph snapshot records in canonical JSON",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/src/oh/snapshot.ts",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Named graph programs compiled to Oh rules",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/src/oh/programs.ts",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Rust query engine with TypeScript fallback",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/src/oh/projection-rust.ts",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Pinned Oh release",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/package.json",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Published release record",
+          "url": "https://github.com/hraness/wordcell/blob/7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10/site/published-release.json",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Oh and Wordcell",
+          "url": "https://github.com/hraness/oh/blob/73da154e7d16d6d3883b85110eaad30381df7a54/docs/wordcell.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Canonical JSON and digests V1",
+          "url": "https://github.com/hraness/oh/blob/73da154e7d16d6d3883b85110eaad30381df7a54/spec/v1/canonical-json.md",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Oh canonical Rust parity test",
+          "url": "https://github.com/hraness/oh/blob/73da154e7d16d6d3883b85110eaad30381df7a54/src/canonical-rust-parity.test.ts",
+          "checkedOn": "2026-09-24"
+        },
+        {
+          "title": "Oh holds its Rust encoder to the TypeScript reference byte for byte",
+          "url": "https://oh.computer/blog/oh-rust-typescript-parity",
+          "checkedOn": "2026-09-26"
+        }
+      ],
+      "observations": [
+        "In Wordcell the Rust canonical encoder is called only by the Oh adoption preparer (src/oh-adoption.ts); graph snapshots and fact keys are fingerprinted with Oh's TypeScript canonicalJson and canonicalSha256 (src/oh/snapshot.ts), and the graph path's Rust preference applies to query evaluation (src/oh/projection-rust.ts).",
+        "A note's own fingerprint is a SHA-256 of the note's text (src/graph-facts.ts), not canonical JSON, so editing whitespace or front matter formatting in a note changes its proof even when no link changed.",
+        "2026-09-26 editorial pass: the post named Oh's parity post by a working title that no longer matches the live page; it now links https://oh.computer/blog/oh-rust-typescript-parity under its published title. Sections were retitled and the limits gathered next to what they limit; no fact, command, or limit changed."
+      ],
+      "scores": {
+        "readerUtility": 2,
+        "originalEvidence": 2,
+        "factualConfidence": 2,
+        "hostFit": 2,
+        "voiceIntegrity": 2,
+        "maintenanceValue": 1
+      },
+      "owner": "Hraness",
+      "drafting": "ai-from-source",
+      "review": {
+        "reviewer": "Claude Opus 5.5 (claude-opus-5-5) editorial review",
+        "reviewerType": "ai",
+        "reviewedOn": "2026-09-26"
+      },
+      "humanReview": null,
+      "reassessOn": "2026-11-05",
+      "harmIfWrong": "A reader could treat a graph proof as proof that a note is correct, or believe Wordcell keeps agent memory in Oh.",
+      "refreshTriggers": [
+        "runtime:kb:oh-computer:answers-graph-queries-with is registered, changes its detail sentence, or is removed",
+        "Wordcell changes its pinned Oh release in package.json",
+        "Change to the named graph programs, graph limits (depth, notes, facts, MiB), truncation exit code, or graphVerifyResult behavior",
+        "Change to which Wordcell paths use Oh's Rust canonical encoder or Rust query engine",
+        "Change to createOhAdoptionPreparerV1 output or behavior in src/oh-adoption.ts",
+        "Wordcell or Oh rename, or the oh.computer parity post or built-on-Oh hub goes live"
+      ]
+    }
+  },
+  {
+    "slug": "free-local-agent-memory",
+    "admission": {
+      "href": "/blog/free-local-agent-memory",
+      "lifecycle": "indexable",
+      "readerJob": "I keep agent memory in Supermemory or a similar service and want to know what Wordcell offers instead, what its numbers show, and what I would give up by switching.",
+      "nonObviousAnswer": "The agent records decisions and sources as Markdown you can read, diff, and revert. The SciFact study measures Wordcell source ranking, while the migration workflow preserves exported Supermemory records as notes.",
+      "originalContribution": "Puts the launch commands next to Wordcell's 300-query SciFact study and walks through local MCP access, revision-checked notes, and Supermemory import.",
+      "hostFit": "The launch post for the local MCP server, the Supermemory importer, and the session-memory workflow, on the Wordcell blog.",
+      "nearestUrls": [
+        {
+          "url": "https://wordcell.io/benchmarks",
+          "distinction": "The benchmarks page lists every study with its setup and limits; the post says what those results mean for someone choosing an agent memory tool."
+        },
+        {
+          "url": "https://wordcell.io/compare/supermemory",
+          "distinction": "The comparison sets the two products side by side feature by feature; the post argues for memory the agent writes as files and says when Supermemory fits better."
+        },
+        {
+          "url": "https://wordcell.io/migrate/supermemory",
+          "distinction": "The migration page lists the steps; the post explains what the launch adds and links there as the next action."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Local MCP server and Supermemory import reference",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/docs/reference.md",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Migrate from Supermemory",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/docs/migration-from-supermemory.md",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Sync a vault with Git",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/docs/sync.md",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Session-memory workflow in the wordcell skill",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/skills/wordcell/references/session-memory.md",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Unreleased changes",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/CHANGELOG.md",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Published release record",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/site/published-release.json",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "MIT license",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/LICENSE",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "SciFact reranking study",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/docs/evaluations/wordcell-scifact-20260919.json",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Query the derived graph",
+          "url": "https://github.com/hraness/wordcell/blob/d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc/docs/graph-authority.md",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Self-hosting overview",
+          "url": "https://supermemory.ai/docs/self-hosting/overview",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "User profiles",
+          "url": "https://supermemory.ai/docs/concepts/user-profiles",
+          "checkedOn": "2026-09-26"
+        },
+        {
+          "title": "Graph memory",
+          "url": "https://supermemory.ai/docs/concepts/graph-memory",
+          "checkedOn": "2026-09-26"
+        }
+      ],
+      "observations": [
+        "2026-09-30 independent AI editorial review: the post now leads local MCP, revision-checked notes, and migration. Only the 300-query SciFact source-ranking study is promoted; deleted Oh and small-fixture digressions remain in the raw research. The source-ranking metric is not a claim about private-vault or answer quality. Third-party quotations retain their recorded 2026-09-26 source checks.",
+        "Supermemory's self-hosted edition is also free and open source, so price alone does not separate it from Wordcell; the post argues from who writes the memory and where it lives.",
+        "When the post was first reviewed, neither the launch commands nor the skill's session-memory workflow was in the published 0.22.5 release, so the post sent readers to the source install and the main-branch skill.",
+        "2026-09-26 editorial pass: retitled to name the query it answers, led with what the launch adds, stated each study's limits beside that study, and cut a closing paragraph that stated a goal rather than a fact; no figure, link, quotation, or status changed.",
+        "2026-09-26 release update: Wordcell 0.23.0 carries the launch commands and the session-memory reference, so the opening sentence, the dek, and the status paragraph drop the source-build wording and point to the release install and the release-pinned skill; no figure or quotation changed."
+      ],
+      "scores": {
+        "readerUtility": 2,
+        "originalEvidence": 1,
+        "factualConfidence": 2,
+        "hostFit": 2,
+        "voiceIntegrity": 2,
+        "maintenanceValue": 1
+      },
+      "owner": "Hraness",
+      "drafting": "ai-from-source",
+      "review": {
+        "reviewer": "Codex independent AI editorial review",
+        "reviewerType": "ai",
+        "reviewedOn": "2026-09-30"
+      },
+      "humanReview": null,
+      "reassessOn": "2026-11-11",
+      "harmIfWrong": "A reader could treat scientific-abstract ranking as a guarantee for their own notes or switch from Supermemory expecting hosted extraction and connectors.",
+      "refreshTriggers": [
+        "A release that changes wordcell mcp, wordcell import supermemory, or the skill's session-memory reference",
+        "A change to a vendored evidence file under docs/ or to the evidence modules under site/wordcell/",
+        "A matched run of a Wordcell vault against Supermemory",
+        "A change to a cited Supermemory documentation page",
+        "A change to /benchmarks, /compare/supermemory, or /migrate/supermemory",
+        "Wordcell, Oh, or Supermemory rename"
+      ]
+    }
+  }
+]

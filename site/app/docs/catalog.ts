@@ -174,6 +174,13 @@ export const docCatalog = [
     summary: "Run named graph queries, read their proofs and limits, and rebuild the local graph cache.",
     quadrant: "explanation",
   },
+  {
+    slug: "markdown-memory-pilot",
+    title: "Markdown-memory retrieval pilot",
+    summary: "A historical comparison of exact and hybrid search on a frozen repository corpus, with measurements and uncertainty.",
+    card: "Exact and hybrid search on a frozen Markdown corpus.",
+    quadrant: "explanation",
+  },
 ] as const satisfies readonly DocEntry[];
 
 /** The README rendered at /docs/overview, listed apart from the docs/ catalog. */

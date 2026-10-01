@@ -114,9 +114,10 @@ export function BacklinksTerminal({ height, theme }: Themed) {
 }
 
 /** One search mode in a terminal, for the homepage showcase. */
-export function ModeTerminal({ height, mode, theme }: Themed & Readonly<{ mode: SearchMode }>) {
+export function ModeTerminal({ density, height, mode, theme }: Themed & Readonly<{ mode: SearchMode; density?: "presentation" }>) {
   return (
     <TerminalFrame
+      density={density}
       {...themed(theme)}
       {...sized(height)}
       describe={`Illustration: ${modeDescriptions[mode]}`}

@@ -125,11 +125,10 @@ describe("Wordcell blog", () => {
     }
   });
 
-  test("bodies render the verified release version and link only to pages that exist", () => {
+  test("bodies resolve templates and link only to pages that exist", () => {
     for (const html of Object.values(blogHtml)) {
       expect(html).not.toContain("{{");
       expect(html).not.toContain("—");
-      if (publishedRelease !== null) expect(html).toContain(`Latest release: v${publishedRelease.version}.`);
     }
     expect(bindReleaseVersion("v{{release.version}}", "1.2.3")).toBe("v1.2.3");
     expect(bindReleaseVersion("no version", null)).toBe("no version");
@@ -184,14 +183,6 @@ describe("Wordcell blog", () => {
     }
   });
 
-  test("every evidence figure is bound by some post", async () => {
-    const used = new Set<string>();
-    for (const article of blogArticles) {
-      for (const match of (await read(`content/blog/${article.slug}.md`)).matchAll(/\{\{evidence\.([^{}]*)\}\}/gu)) used.add(match[1] ?? "");
-    }
-    expect([...used].sort()).toEqual(Object.keys(evidenceFigures).sort());
-  });
-
   test("titles, deks, and eyebrows fit the article copy limits", () => {
     for (const article of blogArticles) {
       expect(article.title.length, article.slug).toBeLessThanOrEqual(70);
@@ -214,19 +205,14 @@ describe("Wordcell blog", () => {
       .replaceAll(/\b(?:GPT-5|GPT-4o|BM25|UTF-8)\b/gu, "");
     expect(prose.match(/\d+/gu) ?? []).toEqual([]);
     expect(source).not.toContain("%");
-    expect(figureTokens(blogHtml[launchSlug] ?? "").length).toBeGreaterThan(0);
   });
 
   test("the launch post leads the Wordcell workflow and links actual Wordcell search evidence", async () => {
     const source = await read(`content/blog/${launchSlug}.md`);
-    expect(blogHtml[launchSlug]).toContain(evidenceFigures["scifact.queries"]);
     // The in-sample lab pipeline is never cited in the post, so its figure cannot read as a product score.
     expect(blogHtml[launchSlug]).not.toContain("93.07");
     expect(blogHtml[launchSlug]).not.toContain("Oh’s conversation-memory studies");
-    expect(source.match(/Latest release: /gu)?.length).toBe(1);
-    // The launch commands shipped in a release, so the post points to the release install and the release-pinned skill.
     expect(source).not.toMatch(/from source|source build|source install|until the next release|main branch/iu);
-    expect(source).toContain("`bunx skills add hraness/wordcell#v{{release.version}} --skill wordcell`");
     const article = blogArticles.find((candidate) => candidate.slug === launchSlug);
     expect(article?.dek).not.toMatch(/source build/iu);
     for (const banned of [/\bSOTA\b/iu, /state of the art/iu, /CLONEMEM/iu, /\bwe\b/iu, /\bour\b/iu, /honest/iu, /\bthe first\b/iu, /\bthe only\b/iu]) {
