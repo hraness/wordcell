@@ -7,7 +7,7 @@
       "dependencies": {
         "@hraness/design-kit": "github:hraness/design-kit#v0.36.3",
         "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz",
-        "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz",
+        "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.6/hraness-site-footer-0.20.6.tgz",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
         "@hraness/web-discovery": "github:hraness/web-discovery#v0.13.0",
         "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz",
@@ -97,7 +97,7 @@
 
     "@hraness/posthog": ["@hraness/posthog@https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz", { "dependencies": { "@posthog/nextjs-config": "1.10.0", "posthog-js": "1.422.5", "posthog-node": "5.51.4" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.2.0 <20.0.0" }, "optionalPeers": ["next", "react"] }, "sha512-XIHWP+tivJOUAw7KVbdPYO3UteM4O0IYf/mD4ZJZugPPJ5ZEHP033Xh/qbAIDv2lSVI245UE4CLpzkznDT/pVg=="],
 
-    "@hraness/site-footer": ["@hraness/site-footer@https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "sha512-TjjjT7cZeg73p9PKzDIJUGvWdV6eYt8IMDI4LtKswwYNzRceedsBnuuRnYb5FcLEyrV3TweEs1eAyqHGYt1XoA=="],
+    "@hraness/site-footer": ["@hraness/site-footer@https://github.com/hraness/site-footer/releases/download/v0.20.6/hraness-site-footer-0.20.6.tgz", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "sha512-ZjnYCPaNz02FSSUvC6B3jDVjsmV1PpmHX3KuyUcTjtv2+JIET1D2pWl05LpD2ED8d5dJKUMJLFCIIsfxycjBoA=="],
 
     "@hraness/support-foundation": ["@hraness/support-foundation@github:hraness/support-foundation#b32c1c8", {}, "hraness-support-foundation-b32c1c8", "sha512-dkMiXCI9bIzcX63byMK/IQHYzZg+i4XlDiuwnpJXrSF4nc9boCk2zDkZPh6cSpueio4h3K+SprnVOWjYzXC77w=="],
 

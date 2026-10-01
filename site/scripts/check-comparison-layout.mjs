@@ -25,7 +25,10 @@ export async function inspectComparisonLayout(page) {
     assert.ok(item.href?.startsWith('/compare/'), 'Comparison: whole card links to its comparison');
     assert.ok(!item.artwork && !item.clipped, 'Comparison: complete text without an artwork well');
     assert.ok(Math.abs(item.icon.width - item.icon.height) <= 1 && item.icon.width >= 55, 'Comparison: square, readable mark');
-    assert.ok(item.icon.right <= item.copy.x + 1, 'Comparison: icon stays beside the copy');
+    const beside = item.icon.right <= item.copy.x + 1;
+    const stacked = item.icon.bottom <= item.copy.y + 1 && Math.abs(item.icon.x - item.copy.x) <= 1;
+    assert.ok(beside || stacked, 'Comparison: icon and copy form distinct, aligned rows or columns');
+    if (page.viewportSize().width >= 768) assert.ok(beside, 'Comparison: wide cards keep the icon beside the copy');
     assert.ok(item.copy.right <= item.card.right + 1 && item.meta.bottom <= item.card.bottom + 1, 'Comparison: content stays in its card');
   }
   const width = page.viewportSize().width;
@@ -44,7 +47,8 @@ export async function inspectComparisonReflow(page) {
     }
     await page.setViewportSize({ ...viewport, width: 390 });
     await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
-    await inspectComparisonLayout(page);
+    const cards = await inspectComparisonLayout(page);
+    assert.ok(cards.every(item => item.icon.bottom <= item.copy.y + 1 && item.copy.width > item.icon.width), 'Comparison: enlarged text moves below the icon with room to read');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Comparison: enlarged text keeps page within viewport');
   } finally {
     await page.evaluate(value => { document.documentElement.style.fontSize = value; }, initialSize);

@@ -28,7 +28,7 @@
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.36.3",
     "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz",
-    "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz",
+    "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.6/hraness-site-footer-0.20.6.tgz",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.13.0",
     "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz",

@@ -6,174 +6,174 @@ Posts go out from the @hraness account. The status label reads "Latest release: 
 
 ## X thread
 
-Post 1 of 9, 197 characters
+Post 1 of 9, 182 characters
 
 ```text
-Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
+Wordcell connects decisions to evidence, plans, and code. Your coding agent recovers the reasoning before an edit and leaves it ready for the next session, in Markdown files you own.
 ```
 
-Post 2 of 9, 182 characters
+Post 2 of 9, 177 characters
 
 ```text
-Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
+Save the rule, why you chose it, and the source that informed it. Wordcell keeps the record in an ordinary Markdown file your agent can search, update, and commit with the code.
 ```
 
-Post 3 of 9, 157 characters
+Post 3 of 9, 205 characters
 
 ```text
-Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
+A question about how many times to retry can lead back to a note about the parser limit. Optional local semantic search helps your agent find the reasoning when it does not remember the phrase or filename.
 ```
 
-Post 4 of 9, 179 characters
+Post 4 of 9, 205 characters
 
 ```text
-Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
+Start from the file your agent is changing. Wordcell returns the decisions, active plans, and AGENTS.md rules tied to that path, giving the agent the context to investigate a change to an earlier decision.
 ```
 
-Post 5 of 9, 161 characters
+Post 5 of 9, 194 characters
 
 ```text
-Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
+A plan links to the decision it implements. Wordcell follows that connection with Oh and returns the supporting note and line, so your agent can inspect the reasoning when an assumption changes.
 ```
 
-Post 6 of 9, 197 characters
+Post 6 of 9, 213 characters
 
 ```text
-Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
+Wordcell is a CLI, local MCP server, and TypeScript SDK over Markdown you own. Read the files in Obsidian or your editor, review their history in Git, and add local search and graph queries as the knowledge grows.
 ```
 
-Post 7 of 9, 110 characters
+Post 7 of 9, 211 characters
 
 ```text
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
+Wordcell fits projects where Claude Code, Codex, Cursor, or another coding agent needs the evidence behind the implementation. Each session can recover the record and update it as the work changes what you know.
 ```
 
-Post 8 of 9, 235 characters
+Post 8 of 9, 190 characters
 
 ```text
-The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon’s essay A Song of Shapes and Words. Wordcell gives coding agents a library of decisions and sources they can revisit, with working methods that improve as you use them.
 ```
 
-Post 9 of 9, 243 characters
+Post 9 of 9, 248 characters
 
 ```text
-Latest release: v0.26.0. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
+Latest release: v0.26.0. Wordcell is free under the MIT license. Install it with Bun 1.3.14 or newer and Git, then add the Agent Skill to teach your coding agent how to find and maintain the knowledge.
 
 https://wordcell.io/blog/introducing-wordcell
 ```
 
 ## Bluesky thread
 
-Post 1 of 9, 197 characters
+Post 1 of 9, 182 characters
 
 ```text
-Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
+Wordcell connects decisions to evidence, plans, and code. Your coding agent recovers the reasoning before an edit and leaves it ready for the next session, in Markdown files you own.
 ```
 
-Post 2 of 9, 182 characters
+Post 2 of 9, 177 characters
 
 ```text
-Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
+Save the rule, why you chose it, and the source that informed it. Wordcell keeps the record in an ordinary Markdown file your agent can search, update, and commit with the code.
 ```
 
-Post 3 of 9, 157 characters
+Post 3 of 9, 205 characters
 
 ```text
-Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
+A question about how many times to retry can lead back to a note about the parser limit. Optional local semantic search helps your agent find the reasoning when it does not remember the phrase or filename.
 ```
 
-Post 4 of 9, 179 characters
+Post 4 of 9, 205 characters
 
 ```text
-Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
+Start from the file your agent is changing. Wordcell returns the decisions, active plans, and AGENTS.md rules tied to that path, giving the agent the context to investigate a change to an earlier decision.
 ```
 
-Post 5 of 9, 161 characters
+Post 5 of 9, 194 characters
 
 ```text
-Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
+A plan links to the decision it implements. Wordcell follows that connection with Oh and returns the supporting note and line, so your agent can inspect the reasoning when an assumption changes.
 ```
 
-Post 6 of 9, 197 characters
+Post 6 of 9, 213 characters
 
 ```text
-Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
+Wordcell is a CLI, local MCP server, and TypeScript SDK over Markdown you own. Read the files in Obsidian or your editor, review their history in Git, and add local search and graph queries as the knowledge grows.
 ```
 
-Post 7 of 9, 110 characters
+Post 7 of 9, 211 characters
 
 ```text
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
+Wordcell fits projects where Claude Code, Codex, Cursor, or another coding agent needs the evidence behind the implementation. Each session can recover the record and update it as the work changes what you know.
 ```
 
-Post 8 of 9, 235 characters
+Post 8 of 9, 190 characters
 
 ```text
-The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon’s essay A Song of Shapes and Words. Wordcell gives coding agents a library of decisions and sources they can revisit, with working methods that improve as you use them.
 ```
 
-Post 9 of 9, 243 characters
+Post 9 of 9, 248 characters
 
 ```text
-Latest release: v0.26.0. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
+Latest release: v0.26.0. Wordcell is free under the MIT license. Install it with Bun 1.3.14 or newer and Git, then add the Agent Skill to teach your coding agent how to find and maintain the knowledge.
 
 https://wordcell.io/blog/introducing-wordcell
 ```
 
 ## Threads thread
 
-Post 1 of 9, 197 characters
+Post 1 of 9, 182 characters
 
 ```text
-Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
+Wordcell connects decisions to evidence, plans, and code. Your coding agent recovers the reasoning before an edit and leaves it ready for the next session, in Markdown files you own.
 ```
 
-Post 2 of 9, 182 characters
+Post 2 of 9, 177 characters
 
 ```text
-Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
+Save the rule, why you chose it, and the source that informed it. Wordcell keeps the record in an ordinary Markdown file your agent can search, update, and commit with the code.
 ```
 
-Post 3 of 9, 157 characters
+Post 3 of 9, 205 characters
 
 ```text
-Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
+A question about how many times to retry can lead back to a note about the parser limit. Optional local semantic search helps your agent find the reasoning when it does not remember the phrase or filename.
 ```
 
-Post 4 of 9, 179 characters
+Post 4 of 9, 205 characters
 
 ```text
-Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
+Start from the file your agent is changing. Wordcell returns the decisions, active plans, and AGENTS.md rules tied to that path, giving the agent the context to investigate a change to an earlier decision.
 ```
 
-Post 5 of 9, 161 characters
+Post 5 of 9, 194 characters
 
 ```text
-Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
+A plan links to the decision it implements. Wordcell follows that connection with Oh and returns the supporting note and line, so your agent can inspect the reasoning when an assumption changes.
 ```
 
-Post 6 of 9, 197 characters
+Post 6 of 9, 213 characters
 
 ```text
-Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
+Wordcell is a CLI, local MCP server, and TypeScript SDK over Markdown you own. Read the files in Obsidian or your editor, review their history in Git, and add local search and graph queries as the knowledge grows.
 ```
 
-Post 7 of 9, 110 characters
+Post 7 of 9, 211 characters
 
 ```text
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
+Wordcell fits projects where Claude Code, Codex, Cursor, or another coding agent needs the evidence behind the implementation. Each session can recover the record and update it as the work changes what you know.
 ```
 
-Post 8 of 9, 235 characters
+Post 8 of 9, 190 characters
 
 ```text
-The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon’s essay A Song of Shapes and Words. Wordcell gives coding agents a library of decisions and sources they can revisit, with working methods that improve as you use them.
 ```
 
-Post 9 of 9, 243 characters
+Post 9 of 9, 248 characters
 
 ```text
-Latest release: v0.26.0. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
+Latest release: v0.26.0. Wordcell is free under the MIT license. Install it with Bun 1.3.14 or newer and Git, then add the Agent Skill to teach your coding agent how to find and maintain the knowledge.
 
 https://wordcell.io/blog/introducing-wordcell
 ```
@@ -181,23 +181,23 @@ https://wordcell.io/blog/introducing-wordcell
 ## LinkedIn post
 
 ```text
-Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
+Wordcell connects decisions to evidence, plans, and code. Your coding agent recovers the reasoning before an edit and leaves it ready for the next session, in Markdown files you own.
 
-Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
+Save the rule, why you chose it, and the source that informed it. Wordcell keeps the record in an ordinary Markdown file your agent can search, update, and commit with the code.
 
-Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
+A question about how many times to retry can lead back to a note about the parser limit. Optional local semantic search helps your agent find the reasoning when it does not remember the phrase or filename.
 
-Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
+Start from the file your agent is changing. Wordcell returns the decisions, active plans, and AGENTS.md rules tied to that path, giving the agent the context to investigate a change to an earlier decision.
 
-Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
+A plan links to the decision it implements. Wordcell follows that connection with Oh and returns the supporting note and line, so your agent can inspect the reasoning when an assumption changes.
 
-Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
+Wordcell is a CLI, local MCP server, and TypeScript SDK over Markdown you own. Read the files in Obsidian or your editor, review their history in Git, and add local search and graph queries as the knowledge grows.
 
-Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
+Wordcell fits projects where Claude Code, Codex, Cursor, or another coding agent needs the evidence behind the implementation. Each session can recover the record and update it as the work changes what you know.
 
-The name nods to roon's essay A Song of Shapes and Words, where a wordcel thinks in words. Coding agents are made of words. Wordcell is building toward every new session starting from the notes the last one left, in files you can read.
+The name nods to roon’s essay A Song of Shapes and Words. Wordcell gives coding agents a library of decisions and sources they can revisit, with working methods that improve as you use them.
 
-Latest release: v0.26.0. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
+Latest release: v0.26.0. Wordcell is free under the MIT license. Install it with Bun 1.3.14 or newer and Git, then add the Agent Skill to teach your coding agent how to find and maintain the knowledge.
 
 https://wordcell.io/blog/introducing-wordcell
 ```
@@ -217,28 +217,28 @@ Topics: Developer Tools, Productivity, Artificial Intelligence
 ## Show HN and first comment fact sheet
 
 - Give the next session what this one learned.
-- Wordcell keeps your decisions, plans, and sources as Markdown notes beside your code. Your coding agent finds the right note before it changes a file, and tells you which file the answer came from.
-- Decided something? Save it as a note with one command. It is an ordinary Markdown file you can open, edit, and commit. Exact search finds it again with no model, account, or network.
-- Ask "how many times do we retry" and exact words find nothing. Turn on search by meaning, and a small model on your own machine finds the parser rule anyway.
-- Before an agent edits a file, it can ask Wordcell for the notes tied to that folder and the AGENTS.md rules that apply. It spots the rule it was about to break and asks you first.
-- Link one note to another and Wordcell can tell you what depends on it. Each answer names the note that links, the note it points to, and the line the link is on.
-- Wordcell never moves your notes into a database of its own. Its search indexes and graph are built from the files and can be deleted and rebuilt. Obsidian, Git, and any text editor still read them.
-- Wordcell is for people who keep decisions in Markdown or Obsidian and work with Claude Code, Codex, or Cursor.
-- Latest release: v0.26.0. Wordcell is free and MIT licensed. It needs Bun 1.3.14 or newer and Git. Install it from GitHub Releases or npm, then add the agent skill so your agent knows the commands.
+- Wordcell connects decisions to evidence, plans, and code. Your coding agent recovers the reasoning before an edit and leaves it ready for the next session, in Markdown files you own.
+- Save the rule, why you chose it, and the source that informed it. Wordcell keeps the record in an ordinary Markdown file your agent can search, update, and commit with the code.
+- A question about how many times to retry can lead back to a note about the parser limit. Optional local semantic search helps your agent find the reasoning when it does not remember the phrase or filename.
+- Start from the file your agent is changing. Wordcell returns the decisions, active plans, and AGENTS.md rules tied to that path, giving the agent the context to investigate a change to an earlier decision.
+- A plan links to the decision it implements. Wordcell follows that connection with Oh and returns the supporting note and line, so your agent can inspect the reasoning when an assumption changes.
+- Wordcell is a CLI, local MCP server, and TypeScript SDK over Markdown you own. Read the files in Obsidian or your editor, review their history in Git, and add local search and graph queries as the knowledge grows.
+- Wordcell fits projects where Claude Code, Codex, Cursor, or another coding agent needs the evidence behind the implementation. Each session can recover the record and update it as the work changes what you know.
+- Latest release: v0.26.0. Wordcell is free under the MIT license. Install it with Bun 1.3.14 or newer and Git, then add the Agent Skill to teach your coding agent how to find and maintain the knowledge.
 - Latest release: v0.26.0. https://wordcell.io/blog/introducing-wordcell
 
 ## Beats
 
-1. Wordcell lets your coding agent read your team's notes
-2. Save a decision once, as a plain file
-3. Find a note even when the words differ
-4. Your agent checks the rules before it edits a file
-5. Links you write become a map of what depends on what
-6. Your notes stay ordinary Markdown files
-7. For people who keep notes in Markdown and code with agents
-8. Coding agents are wordcels, so give them a library
-9. It finds notes; your agent writes the answer
-10. Free and open source, on GitHub and npm
+1. Give your coding agent the reasons behind the code
+2. Keep the decision and the reasoning together
+3. Find the decision in different words
+4. Recover context before the next edit
+5. Connect a decision to the work that depends on it
+6. Keep using your agent, editor, and Git workflow
+7. Carry useful decisions across coding sessions
+8. Give the next session a library to build on
+9. Inspect the recorded connections behind a result
+10. Start with one decision worth keeping
 
 ## Facts and their records
 

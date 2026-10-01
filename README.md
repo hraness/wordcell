@@ -9,14 +9,26 @@ sources as Markdown files beside your code, and agents find them by exact
 words, by meaning with an optional local model, or from the file they are
 about to change.
 
-A new coding-agent session can read your code, but not the decisions that
-stayed in the last session's chat. Wordcell keeps those decisions as Markdown
-files beside the repository, with the plans that depend on them and the web
-pages and PDFs that informed them. Tie a note to the paths it explains, and an
-agent about to change that code runs one command to get the notes and plans
-for that path. Exact search, backlinks, and Git history run on your machine
-with no account or model, and every index rebuilds from files you can read in
-any editor. Wordcell is free and open source.
+A new coding-agent session needs the reasons behind the code it is changing.
+Wordcell keeps the decision, its supporting sources, and the plan that puts it
+into practice in a connected set of Markdown files. Tie a note to a repository
+path, and the next agent can recover that context before it edits the file.
+When an assumption changes, update the decision and keep its earlier reasoning
+in Git.
+
+Captured sources preserve what you read, maintained notes explain what you
+currently understand, and plans record the work and its results. Named
+relationships such as `evidenced-by` and `supersedes` make those connections
+available to the embedded Oh graph engine, whose results point back to the
+supporting files. Optional local semantic search helps when the words in a
+question differ from the note; Git history connects the explanation to its
+commits and accompanying code changes.
+
+Use the CLI, local MCP server, or TypeScript SDK from your existing agent and
+editor. The public Agent Skill teaches agents to recover context, maintain
+plans, and leave reusable decisions for later sessions. Exact search, backlinks,
+and Git history need no account or model. Every index rebuilds from files you
+can read in Obsidian or any text editor. Wordcell is free and open source.
 
 Web capture, optional hosted reranking, and your agent's provider reach other
 services; [Privacy and boundaries](#privacy-and-boundaries) says what each one
