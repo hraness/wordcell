@@ -26,7 +26,7 @@
     "launch:kit": "bun scripts/write-social-kit.ts"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.36.1",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.36.3",
     "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz",
     "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
