@@ -98,6 +98,13 @@ export const docCatalog = [
     quadrant: "how-to",
   },
   {
+    slug: "consumer-search",
+    title: "Set up repository KB search",
+    summary: "Install a pinned search tool, choose local or approved hosted processing for each vault, and inspect reranking results.",
+    card: "Install repository search and choose each vault’s processing mode.",
+    quadrant: "how-to",
+  },
+  {
     slug: "reranking",
     title: "Use hosted reranking",
     summary: "Reorder up to 25 search results with TypeSafe's Jev model. If the provider fails, you keep the original order.",
