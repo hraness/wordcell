@@ -345,7 +345,7 @@
  * underlined like the .record-link links in globals.css. */
 .wordcell-comparison :is(th, td) a,
 .wordcell-limits a {
-  text-decoration: underline;
+  text-decoration-line: underline;
   text-decoration-color: color-mix(in srgb, var(--foreground) 35%, transparent);
   text-underline-offset: 0.18em;
 }

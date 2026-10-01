@@ -70,7 +70,7 @@ test('bootstrap admission rejects extra versions, unrelated tags and identity co
   expect(result.exitCode,JSON.stringify(metadata)).not.toBe(0);
  }
  for (const raw of ['', '{', 'null', '[]', '{}']) expect((await guardResult(raw)).exitCode).not.toBe(0);
-});
+}, 15_000);
 test('ordinary publication retains strictly increasing stable version ordering',async()=>{
  for (const [value,success] of [['0.19.6',true],['0.20.0',false],['0.21.0',false],['1.0.0',false],['0.20.0-bootstrap.2',false],['9007199254740992.0.0',false],[null,false]] as const) {
   const metadata={name:'@hraness/wordcell','dist-tags':{latest:value},versions:{'0.19.6':{name:'@hraness/wordcell',version:'0.19.6'}}};

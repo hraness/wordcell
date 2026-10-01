@@ -271,10 +271,10 @@ describe("Wordcell blog", () => {
   });
 
   test("related products come from the pinned portfolio facts", () => {
-    // Design-kit v0.19.0 carries Wordcell's runtime relation to Oh and xcb's
+    // Design-kit v0.35.0 carries Wordcell's runtime relation to Oh and xcb's
     // relation to Wordcell. Posts show one card per relation: the product's
     // mark, name, and one-line description.
-    expect(portfolioDigest).toBe("sha256:d43bbc1113c077b872d2e11a4a70490cd537d5734951d0c3c4bd8e061ce583a9");
+    expect(portfolioDigest).toBe("sha256:1af50f624f0d06ec13e1531564a8066795ae3fed732210b6f642179730100103");
     const related = relatedFor("kb");
     expect(related.map((entry) => entry.productId)).toEqual(["oh-computer", "xcb", "sponge"]);
     for (const entry of related) {

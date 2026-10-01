@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
+import { MarketingComparison, MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
 
 import { longDate } from "../../../wordcell/format";
 import { WordcellPageChrome } from "../../../wordcell/page-chrome";
@@ -99,28 +99,35 @@ export default function CompareSupermemory() {
         heading="How they differ"
         headingId="differences-title"
         id="differences"
-        summary="Each Supermemory entry links the page it comes from."
+
       >
-        <div aria-label="Supermemory and Wordcell differences" className="wordcell-comparison wordcell-stack" role="region" tabIndex={0}>
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Topic</th>
-                <th scope="col">Supermemory</th>
-                <th scope="col">Wordcell</th>
-              </tr>
-            </thead>
-            <tbody>
-              {differences.map((difference) => (
-                <tr key={difference.topic}>
-                  <th scope="row">{difference.topic}</th>
-                  <td data-label="Supermemory">{difference.supermemory}</td>
-                  <td data-label="Wordcell">{difference.wordcell}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MarketingComparison
+          caption="Wordcell and Supermemory at a glance"
+          highlight={0}
+          options={[{ name: "Wordcell", mark: "/marks/kb.svg" }, { name: "Supermemory" }]}
+          rows={[
+              {"label": "Memory belongs to", "values": ["You or your team", "Users of your app"]},
+              {"label": "Stored as", "values": ["Markdown files", "Extracted facts behind an API"]},
+              {"label": "Runs locally", "values": [true, {"status": "optional", "label": "Supermemory local"}]},
+              {"label": "Review changes", "values": ["Git history", "Managed memory"]},
+              {"label": "Source connectors", "values": [false, {"status": "optional", "label": "Hosted plans"}]},
+              {"label": "Software cost", "values": ["Free · MIT", "Free local · paid hosting"]},
+              {"label": "Agent access", "values": ["Local CLI, SDK and MCP", "Hosted MCP"]},
+          ]}
+          note="Wordcell’s hosted reranking is optional and paid. Supermemory local needs your own model and excludes connectors and the Supermemory MCP. Hosted prices are below."
+        />
+        <details className="wordcell-comparison-sources">
+          <summary>Sources and details</summary>
+          <dl>
+            {differences.map((difference) => (
+              <div key={difference.topic}>
+                <dt>{difference.topic}</dt>
+                <dd><strong>Supermemory:</strong> {difference.supermemory}</dd>
+                <dd><strong>Wordcell:</strong> {difference.wordcell}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       </MarketingSection>
 
       <MarketingSection

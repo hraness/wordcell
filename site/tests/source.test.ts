@@ -59,7 +59,7 @@ describe("Wordcell site source contract", () => {
       read("app/readme.generated.ts"),
     ]);
     expect(packageJson).toContain('"@hraness/ui": "github:hraness/ui#v0.5.18"');
-    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.33.0"');
+    expect(packageJson).toContain('"@hraness/design-kit": "github:hraness/design-kit#v0.35.0"');
     expect(home).toContain('import { AskAiAboutThis } from "@hraness/ui"');
     expect(home).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io" />');
     expect(docs).toContain('<AskAiAboutThis className="ask-ai" url="https://wordcell.io/docs" />');
@@ -168,7 +168,7 @@ test("pins the shared footer release and leaves attribution to the package", asy
     read("app/docs/page.tsx"),
     read("app/globals.css"),
   ]);
-  expect(packageJson).toContain('"@hraness/site-footer": "github:hraness/site-footer#v0.20.1"');
+  expect(packageJson).toContain('"@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz"');
   expect(layout).toContain('import { HranessSiteFooter } from "@hraness/site-footer/react"');
   expect(layout).toMatch(/<HranessSiteFooter\b[^>]*placement="flow"/u);
   for (const source of [home, docs, css]) {

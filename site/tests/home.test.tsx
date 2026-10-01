@@ -139,7 +139,6 @@ test("the homepage leads with the README identity and the verified install comma
   const html = renderToStaticMarkup(<Home />);
   expect(html.match(/<h1\b/gu)).toHaveLength(1);
   expect(html).toContain(renderToStaticMarkup(<h1>{productMessaging.hero.heading}</h1>).replace("<h1>", ""));
-  expect(html).toContain("Markdown knowledge base");
   expect(html).toContain(renderToStaticMarkup(<p>{productMessaging.hero.summary}</p>).replace(/<\/?p>/gu, ""));
   if (publishedRelease === null) {
     expect(html).toContain("First Wordcell release in preparation");
@@ -244,7 +243,7 @@ test("keeps quick-start commands, privacy limits, and evidence links accessible"
   expect(html).toContain('href="/benchmarks"');
   expect(html).toContain('href="/docs/comparisons"');
   expect(html).toContain('data-language="shell"');
-  expect(html).toContain("Optional Jev reranking and your agent&#x27;s provider can receive selected content.");
+  expect(html).toContain("Your agent’s AI provider and optional hosted search ranking can receive selected note content.");
 });
 
 test("unreleased publishing is labeled and source docs do not silently pretend to be an older release", () => {
@@ -307,8 +306,8 @@ test("home and docs install with per-platform tabs: the same Bun command on macO
     const html = renderToStaticMarkup(<Page />);
     expect(html).toContain("hraness-platform-install");
     expect(html).toContain("hraness-platform-badges");
-    expect(html).toContain(`bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v${version}/hraness-wordcell-${version}.tgz`);
-    expect(html).toContain(`npm install --global --ignore-scripts @hraness/wordcell@${version}`);
+    expect(html.replace(/<\/?span\b[^>]*>/gu, "")).toContain(`bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v${version}/hraness-wordcell-${version}.tgz`);
+    expect(html.replace(/<\/?span\b[^>]*>/gu, "")).toContain(`npm install --global --ignore-scripts @hraness/wordcell@${version}`);
     expect(html).not.toContain("WSL2");
     expect(html).toContain("PowerShell");
     const tabs = [...html.matchAll(/data-platform="(macos|linux|windows)"/gu)].map((match) => match[1]);

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
+import { MarketingComparison, MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
 
 import { longDate } from "../../../wordcell/format";
 import { mem0CheckedOn, mem0Pages } from "../../../wordcell/mem0-sources";
@@ -90,28 +90,35 @@ export default function CompareMem0() {
         heading="How they differ"
         headingId="differences-title"
         id="differences"
-        summary="Each Mem0 entry links the page it comes from."
+
       >
-        <div aria-label="Mem0 and Wordcell differences" className="wordcell-comparison wordcell-stack" role="region" tabIndex={0}>
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Topic</th>
-                <th scope="col">Mem0</th>
-                <th scope="col">Wordcell</th>
-              </tr>
-            </thead>
-            <tbody>
-              {differences.map((difference) => (
-                <tr key={difference.topic}>
-                  <th scope="row">{difference.topic}</th>
-                  <td data-label="Mem0">{difference.mem0}</td>
-                  <td data-label="Wordcell">{difference.wordcell}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MarketingComparison
+          caption="Wordcell and Mem0 at a glance"
+          highlight={0}
+          options={[{ name: "Wordcell", mark: "/marks/kb.svg" }, { name: "Mem0" }]}
+          rows={[
+              {"label": "Memory belongs to", "values": ["You or your team", "Users of your app"]},
+              {"label": "Stored as", "values": ["Markdown files", "Model-extracted facts"]},
+              {"label": "Runs locally", "values": [true, {"status": "optional", "label": "Self-hosted SDK"}]},
+              {"label": "Review changes", "values": ["Git history", "Managed memory"]},
+              {"label": "Software cost", "values": ["Free · MIT", "Free SDK · Apache-2.0"]},
+              {"label": "Infrastructure", "values": ["Your files", "Managed or self-hosted"]},
+              {"label": "Agent access", "values": ["Local CLI, SDK and MCP", "SDKs, REST and hosted MCP"]},
+          ]}
+          note="Wordcell’s hosted reranking is optional and paid. Mem0’s free SDK needs a vector store, model and embedder; its managed Platform has additional features."
+        />
+        <details className="wordcell-comparison-sources">
+          <summary>Sources and details</summary>
+          <dl>
+            {differences.map((difference) => (
+              <div key={difference.topic}>
+                <dt>{difference.topic}</dt>
+                <dd><strong>Mem0:</strong> {difference.mem0}</dd>
+                <dd><strong>Wordcell:</strong> {difference.wordcell}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       </MarketingSection>
 
       <MarketingSection

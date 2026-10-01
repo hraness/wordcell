@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
+import { MarketingComparison, MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
 
 import { basicMemoryCheckedOn, basicMemoryPages } from "../../../wordcell/basic-memory-sources";
 import { longDate } from "../../../wordcell/format";
@@ -90,28 +90,35 @@ export default function CompareBasicMemory() {
         heading="How they differ"
         headingId="differences-title"
         id="differences"
-        summary="Each Basic Memory entry links the page it comes from."
+
       >
-        <div aria-label="Basic Memory and Wordcell differences" className="wordcell-comparison wordcell-stack" role="region" tabIndex={0}>
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Topic</th>
-                <th scope="col">Basic Memory</th>
-                <th scope="col">Wordcell</th>
-              </tr>
-            </thead>
-            <tbody>
-              {differences.map((difference) => (
-                <tr key={difference.topic}>
-                  <th scope="row">{difference.topic}</th>
-                  <td data-label="Basic Memory">{difference.basicMemory}</td>
-                  <td data-label="Wordcell">{difference.wordcell}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MarketingComparison
+          caption="Wordcell and Basic Memory at a glance"
+          highlight={0}
+          options={[{ name: "Wordcell", mark: "/marks/kb.svg" }, { name: "Basic Memory" }]}
+          rows={[
+              {"label": "Plain Markdown files", "values": [true, true]},
+              {"label": "Runs locally", "values": [true, true]},
+              {"label": "Agent access", "values": ["CLI, SDK and local MCP", "Local or hosted MCP"]},
+              {"label": "Search", "values": ["Exact or local semantic", "Text, vector and hybrid"]},
+              {"label": "Code context", "values": ["Notes scoped to code paths", "Projects and folders"]},
+              {"label": "Hosted memory workspace", "values": [false, {"status": "optional", "label": "Basic Memory Cloud"}]},
+              {"label": "Software cost", "values": ["Free · MIT", "Free local · AGPL-3.0"]},
+          ]}
+          note="Basic Memory Cloud requires a subscription. Wordcell’s hosted reranking is optional and paid."
+        />
+        <details className="wordcell-comparison-sources">
+          <summary>Sources and details</summary>
+          <dl>
+            {differences.map((difference) => (
+              <div key={difference.topic}>
+                <dt>{difference.topic}</dt>
+                <dd><strong>Basic Memory:</strong> {difference.basicMemory}</dd>
+                <dd><strong>Wordcell:</strong> {difference.wordcell}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       </MarketingSection>
 
       <MarketingSection
@@ -131,7 +138,7 @@ export default function CompareBasicMemory() {
           <li>Your agents keep memory about your own work, and you want it in files you can read, edit, and diff.</li>
           <li>You want every memory change reviewed in Git, like code.</li>
           <li>You want notes tied to repository paths, so an agent opening a file gets the memory that applies to it.</li>
-          <li>You want memory as plain files, with no hosted tier, account, or usage bill.</li>
+          <li>You want memory as plain files without requiring a hosted workspace or an account.</li>
         </ul>
         <p className="record-link"><a href="/docs/comparisons#consider-basic-memory-for-an-mcp-centered-knowledge-graph">Read the full comparison with QMD, Obsidian, and other tools</a></p>
       </MarketingSection>

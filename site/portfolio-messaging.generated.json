@@ -5,7 +5,7 @@
   "portfolio": {
     "contract": "hraness.portfolio-public/v1",
     "url": "https://hraness.com/portfolio.json",
-    "digest": "sha256:28638557fb2323fce51b23d8e94b9f141f2adac771ea22e1d3f50efafdfa47e1"
+    "digest": "sha256:ba365e481a8b15c4a19503b1628e1b7ae9399e47055dde02bae124183a3e1447"
   },
   "messaging": {
     "formatVersion": 1,
@@ -25,7 +25,7 @@
     "long": "A new coding-agent session can read your code, but not the decisions that stayed in the last session's chat. Wordcell keeps those decisions as Markdown files beside the repository, with the plans that depend on them and the web pages and PDFs that informed them. Tie a note to the paths it explains, and an agent about to change that code runs one command to get the notes and plans for that path. Exact search, backlinks, and Git history run on your machine with no account or model, and every index rebuilds from files you can read in any editor. Wordcell is free and open source.",
     "hero": {
       "heading": "Give coding agents the decisions behind your code.",
-      "summary": "Decisions, plans, and sources kept as Markdown beside your repository, one command away from the agent about to change a file.",
+      "summary": "Keep decisions, plans, and sources as Markdown beside your code.",
       "primaryAction": "Install Wordcell",
       "secondaryAction": "See an example"
     },
@@ -41,7 +41,7 @@
       "home-publish": "Publish your notes as a website",
       "home-trust": "The record stays yours",
       "home-questions": "Before you install",
-      "home-related": "Related Hraness tools",
+      "home-related": "Other tools from our studio",
       "home-closing": "Give the next session what this one learned.",
       "home-search-title": "Wordcell: Markdown memory for coding agents",
       "home-primitive-files": "Files you own",

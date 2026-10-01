@@ -607,15 +607,15 @@ describe("/compare/supermemory", () => {
     const checkedOn = longDate(supermemoryPricing.checkedOn);
     expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
     for (const topic of ["Where memory lives", "How memories form", "Whose memory", "Cost", "Connectors", "Compliance", "Agent access"]) {
-      expect(markup).toContain(`<th scope="row">${topic}</th>`);
+      expect(markup).toContain(`<dt>${topic}</dt>`);
     }
     expect(markup).toContain('id="choose-supermemory">Choose Supermemory when</h3>');
     expect(markup).toContain('id="choose-wordcell">Choose Wordcell when</h3>');
-    const differences = markup.slice(markup.indexOf('aria-label="Supermemory and Wordcell differences"'), markup.indexOf("</table>"));
-    const supermemoryCells = [...differences.matchAll(/<td data-label="Supermemory">(.*?)<\/td>/gsu)].map((match) => match[1] ?? "");
+    const differences = /<details class="wordcell-comparison-sources">([\s\S]*?)<\/details>/u.exec(markup)?.[1] ?? "";
+    const supermemoryCells = [...differences.matchAll(/<dd><strong>Supermemory:<\/strong> (.*?)<\/dd>/gsu)].map((match) => match[1] ?? "");
     expect(supermemoryCells.length).toBe(7);
     for (const cell of supermemoryCells) expect(cell).toContain('<a href="https://supermemory.ai/');
-    const cost = /<th scope="row">Cost<\/th><td data-label="Supermemory">(.*?)<\/td>/su.exec(markup)?.[1] ?? "";
+    const cost = /<dt>Cost<\/dt><dd><strong>Supermemory:<\/strong> (.*?)<\/dd>/su.exec(markup)?.[1] ?? "";
     expect(cost).toContain(`href="${supermemoryPricing.href}"`);
     expect(cost).toContain('href="https://supermemory.ai/docs/self-hosting/overview"');
     expect(cost).toContain(checkedOn);
@@ -665,12 +665,12 @@ describe("/compare/basic-memory", () => {
     const checkedOn = longDate(basicMemoryCheckedOn);
     expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
     for (const topic of ["Where notes live", "How notes form", "Note structure", "Search", "Agent access", "Repository context", "Cost"]) {
-      expect(markup).toContain(`<th scope="row">${topic}</th>`);
+      expect(markup).toContain(`<dt>${topic}</dt>`);
     }
     expect(markup).toContain('id="choose-basic-memory">Choose Basic Memory when</h3>');
     expect(markup).toContain('id="choose-wordcell">Choose Wordcell when</h3>');
-    const differences = markup.slice(markup.indexOf('aria-label="Basic Memory and Wordcell differences"'), markup.indexOf("</table>"));
-    const basicMemoryCells = [...differences.matchAll(/<td data-label="Basic Memory">(.*?)<\/td>/gsu)].map((match) => match[1] ?? "");
+    const differences = /<details class="wordcell-comparison-sources">([\s\S]*?)<\/details>/u.exec(markup)?.[1] ?? "";
+    const basicMemoryCells = [...differences.matchAll(/<dd><strong>Basic Memory:<\/strong> (.*?)<\/dd>/gsu)].map((match) => match[1] ?? "");
     expect(basicMemoryCells.length).toBe(7);
     for (const cell of basicMemoryCells) expect(cell).toContain('<a href="https://');
     for (const href of Object.values(basicMemoryPages)) expect(markup).toContain(`href="${href}"`);
@@ -705,12 +705,12 @@ describe("/compare/mem0", () => {
     const checkedOn = longDate(mem0CheckedOn);
     expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
     for (const topic of ["Where memory lives", "How memories form", "Whose memory", "Platform and open source", "Change over time", "Cost", "Agent access"]) {
-      expect(markup).toContain(`<th scope="row">${topic}</th>`);
+      expect(markup).toContain(`<dt>${topic}</dt>`);
     }
     expect(markup).toContain('id="choose-mem0">Choose Mem0 when</h3>');
     expect(markup).toContain('id="choose-wordcell">Choose Wordcell when</h3>');
-    const differences = markup.slice(markup.indexOf('aria-label="Mem0 and Wordcell differences"'), markup.indexOf("</table>"));
-    const mem0Cells = [...differences.matchAll(/<td data-label="Mem0">(.*?)<\/td>/gsu)].map((match) => match[1] ?? "");
+    const differences = /<details class="wordcell-comparison-sources">([\s\S]*?)<\/details>/u.exec(markup)?.[1] ?? "";
+    const mem0Cells = [...differences.matchAll(/<dd><strong>Mem0:<\/strong> (.*?)<\/dd>/gsu)].map((match) => match[1] ?? "");
     expect(mem0Cells.length).toBe(7);
     for (const cell of mem0Cells) expect(cell).toContain('<a href="https://docs.mem0.ai/');
     for (const href of Object.values(mem0Pages)) expect(markup).toContain(`href="${href}"`);
@@ -874,18 +874,32 @@ describe("discovery files", () => {
 describe("stacked tables", () => {
   const pages = [
     { name: "/benchmarks", markup: () => renderToStaticMarkup(<Benchmarks />), tables: 3 },
-    { name: "/compare/basic-memory", markup: () => renderToStaticMarkup(<CompareBasicMemory />), tables: 1 },
-    { name: "/compare/obsidian", markup: () => renderToStaticMarkup(<CompareObsidian />), tables: 1 },
-    { name: "/compare/mem0", markup: () => renderToStaticMarkup(<CompareMem0 />), tables: 1 },
-    { name: "/compare/supermemory", markup: () => renderToStaticMarkup(<CompareSupermemory />), tables: 3 },
+    { name: "/compare/basic-memory", markup: () => renderToStaticMarkup(<CompareBasicMemory />), tables: 0, compact: true },
+    { name: "/compare/obsidian", markup: () => renderToStaticMarkup(<CompareObsidian />), tables: 0, compact: true },
+    { name: "/compare/mem0", markup: () => renderToStaticMarkup(<CompareMem0 />), tables: 0, compact: true },
+    { name: "/compare/supermemory", markup: () => renderToStaticMarkup(<CompareSupermemory />), tables: 2, compact: true },
     { name: "/migrate/supermemory", markup: () => renderToStaticMarkup(<MigrateSupermemory />), tables: 1 },
   ];
 
   for (const page of pages) {
-    test(`${page.name} labels every data cell with its column header for narrow screens`, () => {
+    test(`${page.name} keeps compact and stacked table data labelled on narrow screens`, () => {
       const markup = page.markup();
       const tables = markup.split('class="wordcell-comparison wordcell-stack"').slice(1).map((part) => part.slice(0, part.indexOf("</table>")));
       expect(tables).toHaveLength(page.tables);
+      if ("compact" in page) {
+        const compact = /<figure\b[^>]*class="hraness-marketing-comparison\b[\s\S]*?<\/figure>/u.exec(markup)?.[0] ?? "";
+        expect(compact).toContain('role="region"');
+        expect(compact).toContain('tabindex="0"');
+        expect(compact).toContain("<caption");
+        expect(compact.match(/scope="col"/gu)).toHaveLength(2);
+        const rows = compact.slice(compact.indexOf("<tbody>")).split("<tr>").slice(1);
+        expect(rows.length).toBeGreaterThan(0);
+        for (const row of rows) {
+          expect(row).toContain('scope="row"');
+          expect(row.match(/<td\b/gu)).toHaveLength(2);
+        }
+      }
+
       expect(markup.split('class="wordcell-comparison"').length).toBe(1);
       for (const table of tables) {
         const headers = [...table.matchAll(/<th scope="col">(.*?)<\/th>/g)].map((match) => pageText(match[1] ?? "").trim());
@@ -905,7 +919,7 @@ describe("launch styles", () => {
   test("code keeps every character visible, links in launch tables and lists stay underlined, and stacked tables collapse on narrow screens", async () => {
     const css = await readFile(join(import.meta.dir, "../wordcell/wordcell.css"), "utf8");
     expect(css).toMatch(/code,\s*kbd,\s*samp,\s*pre\s*\{\s*font-variant-ligatures:\s*none;/);
-    expect(css).toMatch(/\.wordcell-comparison :is\(th, td\) a,\s*\.wordcell-limits a \{\s*text-decoration: underline;/u);
+    expect(css).toMatch(/\.wordcell-comparison :is\(th, td\) a,\s*\.wordcell-limits a \{\s*text-decoration-line: underline;/u);
     const narrow = css.slice(css.indexOf("@media (max-width: 40rem)"));
     expect(narrow).toContain(".wordcell-comparison.wordcell-stack table {\n    min-width: 0;");
     expect(narrow).toContain(".wordcell-comparison.wordcell-stack tbody td[data-label]::before {\n    content: attr(data-label);");

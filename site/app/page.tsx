@@ -13,7 +13,7 @@ import {
   ProductHero,
 } from "@hraness/design-kit/react/server";
 import { PlatformInstall, ThemeMenuButton } from "@hraness/design-kit/react";
-import { product, type PortfolioProductId } from "@hraness/design-kit/portfolio";
+import { portfolioRelatedGroups } from "@hraness/design-kit/portfolio";
 
 import { AskAiAboutThis } from "@hraness/ui";
 import { websiteJsonLd } from "@hraness/web-discovery";
@@ -30,7 +30,7 @@ import { PublishedNotesWindow } from "../wordcell/mockups/surfaces";
 import { ComparisonLinks, SupermemoryMigrationLink } from "../wordcell/comparison-links";
 import { ESSAY_URL } from "../wordcell/launch/facts";
 
-import { productMessaging, productName, relatedProduct } from "./messaging";
+import { productMessaging, productName } from "./messaging";
 
 const releaseVersion = publishedRelease?.version;
 const releaseSupports0220 = releaseVersion !== undefined && (Number(releaseVersion.split(".")[0]) > 0 || Number(releaseVersion.split(".")[1]) >= 22);
@@ -39,6 +39,7 @@ const archiveUrl = releaseVersion === undefined ? null : `${repository}/releases
 
 const heading = productMessaging.hero.heading;
 const summary = productMessaging.hero.summary;
+
 const footnote = releaseVersion === undefined
   ? "Free under the MIT license. Exact search needs no account or model. First Wordcell release in preparation."
   : `Latest release: v${releaseVersion} · Free under the MIT license · Exact search needs no account or model.`;
@@ -53,33 +54,17 @@ const primitives = [
 const trust = [
   {
     label: "Your Markdown is the record",
-    detail: "Notes and Git history stay in your files. Search indexes and graph caches are replaceable, and you can keep reading the vault without Wordcell.",
+    detail: "Your notes stay in plain files you can read, edit, and keep using without Wordcell.",
   },
   {
     label: "What can leave your machine",
-    detail: "Exact search and graph queries need no account or hosted service. Web capture contacts its source. Optional Jev reranking and your agent's provider can receive selected content.",
+    detail: "Local search needs no account. Your agent’s AI provider and optional hosted search ranking can receive selected note content.",
   },
   {
     label: "Sources stay inspectable",
     detail: "Open the note, authored link, or commit behind a result.",
   },
 ] as const;
-
-// Sibling cards show each product's registry mark, link, and one-line description.
-const related = (id: PortfolioProductId) => ({ ...relatedProduct(id), mark: product(id).mark });
-
-// Only products with a registered relationship to Wordcell appear here.
-const relatedGroups = [
-  {
-    heading: productMessaging.headings["home-related-group"],
-    headingId: "related-tools",
-    items: [
-      related("wrench"),
-      related("xcb"),
-      related("oh-computer"),
-    ],
-  },
-];
 
 const questions: readonly { question: string; answer: string; after?: React.ReactNode }[] = [
   {
@@ -177,14 +162,12 @@ export default function Home() {
             backdrop={false}
             align="start"
             actions={[
-              { href: "#install", label: productMessaging.hero.primaryAction },
               { href: "/docs/getting-started", label: productMessaging.hero.secondaryAction },
             ]}
-            boundary={footnote}
             className="wordcell-hero"
-            eyebrow={productMessaging.category}
             heading={heading}
             headingId="hero-title"
+            install={releaseVersion === undefined ? undefined : <PlatformInstall platforms={installPlatforms(releaseVersion)} />}
             name=""
             summary={summary}
           />
@@ -198,9 +181,7 @@ export default function Home() {
             summary="Give your agent a memory of past decisions, the reasons behind them, and the sources you relied on. Wordcell keeps that knowledge in Markdown beside your code, ready for the next session."
           >
             <p>Search by exact words, or add a local model to search by meaning. Starting from the file it is changing, your agent gets the notes and AGENTS.md rules that apply, then follows Git history to see why a decision was made.</p>
-            <p>Link decisions with named relationships such as <code>depends-on</code> and <code>supersedes</code>. <a href="/docs/graph-authority">Oh, Wordcell’s graph engine</a>, follows those connections and returns the notes that support each result.</p>
-            <Terminal code={`wordcell context packages/parser/src/index.ts --root kb --repo .
-wordcell history notes/parser-contract --root kb --repo .`} />
+            <p>Connect decisions to the notes that explain them. Your agent can follow those links and see the sources behind each result.</p>
             <p className="record-link"><a href="/developers">Explore the developer workflow</a></p>
           </MarketingSection>
 
@@ -237,18 +218,14 @@ wordcell history notes/parser-contract --root kb --repo .`} />
               <>
                 <PlatformBadges platforms={runsOnPlatforms} />
                 <figure className="wordcell-step">
-                  <figcaption><span>1</span>Install the CLI</figcaption>
-                  <PlatformInstall platforms={installPlatforms(releaseVersion)} />
-                </figure>
-                <figure className="wordcell-step">
-                  <figcaption><span>2</span>Create a vault and save a note</figcaption>
+                  <figcaption><span>1</span>Create a vault and save a note</figcaption>
                   <Terminal code={`wordcell init kb
 wordcell note create notes/parser-contract \\
   --title "Parser contract" --type concept \\
   --body "Parser retries stop after three attempts." --root kb`} />
                 </figure>
                 <figure className="wordcell-step">
-                  <figcaption><span>3</span>Find it again</figcaption>
+                  <figcaption><span>2</span>Find it again</figcaption>
                   <Terminal code={`wordcell search "parser retries" --root kb --mode exact`} />
                 </figure>
                 <p className="install-note">
@@ -330,16 +307,13 @@ wordcell note create notes/parser-contract \\
           />
 
           <MarketingRelated
-            groups={relatedGroups}
-            heading={productMessaging.headings["home-related"]}
+            groups={portfolioRelatedGroups(["wrench", "xcb", "oh-computer"])}
+            heading="Other tools from our studio"
             headingId="related-title"
-            label="Related"
-            summary="Tools that capture into, search, or back a Wordcell vault."
           />
 
           <MarketingCallToAction
             actions={[
-              { href: "#install", label: productMessaging.hero.primaryAction },
               { href: "/docs/getting-started", label: productMessaging.hero.secondaryAction },
             ]}
             footnote={footnote}

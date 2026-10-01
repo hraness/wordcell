@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
+import { MarketingComparison, MarketingSection, ProductHero } from "@hraness/design-kit/react/server";
 
 import { longDate } from "../../../wordcell/format";
 import { obsidianCheckedOn, obsidianPages } from "../../../wordcell/obsidian-sources";
@@ -49,7 +49,7 @@ const differences: readonly Difference[] = [
   {
     topic: "Publishing",
     obsidian: <><a href={obsidianPages.publish}>Obsidian Publish</a> hosts selected notes as a site through an optional subscription.</>,
-    wordcell: <><a href="/docs/publish">Publish selected notes</a> as static files with navigation, search, and backlinks, then host them where you choose.</>,
+    wordcell: <><a href="/docs/publish">Publish selected notes</a> as static files with navigation, search, and backlinks. Host them yourself or publish through <a href="/docs/publish#host-on-wordcellio">wordcell.io</a>.</>,
   },
   {
     topic: "Cost",
@@ -72,20 +72,33 @@ export default function CompareObsidian() {
         summary="Use Obsidian to write and browse linked notes. Use Wordcell to give your coding agent the decisions, rules, and Git history for the file it is changing. They can work on the same Markdown vault."
       />
       <MarketingSection heading="Two ways to work with the same notes" headingId="differences-title" id="differences">
-        <div aria-label="Obsidian and Wordcell differences" className="wordcell-comparison wordcell-stack" role="region" tabIndex={0}>
-          <table>
-            <thead><tr><th scope="col">Topic</th><th scope="col">Obsidian</th><th scope="col">Wordcell</th></tr></thead>
-            <tbody>
-              {differences.map((difference) => (
-                <tr key={difference.topic}>
-                  <th scope="row">{difference.topic}</th>
-                  <td data-label="Obsidian">{difference.obsidian}</td>
-                  <td data-label="Wordcell">{difference.wordcell}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MarketingComparison
+          caption="Wordcell and Obsidian at a glance"
+          highlight={0}
+          options={[{ name: "Wordcell", mark: "/marks/kb.svg" }, { name: "Obsidian" }]}
+          rows={[
+              {"label": "Primary use", "values": ["Memory for a coding agent", "Writing and browsing notes"]},
+              {"label": "Plain Markdown files", "values": [true, true]},
+              {"label": "Runs locally", "values": [true, true]},
+              {"label": "Search", "values": ["Exact or local semantic", "Words and filters"]},
+              {"label": "Agent access", "values": ["Headless CLI, SDK and MCP", "CLI through the open app"]},
+              {"label": "Publishing", "values": ["Static files or hosted notes", "Paid Obsidian Publish"]},
+              {"label": "Software cost", "values": ["Free · MIT", "Free editor"]},
+          ]}
+          note="Both can use the same Markdown folder. Wordcell’s hosted reranking and Obsidian’s Sync and Publish are optional paid services."
+        />
+        <details className="wordcell-comparison-sources">
+          <summary>Sources and details</summary>
+          <dl>
+            {differences.map((difference) => (
+              <div key={difference.topic}>
+                <dt>{difference.topic}</dt>
+                <dd><strong>Obsidian:</strong> {difference.obsidian}</dd>
+                <dd><strong>Wordcell:</strong> {difference.wordcell}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
         <p className="install-note">Obsidian’s documentation and pricing checked {longDate(obsidianCheckedOn)}.</p>
       </MarketingSection>
       <MarketingSection

@@ -93,7 +93,7 @@ a:focus-visible {
 .install-note a,
 .hraness-marketing-question__answer a {
   color: var(--foreground);
-  text-decoration: underline;
+  text-decoration-line: underline;
   text-decoration-color: color-mix(in srgb, var(--foreground) 35%, transparent);
   text-underline-offset: 0.18em;
 }
@@ -216,7 +216,7 @@ a { text-underline-offset: 0.2em; }
 .document-page h3 { font-family: var(--font-text); font-size: var(--hraness-type-h3-size); font-weight: var(--hraness-type-h3-weight); margin: 1.75rem 0 0.75rem; }
 .document-page p { margin: 1rem 0; }
 .document-page pre:not(.hraness-platform-install__pre) { margin: 1.25rem 0; }
-.document-page article a:not([data-hraness-marketing="card"]) { text-decoration: underline; }
+.document-page article a:not([data-hraness-marketing="card"]) { text-decoration-line: underline; }
 /* Related-product cards keep design-kit's own name spacing. */
 .document-page article a[data-hraness-marketing="card"] :is(h2, h3, h4) { margin: 0; }
 .document-page article ul { list-style: disc; padding-left: 1.5rem; margin: 1rem 0; }
@@ -279,6 +279,11 @@ a { text-underline-offset: 0.2em; }
 /* Decorative topic icons (hand-drawn strokes, wordcell/icons.tsx). */
 .wordcell-topic-icon { display: block; width: 44px; height: 44px; margin: 0 0 16px; color: var(--primary); opacity: .88; }
 
+.wordcell-comparison-sources { margin-block-start: 1.5rem; }
+.wordcell-comparison-sources > summary { cursor: pointer; padding-block: .75rem; font-weight: 600; }
+.wordcell-comparison-sources dl { display: grid; gap: 1.5rem; margin-block: 1rem; }
+.wordcell-comparison-sources dt { font-weight: 600; }
+.wordcell-comparison-sources dd { margin: .5rem 0 0; max-inline-size: 70ch; line-height: 1.6; }
 .wordcell-comparison { width: 100%; overflow-x: auto; }
 .wordcell-comparison:focus-visible { outline: 2px solid var(--hraness-site-accent); outline-offset: 4px; }
 .wordcell-comparison table { border-collapse: collapse; width: 100%; min-width: 35rem; font-size: .92rem; line-height: 1.5; }
@@ -307,3 +312,12 @@ a { text-underline-offset: 0.2em; }
   }
   header a { display: inline-flex; align-items: center; }
 }
+
+/* Shared studio convention for text links; controls retain their own decoration line. */
+a[href] {
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+a[href]:where(:hover, :focus-visible) { text-decoration-color: currentColor; }
