@@ -14,8 +14,6 @@ import {
   type ArticleSourceItem,
 } from "@hraness/design-kit";
 
-import { ohLinks } from "../../wordcell/oh-evidence";
-
 const WORDCELL_COMMIT = "7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10";
 const OH_COMMIT = "73da154e7d16d6d3883b85110eaad30381df7a54";
 
@@ -64,51 +62,47 @@ const launchSources = [
   { title: "Graph memory", publisher: "Supermemory", href: "https://supermemory.ai/docs/concepts/graph-memory" },
 ] as const satisfies readonly Omit<ArticleSourceItem, "checkedOn">[];
 
+// Product behavior for the introduction is checked against this source revision.
+const introductionSource = (path: string) =>
+  `https://github.com/hraness/wordcell/blob/9e3466aac48d2899bcbfecf10913253f14039450/${path}`;
+const introductionSources = [
+  { title: "Markdown memory for coding agents", href: introductionSource("docs/agent-memory.md"), checkedOn: "2026-10-01" },
+  { title: "Wordcell command reference", href: introductionSource("docs/reference.md"), checkedOn: "2026-10-01" },
+  { title: "Graph queries and source proofs", href: introductionSource("docs/graph-authority.md"), checkedOn: "2026-10-01" },
+  { title: "Repository context implementation", href: introductionSource("src/repository-memory.ts"), checkedOn: "2026-10-01" },
+  { title: "Decision context workflow", href: introductionSource("src/workflows/decision-context.ts"), checkedOn: "2026-10-01" },
+  { title: "Wordcell Agent Skill", href: introductionSource("skills/wordcell/SKILL.md"), checkedOn: "2026-10-01" },
+  { title: "MIT license", href: introductionSource("LICENSE"), checkedOn: "2026-10-01" },
+  { title: "How xcb uses Wordcell", publisher: "xcb", href: "https://xcb.sh/blog/how-xcb-uses-wordcell", checkedOn: "2026-10-01" },
+  { title: "how to build agentic systems for knowledge work", publisher: "Heinrich", href: "https://x.com/arscontexta/status/2105397004226494487", checkedOn: "2026-10-01" },
+] as const satisfies readonly ArticleSourceItem[];
+
 export const blogArticles = [
   {
     slug: "introducing-wordcell",
     title: "Introducing Wordcell",
-    dek: "Wordcell keeps your notes as Markdown files and builds search and a link graph over them, so an agent can find a decision and trace it back to the file that says it.",
+    dek: "Wordcell connects decisions to evidence, plans, and code in Markdown, giving your coding agent the context to carry work into the next session.",
     eyebrow: "Release",
     published: "2026-09-24",
     updated: "2026-10-01",
     tags: ["wordcell", "markdown", "knowledge-base", "coding-agents", "obsidian"],
-    sources: [
-      { title: "Wordcell README", href: wordcellSource("README.md"), checkedOn: checked },
-      { title: "Query the derived graph", href: wordcellSource("docs/graph-authority.md"), checkedOn: checked },
-      { title: "Oh adoption preparer", href: wordcellSource("src/oh-adoption.ts"), checkedOn: checked },
-      { title: "Oh adoption stops at a review candidate", href: wordcellSource("docs/design.md"), checkedOn: checked },
-      { title: "Capture web content", href: wordcellSource("docs/capture.md"), checkedOn: checked },
-      { title: "Release procedure and rename from KB", href: wordcellSource("docs/publishing.md"), checkedOn: checked },
-      { title: "Changelog, 0.20.0 rename", href: wordcellSource("CHANGELOG.md"), checkedOn: checked },
-      { title: "Published release record", href: wordcellSource("site/published-release.json"), checkedOn: checked },
-      { title: "Wordcell repository guidelines", href: wordcellSource("AGENTS.md"), checkedOn: checked },
-    ],
+    sources: introductionSources,
     admission: {
       href: "/blog/introducing-wordcell",
       lifecycle: "indexable",
-      readerJob: "Decide whether Wordcell fits a Markdown or Obsidian vault used with coding agents, and get from one saved rule to a cited search and graph answer.",
-      nonObviousAnswer: "The Markdown files stay the only record: exact search names the note and line, graph rows carry a proof tied to the file's content digest, context groups current notes apart from superseded ones, clipped pages and PDFs land in the same folder as source material, and Oh records enter only as a review candidate a person turns into a note.",
-      originalContribution: "Walks one saved rule through exact search, a backlinks graph query, and code-path context with the real commands, and states the limits (4,000-note graph bound, truncation, local model download, opt-in hosted reranking) from source.",
+      readerJob: "Understand how Wordcell helps a coding agent carry decisions, evidence, and working methods across sessions, and decide how it fits an existing repository.",
+      nonObviousAnswer: "The useful memory is a connected record of evidence, current reasoning, and work: authored relationships give direction to those connections, code-path context brings them to an edit, and Git preserves why the decision changed.",
+      originalContribution: "Follows one parser retry decision from its evidence and implementation plan through a changed upstream assumption and the next coding session; explains directed predicates, supersession, source proofs, semantic search, and Git using the implemented Wordcell workflow.",
       hostFit: "The product introduction for Wordcell on its own host.",
       nearestUrls: [
-        { url: "https://wordcell.io/", distinction: "The home page lists features; the post explains why Markdown stays the record and walks one rule end to end." },
-        { url: "https://wordcell.io/docs/getting-started", distinction: "The tutorial teaches every step; the post decides fit and shows the result in a few commands." },
+        { url: "https://wordcell.io/", distinction: "The home page introduces the benefits; the essay develops one decision through its evidence, implementation, revision, and reusable method." },
+        { url: "https://wordcell.io/docs/getting-started", distinction: "The tutorial teaches setup; the essay explains why the knowledge is organized this way and how an agent uses it." },
       ],
-      sources: [
-        { title: "Wordcell README", url: wordcellSource("README.md"), checkedOn: checked },
-        { title: "Query the derived graph", url: wordcellSource("docs/graph-authority.md"), checkedOn: checked },
-        { title: "Oh adoption preparer", url: wordcellSource("src/oh-adoption.ts"), checkedOn: checked },
-        { title: "Oh adoption stops at a review candidate", url: wordcellSource("docs/design.md"), checkedOn: checked },
-        { title: "Capture web content", url: wordcellSource("docs/capture.md"), checkedOn: checked },
-        { title: "Release procedure and rename from KB", url: wordcellSource("docs/publishing.md"), checkedOn: checked },
-        { title: "Changelog, 0.20.0 rename", url: wordcellSource("CHANGELOG.md"), checkedOn: checked },
-        { title: "Published release record", url: wordcellSource("site/published-release.json"), checkedOn: checked },
-        { title: "Wordcell repository guidelines", url: wordcellSource("AGENTS.md"), checkedOn: checked },
-      ],
+      sources: introductionSources.map(({ title, href, checkedOn }) => ({ title, url: href, checkedOn })),
       observations: [
-        "Preparing an adoption candidate does not itself write authoritative notes; proposal preparation and adoption expose separate authority boundaries.",
-        "Graph rebuilds replace a derived view while proof and source identities remain tied to the Markdown records; rebuilding is not permission to change those records.",
+        "Path-based context routes authored repository scopes and separates current records from historical work.",
+        "Oh source proofs explain recorded graph connections; source interpretation and the correctness of a decision remain subjects for review.",
+        "The reference essay describes a broader workspace framework; this introduction confines Wordcell to its implemented headless Markdown, CLI, MCP, and SDK workflow.",
       ],
       scores: {
         readerUtility: 2,
@@ -123,15 +117,13 @@ export const blogArticles = [
       review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-01" },
       humanReview: null,
       reassessOn: "2026-11-12",
-      harmIfWrong: "A reader could install Wordcell expecting a guarantee it does not make, such as answers written for them, unlimited graph size, or capture that works behind a login wall.",
+      harmIfWrong: "A reader could expect automatic chat capture, semantic truth verification, or a custom type-system and application runtime that Wordcell does not provide.",
       refreshTriggers: [
-        "Wordcell release record bump (site/published-release.json)",
-        "Change to graph query programs, the 4,000-note limit, truncation marking, or proof contents (docs/graph-authority.md)",
-        "Change to wordcell clip signed-in capture options, profile copying, or the Archive.today fallback (docs/capture.md, src/clip)",
-        "Change to the Oh adoption preparer or its review-candidate output (src/oh-adoption.ts)",
-        "Change to the runtime:kb:oh-computer or runtime:xcb:kb relation detail, or a product rename",
-        "Publication of how-wordcell-uses-oh or xcb's how-xcb-uses-wordcell",
-        "Change to install prerequisites (Bun version, Git) or the package name",
+        "Changes to repository scopes, context grouping, or inherited guide discovery",
+        "Changes to graph predicates, source proofs, or superseded-record handling",
+        "Changes to exact, local semantic, or optional hosted search",
+        "Changes to Git history, MCP authoring, SDK workflows, or the public Agent Skill",
+        "Changes to install prerequisites, the MIT license, or selective publishing",
       ],
     },
   },

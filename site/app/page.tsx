@@ -178,10 +178,10 @@ export default function Home() {
             headingId="memory-title"
             id="memory"
             label="Memory for your coding agent"
-            summary="Give your agent a memory of past decisions, the reasons behind them, and the sources you relied on. Wordcell keeps that knowledge in Markdown beside your code, ready for the next session."
+            summary="Give the next session the reasons behind your code. Wordcell connects decisions to their evidence and the plans that use them, in Markdown your agent can find and update."
           >
-            <p>Search by exact words, or add a local model to search by meaning. Starting from the file it is changing, your agent gets the notes and AGENTS.md rules that apply, then follows Git history to see why a decision was made.</p>
-            <p>Connect decisions to the notes that explain them. Your agent can follow those links and see the sources behind each result.</p>
+            <p>Before changing a file, your agent can recover the decisions, active plans, and AGENTS.md rules tied to that path. Local semantic search helps it find a note in different words; Git history shows how the reasoning changed with the code.</p>
+            <p>Keep sources, current understanding, and ongoing work connected. When an assumption changes, revise the decision and leave the evidence for the next session. Use your existing agent and editor through the CLI, local MCP server, or TypeScript SDK.</p>
             <p className="record-link"><a href="/developers">Explore the developer workflow</a></p>
           </MarketingSection>
 

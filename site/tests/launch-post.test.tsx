@@ -1,19 +1,30 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { LaunchPostBeats, launchBeatToc } from "../app/blog/launch-post";
+import { LAUNCH_POST_SLUG, LaunchPostStory } from "../app/blog/launch-post";
+import { blogContents, blogHtml } from "../app/blog/blog.generated";
 import { launchBeats, socialKit } from "../wordcell/launch/beats";
 import { launchFacts } from "../wordcell/launch/facts";
 import { publishedRelease } from "../app/publication";
 
-describe("Introducing Wordcell launch beats", () => {
-  const html = renderToStaticMarkup(<LaunchPostBeats />);
+describe("Introducing Wordcell essay", () => {
+  const prose = blogHtml[LAUNCH_POST_SLUG]!;
+  const html = renderToStaticMarkup(<LaunchPostStory html={prose} />);
 
-  test("every beat renders with its anchor and one illustration", () => {
-    for (const beat of launchBeats) {
-      expect(html).toContain(`id="beat-${beat.id}"`);
+  test("the essay starts before its examples and every paragraph survives exactly once", () => {
+    const opening = prose.slice(0, prose.indexOf("<h2"));
+    expect(html).toContain(opening);
+    expect(html.indexOf(opening)).toBeLessThan(html.indexOf("data-wordcell-story-visual"));
+    for (const [paragraph] of prose.matchAll(/<p>[\s\S]*?<\/p>/gu)) {
+      expect(html.split(paragraph).length - 1).toBe(1);
     }
-    expect(html.match(/class="wordcell-beat-visual"/gu)?.length).toBe(launchBeats.length);
+    expect(html.match(/data-wordcell-story-visual=/gu)?.length).toBe(3);
+    expect(html).not.toContain('id="beat-');
+    expect(html).not.toContain('id="the-details"');
+  });
+
+  test("an edited section cannot silently strand its illustration", () => {
+    expect(() => renderToStaticMarkup(<LaunchPostStory html="<p>Incomplete essay.</p>" />)).toThrow("illustration anchor");
   });
 
   test("facts match the records they name", async () => {
@@ -26,7 +37,7 @@ describe("Introducing Wordcell launch beats", () => {
     expect(`>=${launchFacts.bunVersion.value}`).toBe(pkg.engines.bun);
     expect(publishedRelease).not.toBeNull();
     expect<string>(launchFacts.status.value).toBe(`Latest release: v${publishedRelease?.version ?? ""}`);
-    expect(html).toContain(launchFacts.graphNotes.value);
+    expect(launchBeats.some((beat) => beat.facts?.includes("graphNotes"))).toBe(true);
   });
 
   test("the film's numbers are the launch facts", async () => {
@@ -34,9 +45,9 @@ describe("Introducing Wordcell launch beats", () => {
     expect(film.copy.proof.items.map((item) => item.value.toLocaleString("en-US"))).toEqual([launchFacts.graphNotes.value, launchFacts.graphDepth.value]);
   });
 
-  test("the vision beat cites the essay the name comes from", () => {
-    expect(html).toContain("https://read.roonscape.ai/p/a-song-of-shapes-and-words");
-    expect(html).toContain("A Song of Shapes and Words");
+  test("the vision beat retains the name’s source without leading the essay", () => {
+    const vision = launchBeats.find((beat) => beat.part === "vision");
+    expect(vision?.post).toContain("A Song of Shapes and Words");
   });
 
   test("the social kit is cut from the beats and names no competitor", () => {
@@ -45,11 +56,13 @@ describe("Introducing Wordcell launch beats", () => {
     expect(text).toContain("https://wordcell.io/blog/introducing-wordcell");
   });
 
-  test("the table of contents lists the beats before the walkthrough", () => {
-    const toc = launchBeatToc();
-    expect(toc.length).toBe(launchBeats.length + 1);
-    expect(toc.at(-1)?.href).toBe("#the-details");
+  test("the table of contents follows the essay’s own headings", () => {
+    const toc = blogContents[LAUNCH_POST_SLUG]!;
+    const ids = [...prose.matchAll(/<h2 id="([^"]+)">/gu)].map((match) => `#${match[1]}` as const);
+    expect(toc.map((item) => item.href)).toEqual(ids);
+    for (const id of ids) expect(html.split(`id="${id.slice(1)}"`).length - 1).toBe(1);
   });
+
 });
 
 describe("site/launch/social-kit.md", () => {
