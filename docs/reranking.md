@@ -8,7 +8,9 @@ first. Reranking cannot recover notes that retrieval did not find.
 ## Search a repository
 
 Run a repository's approved `kb:search` script when it provides one. The script
-pins Wordcell and declares its vault and hosted-processing choice. Otherwise:
+pins Wordcell and declares its vault and hosted-processing choice. Follow the
+[repository setup guide](consumer-search.md) to use an installed executable,
+choose a per-vault default, and preserve a local-only command. Otherwise:
 
 ```sh
 wordcell search "why releases use immutable archives" --root kb \
