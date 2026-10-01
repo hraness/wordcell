@@ -21,6 +21,8 @@
 // response with status 400 or above is logged as `status url`.
 
 import assert from "node:assert/strict";
+import { publicationLinkGroups, verifyPublicationLinks } from "./verify-publication-links.mjs";
+import { verifySettledConsentFlow } from "./verify-settled-consent.mjs";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
@@ -245,6 +247,10 @@ async function main(argv) {
             assert.equal(response?.status(), 200, `${route}: status`);
             await page.locator("main").waitFor();
             await page.evaluate(() => document.fonts.ready);
+            const settledConsent = route === "/" ? await verifySettledConsentFlow(page) : undefined;
+            const publicationLinks = route === "/blog/introducing-wordcell"
+              ? await verifyPublicationLinks(page, publicationLinkGroups.map(group => ({ ...group, required: group.name !== "footer" })))
+              : undefined;
             let searchLayout;
             if (route === "/") {
               searchLayout = await inspectSearchLayout(page, width === 1440);
@@ -265,7 +271,7 @@ async function main(argv) {
             await page.evaluate(() => window.scrollTo(0, 0));
             await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             const screenshot = await page.screenshot({ path: resolve(artifacts, `${file}.png`), fullPage: true, animations: "disabled" });
-            await writeFile(resolve(artifacts, `${file}.json`), JSON.stringify({ route, state, searchLayout, errors }, null, 2));
+            await writeFile(resolve(artifacts, `${file}.json`), JSON.stringify({ route, state, searchLayout, errors, publicationLinks, settledConsent }, null, 2));
             assert.equal(screenshot.readUInt32BE(16), width, `${route}: full-page screenshot width`);
             assert.ok(!state.overflow, `${route}: horizontal overflow at ${width}`);
             assert.ok(state.heading || config.minimalRoutes?.includes(route), `${route}: missing heading`);

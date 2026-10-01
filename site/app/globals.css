@@ -94,15 +94,22 @@ a:focus-visible {
 .hraness-marketing-question__answer a {
   color: var(--foreground);
   text-decoration-line: underline;
-  text-decoration-color: color-mix(in srgb, var(--foreground) 35%, transparent);
   text-underline-offset: 0.18em;
 }
 
-.record-link a:hover,
-.interface-link a:hover,
-.install-note a:hover,
-.hraness-marketing-question__answer a:hover {
-  text-decoration-color: currentColor;
+@media (forced-colors: none) {
+  .record-link a,
+  .interface-link a,
+  .install-note a,
+  .hraness-marketing-question__answer a {
+    text-decoration-color: color-mix(in srgb, var(--foreground) 35%, transparent);
+  }
+  .record-link a:hover,
+  .interface-link a:hover,
+  .install-note a:hover,
+  .hraness-marketing-question__answer a:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 /* The trace section: the heading group stays at the top of its column and
@@ -316,8 +323,13 @@ a { text-underline-offset: 0.2em; }
 /* Shared studio convention for text links; controls retain their own decoration line. */
 a[href] {
   text-decoration-style: dotted;
-  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 }
-a[href]:where(:hover, :focus-visible) { text-decoration-color: currentColor; }
+@media (forced-colors: none) {
+  a[href] { text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
+  a[href]:where(:hover, :focus-visible) { text-decoration-color: currentColor; }
+}
+@media (forced-colors: active) {
+  a[href] { text-decoration-color: LinkText; }
+}
