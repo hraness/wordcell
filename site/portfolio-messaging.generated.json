@@ -5,7 +5,7 @@
   "portfolio": {
     "contract": "hraness.portfolio-public/v1",
     "url": "https://hraness.com/portfolio.json",
-    "digest": "sha256:ba365e481a8b15c4a19503b1628e1b7ae9399e47055dde02bae124183a3e1447"
+    "digest": "sha256:0ecd2968be473435e710fb09b3d3c36e42d73b25ee390f684764c8963bf61420"
   },
   "messaging": {
     "formatVersion": 1,
@@ -283,10 +283,7 @@
       "messaging": {
         "names": {
           "name": "TextButler",
-          "command": "textbutler",
-          "formerly": [
-            "Message Like Me"
-          ]
+          "command": "textbutler"
         },
         "short": "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
         "tagline": "An AI butler in your messaging apps."
@@ -339,7 +336,7 @@
           ]
         },
         "short": "Free agent skill that writes dated dossiers on people, sources cited",
-        "tagline": "See how someone thinks, and where every claim comes from."
+        "tagline": "Learn everything about anyone based on their internet presence"
       }
     },
     {
@@ -1034,7 +1031,7 @@
       "kind": "contract",
       "label": "shared bundle format",
       "direction": "shared",
-      "detail": "Both tools implement the versioned message-like-me.local-message-bundle interchange without importing each other's private state."
+      "detail": "Both tools read and write the same versioned TextButler local message bundle format without importing each other's private state."
     },
     {
       "source": "gobstopper",
@@ -1484,6 +1481,110 @@
       "label": "records drawing runs with",
       "direction": "forward",
       "detail": "The icon.place drawing lab runs each experiment as an ALGAL program in the browser and records the proposal, candidates, and selection as receipts it can replay; the live site does not use ALGAL yet."
+    },
+    {
+      "source": "peopleblade",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "kb",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "slopcamera",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "sys1",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "lifedaysleft",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "sponge",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "algal",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "xcb",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "valhalla",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "gobstopper",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "soundfish",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "wrench",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "oh-computer",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
     }
   ]
 }
