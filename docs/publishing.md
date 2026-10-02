@@ -44,17 +44,21 @@ procedure is preserved in
 3. Verify exact current `main`, the package version, and the release-tag
    rulesets. **Immutable version tags** must prevent updates and deletion
    without bypass. **Release tag creation** must allow only owner User
-   `894119` to create `refs/tags/v*`; it must not allow generic Actions,
-   administrators, roles, teams, or other integrations to bypass creation.
-4. Create the matching annotated `v<version>` tag on that reviewed `main`
-   commit using the owner's existing Git credential, then push that exact
-   tag. Never move a tag or create a probe tag.
+   `894119` and the `hraness-release-tagger` GitHub App to create
+   `refs/tags/v*`; it must not allow generic Actions, administrators, roles,
+   teams, or other integrations to bypass creation.
+4. Once `CI` passes on that `main` commit, `.github/workflows/auto-tag.yml`
+   creates the matching annotated `v<version>` tag through the
+   `hraness-release-tagger` App. If it did not, create and push that exact
+   tag with the owner's existing Git credential. Never move a tag or create a
+   probe tag.
 5. Wait for the tag-triggered **Release** workflow and inspect its immutable
    release readback. Do not begin another stable release until this one has
    completed or its exact partial state has been reconciled.
 
-The workflow checks owner actor and event-sender identity and public
-repository ID `1308971873` before checkout. Its read-only verification job
+The workflow checks that the actor and event sender are the owner (`User`
+`894119`) or `hraness-release-tagger[bot]` (`Bot` `337004703`), and checks
+public repository ID `1308971873`, before checkout. Its read-only verification job
 checks out exact current `main`, requires the protected annotated tag and
 current workflow closure, materializes exact tagged source, runs the complete
 source gate, and checks committed outputs. It packs once with

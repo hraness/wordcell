@@ -409,12 +409,15 @@ function verifyAttestations(directory, manifest) {
 }
 var canonicalJobs = ["Authorize owner release tag", "Verify", "Attest verified artifact", "Publish"];
 var npmJobs = ["Publish exact npm package", "Admit the public npm package"];
+function releaseActor(actor) {
+  return actor.id === 894119 && actor.type === "User" || actor.id === 337004703 && actor.type === "Bot";
+}
 function canonicalRunIdentity(value, manifest, attempt) {
   const run = record(value, "Canonical release run");
   const owner = record(run.actor, "Canonical release actor");
   const triggering = record(run.triggering_actor, "Canonical triggering actor");
   const source = record(run.repository, "Canonical run repository");
-  if (run.id !== manifest.runId || run.run_attempt !== attempt || run.workflow_id !== 320004141 || run.name !== "Release" || run.path !== manifest.workflow || run.status !== "completed" || !["success", "failure"].includes(String(run.conclusion)) || run.event !== "push" || run.head_branch !== manifest.tag || run.head_sha !== manifest.sourceSha || owner.id !== 894119 || owner.type !== "User" || triggering.id !== 894119 || triggering.type !== "User" || source.id !== repositoryId || source.full_name !== repository || source.private !== false) {
+  if (run.id !== manifest.runId || run.run_attempt !== attempt || run.workflow_id !== 320004141 || run.name !== "Release" || run.path !== manifest.workflow || run.status !== "completed" || !["success", "failure"].includes(String(run.conclusion)) || run.event !== "push" || run.head_branch !== manifest.tag || run.head_sha !== manifest.sourceSha || !releaseActor(owner) || !releaseActor(triggering) || source.id !== repositoryId || source.full_name !== repository || source.private !== false) {
     throw new Error("Canonical release does not have the exact completed source and owner identity");
   }
   return run;

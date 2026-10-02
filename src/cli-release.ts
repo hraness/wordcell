@@ -397,6 +397,11 @@ export function verifyAttestations(directory: string, manifest: ReleaseManifest)
 const canonicalJobs = ["Authorize owner release tag", "Verify", "Attest verified artifact", "Publish"];
 const npmJobs = ["Publish exact npm package", "Admit the public npm package"];
 
+// The owner, or the hraness-release-tagger App bot that tags version bumps on main.
+function releaseActor(actor: Record<string, unknown>): boolean {
+  return (actor.id === 894119 && actor.type === "User") || (actor.id === 337004703 && actor.type === "Bot");
+}
+
 function canonicalRunIdentity(value: unknown, manifest: ReleaseManifest, attempt: number): Record<string, unknown> {
   const run = record(value, "Canonical release run");
   const owner = record(run.actor, "Canonical release actor");
@@ -406,7 +411,7 @@ function canonicalRunIdentity(value: unknown, manifest: ReleaseManifest, attempt
     || run.workflow_id !== 320004141 || run.name !== "Release" || run.path !== manifest.workflow
     || run.status !== "completed" || !["success", "failure"].includes(String(run.conclusion)) || run.event !== "push"
     || run.head_branch !== manifest.tag || run.head_sha !== manifest.sourceSha
-    || owner.id !== 894119 || owner.type !== "User" || triggering.id !== 894119 || triggering.type !== "User"
+    || !releaseActor(owner) || !releaseActor(triggering)
     || source.id !== repositoryId || source.full_name !== repository || source.private !== false) {
     throw new Error("Canonical release does not have the exact completed source and owner identity");
   }

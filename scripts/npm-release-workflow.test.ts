@@ -382,7 +382,7 @@ describe("npm release workflows", () => {
       readonly version?: unknown;
     };
     expect(manifest).toEqual(expect.objectContaining({
-      version: "0.26.0",
+      version: "0.26.1",
       description: expect.any(String),
       keywords: [
         "knowledge-base",
@@ -561,6 +561,17 @@ describe("npm release workflows", () => {
       expect(hostileRerun.stderr).toContain(
         "Current release attempt is not owner-authorized",
       );
+
+      // The hraness-release-tagger App bot may push the tag; no other bot may.
+      const tagger = { id: 337004703, type: "Bot" };
+      await writeFile(attemptPath, JSON.stringify({ ...attempt, actor: tagger, triggering_actor: tagger }));
+      expect((await runWorkflowScript(script, environment)).exitCode).toBe(0);
+      for (const actor of [{ id: 41898282, type: "Bot" }, { id: 337004703, type: "User" }, { id: 894119, type: "Bot" }]) {
+        await writeFile(attemptPath, JSON.stringify({ ...attempt, actor, triggering_actor: actor }));
+        const rejected = await runWorkflowScript(script, environment);
+        expect(rejected.exitCode).not.toBe(0);
+        expect(rejected.stderr).toContain("Current release attempt is not owner-authorized");
+      }
 
       await writeFile(attemptPath, JSON.stringify(attempt));
       await writeFile(repositoryPath, JSON.stringify({

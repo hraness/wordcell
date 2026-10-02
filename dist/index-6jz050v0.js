@@ -34,7 +34,7 @@ function wordcellUpdateOptions(bin, entrypoint, argv) {
     effectFree,
     suppressAutomatic: bin === "wordcell" && argv[0] === "support",
     async verifyArtifact(artifact) {
-      const { verifyUpdateArtifact } = await import("./cli-release-c74c5m3k.js");
+      const { verifyUpdateArtifact } = await import("./cli-release-cf48w61z.js");
       await verifyUpdateArtifact(artifact);
     }
   };

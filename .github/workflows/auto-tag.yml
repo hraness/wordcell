@@ -1,0 +1,72 @@
+name: Tag release
+
+# Once a version bump passes CI on main, this creates its annotated
+# v<version> tag, which starts the tag-triggered release workflow. The tag
+# comes from the hraness-release-tagger GitHub App because tags pushed with
+# GITHUB_TOKEN do not trigger workflows.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-tag-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Tag version bump
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Detect version bump
+        id: version
+        run: |
+          set -euo pipefail
+          read_version() { node -e 'const v = JSON.parse(require("fs").readFileSync(0, "utf8")).version; if (typeof v === "string") process.stdout.write(v)'; }
+          version="$(read_version < package.json)"
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Version $version is not a stable release; nothing to tag."
+            exit 0
+          fi
+          previous="$(git show HEAD^:package.json 2>/dev/null | read_version || true)"
+          if [[ "$previous" == "$version" ]]; then
+            echo "Version $version is unchanged; nothing to tag."
+            exit 0
+          fi
+          printf 'tag=v%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - name: Mint tagger token
+        if: steps.version.outputs.tag
+        id: app
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ vars.RELEASE_TAGGER_APP_ID }}
+          private-key: ${{ secrets.RELEASE_TAGGER_PRIVATE_KEY }}
+          permission-contents: write
+      - name: Create annotated tag
+        if: steps.version.outputs.tag
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/$REPO/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            echo "$TAG already exists; leaving it unchanged."
+            exit 0
+          fi
+          object="$(gh api "repos/$REPO/git/tags" -f tag="$TAG" -f message="${REPO#*/} ${TAG#v}" -f object="$SHA" -f type=commit -q .sha)"
+          gh api "repos/$REPO/git/refs" -f ref="refs/tags/$TAG" -f sha="$object" >/dev/null
+          echo "Created $TAG at $SHA"

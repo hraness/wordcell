@@ -23,27 +23,32 @@ jobs:
       - name: Verify immutable owner and public repository identity
         env:
           EXPECTED_ACTOR_ID: "894119"
+          # hraness-release-tagger[bot]: auto-tag.yml creates the tag once a
+          # version bump passes CI on main.
+          TAGGER_ACTOR_ID: "337004703"
           EXPECTED_REPOSITORY: "hraness/wordcell"
           EXPECTED_REPOSITORY_ID: "1308971873"
           REF_PROTECTED: ${{ github.ref_protected }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_EVENT_NAME" != push || \
-                "$GITHUB_ACTOR_ID" != "$EXPECTED_ACTOR_ID" || \
+                ( "$GITHUB_ACTOR_ID" != "$EXPECTED_ACTOR_ID" && "$GITHUB_ACTOR_ID" != "$TAGGER_ACTOR_ID" ) || \
                 "$GITHUB_REPOSITORY" != "$EXPECTED_REPOSITORY" || \
                 "$GITHUB_REPOSITORY_ID" != "$EXPECTED_REPOSITORY_ID" || \
                 "$REF_PROTECTED" != true ]]; then
-            echo "::error::Release requires an owner-created protected tag in the exact public repository"
+            echo "::error::Release requires an owner- or tagger-created protected tag in the exact public repository"
             exit 1
           fi
           EXPECTED_ACTOR_ID="$EXPECTED_ACTOR_ID" \
             EXPECTED_REPOSITORY="$EXPECTED_REPOSITORY" \
-            EXPECTED_REPOSITORY_ID="$EXPECTED_REPOSITORY_ID" node <<'NODE'
+            EXPECTED_REPOSITORY_ID="$EXPECTED_REPOSITORY_ID" \
+            TAGGER_ACTOR_ID="$TAGGER_ACTOR_ID" node <<'NODE'
           const { readFileSync } = require("node:fs");
           const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
           if (
-            event.sender?.id !== Number(process.env.EXPECTED_ACTOR_ID)
-            || event.sender?.type !== "User"
+            ((event.sender?.id !== Number(process.env.EXPECTED_ACTOR_ID) || event.sender?.type !== "User")
+              && (event.sender?.id !== Number(process.env.TAGGER_ACTOR_ID) || event.sender?.type !== "Bot"))
+            || event.sender?.id !== Number(process.env.GITHUB_ACTOR_ID)
             || event.repository?.id !== Number(process.env.EXPECTED_REPOSITORY_ID)
             || event.repository?.full_name !== process.env.EXPECTED_REPOSITORY
             || event.repository?.visibility !== "public"
@@ -365,6 +370,7 @@ jobs:
           const workflow = JSON.parse(readFileSync(process.env.WORKFLOW_JSON, "utf8"));
           const repository = JSON.parse(readFileSync(process.env.REPOSITORY_JSON, "utf8"));
           const actorId = positiveInteger("EXPECTED_ACTOR_ID");
+          const taggerId = 337004703;
           const repositoryId = positiveInteger("EXPECTED_REPOSITORY_ID");
           const runId = positiveInteger("EXPECTED_RUN_ID");
           const runAttempt = positiveInteger("EXPECTED_RUN_ATTEMPT");
@@ -380,10 +386,10 @@ jobs:
             || attempt.head_sha !== process.env.EXPECTED_SHA
             || attempt.status !== "in_progress"
             || attempt.conclusion !== null
-            || attempt.actor?.id !== actorId
-            || attempt.actor?.type !== "User"
-            || attempt.triggering_actor?.id !== actorId
-            || attempt.triggering_actor?.type !== "User"
+            || ((attempt.actor?.id !== actorId || attempt.actor?.type !== "User")
+              && (attempt.actor?.id !== taggerId || attempt.actor?.type !== "Bot"))
+            || ((attempt.triggering_actor?.id !== actorId || attempt.triggering_actor?.type !== "User")
+              && (attempt.triggering_actor?.id !== taggerId || attempt.triggering_actor?.type !== "Bot"))
             || attempt.repository?.id !== repositoryId
             || attempt.repository?.full_name !== process.env.EXPECTED_REPOSITORY
             || attempt.repository?.private !== false
@@ -540,6 +546,7 @@ jobs:
           const workflow = JSON.parse(readFileSync(process.env.WORKFLOW_JSON, "utf8"));
           const repository = JSON.parse(readFileSync(process.env.REPOSITORY_JSON, "utf8"));
           const actorId = positiveInteger("EXPECTED_ACTOR_ID");
+          const taggerId = 337004703;
           const repositoryId = positiveInteger("EXPECTED_REPOSITORY_ID");
           const runId = positiveInteger("EXPECTED_RUN_ID");
           const runAttempt = positiveInteger("EXPECTED_RUN_ATTEMPT");
@@ -555,10 +562,10 @@ jobs:
             || attempt.head_sha !== process.env.EXPECTED_SHA
             || attempt.status !== "in_progress"
             || attempt.conclusion !== null
-            || attempt.actor?.id !== actorId
-            || attempt.actor?.type !== "User"
-            || attempt.triggering_actor?.id !== actorId
-            || attempt.triggering_actor?.type !== "User"
+            || ((attempt.actor?.id !== actorId || attempt.actor?.type !== "User")
+              && (attempt.actor?.id !== taggerId || attempt.actor?.type !== "Bot"))
+            || ((attempt.triggering_actor?.id !== actorId || attempt.triggering_actor?.type !== "User")
+              && (attempt.triggering_actor?.id !== taggerId || attempt.triggering_actor?.type !== "Bot"))
             || attempt.repository?.id !== repositoryId
             || attempt.repository?.full_name !== process.env.EXPECTED_REPOSITORY
             || attempt.repository?.private !== false
@@ -835,6 +842,7 @@ jobs:
           const workflow = JSON.parse(readFileSync(process.env.WORKFLOW_JSON, "utf8"));
           const repository = JSON.parse(readFileSync(process.env.REPOSITORY_JSON, "utf8"));
           const actorId = positiveInteger("EXPECTED_ACTOR_ID");
+          const taggerId = 337004703;
           const repositoryId = positiveInteger("EXPECTED_REPOSITORY_ID");
           const runId = positiveInteger("EXPECTED_RUN_ID");
           const runAttempt = positiveInteger("EXPECTED_RUN_ATTEMPT");
@@ -850,10 +858,10 @@ jobs:
             || attempt.head_sha !== process.env.EXPECTED_SHA
             || attempt.status !== "in_progress"
             || attempt.conclusion !== null
-            || attempt.actor?.id !== actorId
-            || attempt.actor?.type !== "User"
-            || attempt.triggering_actor?.id !== actorId
-            || attempt.triggering_actor?.type !== "User"
+            || ((attempt.actor?.id !== actorId || attempt.actor?.type !== "User")
+              && (attempt.actor?.id !== taggerId || attempt.actor?.type !== "Bot"))
+            || ((attempt.triggering_actor?.id !== actorId || attempt.triggering_actor?.type !== "User")
+              && (attempt.triggering_actor?.id !== taggerId || attempt.triggering_actor?.type !== "Bot"))
             || attempt.repository?.id !== repositoryId
             || attempt.repository?.full_name !== process.env.EXPECTED_REPOSITORY
             || attempt.repository?.private !== false

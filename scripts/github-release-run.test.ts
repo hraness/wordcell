@@ -54,11 +54,16 @@ test("original and latest run identity and terminal result remain mandatory", ()
     { status: "in_progress" }, { conclusion: "cancelled" }, { conclusion: null }, { conclusion: "success" },
     { event: "workflow_dispatch" }, { head_sha: "f".repeat(40) }, { head_branch: "main" }, { path: ".github/workflows/other.yml" },
     { actor: { id: 1, type: "User" } }, { triggering_actor: { id: 894119, type: "Bot" } },
+    { actor: { id: 41898282, type: "Bot" } }, { triggering_actor: { id: 337004703, type: "User" } },
     { repository: { ...run.repository, private: true } },
   ]) {
     expect(() => verifyCanonicalRun({ ...run, ...change }, manifest, proof())).toThrow();
     expect(() => verifyCanonicalRun(run, manifest, { ...proof(), latestRun: { ...run, ...change } })).toThrow();
   }
+  // A release tagged by the hraness-release-tagger App bot verifies.
+  const tagger = { id: 337004703, type: "Bot" };
+  const taggerRun = { ...run, actor: tagger, triggering_actor: tagger };
+  expect(() => verifyCanonicalRun(taggerRun, manifest, { ...proof(), latestRun: taggerRun })).not.toThrow();
   expect(() => verifyCanonicalRun(run, { ...manifest, runAttempt: 2 }, proof())).toThrow();
 });
 

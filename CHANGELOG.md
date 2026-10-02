@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.26.1
+
+Releases now publish automatically when a version bump merges to `main`.
+
+- Automatic updates accept releases tagged by the `hraness-release-tagger` GitHub App as well as by the owner. Every other release check is unchanged: the archive, signatures, source tag, and release workflow are still verified before installation.
+- Install 0.26.1 before the first App-tagged release to keep automatic updates working. Earlier versions accept only owner-tagged releases.
+
 ## 0.26.0
 
 Supported global Wordcell installations check for updates daily and install verified releases before starting a command.

@@ -254,6 +254,7 @@ function validateOwnerTagAuthorization(
     step.if !== undefined
     || step["continue-on-error"] !== undefined
     || environment.EXPECTED_ACTOR_ID !== "894119"
+    || environment.TAGGER_ACTOR_ID !== "337004703"
     || environment.EXPECTED_REPOSITORY !== "hraness/wordcell"
     || environment.EXPECTED_REPOSITORY_ID !== "1308971873"
     || environment.REF_PROTECTED !== "${{ github.ref_protected }}"
@@ -268,6 +269,8 @@ function validateOwnerTagAuthorization(
     '"$REF_PROTECTED" != true',
     "event.sender?.id !== Number(process.env.EXPECTED_ACTOR_ID)",
     'event.sender?.type !== "User"',
+    '(event.sender?.id !== Number(process.env.TAGGER_ACTOR_ID) || event.sender?.type !== "Bot")',
+    "event.sender?.id !== Number(process.env.GITHUB_ACTOR_ID)",
     "event.repository?.id !== Number(process.env.EXPECTED_REPOSITORY_ID)",
     'event.repository?.visibility !== "public"',
     "event.repository?.private !== false",
@@ -361,7 +364,7 @@ export function validateReleaseWorkflow(source: string, label: string): void {
   if (containsUnexpectedProviderInvocation(publicationCommands)) throw new Error(`${label} contains an unexpected provider mutation command outside its reviewed helper`);
   validateNpmPublicationJobs(publishNpm, admitNpm, label);
   if ((source.match(/id-token: write/gu) ?? []).length !== 2) throw new Error(`${label} must grant OIDC only to the attestation and npm publication jobs`);
-  validateReviewedWorkflowSemantics(workflow, "095655d1222eef4423c0ce1967ddfc5042bdd07fcabc458c790f8cc072bfb98b", label);
+  validateReviewedWorkflowSemantics(workflow, "d6411dcd194aa9dfb01b1fd02cf7c8dc9581bde51c8ef1370a9435106a0305ae", label);
 }
 
 function validateNpmPublicationJobs(
