@@ -348,7 +348,7 @@ a[href] {
     background: color-mix(in oklch, var(--foreground, CanvasText) 30%, var(--background, Canvas));
     content: "";
     inset: 0;
-    mask-image: url("/landscape/landscape-a3790159c2fe1715278adae3b35aa6ba9950fc275ac774a5c749931aa17ed21d.jpg");
+    mask-image: image-set(url("/landscape/landscape-40b05924fce55d9c0eeb3e2648a461ee848f48b7d1ffbd40eb34bcb3c5fb9444.webp") 1x, url("/landscape/landscape-0febd1db3f02653525422044433a5ccd3e27854a4e6505cf3cb8ec3527e4634a.webp") 2x);
     mask-mode: luminance;
     mask-position: top center;
     mask-repeat: no-repeat;
@@ -362,7 +362,7 @@ a[href] {
 
 @media (max-width: 48rem) {
   .product-landscape::before {
-    mask-image: url("/landscape/landscape-a94b4cf1e03d743db4a9426a90679fa56ea67ddcb2d433c8a1cfb0af04ea67e5.jpg");
+    mask-image: url("/landscape/landscape-dc5f0bb28dda206a7cb63a412460bc5139716766bcec1d71a8216b4972300803.webp");
     opacity: .36;
   }
 }
