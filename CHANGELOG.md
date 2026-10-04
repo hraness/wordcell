@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.26.2
+
+Browser-profile snapshots can now handle lock files left behind after Chromium exits.
+
+- A snapshot requires the recorded local process to be absent and its socket unavailable. Live, foreign, malformed, and changed locks still prevent copying.
+- Profile and lock identities are checked again after copying. The original profile and its lock files remain unchanged.
+
 ## 0.26.1
 
 Releases now publish automatically when a version bump merges to `main`.

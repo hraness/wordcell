@@ -1,6 +1,6 @@
 {
   "name": "@hraness/wordcell",
-  "version": "0.26.1",
+  "version": "0.26.2",
   "description": "Wordcell keeps decisions, plans, and sources as Markdown beside your code, so coding agents can find them from the file they are about to change.",
   "license": "MIT",
   "type": "module",
