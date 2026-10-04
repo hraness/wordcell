@@ -22,7 +22,7 @@ import {
 } from "./index-npg9z1a4.js";
 import {
   main
-} from "./index-zbv70qmk.js";
+} from "./index-h9vyd03z.js";
 import {
   advancedHelp,
   closestMatch,

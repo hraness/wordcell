@@ -1,4 +1,5 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
+import fc from "fast-check";
 import {
   chmodSync,
   existsSync,
@@ -12,7 +13,9 @@ import {
   truncateSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
+import { hostname, tmpdir } from "node:os";
+import { createServer } from "node:net";
 import { join } from "node:path";
 
 import {
@@ -145,6 +148,127 @@ test("refuses a Chromium user-data root while its browser process lock is presen
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("clones a closed Chromium profile with proven stale singleton links without modifying them", () => {
+  const directory = mkdtempSync(join(tmpdir(), "kb-stale-profile-"));
+  const child = spawnSync(process.execPath, ["--eval", "console.log(process.pid)"], { encoding: "utf8" });
+  expect(child.status).toBe(0);
+  const pid = Number(child.stdout.trim());
+  expect(pid).toBeGreaterThan(0);
+  try {
+    const source = join(directory, "Default");
+    const privateRoot = join(directory, "private");
+    mkdirSync(source);
+    mkdirSync(privateRoot, { mode: 0o700 });
+    writeFileSync(join(directory, "Local State"), "{}");
+    writeFileSync(join(source, "state"), "preserved");
+    symlinkSync(`${hostname()}-${pid}`, join(directory, "SingletonLock"));
+    symlinkSync(join(directory, "missing", "SingletonSocket"), join(directory, "SingletonSocket"));
+    symlinkSync("123456789", join(directory, "SingletonCookie"));
+    const cloned = cloneBrowserProfile(source, privateRoot);
+    expect(readFileSync(join(cloned.userDataPath, "Default", "state"), "utf8")).toBe("preserved");
+    expect(lstatSync(join(directory, "SingletonLock")).isSymbolicLink()).toBeTrue();
+    expect(existsSync(join(cloned.userDataPath, "SingletonLock"))).toBeFalse();
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("refuses a reachable singleton socket even when the recorded PID is dead", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "kb-live-socket-"));
+  const socketPath = join(directory, "SingletonSocket");
+  const server = createServer((socket) => socket.destroy());
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(socketPath, resolve);
+  });
+  try {
+    const userData = join(directory, "user-data");
+    const source = join(userData, "Default");
+    const privateRoot = join(directory, "private");
+    mkdirSync(source, { recursive: true });
+    mkdirSync(privateRoot, { mode: 0o700 });
+    writeFileSync(join(userData, "Local State"), "{}");
+    const child = spawnSync(process.execPath, ["--eval", "console.log(process.pid)"], { encoding: "utf8" });
+    expect(child.status).toBe(0);
+    symlinkSync(`${hostname()}-${child.stdout.trim()}`, join(userData, "SingletonLock"));
+    symlinkSync(socketPath, join(userData, "SingletonSocket"));
+    symlinkSync("123", join(userData, "SingletonCookie"));
+    expect(() => cloneBrowserProfile(source, privateRoot)).toThrow("Chromium profile is active");
+    expect(existsSync(join(privateRoot, "profile-user-data"))).toBeFalse();
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+for (const lockTarget of [`${hostname()}-${process.pid}`, `foreign-host-${process.pid}`, `${hostname()}-0`, `${hostname()}-9999999999999999999999`, "malformed"]) {
+  test(`rejects unproven Chromium lock owner ${lockTarget}`, () => {
+    const directory = mkdtempSync(join(tmpdir(), "kb-unproven-lock-"));
+    try {
+      const source = join(directory, "Default");
+      const privateRoot = join(directory, "private");
+      mkdirSync(source);
+      mkdirSync(privateRoot, { mode: 0o700 });
+      writeFileSync(join(directory, "Local State"), "{}");
+      symlinkSync(lockTarget, join(directory, "SingletonLock"));
+      symlinkSync(join(directory, "missing", "SingletonSocket"), join(directory, "SingletonSocket"));
+      symlinkSync("123", join(directory, "SingletonCookie"));
+      expect(() => cloneBrowserProfile(source, privateRoot)).toThrow("Chromium profile is active");
+      expect(existsSync(join(privateRoot, "profile-user-data"))).toBeFalse();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}
+
+test("discards the snapshot if a browser lock appears during final reproof", () => {
+  const directory = mkdtempSync(join(tmpdir(), "kb-lock-drift-"));
+  const originalKill = process.kill.bind(process);
+  let calls = 0;
+  const probe = spyOn(process, "kill").mockImplementation((pid, signal) => {
+    if (++calls === 3) writeFileSync(join(directory, "DevToolsActivePort"), "9222");
+    return originalKill(pid, signal);
+  });
+  try {
+    const source = join(directory, "Default");
+    const privateRoot = join(directory, "private");
+    mkdirSync(source);
+    mkdirSync(privateRoot, { mode: 0o700 });
+    writeFileSync(join(directory, "Local State"), "{}");
+    const child = spawnSync(process.execPath, ["--eval", "console.log(process.pid)"], { encoding: "utf8" });
+    expect(child.status).toBe(0);
+    symlinkSync(`${hostname()}-${child.stdout.trim()}`, join(directory, "SingletonLock"));
+    symlinkSync(join(directory, "missing", "SingletonSocket"), join(directory, "SingletonSocket"));
+    symlinkSync("123", join(directory, "SingletonCookie"));
+    expect(() => cloneBrowserProfile(source, privateRoot)).toThrow("Chromium profile is active");
+    expect(calls).toBe(4);
+    expect(existsSync(join(privateRoot, "profile-user-data"))).toBeFalse();
+  } finally {
+    probe.mockRestore();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("nonpositive Chromium owner identifiers always fail closed", () => {
+  fc.assert(fc.property(fc.integer({ max: 0 }), (pid) => {
+    const directory = mkdtempSync(join(tmpdir(), "kb-invalid-pid-"));
+    try {
+      const source = join(directory, "Default");
+      const privateRoot = join(directory, "private");
+      mkdirSync(source);
+      mkdirSync(privateRoot, { mode: 0o700 });
+      writeFileSync(join(directory, "Local State"), "{}");
+      symlinkSync(`${hostname()}-${pid}`, join(directory, "SingletonLock"));
+      symlinkSync(join(directory, "missing", "SingletonSocket"), join(directory, "SingletonSocket"));
+      symlinkSync("123", join(directory, "SingletonCookie"));
+      expect(() => cloneBrowserProfile(source, privateRoot)).toThrow("Chromium profile is active");
+      expect(existsSync(join(privateRoot, "profile-user-data"))).toBeFalse();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }), { numRuns: 30 });
 });
 
 test("maps a Chromium user-data root to its isolated Default profile", () => {

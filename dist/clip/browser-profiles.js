@@ -6,7 +6,7 @@ import {
   copyBoundedLocalState,
   isSafeNamedProfile,
   profilePath
-} from "../index-5n05se68.js";
+} from "../index-hnvx7m1j.js";
 import"../index-z1w83f81.js";
 export {
   profilePath,

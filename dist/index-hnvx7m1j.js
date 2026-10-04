@@ -11,13 +11,15 @@ import {
   mkdirSync,
   openSync,
   readdirSync,
+  readlinkSync,
   readSync,
   realpathSync,
   rmSync,
   unlinkSync,
   writeSync
 } from "fs";
-import { homedir } from "os";
+import { spawnSync } from "child_process";
+import { homedir, hostname, tmpdir } from "os";
 import { basename, dirname, isAbsolute, join, resolve, sep } from "path";
 var profileSkipNames = new Set([
   "Cache",
@@ -185,15 +187,82 @@ function localStateEntry(path) {
     throw new BrowserProfileSnapshotError("Chromium Local State is unavailable or unsafe");
   }
 }
-function assertChromiumUserDataIdle(userDataRoot) {
-  let names;
+var activeProfileMessage = "Chromium profile is active or retains a stale process lock; fully quit the browser and retry";
+function assertPidAbsent(pid) {
   try {
-    names = readdirSync(userDataRoot);
-  } catch {
-    throw new BrowserProfileSnapshotError("Chromium user-data root could not be inspected");
+    process.kill(pid, 0);
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH")
+      return;
   }
-  if (names.some((name) => name.startsWith("Singleton") || name === "DevToolsActivePort")) {
-    throw new BrowserProfileSnapshotError("Chromium profile is active or retains a stale process lock; fully quit the browser and retry");
+  throw new BrowserProfileSnapshotError(activeProfileMessage);
+}
+function assertSocketUnavailable(path) {
+  const script = `const fs = require("node:fs");
+const net = require("node:net");
+const socket = net.createConnection({ path: fs.readFileSync(0, "utf8") });
+socket.setTimeout(500, () => { socket.destroy(); process.exit(1); });
+socket.once("connect", () => { socket.destroy(); process.exit(1); });
+socket.once("error", error => process.exit(error.code === "ENOENT" || error.code === "ECONNREFUSED" ? 0 : 1));`;
+  const result = spawnSync(process.execPath, ["--no-env-file", "--no-install", "--no-macros", "--no-addons", "--eval", script], {
+    input: path,
+    cwd: tmpdir(),
+    env: {},
+    timeout: 2000,
+    maxBuffer: 1024,
+    stdio: ["pipe", "pipe", "pipe"]
+  });
+  if (result.error || result.status !== 0)
+    throw new BrowserProfileSnapshotError(activeProfileMessage);
+}
+function assertChromiumUserDataIdle(userDataRoot) {
+  try {
+    const root = lstatSync(userDataRoot);
+    if (!root.isDirectory() || root.isSymbolicLink() || root.uid !== process.getuid?.())
+      throw new Error;
+    const rootProof = { dev: root.dev, ino: root.ino, ctime: root.ctimeMs };
+    const names = readdirSync(userDataRoot).filter((name) => name.startsWith("Singleton") || name === "DevToolsActivePort").sort();
+    if (names.length === 0)
+      return JSON.stringify({ root: rootProof, locks: [] });
+    if (names.join(",") !== "SingletonCookie,SingletonLock,SingletonSocket")
+      throw new Error;
+    const proof = names.map((name) => {
+      const path = join(userDataRoot, name);
+      const entry = lstatSync(path);
+      if (!entry.isSymbolicLink() || entry.uid !== process.getuid?.())
+        throw new Error;
+      return { name, target: readlinkSync(path), dev: entry.dev, ino: entry.ino, ctime: entry.ctimeMs };
+    });
+    const lock = proof.find((entry) => entry.name === "SingletonLock").target;
+    const prefix = `${hostname()}-`;
+    if (!lock.startsWith(prefix) || !/^[1-9][0-9]*$/.test(lock.slice(prefix.length)))
+      throw new Error;
+    const pid = Number(lock.slice(prefix.length));
+    if (!Number.isSafeInteger(pid) || pid > 2147483647)
+      throw new Error;
+    const socket = proof.find((entry) => entry.name === "SingletonSocket").target;
+    if (!isAbsolute(socket) || resolve(socket) !== socket || basename(socket) !== "SingletonSocket" || !socket.startsWith(`${tmpdir()}${sep}`))
+      throw new Error;
+    if (!/^[0-9]{1,32}$/.test(proof.find((entry) => entry.name === "SingletonCookie").target))
+      throw new Error;
+    assertPidAbsent(pid);
+    assertSocketUnavailable(socket);
+    assertPidAbsent(pid);
+    const finalRoot = lstatSync(userDataRoot);
+    if (!sameEntry(root, finalRoot) || finalRoot.ctimeMs !== root.ctimeMs)
+      throw new Error;
+    const finalNames = readdirSync(userDataRoot).filter((name) => name.startsWith("Singleton") || name === "DevToolsActivePort").sort();
+    if (finalNames.join(",") !== names.join(","))
+      throw new Error;
+    for (const entry of proof) {
+      const path = join(userDataRoot, entry.name);
+      const current = lstatSync(path);
+      if (!current.isSymbolicLink() || current.dev !== entry.dev || current.ino !== entry.ino || current.ctimeMs !== entry.ctime || readlinkSync(path) !== entry.target)
+        throw new Error;
+    }
+    return JSON.stringify({ root: rootProof, locks: proof });
+  } catch {
+    throw new BrowserProfileSnapshotError(activeProfileMessage);
   }
 }
 function copyBoundedLocalState(source, destination) {
@@ -289,7 +358,7 @@ function cloneBrowserProfile(source, privateDirectory) {
   if (stateEntry.size > maxLocalStateBytes) {
     throw new BrowserProfileSnapshotError("Chromium Local State exceeds its safety bound");
   }
-  assertChromiumUserDataIdle(userDataRoot);
+  const idleProof = assertChromiumUserDataIdle(userDataRoot);
   const userData = join(privateDirectory, "profile-user-data");
   mkdirSync(userData, { mode: 448 });
   chmodSync(userData, 448);
@@ -297,6 +366,9 @@ function cloneBrowserProfile(source, privateDirectory) {
   try {
     cloneProfile(selectedSource, selectedProfile);
     copyBoundedLocalState(localState, join(userData, "Local State"));
+    if (assertChromiumUserDataIdle(userDataRoot) !== idleProof) {
+      throw new BrowserProfileSnapshotError("Chromium profile lock changed while it was copied");
+    }
     return { userDataPath: userData, profileDirectory: "Default" };
   } catch (error) {
     rmSync(userData, { recursive: true, force: true });

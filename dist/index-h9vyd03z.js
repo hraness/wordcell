@@ -21,7 +21,7 @@ import {
 } from "./index-nd8v7r0z.js";
 import {
   cloneBrowserProfile
-} from "./index-5n05se68.js";
+} from "./index-hnvx7m1j.js";
 import {
   CONFIRM_LINE,
   acquireBrowser,
