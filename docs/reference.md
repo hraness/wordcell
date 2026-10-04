@@ -675,7 +675,7 @@ Note IDs are vault-relative paths without `.md`, such as `notes/decision`.
 
 | Tool | Arguments | Result |
 | --- | --- | --- |
-| `search` | `query`; optional `mode` (`exact`, `keyword`, `semantic`, or `hybrid`, default `hybrid`), `limit` (1-100, default 10), `tags`, `where` (exact metadata values), `has` (metadata paths that must exist), and `scope` (exact repository scopes) | Ranked hits, each with its own exact or QMD evidence. When QMD is unavailable, the result is partial and `diagnostics.lanes` gives the reason. |
+| `search` | `query`; optional `mode` (`exact`, `keyword`, `semantic`, or `hybrid`, default `hybrid`), `limit` (1-100, default 10), `selectedPassage` (boolean, default `false`; includes a local source excerpt with line references and section headings without changing ranking), `tags`, `where` (exact metadata values), `has` (metadata paths that must exist), and `scope` (exact repository scopes) | Ranked hits, each with its own exact or QMD evidence. When QMD is unavailable, the result is partial and `diagnostics.lanes` gives the reason. |
 | `context` (with `--repo`) | `path` (repository-relative); optional `kind` (`auto`, `file`, or `directory`, default `auto`) | Inherited guides, reciprocal hubs, and repository-scoped memory, as in `wordcell context --json`. |
 | `list_notes` | Optional `where`, `has`, `tags`, `scope`, `sort` (`title`, `path`, `inbound`, `outbound`, or `metadata.<path>`), `order` (`asc` or `desc`), and `limit` (1-1,000, default 100) | Matching notes with metadata and link counts, and the total number of matches. |
 | `get_note` | `id` | The note's `frontmatter` as JSON, its `body`, and its `revision`. The read stops at 64 KiB. |
@@ -777,6 +777,45 @@ You can also add the entry to `~/.codex/config.toml`, or to
 command = "wordcell"
 args = ["mcp", "--root", "/absolute/path/to/kb"]
 ```
+
+### Verify the connection
+
+Before configuring a client, run an exact search in your terminal with the
+same absolute vault path. This separates a vault or installation problem
+from a client configuration problem:
+
+```sh
+wordcell search "a phrase from your notes" --root /absolute/path/to/kb --mode exact
+```
+
+After the client starts the server, ask it to call Wordcell's `search` tool
+with these arguments, replacing the query with the phrase you verified:
+
+```json
+{"query": "a phrase from your notes", "mode": "exact", "limit": 3}
+```
+
+Check that the result names the same note as the CLI search. Then call
+`get_note` with that note's vault-relative ID without `.md` and compare the
+returned body with the file. Use exact mode for this first check: the default
+is `hybrid`, which also attempts the optional QMD search. A partial hybrid
+result does not by itself mean the MCP connection failed.
+
+For an existing vault you only want to read, add `--read-only` to the server
+arguments before connecting. Confirm that `create_note`, `update_note_body`,
+and `add_relation` are absent from the client's tool list. The `context`
+tool appears only when you also supply `--repo`.
+
+### Troubleshoot the local MCP server
+
+| Symptom | What to check or change |
+| --- | --- |
+| The desktop client cannot start `wordcell` | Use the absolute executable path printed by `which wordcell` as `command`. Bun must also be in the client's `PATH`, not only your terminal's. Restart the client after changing its configuration. |
+| The server exits before tools appear | Check the server's standard error. `--root` must name an existing directory. Use absolute vault and repository paths in client configurations: relative paths are allowed, but resolve from the server's working directory chosen by the client, which may differ from your terminal's. A missing or invalid root exits with status 2. |
+| Search returns a partial result | Inspect `diagnostics.lanes` for an unavailable QMD index. Retry with `mode: "exact"` to search current Markdown without QMD; see [optional adapters](#review-lifecycle-scripts-before-enabling-optional-adapters) before enabling semantic search. |
+| A response is too large or has `truncated: true` | Reduce `search` or `list_notes` `limit`, or the link tools' `limit` and `depth`. Search defaults to 10 hits; try 3. The server caps structured results at 64 KiB, not at the client's token budget. Read the `omitted` count when present and open source notes individually. |
+| An update would use an incomplete note body | If `get_note` reports `truncated: true`, open the Markdown locally. Do not send the shortened body to `update_note_body`, which replaces the body. |
+| `context` or write tools are missing | `context` requires `--repo`; `--read-only` intentionally removes write tools. Check the configured server arguments and restart the connection after changing them. |
 
 ## Agent skills
 
