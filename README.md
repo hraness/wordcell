@@ -66,14 +66,14 @@ Wordcell keeps the record in Markdown files you own, rebuilds every index from t
 The CLI and TypeScript SDK run with Bun. Install the versioned GitHub archive:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.1/hraness-wordcell-0.26.1.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.2/hraness-wordcell-0.26.2.tgz
 wordcell --help
 ```
 
 Prefer npm? The same release is [mirrored there](https://www.npmjs.com/package/@hraness/wordcell):
 
 ```sh
-npm install --global --ignore-scripts @hraness/wordcell@0.26.1
+npm install --global --ignore-scripts @hraness/wordcell@0.26.2
 wordcell --help
 ```
 
@@ -137,7 +137,7 @@ After trying the CLI, install the public Agent Skill into a compatible agent,
 such as Claude Code, Codex, Cursor, or GitHub Copilot:
 
 ```sh
-bunx skills add hraness/wordcell#v0.26.1 --skill wordcell
+bunx skills add hraness/wordcell#v0.26.2 --skill wordcell
 ```
 
 Then ask:
@@ -348,7 +348,7 @@ exist. [Graph queries and proof limits](https://github.com/hraness/wordcell/blob
 Add the same immutable release to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.1/hraness-wordcell-0.26.1.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.2/hraness-wordcell-0.26.2.tgz
 ```
 
 The SDK provides read-only vault sessions, metadata queries, search, graph

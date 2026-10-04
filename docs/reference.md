@@ -11,7 +11,7 @@
 Copy this prompt into Codex, Claude Code, or another coding agent:
 
 ```text
-Install the `wordcell` Agent Skill from `hraness/wordcell#v0.26.1` with the standard skills
+Install the `wordcell` Agent Skill from `hraness/wordcell#v0.26.2` with the standard skills
 CLI. Use the skill's runtime instructions to install the exact
 versioned GitHub release archive only when the command is missing. Verify it
 with `wordcell doctor` and `wordcell --help`, but do not initialize or modify a vault until
@@ -21,8 +21,8 @@ I ask.
 Install the single public skill with either runner:
 
 ```sh
-npx skills add hraness/wordcell#v0.26.1
-bunx skills add hraness/wordcell#v0.26.1
+npx skills add hraness/wordcell#v0.26.2
+bunx skills add hraness/wordcell#v0.26.2
 ```
 
 Both commands discover the same `wordcell` skill and install it into the selected
@@ -39,7 +39,7 @@ installed skill is byte-identical to the repository source.
 Install the two global commands with Bun:
 
 ```sh
-bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.1/hraness-wordcell-0.26.1.tgz
+bun add --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.2/hraness-wordcell-0.26.2.tgz
 wordcell --help
 wordcell-evaluation-builder --help
 ```
@@ -47,7 +47,7 @@ wordcell-evaluation-builder --help
 The same GitHub archive can be installed with npm:
 
 ```sh
-npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.1/hraness-wordcell-0.26.1.tgz
+npm install --global --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.2/hraness-wordcell-0.26.2.tgz
 wordcell --help
 ```
 
@@ -60,7 +60,7 @@ reviewed and enabled; run `wordcell doctor` to inspect the resulting capabilitie
 For programmatic use, add the versioned GitHub archive to a Bun project:
 
 ```sh
-bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.1/hraness-wordcell-0.26.1.tgz
+bun add --exact --ignore-scripts https://github.com/hraness/wordcell/releases/download/v0.26.2/hraness-wordcell-0.26.2.tgz
 ```
 
 The resulting dependency should remain exact:
@@ -68,7 +68,7 @@ The resulting dependency should remain exact:
 ```json
 {
   "dependencies": {
-    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.26.1/hraness-wordcell-0.26.1.tgz"
+    "@hraness/wordcell": "https://github.com/hraness/wordcell/releases/download/v0.26.2/hraness-wordcell-0.26.2.tgz"
   }
 }
 ```
@@ -790,9 +790,9 @@ companion skill for a distinct recurring ritual. The package smoke test keeps
 future tagged packages byte-identical to that source tree.
 
 ```sh
-npx skills add hraness/wordcell#v0.26.1
+npx skills add hraness/wordcell#v0.26.2
 # or
-bunx skills add hraness/wordcell#v0.26.1
+bunx skills add hraness/wordcell#v0.26.2
 ```
 
 The skill invokes the installed `wordcell` command without depending on a repository
