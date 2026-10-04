@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.26.3
+
+SDK consumers can augment Node environment types without breaking isolated subprocesses.
+
+- Correct the Node API type boundary for private socket probes and metadata search. Their environment contents and safety checks are unchanged.
+- Test all packed exports with a required `NODE_ENV` augmentation, as used by Next.js consumers.
+
 ## 0.26.2
 
 Browser-profile snapshots can now handle lock files left behind after Chromium exits.

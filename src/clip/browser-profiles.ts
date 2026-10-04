@@ -257,7 +257,7 @@ socket.setTimeout(500, () => { socket.destroy(); process.exit(1); });
 socket.once("connect", () => { socket.destroy(); process.exit(1); });
 socket.once("error", error => process.exit(error.code === "ENOENT" || error.code === "ECONNREFUSED" ? 0 : 1));`;
   const result = spawnSync(process.execPath, ["--no-env-file", "--no-install", "--no-macros", "--no-addons", "--eval", script], {
-    input: path, cwd: tmpdir(), env: {}, timeout: 2000, maxBuffer: 1024, stdio: ["pipe", "pipe", "pipe"],
+    input: path, cwd: tmpdir(), env: {} as NodeJS.ProcessEnv, timeout: 2000, maxBuffer: 1024, stdio: ["pipe", "pipe", "pipe"],
   });
   if (result.error || result.status !== 0) throw new BrowserProfileSnapshotError(activeProfileMessage);
 }

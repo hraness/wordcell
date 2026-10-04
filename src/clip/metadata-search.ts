@@ -417,7 +417,7 @@ async function runProcess(options: {
   try {
     child = spawn(options.binaryPath, [], {
       cwd: options.cwd,
-      env: options.environment,
+      env: options.environment as NodeJS.ProcessEnv,
       shell: false,
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,

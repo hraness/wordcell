@@ -875,7 +875,14 @@ void [
 ];
 void [${importSpecifiers.map((_specifier, index) =>
     `surface${String(index)}`
-  ).join(", ")}];\n`;
+  ).join(", ")}];
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      NODE_ENV: "development" | "production" | "test";
+    }
+  }
+}\n`;
   await writeFile(join(consumer, "index.ts"), consumerSource);
   await writeFile(join(consumer, "tsconfig.bundler.json"), "{\n  \"compilerOptions\": {\n    \"target\": \"ES2023\",\n    \"lib\": [\n      \"ES2023\",\n      \"DOM\",\n      \"DOM.Iterable\"\n    ],\n    \"types\": [\n      \"bun\",\n      \"node\"\n    ],\n    \"strict\": true,\n    \"noEmit\": true,\n    \"skipLibCheck\": false,\n    \"erasableSyntaxOnly\": true,\n    \"module\": \"Preserve\",\n    \"moduleResolution\": \"Bundler\"\n  },\n  \"include\": [\n    \"index.ts\"\n  ]\n}");
   await logConsumerToolchain(consumer);
