@@ -1,0 +1,94 @@
+name: Dependency audit
+
+on:
+  pull_request:
+    paths:
+      - "**/bun.lock"
+      - "**/package-lock.json"
+      - "**/npm-shrinkwrap.json"
+      - "**/pnpm-lock.yaml"
+      - "**/yarn.lock"
+      - "**/deno.lock"
+      - "**/Cargo.lock"
+      - "**/go.mod"
+      - "**/uv.lock"
+      - "**/poetry.lock"
+      - "**/Pipfile.lock"
+      - "**/pdm.lock"
+      - "**/pylock.toml"
+      - "**/*requirements*.txt"
+      - "**/Gemfile.lock"
+      - "**/gems.locked"
+      - "**/composer.lock"
+      - "**/pubspec.lock"
+      - "**/mix.lock"
+      - "**/renv.lock"
+      - "**/conan.lock"
+      - "**/packages.lock.json"
+      - "**/packages.config"
+      - "**/*.deps.json"
+      - "**/gradle.lockfile"
+      - "**/buildscript-gradle.lockfile"
+      - "**/pom.xml"
+      - "**/cabal.project.freeze"
+      - "**/stack.yaml.lock"
+      - "**/osv-scanner.toml"
+      - .github/workflows/dependency-audit.yml
+  push:
+    branches: [main]
+    paths:
+      - "**/bun.lock"
+      - "**/package-lock.json"
+      - "**/npm-shrinkwrap.json"
+      - "**/pnpm-lock.yaml"
+      - "**/yarn.lock"
+      - "**/deno.lock"
+      - "**/Cargo.lock"
+      - "**/go.mod"
+      - "**/uv.lock"
+      - "**/poetry.lock"
+      - "**/Pipfile.lock"
+      - "**/pdm.lock"
+      - "**/pylock.toml"
+      - "**/*requirements*.txt"
+      - "**/Gemfile.lock"
+      - "**/gems.locked"
+      - "**/composer.lock"
+      - "**/pubspec.lock"
+      - "**/mix.lock"
+      - "**/renv.lock"
+      - "**/conan.lock"
+      - "**/packages.lock.json"
+      - "**/packages.config"
+      - "**/*.deps.json"
+      - "**/gradle.lockfile"
+      - "**/buildscript-gradle.lockfile"
+      - "**/pom.xml"
+      - "**/cabal.project.freeze"
+      - "**/stack.yaml.lock"
+      - "**/osv-scanner.toml"
+      - .github/workflows/dependency-audit.yml
+  schedule:
+    - cron: "37 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: hraness/.github/actions/dependency-audit@021adfa02636b4950e59b09e38b2dd1fd82b1663 # v1.0.0
