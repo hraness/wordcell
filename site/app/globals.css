@@ -76,8 +76,7 @@ a:focus-visible {
   padding: 1.15rem 1.25rem;
 }
 
-.record-link,
-.interface-link {
+.record-link {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 500;
@@ -89,7 +88,6 @@ a:focus-visible {
 
 /* Links inside body copy stay underlined; the grammar's buttons do not. */
 .record-link a,
-.interface-link a,
 .install-note a,
 .hraness-marketing-question__answer a {
   color: var(--foreground);
@@ -99,13 +97,11 @@ a:focus-visible {
 
 @media (forced-colors: none) {
   .record-link a,
-  .interface-link a,
   .install-note a,
   .hraness-marketing-question__answer a {
     text-decoration-color: color-mix(in srgb, var(--foreground) 35%, transparent);
   }
   .record-link a:hover,
-  .interface-link a:hover,
   .install-note a:hover,
   .hraness-marketing-question__answer a:hover {
     text-decoration-color: currentColor;

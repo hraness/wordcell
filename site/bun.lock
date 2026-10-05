@@ -5,7 +5,7 @@
     "": {
       "name": "wordcell-site",
       "dependencies": {
-        "@hraness/design-kit": "github:hraness/design-kit#v0.36.3",
+        "@hraness/design-kit": "github:hraness/design-kit#v0.41.1",
         "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz",
         "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.7/hraness-site-footer-0.20.7.tgz",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
@@ -93,7 +93,7 @@
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.1", "", { "dependencies": { "@eslint/core": "^0.17.0", "levn": "^0.4.1" } }, "sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA=="],
 
-    "@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#1cccf6a", { "dependencies": { "@hugeicons/core-free-icons": "4.2.3", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.16 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-1cccf6a", "sha512-HEBChkzMrJ4KpoqKgd+ckD3aDaUwHcWeNkJhrBZTEL3GmXu5ttVPSvoVGPpwlwxZGPtGqpWPmM2tFUC/3SpBrQ=="],
+    "@hraness/design-kit": ["@hraness/design-kit@github:hraness/design-kit#4a81f85", { "dependencies": { "@hugeicons/core-free-icons": "4.2.3", "@stylexjs/stylex": "0.19.0", "motion": "12.42.0", "next-themes": "0.4.6", "react-aria-components": "1.19.0", "recharts": "3.8.0", "sugar-high": "^1.2.1", "web-haptics": "0.0.6" }, "peerDependencies": { "@hraness/ui": ">=0.5.16 <0.6.0", "react": ">=18 <20", "react-dom": ">=18 <20" }, "optionalPeers": ["@hraness/ui"] }, "hraness-design-kit-4a81f85", "sha512-3qeAu+WFE7miuFJBYYTzZxwRIcfcOJy4ObhaAo24elH0YifYtV7l8LFChEJYNUIY0rc3EzIGraJITI40ZpzwKg=="],
 
     "@hraness/oh": ["@hraness/oh@https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz", { "peerDependencies": { "@libsql/client": ">=0.17.4 <1", "@suss/datalog": "0.20.0", "@tobilu/qmd": "2.5.3" }, "optionalPeers": ["@libsql/client", "@suss/datalog", "@tobilu/qmd"], "bin": { "oh": "./dist/cli.js" } }, "sha512-BHAzZHXAldhDCg/J2OGFjN0VSBzwmfzk6QjOLdh3vamOftvDHZXNtwOkPpKpXOag2hX4fEr0vrenG0bF07YGFA=="],
 

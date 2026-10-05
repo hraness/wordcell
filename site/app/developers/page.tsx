@@ -277,9 +277,9 @@ const session = await openKnowledgeBase({ root: "kb" });`} />
                   <>
                     <WordcellIcon className="wordcell-topic-icon" name="agent-skill" />
                     {releaseVersion === undefined ? <p>The first Wordcell skill release is in preparation.</p> : <Terminal code={`bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`} />}
-                    <p className="interface-link"><a href={`${repository}/blob/main/skills/wordcell/SKILL.md`}>Inspect the packaged skill</a></p>
                   </>
                 ),
+                link: { href: `${repository}/blob/main/skills/wordcell/SKILL.md`, label: "Inspect the packaged skill" },
               },
             ]}
             label="Interfaces"
