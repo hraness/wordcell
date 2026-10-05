@@ -675,7 +675,7 @@ Note IDs are vault-relative paths without `.md`, such as `notes/decision`.
 
 | Tool | Arguments | Result |
 | --- | --- | --- |
-| `search` | `query`; optional `mode` (`exact`, `keyword`, `semantic`, or `hybrid`, default `hybrid`), `limit` (1-100, default 10), `tags`, `where` (exact metadata values), `has` (metadata paths that must exist), and `scope` (exact repository scopes) | Ranked hits, each with its own exact or QMD evidence. When QMD is unavailable, the result is partial and `diagnostics.lanes` gives the reason. |
+| `search` | `query`; optional `mode` (`exact`, `keyword`, `semantic`, or `hybrid`, default `hybrid`), `limit` (1-100, default 10), `selectedPassage` (boolean, default `false`; includes a local source excerpt with line references and section headings without changing ranking), `tags`, `where` (exact metadata values), `has` (metadata paths that must exist), and `scope` (exact repository scopes) | Ranked hits, each with its own exact or QMD evidence. When QMD is unavailable, the result is partial and `diagnostics.lanes` gives the reason. |
 | `context` (with `--repo`) | `path` (repository-relative); optional `kind` (`auto`, `file`, or `directory`, default `auto`) | Inherited guides, reciprocal hubs, and repository-scoped memory, as in `wordcell context --json`. |
 | `list_notes` | Optional `where`, `has`, `tags`, `scope`, `sort` (`title`, `path`, `inbound`, `outbound`, or `metadata.<path>`), `order` (`asc` or `desc`), and `limit` (1-1,000, default 100) | Matching notes with metadata and link counts, and the total number of matches. |
 | `get_note` | `id` | The note's `frontmatter` as JSON, its `body`, and its `revision`. The read stops at 64 KiB. |
@@ -713,70 +713,10 @@ The write tools use the same authoring operations as `wordcell note create`,
 
 ### Connect a client
 
-Client setup was checked against each client's documentation on 2026-09-26.
-Replace `/absolute/path/to/kb` with your vault. If a desktop application
-cannot find `wordcell`, use the absolute path that `which wordcell` prints.
-Add `--read-only` to the arguments to offer only the read tools, or
-`--repo /absolute/path/to/repository` to add `context`.
-
-Claude Code ([MCP guide](https://code.claude.com/docs/en/mcp)):
-
-```sh
-claude mcp add --transport stdio --scope project wordcell -- wordcell mcp --root /absolute/path/to/kb
-```
-
-Everything after `--` is the server command. `--scope project` saves the
-server in the project's `.mcp.json`, which everyone who uses the repository
-shares. Omit `--scope` to keep the server private to you in this project, or
-use `--scope user` for all your projects.
-
-Claude Desktop ([local server guide](https://modelcontextprotocol.io/docs/develop/connect-local-servers)):
-open the Claude menu, choose Settings, then Developer, then Edit Config. Add the server to
-`claude_desktop_config.json`, then quit and restart Claude Desktop. The file is
-in `~/Library/Application Support/Claude/` on macOS and `%APPDATA%\Claude\` on
-Windows. On macOS, the server's standard error is in
-`~/Library/Logs/Claude/mcp-server-wordcell.log`.
-
-```json
-{
-  "mcpServers": {
-    "wordcell": {
-      "command": "wordcell",
-      "args": ["mcp", "--root", "/absolute/path/to/kb"]
-    }
-  }
-}
-```
-
-Cursor ([MCP guide](https://cursor.com/docs/context/mcp)): add the server to
-`.cursor/mcp.json` in a project, or to `~/.cursor/mcp.json` for every project.
-
-```json
-{
-  "mcpServers": {
-    "wordcell": {
-      "type": "stdio",
-      "command": "wordcell",
-      "args": ["mcp", "--root", "/absolute/path/to/kb"]
-    }
-  }
-}
-```
-
-Codex ([MCP guide](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)):
-
-```sh
-codex mcp add wordcell -- wordcell mcp --root /absolute/path/to/kb
-```
-
-You can also add the entry to `~/.codex/config.toml`, or to
-`.codex/config.toml` in a trusted project:
-
-```toml
-[mcp_servers.wordcell]
-command = "wordcell"
-args = ["mcp", "--root", "/absolute/path/to/kb"]
-```
+[Connect Wordcell to your coding agent](agent-handoffs.md) sets up Claude
+Code, Codex, Cursor, and Claude Desktop, checks that the agent reads your
+notes, and lists fixes for common errors. Every client starts the same
+`wordcell mcp` command with the flags above.
 
 ## Agent skills
 

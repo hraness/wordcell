@@ -36,12 +36,16 @@ import { publishedClaims, publishedClaimsCheckedOn } from "../wordcell/published
 import { basicMemoryCheckedOn, basicMemoryPages } from "../wordcell/basic-memory-sources";
 import { mem0CheckedOn, mem0Pages } from "../wordcell/mem0-sources";
 import { obsidianCheckedOn, obsidianPages } from "../wordcell/obsidian-sources";
+import { claudeMemCheckedOn, claudeMemPages, claudeMemVersion } from "../wordcell/claude-mem-sources";
+import { claudeMemAdmission, comparisonAdmissions, isComparisonIndexable } from "../wordcell/comparison-admissions";
 import { formatPlanCredits, formatPlanPrice, formatUsageRate, supermemoryPricing } from "../wordcell/supermemory-pricing";
+import Home from "../app/page";
 import Benchmarks, { metadata as benchmarksMetadata } from "../app/benchmarks/page";
 import CompareBasicMemory, { metadata as compareBasicMemoryMetadata } from "../app/compare/basic-memory/page";
 import CompareObsidian, { metadata as compareObsidianMetadata } from "../app/compare/obsidian/page";
 import CompareMem0, { metadata as compareMem0Metadata } from "../app/compare/mem0/page";
 import CompareSupermemory, { metadata as compareMetadata } from "../app/compare/supermemory/page";
+import CompareClaudeMem, { metadata as compareClaudeMemMetadata } from "../app/compare/claude-mem/page";
 import MigrateSupermemory, { metadata as migrateMetadata } from "../app/migrate/supermemory/page";
 import {
   MIGRATION_GUIDE_PATH,
@@ -54,7 +58,8 @@ import { grouped, longDate, prose, signed } from "../wordcell/format";
 import { handoffEvidence } from "../wordcell/handoff-evidence";
 import { SetupLinks } from "../wordcell/setup-links";
 import { siteDescription } from "../app/site-description";
-import { launchRoutes } from "../wordcell/launch-routes";
+import { launchRoutes, reviewPendingRoutes } from "../wordcell/launch-routes";
+import { assertArticleAdmissions, isArticleIndexable } from "@hraness/design-kit";
 import { publishedRelease } from "../app/publication";
 import { publishedReadme } from "../scripts/published-readme";
 import {
@@ -418,6 +423,7 @@ describe("agent setup prompt", () => {
   test("the prompt installs the admitted release and matches the documented commands", async () => {
     const migration = await readFile(join(repository, "docs", "migration-from-supermemory.md"), "utf8");
     const reference = await readFile(join(repository, "docs", "reference.md"), "utf8");
+    const setupGuide = await readFile(join(repository, "docs", "agent-handoffs.md"), "utf8");
     const readme = await readFile(join(repository, "README.md"), "utf8");
     const manifest = JSON.parse(await readFile(join(repository, "package.json"), "utf8")) as { version: string };
     if (publishedRelease === null) throw new Error("The site has no admitted release.");
@@ -431,12 +437,13 @@ describe("agent setup prompt", () => {
     expect(SETUP_PROMPT).toContain(`\`wordcell --version\` already shows ${AGENT_MEMORY_RELEASE} or later, the first release with \`wordcell mcp\``);
     expect(SETUP_PROMPT).not.toMatch(/from source|checkout|git clone|bun link/u);
     for (const command of SETUP_COMMANDS.install) expect(SETUP_PROMPT).toContain(`   ${command}\n`);
-    expect(reference).toContain(SETUP_COMMANDS.codex);
-    expect(reference).toContain(SETUP_COMMANDS.claudeCode.replace("--scope user", "--scope project"));
-    expect(reference).toContain("use `--scope user` for all your projects");
-    expect(reference).toContain("~/.cursor/mcp.json");
+    expect(setupGuide).toContain(SETUP_COMMANDS.codex);
+    expect(setupGuide).toContain(SETUP_COMMANDS.claudeCode.replace("--scope user", "--scope project"));
+    expect(setupGuide).toContain("| `user` | `~/.claude.json` |");
+    expect(setupGuide).toContain("~/.cursor/mcp.json");
     expect(reference).toContain("\n### Connect a client\n");
-    expect(CONNECT_CLIENT_URL).toBe("https://wordcell.io/docs/reference#connect-a-client");
+    expect(reference).toContain("(agent-handoffs.md)");
+    expect(CONNECT_CLIENT_URL).toBe("https://wordcell.io/docs/agent-handoffs");
     for (const command of [SETUP_COMMANDS.init, SETUP_COMMANDS.claudeCode, SETUP_COMMANDS.codex, SETUP_COMMANDS.skill, CONNECT_CLIENT_URL]) {
       expect(SETUP_PROMPT).toContain(command);
     }
@@ -764,6 +771,71 @@ describe("/compare/obsidian", () => {
   });
 });
 
+describe("/compare/claude-mem", () => {
+  test("cites the pinned Claude-Mem release and its documentation for every cell", async () => {
+    const markup = renderToStaticMarkup(<CompareClaudeMem />);
+    const text = pageText(markup);
+    expect(markup.match(/<h1[ >]/g)?.length).toBe(1);
+    for (const topic of ["How memory forms", "Session start", "Storage", "Fresh clone or another machine", "Model use", "Agents", "Review and edit", "License"]) {
+      expect(markup).toContain(`<dt>${topic}</dt>`);
+    }
+    const differences = /<details class="wordcell-comparison-sources">([\s\S]*?)<\/details>/u.exec(markup)?.[1] ?? "";
+    const claudeMemCells = [...differences.matchAll(/<dd><strong>Claude-Mem:<\/strong> (.*?)<\/dd>/gsu)].map((match) => match[1] ?? "");
+    expect(claudeMemCells.length).toBe(8);
+    for (const cell of claudeMemCells) expect(cell).toMatch(/<a href="https:\/\/(?:docs\.claude-mem\.ai|github\.com\/thedotmack\/claude-mem\/blob\/v)/u);
+    for (const href of Object.values(claudeMemPages)) expect(markup).toContain(`href="${href}"`);
+    expect(claudeMemPages.hooks).toContain(`/blob/v${claudeMemVersion}/`);
+    expect(text).toContain(`Claude-Mem ${claudeMemVersion}, its documentation, and its source were checked on ${longDate(claudeMemCheckedOn)}.`);
+    expect(text).toContain("it was not run for this page");
+    expect(markup).toContain('id="choose-claude-mem">Choose Claude-Mem when</h3>');
+    expect(markup).toContain('id="choose-wordcell">Choose Wordcell when</h3>');
+    // The table includes rows where Claude-Mem is ahead, such as capturing memory on its own.
+    const table = /<figure\b[^>]*class="hraness-marketing-comparison\b[\s\S]*?<\/figure>/u.exec(markup)?.[0] ?? "";
+    const firstRow = table.slice(table.indexOf("<tbody>")).split("<tr>")[1] ?? "";
+    expect(firstRow.match(/data-comparison-status="(\w+)"/gu)).toEqual(['data-comparison-status="no"', 'data-comparison-status="yes"']);
+    for (const literal of ["~/.claude-mem/claude-mem.db", "CLAUDE_MEM_PROJECT_NAME_SOURCE=git-remote", "CLAUDE_MEM_SESSION_START_INCLUDE_ALL_SOURCES", "CLAUDE_MEM_SKIP_TOOLS", "wordcell mcp", "--root"]) {
+      expect(markup).toContain(`<code>${literal}</code>`);
+    }
+    expect(markup).toContain('href="/docs/agent-handoffs"');
+    expect(await expectDocLinksResolve(markup)).toBeGreaterThanOrEqual(3);
+    expect(text).not.toMatch(notSota);
+    expect(text).not.toMatch(/\bfair\b|\bhonest\b|\bwe\b|\u2014/iu);
+  });
+
+  test("metadata has a canonical path, a description of 110 to 160 characters, and noindex until review", () => {
+    expect(compareClaudeMemMetadata.alternates?.canonical).toBe("/compare/claude-mem");
+    const description = String(compareClaudeMemMetadata.description);
+    expect(description.length).toBeGreaterThanOrEqual(110);
+    expect(description.length).toBeLessThanOrEqual(160);
+    expect(compareClaudeMemMetadata.openGraph?.description).toBe(description);
+    expect(`${String(compareClaudeMemMetadata.title)} ${description}`).not.toMatch(/\u2014|\bSOTA\b/u);
+    const robots = compareClaudeMemMetadata.robots;
+    if (isComparisonIndexable("/compare/claude-mem")) expect(robots).toBeUndefined();
+    else expect(robots).toMatchObject({ index: false });
+  });
+
+  test("the review record follows the article rubric and decides where the page is listed", async () => {
+    expect(() => assertArticleAdmissions(comparisonAdmissions)).not.toThrow();
+    expect(claudeMemAdmission.sources.every((source) => source.checkedOn === claudeMemCheckedOn)).toBe(true);
+    const sitemap = await readFile(join(repository, "site", "public", "sitemap.xml"), "utf8");
+    const llms = await readFile(join(repository, "site", "public", "llms.txt"), "utf8");
+    const home = renderToStaticMarkup(<Home />);
+    for (const admission of comparisonAdmissions) {
+      const url = `https://wordcell.io${admission.href}`;
+      if (isArticleIndexable(admission)) {
+        expect((launchRoutes as readonly string[]).includes(admission.href), admission.href).toBe(true);
+        expect((reviewPendingRoutes as readonly string[]).includes(admission.href), admission.href).toBe(false);
+      } else {
+        expect((reviewPendingRoutes as readonly string[]).includes(admission.href), admission.href).toBe(true);
+        expect((launchRoutes as readonly string[]).includes(admission.href), admission.href).toBe(false);
+        expect(sitemap).not.toContain(`<loc>${url}</loc>`);
+        expect(llms).not.toContain(url);
+        expect(home).not.toContain(`href="${admission.href}"`);
+      }
+    }
+  });
+});
+
 describe("/migrate/supermemory", () => {
   test("every step command is one the migration guide or Get started documents", async () => {
     const guide = await readFile(join(repository, "docs", "migration-from-supermemory.md"), "utf8");
@@ -878,6 +950,7 @@ describe("stacked tables", () => {
     { name: "/compare/obsidian", markup: () => renderToStaticMarkup(<CompareObsidian />), tables: 0, compact: true },
     { name: "/compare/mem0", markup: () => renderToStaticMarkup(<CompareMem0 />), tables: 0, compact: true },
     { name: "/compare/supermemory", markup: () => renderToStaticMarkup(<CompareSupermemory />), tables: 2, compact: true },
+    { name: "/compare/claude-mem", markup: () => renderToStaticMarkup(<CompareClaudeMem />), tables: 0, compact: true },
     { name: "/migrate/supermemory", markup: () => renderToStaticMarkup(<MigrateSupermemory />), tables: 1 },
   ];
 

@@ -1,10 +1,13 @@
 import { Fragment } from "react";
 
+import { ArticleVideo } from "@hraness/design-kit/react/server";
+
 import {
   AgentCitesNote,
   MeaningSearchTerminal,
   NoteFileWindow,
 } from "../../wordcell/mockups/surfaces";
+import { launchFilm } from "../../wordcell/launch/film";
 import { SocialKitDetails } from "./social-kit-details";
 
 export const LAUNCH_POST_SLUG = "introducing-wordcell";
@@ -38,6 +41,7 @@ export function LaunchPostStory({ html }: Readonly<{ html: string }>) {
   }
   return (
     <>
+      <ArticleVideo video={launchFilm} width="wide" caption={null} />
       {sections}
       <div dangerouslySetInnerHTML={{ __html: html.slice(start) }} />
       <SocialKitDetails />

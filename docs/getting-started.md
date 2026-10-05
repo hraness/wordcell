@@ -22,6 +22,35 @@ executable directory to `PATH` and reopen the terminal. The npm mirror
 `npm install --global --ignore-scripts @hraness/wordcell@0.26.3` carries the
 same bytes.
 
+## Search an existing Markdown or Obsidian vault
+
+If you already have notes, start here instead of creating a new vault. Use
+an absolute path to the folder and a phrase you know appears in a note:
+
+```sh
+wordcell search "a phrase from your notes" --root /absolute/path/to/vault --mode exact
+```
+
+Verify that the result names the expected note, then open that Markdown file
+and compare its text. Exact search needs no model or index, and you don't need
+to initialize, convert, or move the files. It reads `.md` files recursively,
+excluding hidden entries, `coverage/`, `dist/`, `node_modules/`, and
+`AGENTS.md`; it does not follow symlinks.
+
+If nothing matches, confirm the root points to the folder containing your
+notes and try a distinctive phrase from a `.md` file. An Obsidian vault's
+`.obsidian/` settings are hidden and are not searched. Search works without
+`index.md`; `wordcell refresh` requires that front door, so don't use refresh
+as an initialization step for an existing vault. See the
+[vault format reference](reference.md#the-kb-vault-format) before adding one.
+
+To serve these notes to a coding agent, continue with
+[Connect Wordcell to your coding agent](agent-handoffs.md). For an Obsidian
+vault, [Use Wordcell with an existing Obsidian vault](obsidian.md) shows which
+links, tags, and attachments Wordcell reads. To learn note authoring and
+publishing without changing your existing vault, follow the remaining steps
+in a separate directory.
+
 ## Create the vault
 
 Choose a directory where you want the vault to live, then create `kb/` inside

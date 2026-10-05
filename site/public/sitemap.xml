@@ -36,6 +36,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://wordcell.io/compare/claude-mem</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://wordcell.io/migrate/supermemory</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -57,6 +62,18 @@
   </url>
   <url>
     <loc>https://wordcell.io/docs/agent-workflow</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://wordcell.io/docs/agent-handoffs</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://wordcell.io/docs/obsidian</loc>
+    <lastmod>2026-10-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -101,11 +118,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://wordcell.io/docs/agent-handoffs</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://wordcell.io/docs/reference</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -147,7 +159,7 @@
   </url>
   <url>
     <loc>https://wordcell.io/blog</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-10-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -165,7 +177,7 @@
   </url>
   <url>
     <loc>https://wordcell.io/blog/how-wordcell-uses-oh</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-10-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

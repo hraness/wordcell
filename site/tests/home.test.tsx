@@ -18,6 +18,7 @@ import CompareBasicMemory from "../app/compare/basic-memory/page";
 import CompareObsidian from "../app/compare/obsidian/page";
 import CompareMem0 from "../app/compare/mem0/page";
 import CompareSupermemory from "../app/compare/supermemory/page";
+import CompareClaudeMem from "../app/compare/claude-mem/page";
 import MigrateSupermemory from "../app/migrate/supermemory/page";
 import { locomoArms } from "../wordcell/oh-evidence";
 import { SETUP_PROMPT } from "../wordcell/setup-prompt";
@@ -34,6 +35,7 @@ async function publicRoutes(): Promise<React.JSX.Element[]> {
     <CompareObsidian key="compare-obsidian" />,
     <CompareMem0 key="compare-mem0" />,
     <CompareSupermemory key="compare-supermemory" />,
+    <CompareClaudeMem key="compare-claude-mem" />,
     <MigrateSupermemory key="migrate-supermemory" />,
     await DocPage({ params: Promise.resolve({ slug: "reference" }) }),
     await DocPage({ params: Promise.resolve({ slug: "overview" }) }),

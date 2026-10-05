@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
 import { publishedRelease } from "../app/publication";
-import { launchRoutes } from "../wordcell/launch-routes";
+import { launchRoutes, reviewPendingRoutes } from "../wordcell/launch-routes";
 
 const site = join(import.meta.dir, "..");
 
@@ -170,8 +170,8 @@ describe("built Wordcell site", () => {
       expect(intro).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
       expect(ohPost).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
       expect(ohPost).toContain('<link rel="canonical" href="https://wordcell.io/blog/how-wordcell-uses-oh"');
-      expect(ohPost).toContain("reviewed by Codex independent AI editorial review.");
-      expect(ohPost).toContain('data-reviewer-type="ai"');
+      expect(ohPost).toContain("reviewed by Ben Guo, a human editor.");
+      expect(ohPost).toContain('data-reviewer-type="human-editor"');
       expect(feedResponse.headers.get("content-type")).toContain("application/atom+xml");
       expect(feed).toContain("<id>https://wordcell.io/blog/introducing-wordcell</id>");
       expect(feed).toContain("<id>https://wordcell.io/blog/how-wordcell-uses-oh</id>");
@@ -200,6 +200,22 @@ describe("built Wordcell site", () => {
         expect(imageResponse.status).toBe(200);
         expect(imageResponse.headers.get("content-type")).toBe("image/png");
         await imageResponse.arrayBuffer();
+      }
+    } finally {
+      await stopBuiltSite(server);
+    }
+  }, 20_000);
+
+  test("serves comparison pages awaiting review with noindex and their canonical URL", async () => {
+    const server = await startBuiltSite();
+    try {
+      for (const path of reviewPendingRoutes) {
+        const response = await fetch(`${server.origin}${path}`, { redirect: "manual" });
+        expect(response.status).toBe(200);
+        const page = await response.text();
+        expect(page).toContain(`<link rel="canonical" href="https://wordcell.io${path}"`);
+        expect(page).toMatch(/<meta name="robots" content="[^"]*noindex/u);
+        expect(page).toContain(`<meta property="og:url" content="https://wordcell.io${path}"`);
       }
     } finally {
       await stopBuiltSite(server);

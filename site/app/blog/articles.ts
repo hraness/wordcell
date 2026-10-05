@@ -14,8 +14,8 @@ import {
   type ArticleSourceItem,
 } from "@hraness/design-kit";
 
-const WORDCELL_COMMIT = "7b6cb5e0d24a3f627e17f7d1bd699a52ab4c9d10";
-const OH_COMMIT = "73da154e7d16d6d3883b85110eaad30381df7a54";
+const WORDCELL_COMMIT = "72541e9cdec1aee29357cbb987f62723e11c85b0";
+const OH_COMMIT = "1055576b87c772247b4a217ee288b338f0656f62";
 
 // The commit that added /benchmarks, /compare/supermemory, and /migrate/supermemory (PR #137); the launch post pins its Wordcell sources there.
 const LAUNCH_COMMIT = "d87d4ecdd0a0b1351bc2b0d0f3cdf8de30c047dc";
@@ -42,9 +42,8 @@ export interface BlogArticle {
   readonly admission: ArticleAdmission;
 }
 
-const checked = "2026-09-24" as const;
+const checked = "2026-10-04" as const;
 const launchChecked = "2026-09-26" as const;
-const edited = "2026-09-26" as const;
 
 /** Every file and page the launch post cites, each opened again on launchChecked. Oh links match ohLinks in wordcell/oh-evidence.ts. */
 const launchSources = [
@@ -115,7 +114,7 @@ export const blogArticles = [
       owner: "Hraness",
       drafting: "ai-from-source",
       review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-01" },
-      humanReview: null,
+      humanReview: { reviewer: "Ben Guo", reviewerType: "human-editor", reviewedOn: "2026-10-04" },
       reassessOn: "2026-11-12",
       harmIfWrong: "A reader could expect automatic chat capture, semantic truth verification, or a custom type-system and application runtime that Wordcell does not provide.",
       refreshTriggers: [
@@ -133,11 +132,11 @@ export const blogArticles = [
     dek: "Wordcell stores your links as Oh records, so every graph answer carries a proof back to the Markdown files that support it.",
     eyebrow: "Integration",
     published: "2026-09-24",
-    updated: "2026-10-01",
+    updated: "2026-10-04",
     tags: ["wordcell", "oh", "markdown", "knowledge-graph", "proofs"],
     sources: [
-      { title: "Canonical encoder wrapper", href: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.ts", checkedOn: "2026-10-01" },
-      { title: "Encoder comparison checks", href: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.test.ts", checkedOn: "2026-10-01" },
+      { title: "Canonical encoder wrapper", href: wordcellSource("src/oh/canonical-rust.ts"), checkedOn: checked },
+      { title: "Encoder comparison checks", href: wordcellSource("src/oh/canonical-rust.test.ts"), checkedOn: checked },
       { title: "Query the derived graph", href: wordcellSource("docs/graph-authority.md"), checkedOn: checked },
       { title: "Oh adoption preparer", href: wordcellSource("src/oh-adoption.ts"), checkedOn: checked },
       { title: "Rust and TypeScript canonical encoder parity test", href: wordcellSource("src/oh/canonical-rust.test.ts"), checkedOn: checked },
@@ -149,7 +148,7 @@ export const blogArticles = [
       { title: "Oh and Wordcell", publisher: "Oh", href: ohSource("docs/wordcell.md"), checkedOn: checked },
       { title: "Canonical JSON and digests V1", publisher: "Oh", href: ohSource("spec/v1/canonical-json.md"), checkedOn: checked },
       { title: "Oh canonical Rust parity test", publisher: "Oh", href: ohSource("src/canonical-rust-parity.test.ts"), checkedOn: checked },
-      { title: "Oh holds its Rust encoder to the TypeScript reference byte for byte", publisher: "Oh", href: "https://oh.computer/blog/oh-rust-typescript-parity", checkedOn: edited },
+      { title: "Keeping record fingerprints consistent across languages", publisher: "Oh", href: "https://oh.computer/blog/oh-rust-typescript-parity", checkedOn: checked },
     ],
     admission: {
       href: "/blog/how-wordcell-uses-oh",
@@ -161,10 +160,11 @@ export const blogArticles = [
       nearestUrls: [
         { url: "https://wordcell.io/docs/graph-authority", distinction: "The reference lists every flag and limit; the post explains what a proof means to a reader checking an answer." },
         { url: "https://wordcell.io/blog/introducing-wordcell", distinction: "The introduction covers the whole product; this post covers only the graph and its proofs." },
+        { url: "https://oh.computer/blog/built-on-oh", distinction: "Oh's hub gives each product that uses Oh one entry; this post explains Wordcell's use in full." },
       ],
       sources: [
-        { title: "Canonical encoder wrapper", url: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.ts", checkedOn: "2026-10-01" },
-        { title: "Encoder comparison checks", url: "https://github.com/hraness/wordcell/blob/05783b08f1cf4d7df0d04a1f64db2eecd063c88a/src/oh/canonical-rust.test.ts", checkedOn: "2026-10-01" },
+        { title: "Canonical encoder wrapper", url: wordcellSource("src/oh/canonical-rust.ts"), checkedOn: checked },
+        { title: "Encoder comparison checks", url: wordcellSource("src/oh/canonical-rust.test.ts"), checkedOn: checked },
         { title: "Query the derived graph", url: wordcellSource("docs/graph-authority.md"), checkedOn: checked },
         { title: "Oh adoption preparer", url: wordcellSource("src/oh-adoption.ts"), checkedOn: checked },
         { title: "Rust and TypeScript canonical encoder parity test", url: wordcellSource("src/oh/canonical-rust.test.ts"), checkedOn: checked },
@@ -176,7 +176,7 @@ export const blogArticles = [
         { title: "Oh and Wordcell", url: ohSource("docs/wordcell.md"), checkedOn: checked },
         { title: "Canonical JSON and digests V1", url: ohSource("spec/v1/canonical-json.md"), checkedOn: checked },
         { title: "Oh canonical Rust parity test", url: ohSource("src/canonical-rust-parity.test.ts"), checkedOn: checked },
-        { title: "Oh holds its Rust encoder to the TypeScript reference byte for byte", url: "https://oh.computer/blog/oh-rust-typescript-parity", checkedOn: edited },
+        { title: "Keeping record fingerprints consistent across languages", url: "https://oh.computer/blog/oh-rust-typescript-parity", checkedOn: checked },
       ],
       observations: [
         "Verifying the WebAssembly artifact and comparing encoded values address separate questions: which code loaded and how it behaved on an input.",
@@ -192,9 +192,9 @@ export const blogArticles = [
       },
       owner: "Hraness",
       drafting: "ai-from-source",
-      review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-01" },
-      humanReview: null,
-      reassessOn: "2026-11-12",
+      review: { reviewer: "Ben Guo", reviewerType: "human-editor", reviewedOn: "2026-10-04" },
+      humanReview: { reviewer: "Ben Guo", reviewerType: "human-editor", reviewedOn: "2026-10-04" },
+      reassessOn: "2026-11-15",
       harmIfWrong: "A reader could treat a graph proof as proof that a note is correct, or believe Wordcell keeps agent memory in Oh.",
       refreshTriggers: [
         "runtime:kb:oh-computer:answers-graph-queries-with is registered, changes its detail sentence, or is removed",
@@ -202,7 +202,7 @@ export const blogArticles = [
         "Change to the named graph programs, graph limits (depth, notes, facts, MiB), truncation exit code, or graphVerifyResult behavior",
         "Change to which Wordcell paths use Oh's Rust canonical encoder or Rust query engine",
         "Change to createOhAdoptionPreparerV1 output or behavior in src/oh-adoption.ts",
-        "Wordcell or Oh rename, or the oh.computer parity post or built-on-Oh hub goes live",
+        "Wordcell or Oh rename, or a change to the oh.computer parity post or the Built on Oh hub",
       ],
     },
   },
@@ -243,7 +243,7 @@ export const blogArticles = [
       owner: "Hraness",
       drafting: "ai-from-source",
       review: { reviewer: "Codex independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-01" },
-      humanReview: null,
+      humanReview: { reviewer: "Ben Guo", reviewerType: "human-editor", reviewedOn: "2026-10-04" },
       reassessOn: "2026-11-12",
       harmIfWrong: "A reader could treat scientific-abstract ranking as a guarantee for their own notes or switch from Supermemory expecting hosted extraction and connectors.",
       refreshTriggers: [
