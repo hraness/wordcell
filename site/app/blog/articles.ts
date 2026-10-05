@@ -76,7 +76,63 @@ const introductionSources = [
   { title: "how to build agentic systems for knowledge work", publisher: "Heinrich", href: "https://x.com/arscontexta/status/2105397004226494487", checkedOn: "2026-10-01" },
 ] as const satisfies readonly ArticleSourceItem[];
 
+const boundaryChecked = "2026-10-05" as const;
+const boundarySources = [
+  { title: "Vault scan, catalog mode, and marker parsing", href: wordcellSource("src/vault.ts"), checkedOn: boundaryChecked },
+  { title: "Managed and authored catalogs in the design guide", href: wordcellSource("docs/design.md"), checkedOn: boundaryChecked },
+  { title: "Command reference: refresh, check, catalog, kb_catalog", href: wordcellSource("docs/reference.md"), checkedOn: boundaryChecked },
+  { title: "Derived views are replaceable in the agent-memory guide", href: wordcellSource("docs/agent-memory.md"), checkedOn: boundaryChecked },
+] as const satisfies readonly ArticleSourceItem[];
+
 export const blogArticles = [
+  {
+    slug: "managed-or-authored",
+    title: "The marked region: managed and authored vaults",
+    dek: "A managed vault gives the tool one marked block in index.md; an authored vault gives it none. Everything outside the markers stays yours, and malformed markers fail closed.",
+    eyebrow: "Explainer",
+    published: "2026-10-05",
+    tags: ["wordcell", "markdown", "knowledge-base", "agent-memory", "obsidian"],
+    sources: boundarySources,
+    admission: {
+      href: "/blog/managed-or-authored",
+      lifecycle: "indexable",
+      readerJob: "Decide how much of your vault a maintenance tool may write, and see the mechanism that keeps generated catalogs, derived views, and advisory candidates out of authored prose.",
+      nonObviousAnswer: "The whole contract is one marked block in index.md: refresh rebuilds it atomically, everything outside the markers is the author's, malformed or duplicated markers fail closed instead of guessing a region, and kb_catalog: authored removes even that block while wordcell catalog still renders a disposable inventory.",
+      originalContribution: "Explains the managed/authored split, the fail-closed marker rule, advisory-only percolation, and the --no-catalog lane gate from the design guide, reference, and src/vault.ts, framed as a write-permission question rather than a feature list.",
+      hostFit: "The product's own explanation of its authored-vs-managed write boundary, on the product's own host; complements the intro's product tour and the Oh post's graph proofs.",
+      nearestUrls: [
+        { url: "https://wordcell.io/blog/introducing-wordcell", distinction: "The introduction covers the product's purpose; this post covers the write boundary that keeps the vault yours." },
+        { url: "https://wordcell.io/blog/free-local-agent-memory", distinction: "The memory post covers MCP access and import; this post covers which bytes tools may change." },
+        { url: "https://wordcell.io/docs/reference", distinction: "The reference lists the flags; this post explains the policy they enforce." },
+      ],
+      sources: boundarySources.map(({ title, href, checkedOn }) => ({ title, url: href, checkedOn })),
+      observations: [
+        "The marked-block region, atomic refresh, authored-catalog frontmatter, fail-closed markers, and --no-catalog lane gate are documented in docs/design.md and docs/reference.md and implemented in src/vault.ts's CatalogMode handling.",
+        "Percolation candidates (title, alias, inbox, relationships) are advisory until an author or agent promotes them; the post says nothing becomes an authored edge silently.",
+        "The replaceable-views claim comes from docs/agent-memory.md: the catalog, QMD database, backlink view, graph traversal, and bounded Git index are derived and replaceable.",
+      ],
+      scores: {
+        readerUtility: 2,
+        originalEvidence: 1,
+        factualConfidence: 2,
+        hostFit: 2,
+        voiceIntegrity: 2,
+        maintenanceValue: 2,
+      },
+      owner: "Hraness",
+      drafting: "ai-from-source",
+      review: { reviewer: "Devin (SWE-2 Max model) independent AI editorial review", reviewerType: "ai", reviewedOn: "2026-10-05" },
+      humanReview: { reviewer: "Ben Guo", reviewerType: "human-editor", reviewedOn: "2026-10-05" },
+      reassessOn: "2026-11-05",
+      harmIfWrong: "A reader could grant a tool wider write scope than the marked region provides, or believe an authored vault blocks refresh-based features it does not.",
+      refreshTriggers: [
+        "Change to CatalogMode, kb_catalog parsing, or marker handling in src/vault.ts",
+        "Change to refresh, check --no-catalog, or catalog command behavior in docs/reference.md",
+        "Change to percolation candidate handling or advisory rules in docs/design.md",
+        "Wordcell rename",
+      ],
+    },
+  },
   {
     slug: "introducing-wordcell",
     title: "Introducing Wordcell",
