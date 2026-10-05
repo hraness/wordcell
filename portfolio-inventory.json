@@ -39,13 +39,6 @@
       "specifier": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0",
       "to": "@hraness/support-foundation",
       "sourceRepository": "hraness/support-foundation"
-    },
-    {
-      "from": "@hraness/wordcell",
-      "scope": "runtime",
-      "specifier": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c",
-      "to": "@tobilu/qmd",
-      "sourceRepository": "hraness/qmd"
     }
   ],
   "deployments": [],
