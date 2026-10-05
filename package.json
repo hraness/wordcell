@@ -506,7 +506,7 @@
   "dependencies": {
     "@hraness/oh": "https://github.com/hraness/oh/releases/download/v0.12.0/hraness-oh-0.12.0.tgz",
     "@steipete/sweet-cookie": "0.4.3",
-    "@tobilu/qmd": "git+https://github.com/hraness/qmd.git#aa993dceb3ef8cfb71d470554ca437570f5a2b3c",
+    "@tobilu/qmd": "https://github.com/hraness/qmd/releases/download/v2.8.3-hraness.1/hraness-qmd-2.8.3-hraness.1.tgz",
     "agent-browser": "0.32.3",
     "defuddle": "0.19.1",
     "yaml": "^2.9.0",
