@@ -1,0 +1,30 @@
+WEBVTT
+
+act-1
+00:00:00.250 --> 00:00:04.088
+Your coding agent doesn't know why the code is the way it is.
+You: Make the parser retry five times before failing.
+Agent: Done. I changed the limit from three to five.
+
+act-2
+00:00:04.388 --> 00:00:08.088
+Wordcell
+Give your coding agent the reasons behind the code.
+
+act-3
+00:00:08.388 --> 00:00:12.638
+Keep the decision and its reason in a Markdown file you own.
+
+act-4
+00:00:12.938 --> 00:00:17.538
+Before the next edit, your agent finds the reason, even in different words.
+
+act-5
+00:00:17.838 --> 00:00:22.078
+Keep using your agent, your editor and Git.
+
+end
+00:00:22.428 --> 00:00:28.400
+Ask your agent: “Install Wordcell from wordcell.io”
+Free and MIT licensed · Latest release: v0.26.0
+wordcell.io

@@ -1,0 +1,26 @@
+{
+  "url": "https://wordcell.io",
+  "readOn": "2026-10-04",
+  "palette": {
+    "background": "#282828",
+    "foreground": "#f0e5c7",
+    "muted": "#c7baa3",
+    "surface": "#1d2021",
+    "surfaceRaised": "#3c3836",
+    "primary": "#a9c1b8",
+    "primarySoft": "#333735",
+    "primaryForeground": "#282828"
+  },
+  "used": {
+    "background": "--background",
+    "foreground": "--foreground",
+    "muted": "--muted",
+    "surface": "--surface",
+    "surfaceRaised": "--surface-raised",
+    "primary": "--primary",
+    "primarySoft": "--primary-soft",
+    "primaryForeground": "--primary-foreground"
+  },
+  "body": "#282828",
+  "html": "#282828"
+}
