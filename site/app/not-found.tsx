@@ -25,6 +25,7 @@ const launchLabels: Readonly<Record<LaunchRoute, string>> = {
   "/compare/obsidian": "Wordcell and Obsidian compared",
   "/compare/mem0": "Wordcell and Mem0 compared",
   "/compare/supermemory": "Wordcell and Supermemory compared",
+  "/compare/claude-mem": "Wordcell and Claude-Mem compared",
   "/migrate/supermemory": "Migrate from Supermemory to Wordcell",
 };
 

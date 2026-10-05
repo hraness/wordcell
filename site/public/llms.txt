@@ -44,6 +44,10 @@ When to use this site:
   Where memory lives, how memories form, cost with Supermemory's pricing
   checked on September 26, 2026, connectors, compliance, agent access, and
   when to choose each.
+- [Wordcell vs Claude-Mem: notes in Git or captured sessions](https://wordcell.io/compare/claude-mem):
+  How memory forms, what loads at session start, where it is stored, what a
+  fresh clone gets, and model use, with Claude-Mem 13.30.0 and its
+  documentation checked on October 4, 2026.
 - [Migrate from Supermemory to Wordcell](https://wordcell.io/migrate/supermemory):
   The install, export, import, and verify steps from the migration guide, with
   a prompt that connects a local agent.

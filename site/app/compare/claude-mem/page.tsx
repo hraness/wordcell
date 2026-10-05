@@ -55,17 +55,17 @@ const differences: readonly Difference[] = [
   },
   {
     topic: "Fresh clone or another machine",
-    claudeMem: <>Memory is filed under the repository folder’s name, or under its <code>org/repo</code> remote with <a href={claudeMemPages.configuration}><code>CLAUDE_MEM_PROJECT_NAME_SOURCE=git-remote</code></a>. Another machine needs an <a href={claudeMemPages.exportImport}>export and import</a> or <a href={claudeMemPages.cloudSync}>cloud sync</a>, which uploads observations, summaries, and prompts to cmem.ai.</>,
+    claudeMem: <>Memory is filed under the repository folder’s name, or under its <code>org/repo</code> remote with <a href={claudeMemPages.configuration}><code>CLAUDE_MEM_PROJECT_NAME_SOURCE=git-remote</code></a>. Another machine needs an <a href={claudeMemPages.exportImport}>export and import</a> or <a href={claudeMemPages.cloudSync}>cloud sync</a>, which uploads observations, summaries, and prompts to cmem.ai. Its opt-in <a href={claudeMemPages.folderContext}>folder <code>CLAUDE.md</code> files</a>, off by default, write a timeline of recent activity into the repository’s subfolders.</>,
     wordcell: "A committed vault arrives with every clone, and Git history shows who changed each note.",
   },
   {
     topic: "Model use",
-    claudeMem: <>A model processes every captured session: your Claude plan, your own OpenRouter or Gemini key, your Codex sign-in, or the CMEM Pro service that the <a href={claudeMemPages.installation}>interactive installer</a> selects first and offers free for up to 14 days.</>,
+    claudeMem: <>A model processes every captured session: your Claude plan, your own OpenRouter or Gemini key, your Codex sign-in, an <a href={claudeMemPages.openaiCompatible}>OpenAI-compatible endpoint</a> such as a local Ollama or LM Studio server, or the CMEM Pro service that the <a href={claudeMemPages.installation}>interactive installer</a> selects first and offers free for up to 14 days.</>,
     wordcell: <>Writing notes and exact search need no model. Semantic search runs a local model after a one-time download, and <a href="/docs/reranking">hosted reranking</a> is optional and paid.</>,
   },
   {
     topic: "Agents",
-    claudeMem: <><a href={claudeMemPages.platforms}>Installers</a> for Claude Code, Codex CLI, Cursor, Windsurf, OpenCode, and others, and four <a href={claudeMemPages.searchTools}>MCP search tools</a>. Codex’s session start includes Claude Code’s observations only with <code>CLAUDE_MEM_SESSION_START_INCLUDE_ALL_SOURCES</code> set.</>,
+    claudeMem: <><a href={claudeMemPages.platforms}>Installers</a> for Claude Code, Codex CLI, Cursor, Windsurf, OpenCode, and others, and <a href={claudeMemPages.searchTools}>MCP tools that search its memory</a>. A <a href={claudeMemPages.mcpServer}>search</a> covers every agent’s observations unless the call names one platform. Codex’s session start includes Claude Code’s observations only with <code>CLAUDE_MEM_SESSION_START_INCLUDE_ALL_SOURCES</code> set.</>,
     wordcell: <>Any MCP client that starts a local server, including Claude Code, Codex, and Cursor; see <a href="/docs/agent-handoffs">Connect Wordcell to your coding agent</a>. The CLI works without MCP.</>,
   },
   {
@@ -111,10 +111,10 @@ export default function CompareClaudeMem() {
               {"label": "Kept in", "values": ["Your repository or a folder you choose", "~/.claude-mem on one machine"]},
               {"label": "After a fresh clone", "values": ["The notes come with it", {"status": "partial", "label": "On the same machine", "detail": "Same folder name by default"}]},
               {"label": "Model calls to save memory", "values": ["None", "Every captured session"]},
-              {"label": "Codex sees Claude Code’s memory", "values": [true, {"status": "optional", "label": "With a setting"}]},
+              {"label": "Codex can search Claude Code’s memory", "values": [true, {"status": "yes", "label": "Yes", "detail": "Session start needs a setting"}]},
               {"label": "Software cost", "values": ["Free · MIT", "Free · Apache-2.0"]},
           ]}
-          note={`Claude-Mem’s cells come from its documentation and its ${claudeMemVersion} source, checked ${checkedOn}; it was not run for this page. Its memory model runs on your Claude plan, your Codex sign-in, your own key, or its paid CMEM Pro service. Another machine gets Claude-Mem’s memory only through an export or cloud sync.`}
+          note={`Claude-Mem’s cells come from its documentation and its ${claudeMemVersion} source, checked ${checkedOn}; it was not run for this page. Its memory model runs on your Claude plan, your Codex sign-in, your own key, a local model server, or its paid CMEM Pro service. Another machine gets Claude-Mem’s database only through an export or cloud sync.`}
         />
         <details className="wordcell-comparison-sources">
           <summary>Sources and details</summary>
@@ -134,19 +134,19 @@ export default function CompareClaudeMem() {
         heading="Where the text goes"
         headingId="flow-title"
         id="flow"
-        summary="Each tool sends your work to a different place, and a different account pays for the processing."
+        summary="The two tools keep your work in different places, and only Claude-Mem sends it to a model to save it."
       >
         <h3 className="wordcell-limits-title" id="flow-claude-mem">Claude-Mem</h3>
         <ol className="wordcell-limits">
           <li>Hooks in Claude Code, or in another agent it supports, send each tool call and its result to a local worker on your machine.</li>
-          <li>The worker sends them to the memory model you chose, such as Claude on your plan, your own API key, or CMEM Pro on cmem.ai.</li>
+          <li>The worker sends them to the memory model you chose, such as Claude on your plan, your own API key, a local model server, or CMEM Pro on cmem.ai.</li>
           <li>The condensed observations land in <code>~/.claude-mem</code>, and the next session starts with the recent ones in its context.</li>
         </ol>
         <h3 className="wordcell-limits-title" id="flow-wordcell">Wordcell</h3>
         <ol className="wordcell-limits">
           <li>You or your agent write a note into the vault, a folder of Markdown on your machine.</li>
           <li>You commit it, and the note travels wherever the repository goes.</li>
-          <li>In the next session, the agent’s client starts <code>wordcell mcp</code> on your machine and the agent searches the files. No model is involved unless you turn on semantic search or reranking.</li>
+          <li>In the next session, the agent’s client starts <code>wordcell mcp</code> on your machine and the agent searches the files. Exact search uses no model. The default hybrid search also runs a local embedding model, downloaded on first use, and hosted reranking runs only when you ask for it.</li>
         </ol>
       </MarketingSection>
 
@@ -160,7 +160,7 @@ export default function CompareClaudeMem() {
         <ul className="wordcell-limits">
           <li>You want memory to build up without asking the agent to save anything.</li>
           <li>You work in one repository on one machine and want recent work loaded into each new session.</li>
-          <li>You accept a model reading every session, on your Claude plan, your own key, or its paid service.</li>
+          <li>You accept a model reading every session, on your Claude plan, your own key, a local model server, or its paid service.</li>
           <li>You want the same automatic capture in several agents it has installers for, such as Claude Code, Codex, and Cursor.</li>
         </ul>
         <h3 className="wordcell-limits-title" id="choose-wordcell">Choose Wordcell when</h3>
