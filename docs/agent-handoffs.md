@@ -233,6 +233,9 @@ results to 25,000 tokens by default. Set `MAX_MCP_OUTPUT_TOKENS` before you
 start `claude` to raise the limit; a result over the limit is saved to a file
 that Claude reads when it needs to, according to its
 [output limits](https://code.claude.com/docs/en/mcp#mcp-output-limits-and-warnings).
+Claude Code also saves any text result longer than 50,000 characters to a
+file, whatever `MAX_MCP_OUTPUT_TOKENS` says, so the two largest results in the
+table reach Claude as a file path.
 Codex takes a per-tool `output_token_limit` in a table such as
 `[mcp_servers.wordcell.tools.search]` in `config.toml`, as its
 [MCP guide](https://developers.openai.com/codex/mcp) describes. Token counts
