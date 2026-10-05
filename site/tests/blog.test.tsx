@@ -50,10 +50,22 @@ describe("Wordcell blog", () => {
     for (const admission of blogAdmissions) {
       // A post without a review stays quarantined; the drafting run never records itself as the reviewer.
       if (admission.review === null) expect(admission.lifecycle, admission.href).toBe("quarantined");
-      else expect(admission.review.reviewerType).toBe("ai");
-      expect(admission.humanReview).toBeNull();
+      // Ben Guo reviewed every post as a human editor. A post he edited carries his review;
+      // an unchanged post keeps its independent AI review, which must say it is AI.
+      else if (admission.review.reviewerType === "ai") expect(admission.review.reviewer).toMatch(/\bAI\b/u);
+      else expect(admission.review as unknown).toEqual(admission.humanReview);
+      expect(admission.humanReview).toEqual({ reviewer: "Ben Guo", reviewerType: "human-editor", reviewedOn: "2026-10-04" });
     }
     expect(unreviewed.map((article) => article.slug)).toEqual([]);
+  });
+
+  test("an AI review that claims to be human is rejected", () => {
+    const [first] = blogAdmissions;
+    if (first === undefined) throw new Error("The blog has no posts.");
+    const aiNamedHuman = { reviewer: "Codex AI human editorial review", reviewerType: "ai", reviewedOn: "2026-10-04" } as const;
+    expect(() => assertArticleAdmissions([{ ...first, review: aiNamedHuman }])).toThrow();
+    expect(() => assertArticleAdmissions([{ ...first, humanReview: aiNamedHuman }])).toThrow();
+    expect(() => articleProvenanceSentence({ drafting: "ai-from-source", review: aiNamedHuman })).toThrow();
   });
 
   test("the registry, rendered bodies, and static routes cover the same posts", () => {
@@ -70,15 +82,19 @@ describe("Wordcell blog", () => {
     for (const article of blogArticles) {
       const html = await renderPost(article.slug);
       const sentence = articleProvenanceSentence(articleProvenanceFromAdmission(article.admission));
+      const review = article.admission.review;
       expect(sentence, article.slug).toBe(
-        article.admission.review === null
+        review === null
           ? "Drafted with AI from the source code. It has not been reviewed yet."
-          : `Drafted with AI from the source code and reviewed by ${article.admission.review.reviewer}.`,
+          : review.reviewerType === "human-editor"
+            ? `Drafted with AI from the source code and reviewed by ${review.reviewer}, a human editor.`
+            : `Drafted with AI from the source code and reviewed by ${review.reviewer}.`,
       );
       expect(html).toContain(sentence);
       expect(html).toContain("By");
       expect(html).toContain("Hraness");
-      expect(html).not.toMatch(/human/iu);
+      // Only a recorded human-editor review may call itself human.
+      if (review?.reviewerType !== "human-editor") expect(html).not.toMatch(/human/iu);
       expect(html).toContain('"@type":"BlogPosting"');
       expect(html).toContain(`https://wordcell.io/blog/${article.slug}`);
     }

@@ -4,7 +4,7 @@ The Markdown files stay the record. The graph is a copy Wordcell can delete and 
 
 ## What Oh is
 
-Oh is a memory framework that applications embed as a library. It stores typed records, derives new facts from rules, and returns each derived answer with the chain of facts and rules that produced it. Wordcell uses the part that stores records and answers graph questions. There is no Oh account to create and no service to run. Wordcell pins one released version of Oh and upgrades only by changing that pin.
+[Oh](https://oh.computer) is a memory framework that applications embed as a library. It stores typed records, derives new facts from rules, and returns each derived answer with the chain of facts and rules that produced it. Wordcell uses the part that stores records and answers graph questions. There is no Oh account to create and no service to run. Wordcell pins one released version of Oh and upgrades only by changing that pin.
 
 Oh writes records in a defined text form, called canonical JSON, and identifies those contents with a SHA-256 fingerprint. Programs that follow the same encoding rules produce the same bytes and fingerprint, whatever order they assembled the object's fields in. A proof uses that fingerprint to identify the record it depends on.
 
@@ -76,3 +76,5 @@ Wordcell does not keep an agent's memory in Oh. Its SDK can turn selected record
 Wordcell runs named graph queries; there is no free-form query language. Absences, orphan notes, and counts are computed by Wordcell from the complete snapshot, not proved by Oh. A query that exhausts its work budget fails. A result clipped by its row or proof limit is marked as truncated, so the caller can distinguish it from a complete answer. The [graph reference](/docs/graph-authority) lists the supported queries, limits, and exit codes.
 
 Wordcell's search does not use Oh. Exact search and optional local search by meaning are Wordcell's own, so Oh's memory benchmarks say nothing about Wordcell's search or answers.
+
+[Built on Oh](https://oh.computer/blog/built-on-oh) lists the Hraness products that use Oh, and [Introducing Wordcell](/blog/introducing-wordcell) covers the rest of Wordcell.
