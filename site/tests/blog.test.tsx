@@ -275,7 +275,7 @@ describe("Wordcell blog", () => {
   });
 
   test("related products come from the pinned portfolio facts", () => {
-    // Design-kit v0.35.0 carries Wordcell's runtime relation to Oh and xcb's
+    // Design-kit v0.41.1 carries Wordcell's runtime relation to Oh and xcb's
     // relation to Wordcell. Posts show one card per relation: the product's
     // mark, name, and one-line description.
     expect(portfolioDigest).toBe("sha256:2b479271b1d93256390327d29e63d23add0595150cae675eb99635fac8dc6973");

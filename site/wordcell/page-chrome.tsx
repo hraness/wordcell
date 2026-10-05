@@ -42,7 +42,7 @@ export function WordcellPageChrome({ path, action, children }: Readonly<{ path: 
       <a className="skip-link" href="#main">Skip to content</a>
       <WordcellSiteHeader action={action} />
 
-      <main id="main" tabIndex={-1}>
+      <main id="main" tabIndex={-1} data-hraness-landscape="page">
         <MarketingPage>{children}</MarketingPage>
       </main>
 
