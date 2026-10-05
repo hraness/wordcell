@@ -61,6 +61,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://wordcell.io/docs/agent-handoffs</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://wordcell.io/docs/obsidian</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://wordcell.io/docs/capture</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -99,11 +111,6 @@
     <loc>https://wordcell.io/docs/sync</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://wordcell.io/docs/agent-handoffs</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://wordcell.io/docs/reference</loc>

@@ -5,6 +5,11 @@ export const launchRoutes = ["/benchmarks", "/compare/basic-memory", "/compare/o
 
 export type LaunchRoute = (typeof launchRoutes)[number];
 
+/** Comparison pages served with noindex while their review record in
+ * comparison-admissions.ts is pending. They stay out of the sitemap, llms.txt,
+ * and the home page links; when a review admits one, move it to launchRoutes. */
+export const reviewPendingRoutes = ["/compare/claude-mem"] as const;
+
 export function isLaunchRoute(path: string): path is LaunchRoute {
   return (launchRoutes as readonly string[]).includes(path);
 }

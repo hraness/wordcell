@@ -75,6 +75,11 @@ export const socialPages = {
     headline: routeTitles.compareSupermemory.card,
     path: "/compare/supermemory",
   },
+  compareClaudeMem: {
+    description: "Sessions captured for you, or notes you keep in Git.",
+    headline: routeTitles.compareClaudeMem.card,
+    path: "/compare/claude-mem",
+  },
   migrateSupermemory: {
     description: "Export, import as Markdown, and verify.",
     eyebrow: "Guide",

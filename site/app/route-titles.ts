@@ -14,5 +14,6 @@ export const routeTitles = {
   compareObsidian: { title: "Wordcell vs Obsidian: coding-agent memory and a Markdown editor", card: "Wordcell vs Obsidian" },
   compareMem0: { title: "Wordcell vs Mem0: agent notes or per-user app memory", card: "Wordcell vs Mem0" },
   compareSupermemory: { title: "Wordcell vs Supermemory: files or a hosted memory API", card: "Wordcell vs Supermemory" },
+  compareClaudeMem: { title: "Wordcell vs Claude-Mem: notes in Git or captured sessions", card: "Wordcell vs Claude-Mem" },
   migrateSupermemory: { title: "Migrate from Supermemory to Wordcell", card: "Migrate from Supermemory" },
 } as const satisfies Record<string, { readonly title: string; readonly card: string }>;
