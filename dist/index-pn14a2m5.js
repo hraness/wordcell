@@ -1,13 +1,13 @@
 // @bun
 import {
   createHostedReranker
-} from "./index-1nemkjr9.js";
+} from "./index-pbz3qw1s.js";
 
 // src/rerank-clef.ts
 var CLEF_MODELS = ["clef", "clef-flash"];
 var DEFAULT_CLEF_MODEL = "clef";
 function clefEndpoint(accountId, model = DEFAULT_CLEF_MODEL) {
-  if (!/^[a-f0-9]{32}$/u.test(accountId) || !CLEF_MODELS.includes(model)) {
+  if (typeof accountId !== "string" || !/^[a-f0-9]{32}$/u.test(accountId) || !CLEF_MODELS.includes(model)) {
     throw new Error("Invalid Cloudflare Clef account or model.");
   }
   return `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/cloudflare/${model}`;
@@ -24,7 +24,7 @@ function createClefReranker(options = {}) {
   const environment = options.environment ?? process.env;
   const accountId = Object.hasOwn(environment, "CLOUDFLARE_ACCOUNT_ID") ? environment["CLOUDFLARE_ACCOUNT_ID"] : undefined;
   const apiKey = Object.hasOwn(environment, "CLOUDFLARE_API_TOKEN") ? environment["CLOUDFLARE_API_TOKEN"] : Object.hasOwn(environment, "CLOUDFLARE_AUTH_TOKEN") ? environment["CLOUDFLARE_AUTH_TOKEN"] : undefined;
-  const model = options.model ?? DEFAULT_CLEF_MODEL;
+  const model = options.model === undefined ? DEFAULT_CLEF_MODEL : options.model;
   let endpoint;
   try {
     if (accountId !== undefined)

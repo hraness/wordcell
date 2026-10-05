@@ -7,14 +7,14 @@ const packagePrefix = "package/";
 const maximumTarBytes = 6_950_000;
 const ustarSignature = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00, 0x30, 0x30]);
 
-// 0.26.0 ships two lazy bin shims and the existing release verifier for updates:
-// measured npm package 6,365,761 unpacked bytes (1,435,338 compressed, 299 files).
+// The Clef provider migration ships src/rerank-clef.ts and dist/rerank-clef.js:
+// measured npm package 6,385,735 unpacked bytes (1,439,073 compressed, 302 files).
 // Preserve the compressed/file bounds and the existing 450 KB tar overhead cap.
 export const maximumUnpackedBytes = 6_500_000;
 
 const packageBudget = Object.freeze({
   entryCount: { min: 190, max: 420 },
-  fileCount: { min: 190, max: 300 },
+  fileCount: { min: 190, max: 306 },
   packedBytes: { min: 950_000, max: 1_450_000 },
   unpackedBytes: { min: 4_500_000, max: maximumUnpackedBytes },
 });

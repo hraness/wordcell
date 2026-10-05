@@ -4,8 +4,8 @@ import {
   DEFAULT_CLEF_MODEL,
   clefEndpoint,
   createClefReranker
-} from "./index-v0ejwj2e.js";
-import"./index-1nemkjr9.js";
+} from "./index-pn14a2m5.js";
+import"./index-pbz3qw1s.js";
 import"./index-j70m75wd.js";
 import"./index-z1w83f81.js";
 export {

@@ -53,10 +53,10 @@ import {
 } from "./index-23z4zxgg.js";
 import {
   createClefReranker
-} from "./index-v0ejwj2e.js";
+} from "./index-pn14a2m5.js";
 import {
   createTypeSafeReranker
-} from "./index-1nemkjr9.js";
+} from "./index-pbz3qw1s.js";
 import {
   MAX_SOURCE_INBOX_PREFIXES,
   MAX_SOURCE_INBOX_RESULTS,
@@ -3585,37 +3585,8 @@ async function createCliTypeSafeReranker(environment = process.env, homeDirector
     await handle?.close();
   }
 }
-async function createCliClefReranker(environment = process.env, homeDirectory = homedir(), model = "clef") {
-  const accountId = Object.hasOwn(environment, "CLOUDFLARE_ACCOUNT_ID") ? environment["CLOUDFLARE_ACCOUNT_ID"] : undefined;
-  if (accountId === undefined || !/^[a-f0-9]{32}$/u.test(accountId) || Object.hasOwn(environment, "CLOUDFLARE_API_TOKEN") || Object.hasOwn(environment, "CLOUDFLARE_AUTH_TOKEN")) {
-    return createClefReranker({ environment, model });
-  }
-  const explicitFile = environment["CLOUDFLARE_API_TOKEN_FILE"];
-  const configDirectory = environment["XDG_CONFIG_HOME"];
-  if (explicitFile !== undefined && !isAbsolute2(explicitFile) || configDirectory !== undefined && configDirectory !== "" && !isAbsolute2(configDirectory)) {
-    return unavailable("Cloudflare credential file configuration requires absolute paths.", "clef");
-  }
-  const path = explicitFile ?? join4(configDirectory || join4(homeDirectory, ".config"), "wordcell", "cloudflare-api-token");
-  let handle;
-  try {
-    handle = await open2(path, constants2.O_RDONLY | constants2.O_NOFOLLOW | constants2.O_NONBLOCK);
-    const metadata = await handle.stat();
-    const uid = process.getuid?.();
-    if (!metadata.isFile() || metadata.nlink !== 1 || metadata.size < 1 || metadata.size > 514 || process.platform !== "win32" && ((metadata.mode & 63) !== 0 || metadata.uid !== uid)) {
-      return unavailable("Cloudflare credential file must be an owner-only regular file containing one API token.", "clef");
-    }
-    const bytes = Buffer.alloc(515);
-    const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
-    const token = bytes.subarray(0, bytesRead).toString("utf8").replace(/\r?\n$/u, "");
-    if (!/^[\x21-\x7e]{1,512}$/u.test(token)) {
-      return unavailable("Cloudflare credential file must contain one valid API token.", "clef");
-    }
-    return createClefReranker({ environment: { CLOUDFLARE_ACCOUNT_ID: accountId, CLOUDFLARE_API_TOKEN: token }, model });
-  } catch {
-    return unavailable("Cloudflare credentials are unavailable; set CLOUDFLARE_API_TOKEN or an owner-only CLOUDFLARE_API_TOKEN_FILE.", "clef");
-  } finally {
-    await handle?.close();
-  }
+async function createCliClefReranker(environment = process.env, _homeDirectory = homedir(), model = "clef") {
+  return createClefReranker({ environment, model });
 }
 
 // src/cli-program.ts

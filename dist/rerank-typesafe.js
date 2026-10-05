@@ -4,7 +4,7 @@ import {
   DEFAULT_SYSTEMONE_MODEL,
   createHostedReranker,
   createTypeSafeReranker
-} from "./index-1nemkjr9.js";
+} from "./index-pbz3qw1s.js";
 import"./index-j70m75wd.js";
 import"./index-z1w83f81.js";
 export {

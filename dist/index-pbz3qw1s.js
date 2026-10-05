@@ -144,7 +144,7 @@ async function mapWithConcurrency(items, concurrency, operation) {
   return results;
 }
 function validApiKey(value) {
-  return value !== undefined && /^[\x21-\x7e]{1,512}$/u.test(value);
+  return typeof value === "string" && /^[\x21-\x7e]{1,512}$/u.test(value);
 }
 function boundedPositiveInteger(value, fallback, maximum) {
   const resolved = value ?? fallback;
