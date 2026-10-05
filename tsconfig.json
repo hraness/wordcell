@@ -114,6 +114,9 @@
       "@hraness/wordcell/query": [
         "./src/query.ts"
       ],
+      "@hraness/wordcell/rerank-clef": [
+        "./src/rerank-clef.ts"
+      ],
       "@hraness/wordcell/repository-memory": [
         "./src/repository-memory.ts"
       ],

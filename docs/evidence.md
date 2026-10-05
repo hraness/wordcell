@@ -150,9 +150,9 @@ selector finds matching words and does not judge whether an answer exists.
 
 ### Reranking with passages instead of snippets
 
-Wordcell's optional reranker still receives snippets. A comparison with
-TypeSafe's `jev-1.13.0` model scored the same 95 candidate notes across 20
-questions twice, changing only the candidate text. The 20 are the 16 above plus
+Wordcell's optional reranker receives snippets. A historical September 27,
+2026 comparison with TypeSafe's `jev-1.13.0` model scored the same 95 candidate
+notes across 20 questions twice, changing only the candidate text. The 20 are the 16 above plus
 four answerable questions from an earlier pilot. Both arms put the answer
 note first for 14 of 16 answerable questions: passages fixed one ranking and
 broke another. All 190 requests succeeded, with 51,679 input tokens for
@@ -209,8 +209,9 @@ claimed here.
 
 [Oh](https://oh.computer) backs Wordcell's named graph queries and source proofs.
 Wordcell keeps Markdown and Git authoritative and builds a disposable projection
-for those queries. Its exact search, optional QMD search, and optional hosted
-Jev reranking follow separate retrieval paths.
+for those queries. Its exact search and optional QMD search follow separate
+retrieval paths. The source version also includes optional hosted Cloudflare
+Clef reranking; see [setup and release availability](reranking.md).
 
 Oh's conversation-memory benchmarks evaluate its own memory-retrieval API,
 reader models, and evaluation protocols. Those scores do not transfer to a
@@ -219,7 +220,8 @@ Wordcell vault merely because it uses the same library. The
 LongMemEval-S study, its LoCoMo run, and its smaller pilot with Supermemory as
 Oh's results, each with its limits. Wordcell's
 [SciFact study](reranking.md#evidence-and-limits) compares exact search with
-hosted Jev reranking on the same public queries and candidate windows. It
+hosted Jev reranking on the same public queries and candidate windows in
+September 2026. It does not measure Clef. It
 measures source ranking, without generating answers; this page measures the
 size of the first context handoff and whether its excerpts contain the answer. The [graph guide](graph-authority.md#how-wordcell-and-oh-fit-together)
 explains the integration.

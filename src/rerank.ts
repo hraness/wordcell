@@ -56,7 +56,7 @@ export type SearchReranker = {
 };
 
 export type KnowledgeBaseSearchRerankOptions = {
-  readonly engine: "typesafe";
+  readonly engine: "clef" | "typesafe";
   /** Window size submitted to the engine, from 2 through MAX_RERANK_CANDIDATES. */
   readonly limit?: number;
   /** Cancels only the hosted rerank phase, not local retrieval or indexing. */

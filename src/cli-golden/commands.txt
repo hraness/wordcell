@@ -57,7 +57,10 @@ Options
   --priority                    Order results by the rules file first
   --candidate-limit <count>     How many candidates to rank before trimming
   --min-score <score>           Drop results scoring below this (0 to 1)
-  --rerank <typesafe>           Rerank results with the hosted TypeSafe service
+  --rerank <clef|typesafe>      Send query and snippets to Clef (typesafe is
+                                deprecated)
+  --rerank-model <clef|clef-flash>
+                                Clef model to use (default: clef)
   --rerank-limit <2..25>        How many results the reranker sees
   --selected-passage            Add a local source excerpt to each result
   --json                        Print machine-readable output

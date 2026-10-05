@@ -66,7 +66,7 @@ The search result stays connected to the note. Wordcell joins matches to the cur
 
 This is particularly useful when the vocabulary has changed. An older plan might call the module an importer while the current code calls it a parser. Search by meaning gives the agent another way to find the earlier reasoning, while exact names and repository scopes provide direct routes when you know them.
 
-Local semantic search uses an optional model through QMD. For projects that want to evaluate a hosted reranker too, Wordcell has a separate, optional Jev integration. The [measured search comparison](/benchmarks) shows what that reranking changed on a public dataset, with the method and results linked beside the numbers.
+Local semantic search uses an optional model through QMD. For projects that want to evaluate a hosted reranker too, Wordcell's source version includes a separate, optional Cloudflare Clef integration that is not in the released package. The [measured search comparison](/benchmarks) records historical Jev reranking results on a public dataset, with the method and results linked beside the numbers. It does not measure Clef.
 
 ## Revisit the decision when an assumption changes
 

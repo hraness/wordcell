@@ -20,10 +20,16 @@ import {
   initVault
 } from "./index-23z4zxgg.js";
 import {
+  CLEF_MODELS,
+  DEFAULT_CLEF_MODEL,
+  clefEndpoint,
+  createClefReranker
+} from "./index-pn14a2m5.js";
+import {
   DEFAULT_SYSTEMONE_ENDPOINT,
   DEFAULT_SYSTEMONE_MODEL,
   createTypeSafeReranker
-} from "./index-9rf81m0p.js";
+} from "./index-pbz3qw1s.js";
 import {
   MAX_SOURCE_DISPOSITION_EVIDENCE,
   MAX_SOURCE_INBOX_CONNECTIONS,
@@ -37,7 +43,7 @@ import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation,
   verifyFrozenEvaluationSnapshot
-} from "./index-j2jt49gr.js";
+} from "./index-yatn62qq.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -50,7 +56,8 @@ import {
   packUntrustedSearchContext,
   searchEvidenceRank,
   validateKnowledgeBaseSearchHistory
-} from "./index-9zkba8hr.js";
+} from "./index-7bqwzjba.js";
+import"./index-4j3tt0c3.js";
 import"./index-adx6khj5.js";
 import {
   MAX_EMBEDDING_MODEL_BYTES,
@@ -68,7 +75,6 @@ import {
   semanticDatabasePath,
   sha256EmbeddingModelFile
 } from "./index-fp732bgg.js";
-import"./index-4j3tt0c3.js";
 import {
   percolateWithGraph
 } from "./index-wqx1x32f.js";
@@ -866,7 +872,9 @@ export {
   createNote,
   createGraphSnapshot,
   createConceptNote,
+  createClefReranker,
   compareAgentGuideAudits,
+  clefEndpoint,
   classifyRepositoryMemoryRecord,
   checkpointSemanticWarmCache,
   catalogStart,
@@ -1010,5 +1018,7 @@ export {
   DEFAULT_PUBLISH_LIST_LIMIT,
   DEFAULT_PERCOLATION_MIN_SUPPORT,
   DEFAULT_PERCOLATION_LIMIT,
+  DEFAULT_CLEF_MODEL,
+  CLEF_MODELS,
   AgentContextRepositoryPathError
 };

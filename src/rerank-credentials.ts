@@ -4,9 +4,10 @@ import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import type { SearchReranker } from "./rerank.js";
 import { createTypeSafeReranker } from "./rerank-typesafe.js";
+import { createClefReranker, type ClefModel } from "./rerank-clef.js";
 
-function unavailable(message: string): SearchReranker {
-  return { id: "typesafe", rerank: async () => ({ status: "unavailable", message }) };
+function unavailable(message: string, id = "typesafe"): SearchReranker {
+  return { id, rerank: async () => ({ status: "unavailable", message }) };
 }
 
 /** CLI-only credential discovery, called only after explicit --rerank typesafe. */
@@ -53,4 +54,12 @@ export async function createCliTypeSafeReranker(
   } finally {
     await handle?.close();
   }
+}
+
+export async function createCliClefReranker(
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+  _homeDirectory: string = homedir(),
+  model: ClefModel = "clef",
+): Promise<SearchReranker> {
+  return createClefReranker({ environment, model });
 }

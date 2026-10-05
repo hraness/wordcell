@@ -189,17 +189,22 @@ form. Graph neighbors and Git history remain separate from primary
 text rank. They explain and expand candidates without becoming authored facts,
 links, or recency boosts.
 
-Reranking is opt-in through `--rerank typesafe`. It uses `jev-1.13.0` and sends
-the query plus each candidate's identifier, title, vault-relative path, and at
-most 512 UTF-8 bytes of snippet text to TypeSafe. Enable it only for vaults
+Clef support is in the current source tree. The skill's pinned release does not
+include it; do not pass Clef flags to that installed CLI. In an explicitly
+selected source checkout, use `bun ./src/cli.ts` instead of `wordcell` for Clef
+commands. Source selection does not authorize hosted processing.
+
+Reranking is opt-in through `--rerank clef`. It uses Cloudflare's `clef` model
+(or `--rerank-model clef-flash`) and sends the query plus each candidate's
+identifier, title, vault-relative path, and at most 512 UTF-8 bytes of snippet
+text to Cloudflare. Enable it only for vaults
 approved for external processing and provider input-token charges. Use
 `--rerank-limit 25` to bound the window (2–25 candidates); four requests run
 concurrently under one eight-second deadline with no retries. Exact identities
 remain first. Results retain their original scores and retrieval evidence.
 
-The CLI reads `TYPESAFE_API_KEY`, an explicit `TYPESAFE_API_KEY_FILE`, or the
-owner-only file `~/.config/wordcell/typesafe-api-key` (honoring
-`XDG_CONFIG_HOME`). Keep credentials outside the repository. A missing key or
+The CLI requires `CLOUDFLARE_ACCOUNT_ID` and reads `CLOUDFLARE_API_TOKEN`
+(`CLOUDFLARE_AUTH_TOKEN` is an alias) from the environment only. Keep credentials outside the repository. A missing token or
 provider failure retains baseline ordering and marks the rerank lane
 unavailable or degraded. Inspect its structured `rerank` receipt for attempted
 requests, known usage, elapsed time, and whether usage is complete; an unknown

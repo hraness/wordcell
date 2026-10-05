@@ -26,10 +26,11 @@
 
 Use `bun run kb:search "question" --json` for ordinary questions about this
 repository's `kb/`. It pins Wordcell 0.24.1, returns a local
-`selectedPassage` excerpt with line references for each result, and enables
-hosted TypeSafe reranking for this public KB. Queries and bounded note identifiers, titles,
-paths, and snippets leave the machine. Keep the API key in the private
-Wordcell credential file or environment, never in this repository.
+`selectedPassage` excerpt with line references for each result, and stays local.
+After explicit approval of Cloudflare processing for this vault, use
+`bun run kb:search:clef "question" --json` with the current built CLI for hosted
+Clef reranking. Queries and bounded note identifiers, titles, paths, and snippets
+then leave the machine. Keep Cloudflare credentials in the environment only, never in this repository.
 
 Inspect the rerank lane before claiming it ran: `ready` means the complete
 window was accepted; `unavailable` or `degraded` preserves baseline results.

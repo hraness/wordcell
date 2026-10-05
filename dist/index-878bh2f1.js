@@ -13,7 +13,7 @@ import {
   loadPortfolioRegistry,
   openKnowledgePortfolio,
   snapshotPortfolioRegistry
-} from "./index-9paxge84.js";
+} from "./index-3hts6yy9.js";
 import {
   diffCaptureBundle
 } from "./index-j4zgmzjr.js";
@@ -33,7 +33,7 @@ import {
   resolveCommandId,
   rootHelp,
   startHelp
-} from "./index-8pabwzqg.js";
+} from "./index-t4hjm1kk.js";
 import {
   detectAudience,
   renderFailure,
@@ -52,8 +52,11 @@ import {
   initVault
 } from "./index-23z4zxgg.js";
 import {
+  createClefReranker
+} from "./index-pn14a2m5.js";
+import {
   createTypeSafeReranker
-} from "./index-9rf81m0p.js";
+} from "./index-pbz3qw1s.js";
 import {
   MAX_SOURCE_INBOX_PREFIXES,
   MAX_SOURCE_INBOX_RESULTS,
@@ -62,7 +65,7 @@ import {
 import {
   knowledgeBaseEvaluationRetrieverIds,
   openKnowledgeBaseEvaluation
-} from "./index-j2jt49gr.js";
+} from "./index-yatn62qq.js";
 import {
   DEFAULT_SEARCH_RESULTS,
   MAX_SEARCH_CANDIDATES,
@@ -71,7 +74,7 @@ import {
   MAX_SEARCH_RESULTS,
   openKnowledgeBase,
   searchEvidenceRank
-} from "./index-9zkba8hr.js";
+} from "./index-7bqwzjba.js";
 import {
   MAX_SEARCH_RULE_CONFIG_BYTES,
   parseSearchRules
@@ -3548,8 +3551,8 @@ import { constants as constants2 } from "fs";
 import { open as open2 } from "fs/promises";
 import { homedir } from "os";
 import { isAbsolute as isAbsolute2, join as join4 } from "path";
-function unavailable(message) {
-  return { id: "typesafe", rerank: async () => ({ status: "unavailable", message }) };
+function unavailable(message, id = "typesafe") {
+  return { id, rerank: async () => ({ status: "unavailable", message }) };
 }
 async function createCliTypeSafeReranker(environment = process.env, homeDirectory = homedir()) {
   if (Object.hasOwn(environment, "TYPESAFE_API_KEY")) {
@@ -3581,6 +3584,9 @@ async function createCliTypeSafeReranker(environment = process.env, homeDirector
   } finally {
     await handle?.close();
   }
+}
+async function createCliClefReranker(environment = process.env, _homeDirectory = homedir(), model = "clef") {
+  return createClefReranker({ environment, model });
 }
 
 // src/cli-program.ts
@@ -4360,6 +4366,7 @@ function parseSemanticCommand(command, arguments_) {
   let candidateLimit;
   let minScore;
   let rerank;
+  let rerankModel;
   let rerankLimit;
   let selectedPassage = false;
   let graphDepth;
@@ -4423,7 +4430,7 @@ function parseSemanticCommand(command, arguments_) {
       cursor += 1;
       continue;
     }
-    if (command === "search" && (argument === "--mode" || argument === "--limit" || argument === "--candidate-limit" || argument === "--min-score" || argument === "--rerank" || argument === "--rerank-limit" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--related" || argument === "--graph-depth")) {
+    if (command === "search" && (argument === "--mode" || argument === "--limit" || argument === "--candidate-limit" || argument === "--min-score" || argument === "--rerank" || argument === "--rerank-model" || argument === "--rerank-limit" || argument === "--where" || argument === "--has" || argument === "--tag" || argument === "--scope" || argument === "--repository-scope" || argument === "--related" || argument === "--graph-depth")) {
       const value = readValue(arguments_, cursor);
       if (value === null)
         return { ok: false, message: `${argument} requires a value` };
@@ -4433,10 +4440,15 @@ function parseSemanticCommand(command, arguments_) {
         }
         mode = value;
       } else if (argument === "--rerank") {
-        if (value !== "typesafe") {
-          return { ok: false, message: "--rerank must be typesafe" };
+        if (value !== "clef" && value !== "typesafe") {
+          return { ok: false, message: "--rerank must be clef or legacy typesafe" };
         }
         rerank = value;
+      } else if (argument === "--rerank-model") {
+        if (value !== "clef" && value !== "clef-flash") {
+          return { ok: false, message: "--rerank-model must be clef or clef-flash" };
+        }
+        rerankModel = value;
       } else if (argument === "--rerank-limit") {
         const parsed = Number(value);
         if (!Number.isSafeInteger(parsed) || parsed < 2 || parsed > MAX_RERANK_CANDIDATES) {
@@ -4576,7 +4588,10 @@ function parseSemanticCommand(command, arguments_) {
     };
   }
   if (rerankLimit !== undefined && rerank === undefined) {
-    return { ok: false, message: "--rerank-limit requires --rerank typesafe" };
+    return { ok: false, message: "--rerank-limit requires --rerank clef or legacy typesafe" };
+  }
+  if (rerankModel !== undefined && rerank !== "clef") {
+    return { ok: false, message: "--rerank-model requires --rerank clef" };
   }
   if (priority && rulesPath === undefined) {
     return { ok: false, message: "--priority requires --rules" };
@@ -4616,6 +4631,7 @@ function parseSemanticCommand(command, arguments_) {
       ...candidateLimit === undefined ? {} : { candidateLimit },
       ...minScore === undefined ? {} : { minScore },
       ...rerank === undefined ? {} : { rerank },
+      ...rerankModel === undefined ? {} : { rerankModel },
       ...rerankLimit === undefined ? {} : { rerankLimit },
       ...selectedPassage ? { selectedPassage: true } : {},
       query,
@@ -5477,7 +5493,7 @@ function renderKnowledgeBaseSearch(result) {
   ];
   const rerankLane = result.diagnostics.lanes.find(({ lane }) => lane === "rerank");
   if (rerankLane !== undefined) {
-    lines.push(`  Rerank: typesafe over ${rerankLane.results} candidates (${rerankLane.status})` + (rerankLane.message === undefined ? "" : ` \u2014 ${safe(rerankLane.message)}`));
+    lines.push(`  Rerank: ${safe(rerankLane.engine ?? "hosted")} over ${rerankLane.results} candidates (${rerankLane.status})` + (rerankLane.message === undefined ? "" : ` \u2014 ${safe(rerankLane.message)}`));
     const receipt = rerankLane.rerank;
     if (receipt?.accounting !== undefined) {
       const { attempted, candidates, completed, elapsedMs, usageComplete } = receipt.accounting;
@@ -5546,7 +5562,7 @@ async function runSemantic(command, output, dependencies) {
     repository: command.repository,
     ...command.database === undefined ? {} : { database: command.database },
     ...searchRules === undefined ? {} : { searchRules }
-  }, ...command.rerank === undefined ? [] : [{ rerankers: dependencies.rerankers ?? [await createCliTypeSafeReranker()] }]);
+  }, ...command.rerank === undefined ? [] : [{ rerankers: dependencies.rerankers ?? [command.rerank === "clef" ? await createCliClefReranker(process.env, undefined, command.rerankModel) : await createCliTypeSafeReranker()] }]);
   try {
     const result = await kb.search({
       query: command.query,

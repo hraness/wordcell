@@ -1929,7 +1929,7 @@ describe("search rerank", () => {
     observed: SearchRerankRequest[] = [],
   ): SearchReranker {
     return {
-      id: "typesafe",
+      id: "clef",
       rerank: async (request) => {
         observed.push(request);
         return await handler(request);
@@ -1964,7 +1964,7 @@ describe("search rerank", () => {
           status: "ready",
           ordering: request.candidates.map(({ id }) => id),
           probabilities,
-          model: "jev-latest",
+          model: "clef",
           usage: { inputTokens: 240, outputTokens: 12 },
         };
       }, observed);
@@ -1977,7 +1977,7 @@ describe("search rerank", () => {
         mode: "exact",
         limit: 4,
         graph: false,
-        rerank: { engine: "typesafe", limit: 4 },
+        rerank: { engine: "clef", limit: 4 },
       });
       await reranked.close();
 
@@ -1999,7 +1999,7 @@ describe("search rerank", () => {
         const rerankEvidence = hit.evidence.find(({ kind }) => kind === "rerank");
         expect(rerankEvidence).toBeDefined();
         if (rerankEvidence?.kind === "rerank") {
-          expect(rerankEvidence.engine).toBe("typesafe");
+          expect(rerankEvidence.engine).toBe("clef");
           expect(rerankEvidence.rerankRank).toBe(hit.rank);
           expect(typeof rerankEvidence.probability).toBe("number");
         }
@@ -2007,11 +2007,11 @@ describe("search rerank", () => {
       const moved = result.results.find(({ id }) => id === baselineIds[0]);
       expect(moved?.rank ?? -1).toBe(4);
       expect(result.diagnostics.lanes).toContainEqual({
-        lane: "rerank",
+        lane: "rerank", engine: "clef",
         status: "ready",
         results: 4,
-        message: "jev-latest; 240 input tokens, 12 output tokens",
-        rerank: { model: "jev-latest", usage: { inputTokens: 240, outputTokens: 12 } },
+        message: "clef; 240 input tokens, 12 output tokens",
+        rerank: { model: "clef", usage: { inputTokens: 240, outputTokens: 12 } },
       });
     } finally {
       await rm(temporary, { recursive: true, force: true });
@@ -2037,11 +2037,11 @@ describe("search rerank", () => {
           mode: "exact",
           limit: 4,
           graph: false,
-          rerank: { engine: "typesafe", limit: 4 },
+          rerank: { engine: "clef", limit: 4 },
         });
         expect(result.results[0]).toMatchObject({ id: "notes/identity", identity: true, rank: 1 });
         expect(result.results[0]?.evidence).toContainEqual({
-          kind: "rerank", engine: "typesafe", baselineRank: 1, rerankRank: 1, probability: 0.01,
+          kind: "rerank", engine: "clef", baselineRank: 1, rerankRank: 1, probability: 0.01,
         });
         expect(result.results.slice(1).every(({ identity }) => !identity)).toBe(true);
       } finally {
@@ -2112,7 +2112,7 @@ describe("search rerank", () => {
         graph: false,
         history: false,
         ordering: "priority-then-relevance",
-        rerank: { engine: "typesafe", limit: 6 },
+        rerank: { engine: "clef", limit: 6 },
       });
       expect(result.results[0]?.id).toBe("notes/alpha");
       const rerankEvidence = result.results[0]?.evidence.find(({ kind }) => kind === "rerank");
@@ -2173,13 +2173,13 @@ describe("search rerank", () => {
           limit: 4,
           graph: false,
           history: false,
-          rerank: { engine: "typesafe", limit: 4 },
+          rerank: { engine: "clef", limit: 4 },
         });
         expect(result.results.map(({ id }) => id))
           .toEqual(baseline.results.map(({ id }) => id));
         expect(result.partial).toBe(true);
         expect(result.diagnostics.lanes).toContainEqual({
-          lane: "rerank",
+          lane: "rerank", engine: "clef",
           status: "degraded",
           results: 0,
           message: "Rerank engine returned a malformed result.",
@@ -2209,7 +2209,7 @@ describe("search rerank", () => {
         mode: "exact",
         limit: 6,
         graph: false,
-        rerank: { engine: "typesafe", limit: 3 },
+        rerank: { engine: "clef", limit: 3 },
       });
       await kb.close();
       expect(observed[0]?.candidates).toHaveLength(3);
@@ -2252,7 +2252,7 @@ describe("search rerank", () => {
           mode: "exact",
           limit: 4,
           graph: false,
-          rerank: { engine: "typesafe", limit: 4 },
+          rerank: { engine: "clef", limit: 4 },
         });
         await degraded.close();
         expect(result.partial).toBe(true);
@@ -2293,7 +2293,7 @@ describe("search rerank", () => {
       }), observed)] });
       const baseline = await kb.search({ query: "transient retry budget", mode: "exact", limit: 4, graph: false });
       const result = await kb.search({ query: "transient retry budget", mode: "exact", limit: 4, graph: false,
-        rerank: { engine: "typesafe", limit: 4, signal: controller.signal },
+        rerank: { engine: "clef", limit: 4, signal: controller.signal },
       });
       await kb.close();
       expect(observed).toHaveLength(1);
@@ -2301,7 +2301,7 @@ describe("search rerank", () => {
       expect(result.results).toEqual(baseline.results);
       expect(result.partial).toBe(true);
       expect(result.diagnostics.lanes.find(({ lane }) => lane === "rerank")).toEqual({
-        lane: "rerank", status: "degraded", results: 0, message: "request aborted", rerank: receipt,
+        lane: "rerank", engine: "clef", status: "degraded", results: 0, message: "request aborted", rerank: receipt,
       });
     } finally { await rm(temporary, { recursive: true, force: true }); }
   });
@@ -2310,7 +2310,7 @@ describe("search rerank", () => {
     const { temporary, root } = await rerankFixture();
     try {
       const reranker: SearchReranker = {
-        id: "typesafe",
+        id: "clef",
         rerank: (() => {
           throw new Error("provider exploded");
         }) as SearchReranker["rerank"],
@@ -2321,14 +2321,14 @@ describe("search rerank", () => {
         mode: "exact",
         limit: 4,
         graph: false,
-        rerank: { engine: "typesafe", limit: 4 },
+        rerank: { engine: "clef", limit: 4 },
       });
       await kb.close();
       expect(result.partial).toBe(true);
       expect(result.results.map(({ id }) => id))
         .toEqual(["notes/alpha", "notes/beta", "notes/delta", "notes/epsilon"]);
       expect(result.diagnostics.lanes).toContainEqual({
-        lane: "rerank",
+        lane: "rerank", engine: "clef",
         status: "degraded",
         results: 0,
         message: "Rerank engine failed before returning a result.",
@@ -2349,21 +2349,21 @@ describe("search rerank", () => {
       await expect(kb.search({
         query: "transient retry budget",
         mode: "exact",
-        rerank: { engine: "typesafe", limit: 1 },
+        rerank: { engine: "clef", limit: 1 },
       })).rejects.toThrow("from 2 through 25");
       await expect(kb.search({
         query: "transient retry budget",
         mode: "exact",
-        rerank: { engine: "typesafe", limit: 26 },
+        rerank: { engine: "clef", limit: 26 },
       })).rejects.toThrow("from 2 through 25");
       await expect(kb.search({
         query: "transient retry budget",
         mode: "exact",
         rerank: { engine: "bogus" as never },
-      })).rejects.toThrow('must be "typesafe"');
+      })).rejects.toThrow('must be "clef"');
       await expect(kb.search({
         query: "transient retry budget", mode: "exact",
-        rerank: { engine: "typesafe", signal: {} as AbortSignal },
+        rerank: { engine: "clef", signal: {} as AbortSignal },
       })).rejects.toThrow("must be an AbortSignal");
       await kb.close();
 
@@ -2371,7 +2371,7 @@ describe("search rerank", () => {
       await expect(unconfigured.search({
         query: "transient retry budget",
         mode: "exact",
-        rerank: { engine: "typesafe" },
+        rerank: { engine: "clef" },
       })).rejects.toThrow("not available in this session");
       await unconfigured.close();
     } finally {
@@ -2452,7 +2452,7 @@ describe("selected search passages", () => {
       const results = [];
       for (const [index, selectedPassage] of [false, true].entries()) {
         const reranker: SearchReranker = {
-          id: "typesafe",
+          id: "clef",
           rerank: async (request) => {
             requests[index]?.push(request);
             const ordering = request.candidates.map(({ id }) => id).reverse();
@@ -2466,7 +2466,7 @@ describe("selected search passages", () => {
           graph: false,
           history: false,
           selectedPassage,
-          rerank: { engine: "typesafe", limit: 2 },
+          rerank: { engine: "clef", limit: 2 },
         }));
         await kb.close();
       }

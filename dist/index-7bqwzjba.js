@@ -1,5 +1,9 @@
 // @bun
 import {
+  UntrustedContentBudgetError,
+  createUntrustedToolResult
+} from "./index-4j3tt0c3.js";
+import {
   expandSearchRequest,
   parseSearchRules,
   prioritizeSearchHits
@@ -8,10 +12,6 @@ import {
   openSemanticSearchSession,
   recommendedEmbeddingModel
 } from "./index-fp732bgg.js";
-import {
-  UntrustedContentBudgetError,
-  createUntrustedToolResult
-} from "./index-4j3tt0c3.js";
 import {
   percolateWithGraph
 } from "./index-wqx1x32f.js";
@@ -529,8 +529,8 @@ function checkedRerankRequest(value, rerankers) {
     throw new TypeError("Search rerank options must be an options object.");
   }
   const options = value;
-  if (options.engine !== "typesafe") {
-    throw new Error('Search rerank engine must be "typesafe".');
+  if (options.engine !== "clef" && options.engine !== "typesafe") {
+    throw new Error('Search rerank engine must be "clef" or legacy "typesafe".');
   }
   const reranker = rerankers?.find((entry) => entry.id === options.engine);
   if (reranker === undefined) {
@@ -856,6 +856,7 @@ async function openKnowledgeBase(options, dependencies = {}) {
       const rerankMessage = applied.status === "ready" ? details.length === 0 ? undefined : details.join("; ") : applied.message ?? "Rerank engine did not return a result.";
       diagnostics.push({
         lane: "rerank",
+        engine: rerankRequest.reranker.id,
         ...Object.keys(resultDetails).length === 0 ? {} : { rerank: resultDetails },
         status: applied.status === "failed" ? "degraded" : applied.status,
         results: applied.status === "ready" ? applied.placements.size : 0,

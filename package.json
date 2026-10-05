@@ -55,6 +55,7 @@
     "./src/query.ts",
     "./src/rerank.ts",
     "./src/rerank-typesafe.ts",
+    "./src/rerank-clef.ts",
     "./src/repository-memory.ts",
     "./src/sdk.ts",
     "./src/search.ts",
@@ -249,6 +250,10 @@
       "types": "./src/rerank-typesafe.ts",
       "import": "./dist/rerank-typesafe.js"
     },
+    "./rerank-clef": {
+      "types": "./src/rerank-clef.ts",
+      "import": "./dist/rerank-clef.js"
+    },
     "./repository-memory": {
       "types": "./src/repository-memory.ts",
       "import": "./dist/repository-memory.js"
@@ -432,6 +437,7 @@
     "src/query.ts",
     "src/rerank.ts",
     "src/rerank-typesafe.ts",
+    "src/rerank-clef.ts",
     "src/rerank-credentials.ts",
     "src/repository-memory.ts",
     "src/search.ts",
@@ -485,7 +491,7 @@
     "kb:check:lane": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell check --root kb --no-catalog",
     "kb:check": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell check --root kb && bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell agents check --root kb --repo .",
     "kb:catalog": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell catalog --root kb",
-    "build": "bun -e 'await (await import(\"node:fs/promises\")).rm(\"./dist\", { recursive: true, force: true })' && bun build ./src/index.ts ./src/publish.ts ./src/publish-model.ts ./src/publish-search.ts ./src/agent-context.ts ./src/agent-guide-audit.ts ./src/attachments.ts ./src/authoring.ts ./src/benchmark.ts ./src/clip/browser-profiles.ts ./src/capture.ts ./src/cli.ts ./src/cli-bin.ts ./src/evaluation-builder-bin.ts ./src/clip/acquire.ts ./src/clip/args.ts ./src/clip/bounded-byte-buffer.ts ./src/clip/bundle-reader.ts ./src/clip/cli.ts ./src/clip/cookies.ts ./src/clip/doctor.ts ./src/clip/jobs.ts ./src/clip/network.ts ./src/clip/network-proxy.ts ./src/clip/persist.ts ./src/clip/refresh.ts ./src/clip/terminal.ts ./src/evaluation.ts ./src/evaluation-builder.ts ./src/evaluation-kb.ts ./src/git.ts ./src/graph.ts ./src/graph-percolation.ts ./src/graph-authority.ts ./src/navigation.ts ./src/pdf.ts ./src/percolate.ts ./src/portfolio.ts ./src/query.ts ./src/rerank.ts ./src/rerank-typesafe.ts ./src/repository-memory.ts ./src/sdk.ts ./src/search.ts ./src/search-rules.ts ./src/semantic.ts ./src/source-inbox.ts ./src/untrusted-content.ts ./src/url-intelligence.ts ./src/workflow.ts ./src/workflows/index.ts ./src/workflows/decision-context.ts ./src/workflows/explain-change.ts ./src/workflows/plan-radar.ts ./src/clip/defuddle-worker.ts --outdir ./dist --root ./src --target bun --format esm --splitting --packages external && bun build ./src/publish-reader/reader.ts --outfile ./dist/publish-reader/reader.js --target browser --format esm && bun build ./src/publish-reader/theme.ts --outfile ./dist/publish-reader/theme.js --target browser --format iife && cp ./src/publish-reader/reader.css ./dist/publish-reader/reader.css",
+    "build": "bun -e 'await (await import(\"node:fs/promises\")).rm(\"./dist\", { recursive: true, force: true })' && bun build ./src/index.ts ./src/publish.ts ./src/publish-model.ts ./src/publish-search.ts ./src/agent-context.ts ./src/agent-guide-audit.ts ./src/attachments.ts ./src/authoring.ts ./src/benchmark.ts ./src/clip/browser-profiles.ts ./src/capture.ts ./src/cli.ts ./src/cli-bin.ts ./src/evaluation-builder-bin.ts ./src/clip/acquire.ts ./src/clip/args.ts ./src/clip/bounded-byte-buffer.ts ./src/clip/bundle-reader.ts ./src/clip/cli.ts ./src/clip/cookies.ts ./src/clip/doctor.ts ./src/clip/jobs.ts ./src/clip/network.ts ./src/clip/network-proxy.ts ./src/clip/persist.ts ./src/clip/refresh.ts ./src/clip/terminal.ts ./src/evaluation.ts ./src/evaluation-builder.ts ./src/evaluation-kb.ts ./src/git.ts ./src/graph.ts ./src/graph-percolation.ts ./src/graph-authority.ts ./src/navigation.ts ./src/pdf.ts ./src/percolate.ts ./src/portfolio.ts ./src/query.ts ./src/rerank.ts ./src/rerank-typesafe.ts ./src/rerank-clef.ts ./src/repository-memory.ts ./src/sdk.ts ./src/search.ts ./src/search-rules.ts ./src/semantic.ts ./src/source-inbox.ts ./src/untrusted-content.ts ./src/url-intelligence.ts ./src/workflow.ts ./src/workflows/index.ts ./src/workflows/decision-context.ts ./src/workflows/explain-change.ts ./src/workflows/plan-radar.ts ./src/clip/defuddle-worker.ts --outdir ./dist --root ./src --target bun --format esm --splitting --packages external && bun build ./src/publish-reader/reader.ts --outfile ./dist/publish-reader/reader.js --target browser --format esm && bun build ./src/publish-reader/theme.ts --outfile ./dist/publish-reader/theme.js --target browser --format iife && cp ./src/publish-reader/reader.css ./dist/publish-reader/reader.css",
     "check:workflows": "bun ./scripts/check-workflow-yaml.ts",
     "check:installed-command-docs": "bun ./scripts/check-installed-command-docs.ts",
     "check:portfolio-inventory": "bun ./scripts/check-portfolio-inventory.ts",
@@ -499,7 +505,8 @@
     "check": "bun run check:worker && bun run check:effect && bun run check:workflows && bun run check:portfolio-inventory && bun run check:installed-command-docs && bun run typecheck && bun run build && bun run test:package && bun run test && bun run url-metadata:tool:check",
     "prepack": "bun run check",
     "check:effect": "bun run scripts/check-effect-policy.ts",
-    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell search --root kb --mode exact --selected-passage --rerank typesafe --rerank-limit 25",
+    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell search --root kb --mode exact --selected-passage",
+    "kb:search:clef": "bun ./dist/cli.js search --root kb --mode exact --selected-passage --rerank clef --rerank-limit 25",
     "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.1/hraness-wordcell-0.24.1.tgz wordcell search --root kb --mode exact --selected-passage",
     "check:worker": "tsc -p worker/tsconfig.json --noEmit"
   },

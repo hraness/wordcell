@@ -176,7 +176,8 @@ import {
   type KnowledgeBaseSearchResult,
 } from "./sdk.js";
 import { MAX_RERANK_CANDIDATES, type SearchReranker } from "./rerank.js";
-import { createCliTypeSafeReranker } from "./rerank-credentials.js";
+import { createCliClefReranker, createCliTypeSafeReranker } from "./rerank-credentials.js";
+import type { ClefModel } from "./rerank-clef.js";
 import {
   refreshVault,
   refreshVaultComplete,
@@ -382,7 +383,8 @@ type ParsedCommand =
       readonly limit?: number;
       readonly candidateLimit?: number;
       readonly minScore?: number;
-      readonly rerank?: "typesafe";
+      readonly rerank?: "clef" | "typesafe";
+      readonly rerankModel?: ClefModel;
       readonly rerankLimit?: number;
       readonly selectedPassage?: boolean;
       readonly query: string;
@@ -1272,7 +1274,8 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
   let limit: number | undefined;
   let candidateLimit: number | undefined;
   let minScore: number | undefined;
-  let rerank: "typesafe" | undefined;
+  let rerank: "clef" | "typesafe" | undefined;
+  let rerankModel: ClefModel | undefined;
   let rerankLimit: number | undefined;
   let selectedPassage = false;
   let graphDepth: number | undefined;
@@ -1341,6 +1344,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       || argument === "--candidate-limit"
       || argument === "--min-score"
       || argument === "--rerank"
+      || argument === "--rerank-model"
       || argument === "--rerank-limit"
       || argument === "--where"
       || argument === "--has"
@@ -1358,10 +1362,15 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
         }
         mode = value;
       } else if (argument === "--rerank") {
-        if (value !== "typesafe") {
-          return { ok: false, message: "--rerank must be typesafe" };
+        if (value !== "clef" && value !== "typesafe") {
+          return { ok: false, message: "--rerank must be clef or legacy typesafe" };
         }
         rerank = value;
+      } else if (argument === "--rerank-model") {
+        if (value !== "clef" && value !== "clef-flash") {
+          return { ok: false, message: "--rerank-model must be clef or clef-flash" };
+        }
+        rerankModel = value;
       } else if (argument === "--rerank-limit") {
         const parsed = Number(value);
         if (!Number.isSafeInteger(parsed) || parsed < 2 || parsed > MAX_RERANK_CANDIDATES) {
@@ -1498,7 +1507,10 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
     };
   }
   if (rerankLimit !== undefined && rerank === undefined) {
-    return { ok: false, message: "--rerank-limit requires --rerank typesafe" };
+    return { ok: false, message: "--rerank-limit requires --rerank clef or legacy typesafe" };
+  }
+  if (rerankModel !== undefined && rerank !== "clef") {
+    return { ok: false, message: "--rerank-model requires --rerank clef" };
   }
   if (priority && rulesPath === undefined) {
     return { ok: false, message: "--priority requires --rules" };
@@ -1539,6 +1551,7 @@ function parseSemanticCommand(command: "index" | "search", arguments_: readonly 
       ...(candidateLimit === undefined ? {} : { candidateLimit }),
       ...(minScore === undefined ? {} : { minScore }),
       ...(rerank === undefined ? {} : { rerank }),
+      ...(rerankModel === undefined ? {} : { rerankModel }),
       ...(rerankLimit === undefined ? {} : { rerankLimit }),
       ...(selectedPassage ? { selectedPassage: true } : {}),
       query,
@@ -2394,7 +2407,7 @@ function renderKnowledgeBaseSearch(result: KnowledgeBaseSearchResult): string {
   const rerankLane = result.diagnostics.lanes.find(({ lane }) => lane === "rerank");
   if (rerankLane !== undefined) {
     lines.push(
-      `  Rerank: typesafe over ${rerankLane.results} candidates (${rerankLane.status})`
+      `  Rerank: ${safe(rerankLane.engine ?? "hosted")} over ${rerankLane.results} candidates (${rerankLane.status})`
         + (rerankLane.message === undefined ? "" : ` — ${safe(rerankLane.message)}`),
     );
     const receipt = rerankLane.rerank;
@@ -2488,7 +2501,9 @@ async function runSemantic(
     },
     ...(command.rerank === undefined
       ? []
-      : [{ rerankers: dependencies.rerankers ?? [await createCliTypeSafeReranker()] }]),
+      : [{ rerankers: dependencies.rerankers ?? [command.rerank === "clef"
+          ? await createCliClefReranker(process.env, undefined, command.rerankModel)
+          : await createCliTypeSafeReranker()] }]),
   );
   try {
     const result = await kb.search({

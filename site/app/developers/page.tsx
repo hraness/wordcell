@@ -304,7 +304,7 @@ const session = await openKnowledgeBase({ root: "kb" });`} />
                 },
                 {
                   label: "Local retrieval by default",
-                  detail: "Exact search, graph queries, and optional local semantic search run on your machine. Optional hosted reranking is off by default. When you turn it on, it sends TypeSafe your query and, for up to 25 candidates, each note's identifier, title, path, and up to 512 bytes of its snippet.",
+                  detail: "Exact search, graph queries, and optional local semantic search run on your machine. The source version includes Cloudflare Clef reranking, which is not in the released package and stays off by default. When you turn it on, it sends Cloudflare your query and, for up to 25 candidates, each note's identifier, title, path, and up to 512 bytes of its snippet.",
                 },
                 {
                   label: "The agent keeps its own rules",

@@ -158,11 +158,22 @@ test("detailed retrieval measurements retain their sources and limits on the ben
     expect(html).toContain(fact);
   }
   expect(html).toContain('href="/docs/reranking#evidence-and-limits"');
+  expect(html).toContain("Historical Jev study from September 2026");
+  expect(html).toContain("does not measure Cloudflare Clef");
   for (const page of [renderToStaticMarkup(<Home />), renderToStaticMarkup(<Developers />)]) {
     expect(page).not.toContain("89.8%");
     expect(page).not.toContain("84.4%");
     expect(page).not.toContain("for the same answer");
   }
+});
+
+test("hosted reranking copy distinguishes Clef setup from historical Jev evidence", () => {
+  const reranking = docHtml["reranking"]!.replace(/\s+/gu, " ");
+  for (const fact of ["Cloudflare Clef", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN", "clef-flash", "text only", "Legacy compatibility", "historical Jev evidence"]) {
+    expect(reranking).toContain(fact);
+  }
+  expect(renderToStaticMarkup(<Developers />)).toContain("Cloudflare");
+  expect(docCatalog.find(({ slug }) => slug === "reranking")?.summary).toContain("Cloudflare Clef");
 });
 
 test("unmatched published protocols cannot be plotted as a shared comparison", () => {

@@ -11,9 +11,21 @@ queries, and static publication need no account, model, or network request.
 Optional QMD semantic search downloads its model on first use and then runs
 locally. Capturing a URL contacts the selected source and its allowed resources.
 
-`--rerank typesafe` explicitly enables hosted Jev reranking. It sends the query
-and bounded candidate titles, vault-relative paths, and snippets to TypeSafe.
-Leave that flag unset to keep search local. A coding agent that reads returned
+`--rerank clef` explicitly enables Cloudflare Clef reranking. It sends the query
+and up to 25 candidate identifiers, titles, vault-relative paths, and snippets
+of at most 512 UTF-8 bytes to the selected Cloudflare account. Use it only after
+approving external processing for that vault. It sends no images or attachments.
+Account and API-token credentials alone never enable it. The CLI reads tokens
+only after that flag is selected; supply Cloudflare credentials through the
+environment only. Token files are not read for Clef. TypeSafe credentials are
+never repurposed for Cloudflare. The deprecated `--rerank typesafe` path explicitly
+sends the same text fields to TypeSafe, with separate credentials.
+
+Requests use fixed provider origins, reject redirects, and never retry. A
+failure or cancellation preserves the baseline ordering but can leave unknown
+charges for dispatched requests. Provider bodies and credentials are omitted
+from diagnostics. See [reranking setup and limits](docs/reranking.md).
+Leave `--rerank` unset to keep search local. A coding agent that reads returned
 notes also follows its own provider settings; local storage does not make a
 hosted agent local.
 

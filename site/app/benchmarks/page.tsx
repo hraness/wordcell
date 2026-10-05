@@ -72,7 +72,7 @@ export default function Benchmarks() {
         heading="Wordcell measurements with source data"
         headingId="hero-title"
         name=""
-        summary={`Compare Wordcell exact search with optional Jev reranking on ${scifactDetails.queries} questions about scientific abstracts. Explore the memory-retrieval studies from Oh, the graph library Wordcell uses.`}
+        summary={`Compare the historical September 2026 Wordcell exact-search and Jev reranking results on ${scifactDetails.queries} questions about scientific abstracts. Explore the memory-retrieval studies from Oh, the graph library Wordcell uses.`}
       />
 
       <MarketingSection
@@ -83,7 +83,7 @@ export default function Benchmarks() {
       >
         <BenchmarkComparison study={scifactStudy}>
           <p>nDCG at five rose from {scifactDetails.baselineNdcg} to {scifactDetails.rerankedNdcg}. It improved for {scifactDetails.improved} queries and regressed for {scifactDetails.regressed}. For {scifactDetails.missing} queries, neither candidate window contained a judged relevant source.</p>
-          <p>Optional reranking sends the query and candidate snippets to a paid provider. The study uses scientific abstracts and measures source ranking; results on your notes may differ.</p>
+          <p>This September 2026 study used Jev and scientific abstracts. It measures source ranking, not the current Cloudflare Clef integration or results on your notes. Hosted reranking sends the query and candidate snippets to a paid provider only when you enable it.</p>
         </BenchmarkComparison>
       </MarketingSection>
 

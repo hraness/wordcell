@@ -11,7 +11,7 @@ import {
 import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
 
 const packageName = "@hraness/wordcell";
-const maximumPackageFiles = 300;
+const maximumPackageFiles = 306;
 const maximumPackedBytes = 1_450_000;
 const importSpecifiers = [
   "@hraness/wordcell",
@@ -53,6 +53,7 @@ const importSpecifiers = [
   "@hraness/wordcell/query",
   "@hraness/wordcell/rerank",
   "@hraness/wordcell/rerank-typesafe",
+  "@hraness/wordcell/rerank-clef",
   "@hraness/wordcell/repository-memory",
   "@hraness/wordcell/sdk",
   "@hraness/wordcell/search",
@@ -68,10 +69,11 @@ const importSpecifiers = [
   "@hraness/wordcell/workflows/plan-radar",
 ];
 const baselineRequiredNamedExports = {
-  "@hraness/wordcell": ["analyzeVaultComplete", "scanVaultComplete", "refreshVaultComplete"],
+  "@hraness/wordcell": ["analyzeVaultComplete", "scanVaultComplete", "refreshVaultComplete", "createClefReranker"],
   "@hraness/wordcell/graph": ["analyzeVaultComplete"],
   "@hraness/wordcell/rerank": ["applyRerank"],
   "@hraness/wordcell/rerank-typesafe": ["createTypeSafeReranker"],
+  "@hraness/wordcell/rerank-clef": ["createClefReranker", "clefEndpoint"],
   "@hraness/wordcell/graph-authority": ["openGraphAuthority", "queryGraph", "rebuildGraph", "verifyGraph"],
   "@hraness/wordcell/graph-percolation": ["percolateWithGraph"],
   "@hraness/wordcell/clip/bundle-reader": ["readCaptureBundle", "verifyCaptureBundle"],
@@ -352,11 +354,11 @@ async function verifyInstalledRerankFallback(cwd: string, root: string): Promise
     const child = Bun.spawn([
       join(cwd, "node_modules", ".bin", "wordcell"),
       "search", "Alpha Beta", "--root", root, "--mode", "exact", "--no-graph", "--json",
-      ...(rerank ? ["--rerank", "typesafe", "--rerank-limit", "2"] : []),
+      ...(rerank ? ["--rerank", "clef", "--rerank-limit", "2"] : []),
     ], {
       cwd,
       // Explicitly invalid credentials forbid ambient keys and global file discovery.
-      env: { ...environment, TYPESAFE_API_KEY: "", HRANESS_SUPPORT: "off" },
+      env: { ...environment, CLOUDFLARE_ACCOUNT_ID: "", CLOUDFLARE_API_TOKEN: "", TYPESAFE_API_KEY: "", HRANESS_SUPPORT: "off" },
       stdout: "pipe", stderr: "pipe",
     });
     const [code, stdout] = await Promise.all([child.exited, new Response(child.stdout).text()]);
