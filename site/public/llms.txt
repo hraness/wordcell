@@ -56,9 +56,15 @@ When to use this site:
   install it, and how a coding agent uses a vault, on one page.
 - [Use Wordcell with a coding agent](https://wordcell.io/docs/agent-workflow):
   Set up, query, maintain, and revise repository memory.
+- [Connect Wordcell to your coding agent](https://wordcell.io/docs/agent-handoffs):
+  Register the local MCP server with Claude Code, Codex, Cursor, or Claude
+  Desktop, check that the agent reads your notes, and fix common errors.
+- [Use Wordcell with an existing Obsidian vault](https://wordcell.io/docs/obsidian):
+  Which Obsidian links, tags, and attachments Wordcell reads, and how to serve
+  a vault to a coding agent without changing it.
 - [Reference](https://wordcell.io/docs/reference): Exact commands, formats,
   SDK imports, optional adapters, and the local MCP server (wordcell mcp)
-  with its tools and client settings.
+  with its flags and tools.
 - [Publish](https://wordcell.io/docs/publish): Select notes and build a static
   site.
 - [Migrate from Supermemory](https://wordcell.io/docs/migration-from-supermemory):

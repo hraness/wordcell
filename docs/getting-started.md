@@ -45,7 +45,9 @@ as an initialization step for an existing vault. See the
 [vault format reference](reference.md#the-kb-vault-format) before adding one.
 
 To serve these notes to a coding agent, continue with
-[Connect a client](reference.md#connect-a-client). To learn note authoring and
+[Connect Wordcell to your coding agent](agent-handoffs.md). For an Obsidian
+vault, [Use Wordcell with an existing Obsidian vault](obsidian.md) shows which
+links, tags, and attachments Wordcell reads. To learn note authoring and
 publishing without changing your existing vault, follow the remaining steps
 in a separate directory.
 

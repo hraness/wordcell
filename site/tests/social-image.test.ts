@@ -16,6 +16,8 @@ import { metadata as mem0Metadata } from "../app/compare/mem0/page";
 import * as mem0Image from "../app/compare/mem0/opengraph-image";
 import { metadata as supermemoryMetadata } from "../app/compare/supermemory/page";
 import * as supermemoryImage from "../app/compare/supermemory/opengraph-image";
+import { metadata as claudeMemMetadata } from "../app/compare/claude-mem/page";
+import * as claudeMemImage from "../app/compare/claude-mem/opengraph-image";
 import { metadata as migrateMetadata } from "../app/migrate/supermemory/page";
 import * as migrateImage from "../app/migrate/supermemory/opengraph-image";
 import * as docImage from "../app/docs/[slug]/opengraph-image";
@@ -39,6 +41,7 @@ const routes = [
   ["/compare/obsidian", obsidianMetadata, obsidianImage, socialPages.compareObsidian],
   ["/compare/mem0", mem0Metadata, mem0Image, socialPages.compareMem0],
   ["/compare/supermemory", supermemoryMetadata, supermemoryImage, socialPages.compareSupermemory],
+  ["/compare/claude-mem", claudeMemMetadata, claudeMemImage, socialPages.compareClaudeMem],
   ["/migrate/supermemory", migrateMetadata, migrateImage, socialPages.migrateSupermemory],
 ] as const;
 

@@ -57,6 +57,21 @@ export const docCatalog = [
     quadrant: "how-to",
   },
   {
+    slug: "agent-handoffs",
+    title: "Connect Wordcell to your coding agent",
+    summary: "Register Wordcell’s local MCP server with Claude Code, Codex, or Cursor, check that the agent can start it, and fix the errors you are likely to see.",
+    card: "Set up the MCP server in Claude Code, Codex, or Cursor.",
+    quadrant: "how-to",
+  },
+  {
+    slug: "obsidian",
+    title: "Use Wordcell with an existing Obsidian vault",
+    cardTitle: "Use Wordcell with an Obsidian vault",
+    summary: "Search an Obsidian vault in place, see which links, tags, and attachments Wordcell reads, and serve the vault to a coding agent without changing it.",
+    card: "Search, check, and serve a vault without changing it.",
+    quadrant: "how-to",
+  },
+  {
     slug: "migration-from-supermemory",
     title: "Migrate from Supermemory",
     summary: "Export your Supermemory documents and memory entries, import them as Markdown notes, and see what does not transfer.",
@@ -116,12 +131,6 @@ export const docCatalog = [
     title: "Installation and command reference",
     summary: "Exact interfaces, SDK imports, optional adapters, the vault format, and prerequisites.",
     card: "Exact interfaces, SDK imports, and adapters.",
-    quadrant: "reference",
-  },
-  {
-    slug: "agent-handoffs",
-    title: "Agent setup links",
-    summary: "Supported composer links, setup commands, and storage requirements for coding agents.",
     quadrant: "reference",
   },
   {

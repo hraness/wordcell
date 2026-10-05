@@ -266,7 +266,7 @@ redaction. [Selection recipes and hosting guide](https://github.com/hraness/word
 Code, Claude Desktop, Cursor, or Codex, over standard input and output. The
 client can search, list, and read notes, follow links, create notes, update a
 note body at a known revision, and add typed relations. `--read-only` removes
-the write tools. [Connect a client](https://github.com/hraness/wordcell/blob/main/docs/reference.md#connect-a-client)
+the write tools. [Connect Wordcell to your coding agent](https://github.com/hraness/wordcell/blob/main/docs/agent-handoffs.md)
 shows the setup for each host.
 
 With the Agent Skill, ask your agent to save the session. It writes a dated
@@ -380,8 +380,9 @@ Start with the task you want to complete. Browse all guides on the
 | [Get started](https://github.com/hraness/wordcell/blob/main/docs/getting-started.md) | Learn the full loop on a first vault: save, find, connect, and publish one note. |
 | [Agent workflow](https://github.com/hraness/wordcell/blob/main/docs/agent-workflow.md) | Set up, query, maintain, and revise repository memory. |
 | [Search an existing Obsidian or Markdown vault](https://github.com/hraness/wordcell/blob/main/docs/getting-started.md#search-an-existing-markdown-or-obsidian-vault) | Find a saved note without initialization or a model download. |
-| [Connect a coding agent over MCP](https://github.com/hraness/wordcell/blob/main/docs/reference.md#connect-a-client) | Configure Claude Code, Claude Desktop, Cursor, or Codex, then verify a note read. |
-| [Troubleshoot MCP](https://github.com/hraness/wordcell/blob/main/docs/reference.md#troubleshoot-the-local-mcp-server) | Diagnose executable paths, partial search results, missing tools, and oversized responses. |
+| [Use an existing Obsidian vault](https://github.com/hraness/wordcell/blob/main/docs/obsidian.md) | See which Obsidian links, tags, and attachments Wordcell reads, and serve the vault to an agent read-only. |
+| [Connect a coding agent over MCP](https://github.com/hraness/wordcell/blob/main/docs/agent-handoffs.md) | Configure Claude Code, Codex, Cursor, or Claude Desktop, then verify a note read. |
+| [Troubleshoot MCP](https://github.com/hraness/wordcell/blob/main/docs/agent-handoffs.md#troubleshoot-the-connection) | Diagnose executable paths, partial search results, missing tools, and oversized responses. |
 | [Installation and command reference](https://github.com/hraness/wordcell/blob/main/docs/reference.md) | Exact interfaces, SDK imports, optional adapters, and troubleshooting prerequisites. |
 | [Web capture](https://github.com/hraness/wordcell/blob/main/docs/capture.md) and [PDF capture](https://github.com/hraness/wordcell/blob/main/docs/pdf.md) | Save sources with provenance, assets, and explicit completeness limits. |
 | [Publish selected notes](https://github.com/hraness/wordcell/blob/main/docs/publish.md) | Preview a slice, build a static site, and choose how to host it. |

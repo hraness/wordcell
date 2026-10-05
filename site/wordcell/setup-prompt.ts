@@ -31,7 +31,7 @@ export const SETUP_COMMANDS = {
   skill: `bunx skills add hraness/wordcell#v${releaseVersion} --skill wordcell`,
 } as const;
 
-export const CONNECT_CLIENT_URL = "https://wordcell.io/docs/reference#connect-a-client";
+export const CONNECT_CLIENT_URL = "https://wordcell.io/docs/agent-handoffs";
 
 export function buildSetupPrompt(): string {
   return [
