@@ -100,8 +100,8 @@ export const docCatalog = [
   {
     slug: "reranking",
     title: "Use hosted reranking",
-    summary: "Reorder up to 25 search results with TypeSafe's Jev model. If the provider fails, you keep the original order.",
-    card: "Reorder up to 25 search results with TypeSafe’s Jev model.",
+    summary: "The source version can reorder up to 25 results with Cloudflare Clef. If the provider fails, you keep the original order.",
+    card: "Rerank up to 25 results with Cloudflare Clef in the source version.",
     quadrant: "how-to",
   },
   {

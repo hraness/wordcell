@@ -40,8 +40,9 @@ The returned `source` is `notes/retry-review` and the `target` is
 in-memory projection and creates no `.wordcell/oh.sqlite` file.
 
 Wordcell search uses its own exact matching and optional QMD local retrieval.
-Optional Jev reranking reorders a bounded candidate window through a hosted
-provider. These search paths do not invoke Oh's conversation-memory retrieval
+The source version also includes optional Cloudflare Clef reranking, which
+reorders a candidate window through a hosted provider. See
+[setup and release availability](reranking.md). These search paths do not invoke Oh's conversation-memory retrieval
 API. Oh's memory benchmarks therefore do not measure Wordcell search or answer
 quality. See Wordcell's [retrieval study](reranking.md#evidence-and-limits) and
 [context-payload measurement](evidence.md) for the paths evaluated here.

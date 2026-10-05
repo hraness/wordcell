@@ -125,6 +125,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     readonly exports?: unknown;
     readonly files?: unknown;
     readonly version?: unknown;
+    readonly scripts?: unknown;
   };
   if (
     !Array.isArray(manifest.files)
@@ -194,6 +195,9 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "templates/companion-skill.template.md",
   ]);
   expect(manifest.version).toBe("0.26.3");
+  const scripts = manifest.scripts as Record<string, string>;
+  expect(scripts["kb:search"]).not.toContain("--rerank");
+  expect(scripts["kb:search:clef"]).toContain("--rerank clef");
   expect(manifestFiles).toContain("skills/wordcell");
   expect(publicSourceFiles).toContain("src/repository-memory.ts");
   expect(Object.keys(manifest.exports as Record<string, unknown>).toSorted()).toEqual([
@@ -236,6 +240,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "./query",
     "./repository-memory",
     "./rerank",
+    "./rerank-clef",
     "./rerank-typesafe",
     "./sdk",
     "./search",
@@ -268,7 +273,8 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     'export * from "./publish-model.js";',
     'export * from "./query.js";',
     'export * from "./rerank.js";',
-    'export * from "./rerank-typesafe.js";',
+    'export { createTypeSafeReranker, DEFAULT_SYSTEMONE_ENDPOINT, DEFAULT_SYSTEMONE_MODEL, type TypeSafeRerankerOptions, type SystemOneTransport } from "./rerank-typesafe.js";',
+    'export * from "./rerank-clef.js";',
     'export * from "./repository-memory.js";',
     'export * from "./search.js";',
     'export * from "./semantic.js";',

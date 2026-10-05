@@ -642,6 +642,16 @@ describe("kb argument parsing", () => {
         ok: false,
         message: "--history and --require-history cannot be used together",
       });
+    expect(parseArguments(["search", "query", "--rerank", "clef", "--rerank-model", "clef-flash"]))
+      .toMatchObject({ ok: true, value: { rerank: "clef", rerankModel: "clef-flash" } });
+    expect(parseArguments(["search", "query", "--rerank-model", "clef-flash"]))
+      .toEqual({ ok: false, message: "--rerank-model requires --rerank clef" });
+    expect(parseArguments(["search", "query", "--rerank", "typesafe", "--rerank-model", "clef-flash"]))
+      .toEqual({ ok: false, message: "--rerank-model requires --rerank clef" });
+    expect(parseArguments(["search", "query", "--rerank", "clef", "--rerank-model", "jev"]))
+      .toEqual({ ok: false, message: "--rerank-model must be clef or clef-flash" });
+    expect(parseArguments(["search", "query", "--rerank", "clef"]))
+      .toMatchObject({ ok: true, value: { rerank: "clef" } });
     expect(parseArguments(["search", "query", "--rerank", "typesafe"]))
       .toMatchObject({
         ok: true,
@@ -654,12 +664,12 @@ describe("kb argument parsing", () => {
         .toEqual({ ok: false, message: "--rerank-limit must be an integer from 2 through 25" });
     }
     expect(parseArguments(["search", "query", "--rerank-limit", "10"]))
-      .toEqual({ ok: false, message: "--rerank-limit requires --rerank typesafe" });
+      .toEqual({ ok: false, message: "--rerank-limit requires --rerank clef or legacy typesafe" });
     expect(parseArguments(["search", "query", "--rerank-limit"]))
       .toEqual({ ok: false, message: "--rerank-limit requires a value" });
     expect(parseArguments(["search", "query", "--rerank", "bogus"])).toEqual({
       ok: false,
-      message: "--rerank must be typesafe",
+      message: "--rerank must be clef or legacy typesafe",
     });
     expect(parseArguments(["search", "query", "--rerank"])).toEqual({
       ok: false,
@@ -2071,7 +2081,7 @@ describe("kb vault commands", () => {
     const opened: unknown[] = [];
     const searched: unknown[] = [];
     const fakeReranker = {
-      id: "typesafe",
+      id: "clef",
       rerank: () => Promise.resolve({ status: "unavailable" as const, message: "unused" }),
     };
     const searchOutput = captureOutput();
@@ -2081,7 +2091,9 @@ describe("kb vault commands", () => {
       "--root",
       "vault",
       "--rerank",
-      "typesafe",
+      "clef",
+      "--rerank-model",
+      "clef-flash",
       "--rerank-limit",
       "10",
     ], searchOutput.output, {
@@ -2123,7 +2135,7 @@ describe("kb vault commands", () => {
                   },
                   {
                     kind: "rerank" as const,
-                    engine: "typesafe",
+                    engine: "clef",
                     baselineRank: 2,
                     rerankRank: 1,
                     probability: 0.91,
@@ -2144,7 +2156,8 @@ describe("kb vault commands", () => {
                     lane: "rerank" as const,
                     status: "ready" as const,
                     results: 3,
-                    message: "jev-latest; 120 input tokens, 8 output tokens",
+                    engine: "clef",
+                    message: "clef-flash; 120 input tokens, 8 output tokens",
                   },
                 ],
               },
@@ -2168,13 +2181,13 @@ describe("kb vault commands", () => {
         repositoryScopes: [],
         graph: {},
         history: false,
-        rerank: { engine: "typesafe", limit: 10 },
+        rerank: { engine: "clef", limit: 10 },
       },
     ]);
     const injected = opened[0] as { dependencies?: { rerankers?: unknown[] } };
     expect(injected.dependencies?.rerankers).toEqual([fakeReranker]);
     expect(searchOutput.stdout()).toContain(
-      "Rerank: typesafe over 3 candidates (ready)",
+      "Rerank: clef over 3 candidates (ready)",
     );
     expect(searchOutput.stdout()).toContain("rerank#1");
   });

@@ -95,7 +95,8 @@ See [the design](design.md) and [agent workflow](agent-workflow.md).
 If all you need is local retrieval, standalone QMD may be the shorter path.
 Choose Wordcell when maintaining and reusing the knowledge around retrieval
 matters too. The [SciFact study](reranking.md#evidence-and-limits) compares
-Wordcell exact search with optional Jev reranking on scientific abstracts.
+Wordcell exact search with Jev reranking on scientific abstracts in September
+2026. That historical result does not measure Cloudflare Clef.
 There is no matched retrieval-quality or latency benchmark against QMD.
 
 ## Consider Basic Memory for an MCP-centered knowledge graph
@@ -207,8 +208,10 @@ many users’ conversations.
 Authored Markdown and Git remain yours. Exact queries, graph operations, and
 static site generation run locally without a hosted model or account. Optional
 QMD search runs local models after setup. Package installation and model
-downloads require network access. Opt-in `--rerank typesafe` sends bounded
-candidate context to the external Jev provider; capturing a URL contacts that
+downloads require network access. In the source version, opt-in
+`--rerank clef` sends the query and candidate context to Cloudflare;
+[setup and release availability](reranking.md) describe when to use it.
+Capturing a URL contacts that
 source, and publishing files to a host makes the selected content available
 there. A cloud agent can receive whatever context you send it. Local storage
 does not change the agent host's data handling. See

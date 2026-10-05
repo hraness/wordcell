@@ -194,15 +194,20 @@ Open the returned Markdown and guides before acting on them.
 
 ## Rerank a search window
 
+Cloudflare Clef support is in the current source tree. The versioned release
+listed above does not include it. From a source checkout, run:
+
 ```sh
-wordcell search "why releases use immutable archives" --root kb --mode exact \
-  --rerank typesafe --rerank-limit 25 --limit 5 --json
+bun ./src/cli.ts search "why releases use immutable archives" --root kb --mode exact \
+  --rerank clef --rerank-limit 25 --limit 5 --json
 ```
 
-This optional hosted lane uses TypeSafe's pinned `jev-1.13.0` model. It sends
-bounded query and note snippets to the provider, needs a private local
-credential, and incurs provider charges. Exact identities remain first; a
-provider failure retains the baseline order with a diagnostic. See the
+This optional hosted reranker uses Cloudflare Clef (`clef` by default, or
+`--rerank-model clef-flash`). It sends the query and candidate note identifiers,
+titles, paths, and snippets to Cloudflare, needs `CLOUDFLARE_ACCOUNT_ID` and
+`CLOUDFLARE_API_TOKEN`, and incurs provider charges. Enable it only for vaults you
+approve for external processing; credentials alone never enable it. Exact
+identities remain first; a provider failure retains the baseline order with a diagnostic. See the
 [setup, SDK examples, measured results, and limits](https://github.com/hraness/wordcell/blob/main/docs/reranking.md).
 
 ## What you can do
@@ -283,10 +288,10 @@ keeps one vault current on several machines.
 
 ## Evidence and comparisons
 
-On the public SciFact dataset of scientific abstracts, optional hosted Jev
+In the September 19, 2026 SciFact study of scientific abstracts, hosted Jev
 reranking placed a relevant result first for **161 of 300 queries**, versus
-**101** with Wordcell exact search alone. Hosted reranking is optional and uses
-a paid provider. [Results and method](https://github.com/hraness/wordcell/blob/main/docs/reranking.md#evidence-and-limits).
+**101** with Wordcell exact search alone. These historical measurements do not
+evaluate Cloudflare Clef or Clef Flash. [Results and method](https://github.com/hraness/wordcell/blob/main/docs/reranking.md#evidence-and-limits).
 
 [The comparison guide](https://wordcell.io/docs/comparisons)
 covers Markdown alone, QMD, Basic Memory, Obsidian, static publishing tools,
@@ -335,7 +340,7 @@ Backlinks and typed relationships come from authored links. Percolation
 suggests connections for review and does not add inferred edges to notes.
 
 Wordcell search combines its own exact matching with optional QMD local search
-and optional hosted Jev reranking. Oh also offers memory retrieval for applications;
+and optional hosted Cloudflare Clef reranking. Oh also offers memory retrieval for applications;
 its conversation-memory benchmark scores measure that separate path. They do not
 establish Wordcell's retrieval or answer quality. [How the integration works](https://github.com/hraness/wordcell/blob/main/docs/graph-authority.md#how-wordcell-and-oh-fit-together).
 
@@ -359,8 +364,8 @@ show the public imports and lifecycle.
 ## Privacy and boundaries
 
 - Structural queries and exact search read local files. Optional semantic
-  search downloads its model on first use and runs locally. Optional Jev
-  reranking sends the query and bounded candidate context to a remote provider;
+  search downloads its model on first use and runs locally. Optional Cloudflare
+  Clef reranking sends the query and candidate context to Cloudflare;
   it is off by default.
 - URL capture contacts the requested source. Signed-in capture uses only
   explicitly selected browser state. Review the [security policy](https://github.com/hraness/wordcell/blob/main/SECURITY.md)

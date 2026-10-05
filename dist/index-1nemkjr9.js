@@ -105,10 +105,10 @@ function hasExactKeys(value, expected) {
 function tokenCount(value) {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 1e9 ? value : null;
 }
-function acceptedResponseModel(value) {
-  return value === DEFAULT_SYSTEMONE_MODEL;
+function acceptedResponseModel(value, model) {
+  return value === model;
 }
-function parseSystemOneResponse(value) {
+function parseSystemOneResponse(value, model) {
   const root = recordValue(value);
   if (root === null || !hasExactKeys(root, ["model", "answers", "usage"]))
     return null;
@@ -126,7 +126,7 @@ function parseSystemOneResponse(value) {
     return null;
   const inputTokens = tokenCount(usage["input_tokens"]);
   const outputTokens = tokenCount(usage["output_tokens"]);
-  if (!acceptedResponseModel(root["model"]) || inputTokens === null || outputTokens === null)
+  if (!acceptedResponseModel(root["model"], model) || inputTokens === null || outputTokens === null)
     return null;
   return { noul, model: root["model"], inputTokens, outputTokens };
 }
@@ -164,14 +164,25 @@ function validRerankRequest(value) {
   return true;
 }
 function createTypeSafeReranker(options = {}) {
+  const environment = options.environment ?? process.env;
+  return createHostedReranker(options, {
+    id: "typesafe",
+    label: "TypeSafe",
+    model: DEFAULT_SYSTEMONE_MODEL,
+    endpoint: DEFAULT_SYSTEMONE_ENDPOINT,
+    apiKey: Object.hasOwn(environment, "TYPESAFE_API_KEY") ? environment["TYPESAFE_API_KEY"] : undefined,
+    unavailableMessage: "TYPESAFE_API_KEY is missing or invalid; the TypeSafe rerank lane is unavailable.",
+    unwrap: (value) => value
+  });
+}
+function createHostedReranker(options, provider) {
   const transport = options.transport ?? fetchSystemOneTransport;
   const timeoutMs = boundedPositiveInteger(options.timeoutMs, DEFAULT_RERANK_TIMEOUT_MS, MAX_RERANK_TIMEOUT_MS);
   const maxResponseBytes = boundedPositiveInteger(options.maxResponseBytes, DEFAULT_RERANK_MAX_RESPONSE_BYTES, MAX_RERANK_RESPONSE_BYTES);
   const concurrency = boundedPositiveInteger(options.concurrency, DEFAULT_RERANK_CONCURRENCY, MAX_RERANK_CONCURRENCY);
-  const environment = options.environment ?? process.env;
-  const apiKey = Object.hasOwn(environment, "TYPESAFE_API_KEY") ? environment["TYPESAFE_API_KEY"] : undefined;
+  const apiKey = provider.apiKey;
   return {
-    id: "typesafe",
+    id: provider.id,
     rerank: async (request) => {
       const started = performance.now();
       const controller = new AbortController;
@@ -209,7 +220,7 @@ function createTypeSafeReranker(options = {}) {
       };
       const failed = (message) => ({
         status: "failed",
-        message,
+        message: message.replaceAll("TypeSafe", provider.label),
         ...details()
       });
       try {
@@ -224,8 +235,8 @@ function createTypeSafeReranker(options = {}) {
         if (callerSignal?.aborted === true) {
           return failed("TypeSafe rerank request was aborted.");
         }
-        if (!validApiKey(apiKey)) {
-          return { status: "unavailable", message: "TYPESAFE_API_KEY is missing or invalid; the TypeSafe rerank lane is unavailable." };
+        if (!validApiKey(apiKey) || provider.endpoint === undefined) {
+          return { status: "unavailable", message: provider.unavailableMessage };
         }
         if (candidateCount === 0)
           return { status: "ready", ordering: [], probabilities: {} };
@@ -242,15 +253,18 @@ function createTypeSafeReranker(options = {}) {
           if (encoder.encode(JSON.stringify(state)).byteLength > MAX_RERANK_STATE_BYTES) {
             return failed(`TypeSafe rerank state exceeds the ${MAX_RERANK_STATE_BYTES}-byte limit.`);
           }
-          bodies.push(encoder.encode(JSON.stringify({
-            model: DEFAULT_SYSTEMONE_MODEL,
+          const body = encoder.encode(JSON.stringify({
+            model: provider.model,
             state,
             questions: { [RELEVANCE_QUESTION]: {
               type: "noul",
               instructions: RELEVANCE_INSTRUCTIONS,
               criteria: RELEVANCE_CRITERIA
             } }
-          })));
+          }));
+          if (body.byteLength > 32 * 1024)
+            return failed("TypeSafe rerank body exceeds the 32768-byte limit.");
+          bodies.push(body);
         }
         const deadline = started + timeoutMs;
         const timeoutMessage = "TypeSafe rerank window exceeded its deadline.";
@@ -271,7 +285,7 @@ function createTypeSafeReranker(options = {}) {
             let response;
             try {
               response = await transport({
-                url: DEFAULT_SYSTEMONE_ENDPOINT,
+                url: provider.endpoint,
                 body,
                 headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
                 timeoutMs: Math.max(1, Math.ceil(deadline - performance.now())),
@@ -302,7 +316,8 @@ function createTypeSafeReranker(options = {}) {
                 stop(response.status === 200 ? "TypeSafe rerank response was not valid UTF-8 JSON." : `TypeSafe rerank request returned HTTP ${response.status}.`);
                 return { ok: false, message: firstFailure };
               }
-              const root = recordValue(parsed);
+              const result = provider.unwrap(parsed);
+              const root = recordValue(result);
               const usage = recordValue(root?.["usage"]);
               const input = tokenCount(usage?.["input_tokens"]);
               const output = tokenCount(usage?.["output_tokens"]);
@@ -315,13 +330,13 @@ function createTypeSafeReranker(options = {}) {
                 outputTokens += output;
                 usageReceipts += 1;
               }
-              if (acceptedResponseModel(root?.["model"]))
-                observedModel = DEFAULT_SYSTEMONE_MODEL;
+              if (acceptedResponseModel(root?.["model"], provider.model))
+                observedModel = provider.model;
               if (response.status !== 200) {
                 stop(`TypeSafe rerank request returned HTTP ${response.status}.`);
                 return { ok: false, message: firstFailure };
               }
-              const answer = parseSystemOneResponse(parsed);
+              const answer = parseSystemOneResponse(result, provider.model);
               if (answer === null) {
                 stop("TypeSafe rerank response was malformed.");
                 return { ok: false, message: firstFailure };
@@ -365,4 +380,4 @@ function createTypeSafeReranker(options = {}) {
   };
 }
 
-export { DEFAULT_SYSTEMONE_ENDPOINT, DEFAULT_SYSTEMONE_MODEL, createTypeSafeReranker };
+export { DEFAULT_SYSTEMONE_ENDPOINT, DEFAULT_SYSTEMONE_MODEL, createTypeSafeReranker, createHostedReranker };
