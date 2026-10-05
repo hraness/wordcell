@@ -1,8 +1,32 @@
 {
   "copies": [
-    ["wordcell-launch-1080p.mp4", "../../site/public/media/wordcell-launch.mp4"],
-    ["wordcell-launch-1080p.webm", "../../site/public/media/wordcell-launch.webm"],
-    ["wordcell-launch-poster.jpg", "../../site/public/media/wordcell-launch-poster.jpg"],
-    ["wordcell-launch.en.vtt", "../../site/public/media/wordcell-launch.vtt"]
+    [
+      "wordcell-launch-1080p.mp4",
+      "../../site/public/media/wordcell-launch.mp4"
+    ],
+    [
+      "wordcell-launch-1080p.webm",
+      "../../site/public/media/wordcell-launch.webm"
+    ],
+    [
+      "wordcell-launch-poster.jpg",
+      "../../site/public/media/wordcell-launch-poster.jpg"
+    ],
+    [
+      "wordcell-launch.en.vtt",
+      "../../site/public/media/wordcell-launch.vtt"
+    ],
+    [
+      "wordcell-launch-1x1.mp4",
+      "../../site/public/media/wordcell-launch-1x1.mp4"
+    ],
+    [
+      "wordcell-launch-9x16.mp4",
+      "../../site/public/media/wordcell-launch-9x16.mp4"
+    ],
+    [
+      "wordcell-launch-9x16-poster.jpg",
+      "../../site/public/media/wordcell-launch-9x16-poster.jpg"
+    ]
   ]
 }
