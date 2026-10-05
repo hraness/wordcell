@@ -71,3 +71,16 @@ describe("site/launch/social-kit.md", () => {
     expect(await Bun.file(new URL("../launch/social-kit.md", import.meta.url)).text()).toBe(renderSocialKitMarkdown());
   });
 });
+
+describe("launch film", () => {
+  test("is a complete article video whose files are all in public/", async () => {
+    const { existsSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { assertArticleVideo } = await import("@hraness/design-kit");
+    const { launchFilm } = await import("../wordcell/launch/film");
+    expect(() => assertArticleVideo(launchFilm)).not.toThrow();
+    for (const path of [...launchFilm.sources.map((source) => source.src), launchFilm.poster, launchFilm.captions]) {
+      expect(existsSync(join(import.meta.dir, "../public", path))).toBe(true);
+    }
+  });
+});

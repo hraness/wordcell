@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Launch film</title>
+<style>
+/*__FONTS__*/
+:root{/*__VARS__*/
+  color-scheme: dark;
+  --rule: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --rule-strong: color-mix(in srgb, var(--foreground) 18%, transparent);
+  --ink70: color-mix(in srgb, var(--foreground) 72%, transparent);
+  --ok: color-mix(in oklch, #7fd498 80%, var(--foreground));
+}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:transparent!important}
+*,*::before,*::after{box-sizing:border-box}
+#frame{position:absolute;inset:0;background:var(--background);overflow:hidden;font-family:"Film Sans",ui-sans-serif,system-ui,sans-serif;
+  color:var(--foreground);-webkit-font-smoothing:antialiased;font-kerning:normal;font-feature-settings:"kern" 1}
+#bg{position:absolute;inset:0;pointer-events:none}
+#bg .glow{position:absolute;width:1400px;height:1000px;left:0;top:0;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--primary) 9%,transparent),transparent);will-change:transform,opacity}
+#bg .vignette{position:absolute;inset:0;background:radial-gradient(ellipse 75% 70% at 50% 46%,transparent 55%,rgba(0,0,0,.42) 100%)}
+#grain{position:absolute;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='11' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.a{position:absolute;left:0;top:0;will-change:transform,opacity;white-space:nowrap}
+.mono{font-family:"Film Mono",ui-monospace,monospace;font-feature-settings:"liga" 0,"calt" 0}
+.muted{color:var(--muted)}
+.hl{font-weight:550;line-height:1.08;white-space:normal;text-align:center;text-wrap:balance}
+.hl .w{display:inline-block;white-space:pre;will-change:transform,opacity,filter}
+.foil-text{background-image:var(--foil-image);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.hl .acc{--hraness-foil-reflection:40%;--hraness-foil-text-base:color-mix(in oklch,var(--primary) 78%,var(--foreground))}
+.mark{position:relative;flex:none}
+.mark .paint{position:absolute;inset:0;background-image:var(--foil-image);-webkit-mask:var(--mark) center/contain no-repeat;mask:var(--mark) center/contain no-repeat}
+.lockup{display:flex;align-items:center;font-weight:700;letter-spacing:-.045em}
+.lockup .word{line-height:1}
+.card{background:var(--surface);border:1.5px solid var(--rule-strong);border-radius:22px;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 30px 60px -20px rgba(0,0,0,.55),0 10px 24px -12px rgba(0,0,0,.5)}
+.app{display:flex;align-items:center;gap:14px;color:var(--muted);font-weight:500}
+.tile{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;flex:none;font-weight:700;letter-spacing:-.02em}
+.chip{display:inline-flex;align-items:center;gap:.5em;border-radius:999px;font-weight:500;letter-spacing:-.01em;border:1.5px solid var(--rule-strong);background:var(--surface);color:var(--muted)}
+.src{display:inline-flex;align-items:center;gap:.5em;border-radius:999px;font-weight:500;letter-spacing:-.005em;white-space:nowrap;
+  background:color-mix(in srgb,var(--c) 12%,var(--surface));border:1.5px solid color-mix(in srgb,var(--c) 34%,transparent);color:var(--foreground)}
+.src i{display:inline-block;width:.55em;height:.55em;border-radius:50%;background:var(--c)}
+.panel{background:color-mix(in srgb,var(--surface) 94%,transparent);border:1.5px solid var(--rule-strong);border-radius:28px;overflow:hidden;
+  box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 40px 80px -30px rgba(0,0,0,.7)}
+.bar{position:absolute;left:0;right:0;top:0;z-index:2;background:var(--surface);display:flex;align-items:center;gap:14px;border-bottom:1.5px solid var(--rule);color:var(--muted);font-weight:500}
+.view{position:absolute;left:0;right:0;bottom:0;overflow:hidden}
+.feed{position:absolute;left:0;right:0;top:0}
+.msg{position:relative;display:flex;will-change:transform,opacity}
+.msg.you{justify-content:flex-end}
+.bubble{background:var(--primary-soft);border:1.5px solid color-mix(in srgb,var(--primary) 26%,transparent);color:var(--foreground);border-radius:26px 26px 8px 26px;font-weight:500;letter-spacing:-.015em;line-height:1.25;white-space:normal}
+.agent{display:flex;gap:20px;align-items:flex-start}
+.avatar{flex:none;border-radius:50%;background:var(--surface-raised);border:1.5px solid var(--rule-strong);display:flex;align-items:center;justify-content:center}
+.reply{font-weight:450;letter-spacing:-.015em;line-height:1.3;white-space:normal}
+.reply .w{display:inline-block;white-space:pre}
+.dots{display:flex;gap:9px;align-items:center;position:absolute}
+.dots i{display:block;width:11px;height:11px;border-radius:50%;background:var(--muted)}
+.mini{display:flex;flex-direction:column;gap:6px;margin-top:20px;padding:18px 22px;border-radius:18px;background:var(--surface-raised);border:1.5px solid var(--rule-strong);width:max-content;max-width:100%;white-space:normal}
+.term{background:color-mix(in srgb,var(--background) 70%,#000);border:1.5px solid var(--rule-strong);border-radius:22px;overflow:hidden;box-shadow:0 40px 80px -30px rgba(0,0,0,.7)}
+.term .ln{white-space:pre}
+.stat .v{display:inline-block;font-weight:550;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row{display:flex;align-items:center}
+svg{position:absolute;left:0;top:0;overflow:visible}
+</style>
+</head>
+<body>
+<div id="frame"><div id="bg"><div class="glow"></div><div class="vignette"></div></div><svg id="lines"></svg><div id="stage"></div><div id="chrome"></div><div id="grain"></div></div>
+<script>/*__FILM__*/</script>
+<script type="module">
+const F = window.__FILM__;
+const FMT = innerWidth / innerHeight > 1.3 ? "wide" : innerWidth / innerHeight < 0.8 ? "portrait" : "square";
+// Portrait is viewed full screen on a phone: lay out on a smaller virtual canvas and zoom it up.
+const Z = FMT === "portrait" ? 1.22 : 1;
+const W = innerWidth / Z, H = innerHeight / Z;
+for (const id of ["stage", "chrome", "lines"]) document.getElementById(id).style.zoom = String(Z);
+const pick = (w, s, p = s) => (FMT === "wide" ? w : FMT === "square" ? s : p);
+const frameEl = document.getElementById("frame");
+const stage = document.getElementById("stage"), chrome = document.getElementById("chrome"), svg = document.getElementById("lines");
+svg.setAttribute("width", W); svg.setAttribute("height", H);
+const NS = "http://www.w3.org/2000/svg";
+const glow = document.querySelector("#bg .glow");
+
+// ---------- motion ----------
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const springW = (w) => (dt) => (dt <= 0 ? 0 : 1 - (1 + w * dt) * Math.exp(-w * dt));
+const spring = springW(15);
+const springPop = (dt) => {
+  if (dt <= 0) return 0;
+  const w = 16, z = 0.66, wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * dt) * (Math.cos(wd * dt) + (z / Math.sqrt(1 - z * z)) * Math.sin(wd * dt));
+};
+const easeOut = (k) => 1 - Math.pow(1 - clamp(k), 3);
+const easeIn = (k) => Math.pow(clamp(k), 2.2);
+const easeInOut = (k) => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+function env(t, t0, t1, din = 0.42, dout = 0.3) {
+  const inK = easeOut((t - t0) / din), out = easeIn((t - (t1 - dout)) / dout);
+  return { o: inK * (1 - out), k: spring(t - t0), inK, out };
+}
+function el(cls, parent = stage, html = "") {
+  const node = document.createElement("div");
+  node.className = cls;
+  if (html) node.innerHTML = html;
+  parent.appendChild(node);
+  return node;
+}
+function place(node, x, y, o = 1, s = 1, rot = 0, blur = 0) {
+  node.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0)${s !== 1 ? ` scale(${s.toFixed(4)})` : ""}${rot ? ` rotate(${rot.toFixed(3)}deg)` : ""}`;
+  node.style.opacity = o <= 0.001 ? "0" : o.toFixed(3);
+  node.style.visibility = o <= 0.001 ? "hidden" : "visible";
+  node.style.filter = blur > 0.05 && o > 0.001 ? `blur(${blur.toFixed(2)}px)` : "none";
+}
+function rise(node, t, t0, t1, x, y, opt = {}) {
+  const e = env(t, t0, t1, opt.din, opt.dout);
+  place(node, x + (1 - e.k) * (opt.dx ?? 0), y + (1 - e.k) * (opt.dy ?? 26) - e.out * 12, e.o * (opt.o ?? 1),
+    lerp(opt.s0 ?? 1, 1, e.k), opt.rot ?? 0, (1 - e.inK) * (opt.blur ?? 10) + e.out * 8);
+  return e;
+}
+function pop(node, t, ts, origin = "50% 50%") {
+  const k = springPop(t - ts);
+  node.style.opacity = clamp((t - ts) / 0.2).toFixed(3);
+  node.style.transform = `translateY(${((1 - k) * 16).toFixed(2)}px) scale(${lerp(0.9, 1, k).toFixed(4)})`;
+  node.style.transformOrigin = origin;
+}
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const words = (text, acc = []) => text.split(" ").map((w) => `<span class="w${acc.includes(w) ? " acc foil-text" : ""}">${esc(w)}</span>`).join(" ");
+const hash = (n) => { let h = (n * 2654435761) >>> 0; h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 13; return (h >>> 0) / 4294967296; };
+
+// ---------- frame geometry ----------
+const M = pick(120, 64, 48);
+const HL = { size: pick(70, 54, 56), top: pick(112, 112, 150) };
+const BOTTOM = H - pick(84, 72, 110);
+const BRAND_Y = pick(54, 46, 64);
+const CONTENT_W = pick(1180, 952, 952);
+
+// ---------- brand ----------
+function lockup(markH, fontSize, parent) {
+  const node = el("a lockup", parent);
+  node.style.fontSize = `${fontSize}px`; node.style.gap = `${Math.round(fontSize * 0.32)}px`;
+  const m = el("mark", node, `<div class="paint"></div>`);
+  m.style.width = `${markH * F.brand.markAspect}px`; m.style.height = `${markH}px`;
+  const word = el("word foil-text", node); word.textContent = F.brand.wordmark; word.style.paddingBottom = `${Math.round(fontSize * 0.08)}px`;
+  return { node, m, word };
+}
+const brand = lockup(pick(34, 32, 40), pick(30, 28, 34), chrome);
+const sample = el("a chip", chrome, esc(F.sampleLabel));
+sample.style.fontSize = pick("19px", "18px", "22px"); sample.style.padding = "7px 16px";
+const revealIndex = F.acts.findIndex((a) => a.kind === "reveal");
+const T = F.timeline;
+const handT = revealIndex >= 0 && T[revealIndex + 1] ? T[revealIndex + 1].start : F.endStart;
+const sweeps = [[T[revealIndex].start + 0.35, 1.5], [handT, 1.2], [F.endStart + 0.25, 1.6]];
+function foilPosition(t) {
+  let x = 50 + 9 * Math.sin(t * 0.55), y = 50 + 12 * Math.cos(t * 0.42);
+  for (const [t0, d] of sweeps) { const k = (t - t0) / d; if (k > 0 && k < 1) { const e = easeInOut(k); x = lerp(8, 92, e); y = lerp(30, 70, e); } }
+  frameEl.style.setProperty("--hraness-foil-x", `${x.toFixed(2)}%`);
+  frameEl.style.setProperty("--hraness-foil-y", `${y.toFixed(2)}%`);
+}
+// Merge adjacent sample acts so the chip does not blink between them.
+const sampleSpans = [];
+F.acts.forEach((a, i) => {
+  if (!a.sample) return;
+  const last = sampleSpans.at(-1);
+  if (last && Math.abs(last[1] - T[i].start) < 0.01) last[1] = T[i].end; else sampleSpans.push([T[i].start, T[i].end]);
+});
+
+// ---------- headlines ----------
+function headline(act, i) {
+  const node = el("a hl", chrome);
+  node.style.fontSize = `${HL.size}px`; node.style.letterSpacing = F.brand.tracking; node.style.width = `${W - 2 * M}px`;
+  node.innerHTML = words(act.headline, act.accents ?? []);
+  return { node, spans: [...node.querySelectorAll(".w")], t0: T[i].start + 0.2, t1: T[i].end };
+}
+function drawHeadline(h, t) {
+  const out = easeIn((t - (h.t1 - 0.3)) / 0.3);
+  if (t < h.t0 - 0.01 || out >= 1) { place(h.node, M, HL.top, 0); return; }
+  place(h.node, M, HL.top, 1);
+  h.spans.forEach((s, i) => {
+    const ti = h.t0 + i * 0.038, k = spring(t - ti), o = easeOut((t - ti) / 0.38);
+    const blur = (1 - o) * 9 + out * 7;
+    s.style.opacity = (o * (1 - out)).toFixed(3);
+    s.style.transform = `translateY(${((1 - k) * 24 - out * 10).toFixed(2)}px)`;
+    s.style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : "none";
+  });
+}
+
+// ---------- shared pieces ----------
+const tile = (card, size) => `<span class="tile" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px;color:${card.color};background:color-mix(in srgb,${card.color} 16%,transparent)">${esc(card.glyph)}</span>`;
+const sparkle = (size, color = "currentColor") => `<svg width="${size}" height="${size}" viewBox="0 0 18 18" style="position:static"><path d="M9 1.5l1.7 4.6L15.5 8l-4.8 1.8L9 14.5l-1.7-4.7L2.5 8l4.8-1.9Z" fill="${color}"/></svg>`;
+const check = (size) => `<svg width="${size}" height="${size}" viewBox="0 0 26 26" style="position:static"><circle cx="13" cy="13" r="12" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 13.5l3.6 3.4 7.4-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function srcChip(name, color, fs, parent) {
+  const node = el("src", parent); node.style.setProperty("--c", color); node.style.fontSize = `${fs}px`;
+  node.style.padding = `${Math.round(fs * 0.3)}px ${Math.round(fs * 0.7)}px`; node.innerHTML = `<i></i>${esc(name)}`;
+  return node;
+}
+function sourceCard(card, width, compact = false) {
+  const node = el("a card");
+  node.style.width = `${width}px`; node.style.padding = compact ? pick("22px 26px", "18px 20px") : pick("26px 30px 28px", "22px 26px 24px");
+  node.style.whiteSpace = "normal";
+  node.innerHTML = `<div class="app" style="font-size:${compact ? pick(21, 19, 22) : pick(24, 21, 22)}px">${tile(card, compact ? pick(38, 34, 40) : pick(44, 38, 40))}${esc(card.app)}</div>` + (compact
+    ? `<div style="margin-top:12px;font-size:${pick(24, 20, 24)}px;color:var(--ink70);letter-spacing:-.01em;line-height:1.3">${card.lines.map(esc).join(FMT === "wide" ? " · " : "<br>")}</div>`
+    : card.lines.map((line, j) => `<div style="margin-top:${j ? 6 : pick(22, 16)}px;font-size:${j ? pick(28, 23, 24) : pick(36, 29, 30)}px;font-weight:${j ? 450 : 550};letter-spacing:-.02em;color:${j ? "var(--ink70)" : "var(--foreground)"}">${esc(line)}</div>`).join(""));
+  return node;
+}
+function colorFor(act, app) {
+  const all = [...(act.sources ?? []), ...(act.cards ?? [])];
+  return all.find((c) => c.app === app)?.color ?? "var(--primary)";
+}
+
+// ---------- act builders ----------
+// Each returns { layout(), draw(t) }. `S` is the act's start, `E` its end.
+const builders = {
+  scatter(act, i, S, E) {
+    const CW = Math.min(pick(520, 420, 440), W - 2 * M);
+    const cards = act.cards.map((c) => ({ c, node: sourceCard(c, CW) }));
+    const ghosts = (act.ghosts ?? []).map((name) => { const node = el("a chip", stage, esc(name)); node.style.fontSize = pick("22px", "20px", "24px"); node.style.padding = pick("10px 20px", "8px 16px", "10px 20px"); return { name, node }; });
+    const next = F.acts[i + 1], after = F.acts[i + 2];
+    // Cards stay, dimmed, behind a following chat; they converge on the reveal that follows.
+    const persistUntil = next?.kind === "chat" ? T[i + 1].end : E;
+    const convergeAt = (next?.kind === "reveal") ? E : (next?.kind === "chat" && after?.kind === "reveal") ? T[i + 1].end : null;
+    let pos = [], gpos = [];
+    return {
+      layout(top, bottom) {
+        const n = cards.length, span = bottom - top;
+        pos = cards.map(({ node }, j) => {
+          const h = node.offsetHeight, rot = [-3.2, 1.6, 3.4, -1.8][j % 4];
+          if (FMT === "wide") {
+            const x = M + 120 + (n === 1 ? (W - 2 * M - 240 - CW) / 2 : j * (W - 2 * M - 240 - CW) / (n - 1));
+            const y = top + (j % 2 ? span * 0.5 : span * 0.06);
+            return [x, Math.min(y, bottom - h), rot];
+          }
+          const x = j % 2 ? W - M - CW : M + (j % 4 === 2 ? (W - 2 * M - CW) / 2 : 0);
+          const y = top + 20 + j * ((span - h - 20) / Math.max(1, n - 1));
+          return [x, y, rot];
+        });
+        const rects = cards.map(({ node }, j) => [pos[j][0] - 30, pos[j][1] - 30, pos[j][0] + CW + 30, pos[j][1] + node.offsetHeight + 30]);
+        const cells = [];
+        const cols = pick(5, 3, 3), rows = pick(3, 4, 6);
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const x = M + (c + 0.15 + 0.5 * hash(r * 7 + c)) * (W - 2 * M) / cols, y = top + (r + 0.2 + 0.4 * hash(r * 11 + c * 3)) * span / rows;
+          cells.push([x, y]);
+        }
+        const free = [];
+        for (const [x, y] of cells) {
+          const g = ghosts[free.length]; if (!g) break;
+          const w = g.node.offsetWidth, h = g.node.offsetHeight, gx = Math.min(x, W - M - w);
+          if (rects.some(([a, b, c2, d]) => gx < c2 && gx + w > a && y < d && y + h > b)) continue;
+          if (free.some(([fx, fy, fw]) => gx < fx + fw + 20 && gx + w + 20 > fx && Math.abs(fy - y) < h + 16)) continue;
+          free.push([gx, y, w]);
+        }
+        gpos = free;
+      },
+      draw(t) {
+        const dim = next?.kind === "chat" ? easeOut((t - T[i + 1].start) / 0.6) : 0;
+        const conv = convergeAt === null ? 0 : easeIn(clamp((t - (convergeAt - 0.25)) / 0.75));
+        const plainOut = convergeAt === null ? easeIn((t - (persistUntil - 0.3)) / 0.3) : 0;
+        const cx = W / 2, cy = (HL.top + BOTTOM) / 2;
+        cards.forEach(({ node }, j) => {
+          const [x0, y0, rot] = pos[j];
+          const e = env(t, S + 0.55 + j * 0.22, 999, 0.5);
+          const dx = 7 * Math.sin(t * 0.55 + j * 2.1), dy = 6 * Math.cos(t * 0.47 + j * 1.3);
+          let x = x0 + dx + (1 - e.k) * (j % 2 ? 90 : -90), y = y0 + dy + (1 - e.k) * 60;
+          let s = lerp(0.92, 1, e.k) * lerp(1, 0.94, dim), o = e.o * lerp(1, 0.36, dim) * (1 - plainOut), b = (1 - e.inK) * 12 + dim * 3.5 + plainOut * 8;
+          x = lerp(x, cx - CW / 2, conv); y = lerp(y, cy - node.offsetHeight / 2, conv); s *= lerp(1, 0.25, conv); o *= 1 - easeIn(clamp((conv - 0.35) / 0.65)); b += conv * 6;
+          place(node, x, y, t > persistUntil + 0.8 ? 0 : o, s, rot * (1 - conv), b);
+        });
+        ghosts.forEach((g, j) => {
+          const p = gpos[j];
+          if (!p) { place(g.node, 0, 0, 0); return; }
+          const e = env(t, S + 1.0 + j * 0.09, 999, 0.6);
+          let x = p[0] + 10 * Math.sin(t * 0.4 + j), y = p[1] + (1 - e.k) * 30 + 8 * Math.cos(t * 0.35 + j * 0.7);
+          x = lerp(x, cx - g.node.offsetWidth / 2, conv); y = lerp(y, cy - 20, conv);
+          const o = e.o * 0.5 * lerp(1, 0.45, dim) * (1 - easeIn(clamp((conv - 0.2) / 0.6))) * (1 - plainOut);
+          place(g.node, x, y, t > persistUntil + 0.8 ? 0 : o, lerp(0.94, 1, e.k) * lerp(1, 0.3, conv), 0, 1.6 + (1 - e.inK) * 8 + conv * 6);
+        });
+      },
+    };
+  },
+
+  chat(act, i, S, E) {
+    const PW = Math.min(pick(1120, 952), W - 2 * M);
+    const panel = el("a panel"); panel.style.width = `${PW}px`;
+    const barH = pick(78, 72, 84);
+    const bar = el("bar", panel, `<span class="tile" style="width:34px;height:34px;color:var(--foreground);background:var(--surface-raised);border-radius:50%">${sparkle(18)}</span><span>${esc(act.label ?? "Your agent")}</span><span style="margin-left:auto;font-size:${pick(17, 16, 20)}px;padding:5px 14px" class="chip">Example</span>`);
+    bar.style.fontSize = pick("22px", "20px", "24px"); bar.style.height = `${barH}px`; bar.style.padding = pick("0 30px", "0 26px");
+    const view = el("view", panel); view.style.top = `${barH}px`;
+    const feed = el("feed", view); const PAD = pick(34, 30, 34); feed.style.padding = `${PAD}px ${pick(36, 30, 32)}px`;
+    const fs = pick(30, 28, 32);
+    const blocks = act.exchanges.map((ex, k) => {
+      const block = el("", feed); if (k) block.style.marginTop = pick("40px", "36px");
+      const you = el("msg you", block, `<div class="bubble" style="font-size:${fs}px;padding:${pick("18px 26px", "16px 22px")};max-width:${pick(760, 720, 720)}px">${esc(ex.you)}</div>`);
+      const agent = el("msg agent", block, `<div class="avatar" style="width:${pick(52, 48, 54)}px;height:${pick(52, 48, 54)}px">${sparkle(20, "var(--foreground)")}</div><div class="body" style="position:relative;min-width:0"><div class="dots" style="top:20px"><i></i><i></i><i></i></div><div class="reply" style="font-size:${fs + 1}px;max-width:${pick(860, 760, 760)}px;padding-top:6px">${words(ex.agent)}</div></div>`);
+      agent.style.marginTop = pick("30px", "28px");
+      const body = agent.querySelector(".body");
+      let extra = null, chips = [];
+      if (ex.chips) {
+        extra = el("", body); extra.style.cssText = "display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px";
+        if (ex.chips.label) { const l = el("muted", extra); l.textContent = ex.chips.label; l.style.fontSize = `${pick(21, 19, 22)}px`; }
+        chips = ex.chips.items.map((name) => srcChip(name, colorForName(name), pick(21, 19, 22), extra));
+      }
+      if (ex.card) {
+        extra = el("mini", body);
+        extra.innerHTML = `${ex.card.kicker ? `<div class="muted" style="font-size:${pick(17, 16, 18)}px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">${esc(ex.card.kicker)}</div>` : ""}<div style="font-size:${pick(27, 24, 27)}px;font-weight:550;letter-spacing:-.015em">${esc(ex.card.title)}</div>${ex.card.body ? `<div style="font-size:${pick(22, 20, 22)}px;color:var(--ink70);line-height:1.3">${esc(ex.card.body)}</div>` : ""}${ex.card.meta ? `<div class="muted mono" style="font-size:${pick(18, 16, 18)}px">${esc(ex.card.meta)}</div>` : ""}${ex.card.image ? `<img src="${ex.card.image}" style="display:block;margin-top:10px;border-radius:12px;border:1.5px solid var(--rule-strong);width:${pick(480, 460, 520)}px;max-width:100%;height:auto">` : ""}`;
+      }
+      return { block, you, agent, spans: [...agent.querySelectorAll(".reply .w")], dots: agent.querySelector(".dots"), dotEls: [...agent.querySelectorAll(".dots i")], chips, card: ex.card ? extra : null, from: ex.chips ? extra : null, ex };
+    });
+    // Per-exchange times.
+    let c = S + 0.45;
+    const times = act.exchanges.map((ex) => {
+      const tYou = c + 0.15, tDots = tYou + 0.6, tReply = tDots + 0.65, tExtra = tReply + wordsIn(ex.agent) * 0.032 + 0.25;
+      const start = c; c += 0.6 + 0.65 + wordsIn(ex.agent) * 0.032 + 1.7 + (ex.chips || ex.card ? 0.9 : 0);
+      return { start, tYou, tDots, tReply, tExtra };
+    });
+    let top = 0, bottom = 0, heights = [], tops = [];
+    return {
+      layout(t0, b0) { top = t0; bottom = b0; heights = blocks.map((b) => b.block.offsetHeight); tops = blocks.map((b) => b.block.offsetTop); },
+      draw(t) {
+        // Grow and scroll for each later exchange.
+        let h = barH + 2 * PAD + heights[0], scroll = 0, fadePx = 0;
+        for (let k = 1; k < blocks.length; k++) {
+          const g = easeInOut((t - times[k].start) / 0.8);
+          const keep = pick(110, 120, 130);
+          const targetH = Math.min(bottom - top, barH + 2 * PAD + keep + heights[k]);
+          h = lerp(h, targetH, g);
+          scroll = lerp(scroll, Math.max(0, tops[k] - PAD - keep), g);
+          fadePx = lerp(fadePx, 110, easeOut((t - times[k].start) / 0.5));
+        }
+        h = Math.min(h, bottom - top);
+        panel.style.height = `${h.toFixed(2)}px`;
+        feed.style.transform = `translateY(${(-scroll).toFixed(2)}px)`;
+        const mask = fadePx < 1 ? "none" : `linear-gradient(to bottom, transparent 0, #000 ${fadePx.toFixed(1)}px)`;
+        view.style.webkitMaskImage = mask; view.style.maskImage = mask;
+        rise(panel, t, S + 0.25, E, (W - PW) / 2, top + (bottom - top - h) / 2, { dy: 40, s0: 0.97 });
+        blocks.forEach((b, k) => {
+          const tm = times[k];
+          pop(b.you, t, tm.tYou, "100% 100%");
+          b.agent.style.opacity = t >= tm.tDots ? clamp((t - tm.tDots) / 0.2).toFixed(3) : "0";
+          b.dots.style.opacity = t >= tm.tDots && t < tm.tReply ? "1" : "0";
+          b.dotEls.forEach((d, j) => { const s = Math.max(0, Math.sin((t - tm.tDots) * 9 - j * 0.9)); d.style.transform = `translateY(${(-5 * s).toFixed(2)}px)`; d.style.opacity = (0.45 + 0.55 * s).toFixed(3); });
+          b.spans.forEach((s, j) => {
+            const ti = tm.tReply + j * 0.032, k2 = spring(t - ti), o = easeOut((t - ti) / 0.28);
+            s.style.opacity = o.toFixed(3); s.style.transform = `translateY(${((1 - k2) * 10).toFixed(2)}px)`; s.style.filter = o < 0.99 ? `blur(${((1 - o) * 6).toFixed(2)}px)` : "none";
+          });
+          if (b.from) {
+            const label = b.from.querySelector(".muted"); if (label) label.style.opacity = clamp((t - tm.tExtra) / 0.25).toFixed(3);
+            b.chips.forEach((chip, j) => pop(chip, t, tm.tExtra + 0.1 + j * 0.12));
+          }
+          if (b.card) {
+            const kr = spring(t - tm.tExtra), o = clamp((t - tm.tExtra) / 0.3);
+            b.card.style.opacity = o.toFixed(3); b.card.style.transform = `translateY(${((1 - kr) * 22).toFixed(2)}px)`;
+            b.card.style.filter = o < 1 ? `blur(${((1 - o) * 8).toFixed(2)}px)` : "none";
+          }
+          if (k < blocks.length - 1) b.block.style.opacity = (1 - 0.45 * easeOut((t - times[k + 1].start) / 0.6)).toFixed(3);
+        });
+      },
+    };
+  },
+
+  reveal(act, i, S, E) {
+    const hero = lockup(pick(150, 124, 140), pick(138, 112, 124), chrome);
+    const tag = el("a", chrome); tag.style.cssText = `font-size:${pick(38, 32, 38)}px;font-weight:450;letter-spacing:-.02em;color:var(--ink70);text-align:center;width:${W - 2 * M}px;white-space:normal;text-wrap:balance`;
+    tag.textContent = act.tagline;
+    let hw = 0, hh = 0;
+    return {
+      layout() { const fit = Math.min(1, (W - 2 * M) / hero.node.offsetWidth); hero.node.style.fontSize = `${parseFloat(hero.node.style.fontSize) * fit}px`; hero.m.style.width = `${parseFloat(hero.m.style.width) * fit}px`; hero.m.style.height = `${parseFloat(hero.m.style.height) * fit}px`; hero.node.style.gap = `${parseFloat(hero.node.style.gap) * fit}px`; hw = hero.node.offsetWidth; hh = hero.node.offsetHeight; },
+      hero,
+      draw(t) {
+        const t0 = S + 0.15, k = spring(t - t0), o = easeOut((t - t0) / 0.5);
+        const hand = clamp((t - (handT - 0.3)) / 0.75), handK = easeInOut(hand);
+        const y0 = (HL.top + BOTTOM) / 2 - hh - pick(30, 30, 50);
+        const scale = lerp(0.82, 1, k);
+        hero.node.style.transformOrigin = "0 0";
+        if (hand <= 0) place(hero.node, (W - hw * scale) / 2, y0 + (hh * (1 - scale)) / 2, t < t0 ? 0 : o, scale, 0, (1 - o) * 14);
+        else place(hero.node, lerp((W - hw) / 2, M, handK), lerp(y0, BRAND_Y, handK), hand >= 1 ? 0 : 1, lerp(1, brand.node.offsetWidth / hw, handK));
+        hero.m.style.filter = `drop-shadow(0 0 ${(28 * (1 - handK)).toFixed(1)}px color-mix(in srgb, var(--primary) ${Math.round(28 * o * (1 - handK))}%, transparent))`;
+        rise(tag, t, S + 0.85, E - 0.1, M, y0 + hh + pick(54, 46, 60), { dy: 18 });
+      },
+    };
+  },
+
+  merge(act, i, S, E) {
+    const wide = FMT === "wide";
+    const SW = wide ? 470 : Math.floor((W - 2 * M - (act.sources.length - 1) * 24) / act.sources.length);
+    const srcs = act.sources.map((c) => ({ c, node: sourceCard(c, SW, true) }));
+    const RW = wide ? W - 2 * M - 40 - SW - 150 : W - 2 * M;
+    const rec = el("a card"); rec.style.width = `${RW}px`;
+    const PADX = pick(40, 34, 34);
+    const head = el("a"); head.style.cssText = `display:flex;align-items:center;gap:${pick(26, 22)}px`;
+    const av = act.result.avatar ?? act.result.title.split(" ").map((p) => p[0]).join("").slice(0, 2);
+    head.innerHTML = `<div style="width:${pick(92, 80)}px;height:${pick(92, 80)}px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);border:1.5px solid color-mix(in srgb,var(--primary) 30%,transparent);color:var(--primary);font-weight:600;font-size:${pick(34, 30)}px;flex:none">${esc(av)}</div><div style="min-width:0"><div style="font-size:${pick(48, 42)}px;font-weight:550;letter-spacing:-.03em;line-height:1.05">${esc(act.result.title)}</div>${act.result.subtitle ? `<div class="muted" style="font-size:${pick(26, 23)}px;margin-top:8px;white-space:normal">${esc(act.result.subtitle)}</div>` : ""}</div>`;
+    const rule = el("a"); rule.style.cssText = `height:1.5px;background:var(--rule);width:${RW - 2 * PADX}px`;
+    const ROW = { h: pick(78, 74), fs: pick(29, 26), labelW: pick(210, 170) };
+    const rows = act.result.rows.map((r) => {
+      const node = el("a row"); node.style.width = `${RW - 2 * PADX}px`;
+      node.innerHTML = `<div class="muted" style="width:${ROW.labelW}px;font-size:${ROW.fs - 4}px;flex:none">${esc(r.label)}</div><div style="font-size:${ROW.fs}px;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis">${esc(r.value)}</div><div class="tags" style="margin-left:auto;display:flex;gap:10px;padding-left:16px"></div>`;
+      const tags = r.from.map((name) => srcChip(name, colorFor(act, name), pick(19, 17), node.querySelector(".tags")));
+      return { r, node, tags };
+    });
+    const rules = rows.slice(1).map(() => { const n = el("a"); n.style.cssText = `height:1.5px;background:var(--rule);width:${RW - 2 * PADX}px`; return n; });
+    const foot = act.result.footnote ? el("a", stage, `${check(26)}${esc(act.result.footnote)}`) : null;
+    if (foot) foot.style.cssText += `;display:flex;align-items:center;gap:12px;font-size:${pick(22, 20)}px;color:var(--primary);font-weight:500`;
+    const flows = rows.flatMap((row, ri) => row.r.from.map((app) => {
+      const p = document.createElementNS(NS, "path"); p.setAttribute("fill", "none"); p.setAttribute("stroke-width", "2"); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke", colorFor(act, app)); svg.appendChild(p);
+      const dot = document.createElementNS(NS, "circle"); dot.setAttribute("r", "5"); dot.setAttribute("fill", colorFor(act, app)); svg.appendChild(dot);
+      return { p, dot, ri, si: act.sources.findIndex((s) => s.app === app), j: row.r.from.indexOf(app), n: row.r.from.length };
+    }));
+    const TOP = pick(178, 160), recH = TOP + rows.length * ROW.h + (foot ? pick(90, 84) : pick(30, 26));
+    rec.style.height = `${recH}px`;
+    let L = null;
+    return {
+      layout(top, bottom) {
+        const srcH = srcs.map((s) => s.node.offsetHeight);
+        if (wide) {
+          const total = srcH.reduce((a, b) => a + b, 0) + (srcs.length - 1) * 26;
+          const recY = top + Math.max(0, (bottom - top - recH) / 2);
+          let y = top + Math.max(0, (bottom - top - total) / 2);
+          L = { srcPos: srcH.map((h) => { const p = [M + 20, y]; y += h + 26; return p; }), srcH, recX: M + 20 + SW + 150, recY };
+        } else {
+          const rowH = Math.max(...srcH), gap = pick(0, 56, 70);
+          const blockH = rowH + gap + recH, y0 = top + Math.max(0, (bottom - top - blockH) / 2);
+          L = { srcPos: srcs.map((_, j) => [M + j * (SW + 24), y0]), srcH, recX: M, recY: y0 + rowH + gap };
+        }
+        for (const f of flows) {
+          const [sx, sy] = L.srcPos[f.si];
+          const ry = L.recY + TOP + f.ri * ROW.h + ROW.h / 2 - 6;
+          let d;
+          if (wide) { const x1 = sx + SW, y1 = sy + L.srcH[f.si] / 2, x2 = L.recX, mx = (x1 + x2) / 2; d = `M${x1},${y1} C${mx},${y1} ${mx},${ry} ${x2},${ry}`; }
+          else { const x1 = sx + SW / 2 + (f.n > 1 ? (f.j ? 14 : -14) : 0) + f.ri * 6; d = `M${x1},${sy + L.srcH[f.si]} L${x1},${L.recY}`; }
+          f.p.setAttribute("d", d); f.len = f.p.getTotalLength();
+        }
+      },
+      draw(t) {
+        srcs.forEach((s, j) => rise(s.node, t, S + 0.45 + j * 0.12, E, L.srcPos[j][0], L.srcPos[j][1], wide ? { dx: -60, dy: 0 } : { dy: 30 }));
+        const r0 = S + 0.65;
+        rise(rec, t, r0, E, L.recX, L.recY, { dy: 34, s0: 0.98 });
+        rise(head, t, r0 + 0.15, E, L.recX + PADX, L.recY + pick(38, 34), { dy: 14 });
+        rise(rule, t, r0 + 0.2, E, L.recX + PADX, L.recY + TOP - pick(20, 18), { dy: 0, blur: 0 });
+        const out = easeIn((t - (E - 0.3)) / 0.3);
+        rows.forEach((row, ri) => {
+          const rt = S + 1.0 + ri * 0.38;
+          rise(row.node, t, rt + 0.42, E, L.recX + PADX, L.recY + TOP + ri * ROW.h + (ROW.h - ROW.fs * 1.3) / 2 - 6, { dx: -18, dy: 0, blur: 6 });
+          row.tags.forEach((tag, j) => pop(tag, t, rt + 0.5 + j * 0.08));
+          if (ri > 0) rise(rules[ri - 1], t, rt + 0.3, E, L.recX + PADX, L.recY + TOP + ri * ROW.h - 2, { dy: 0, blur: 0 });
+        });
+        for (const f of flows) {
+          const rt = S + 1.0 + f.ri * 0.38, kd = easeInOut((t - rt) / 0.55);
+          f.p.setAttribute("stroke-dasharray", `${f.len} ${f.len}`); f.p.setAttribute("stroke-dashoffset", String(f.len * (1 - kd)));
+          f.p.style.opacity = String((t < rt ? 0 : lerp(0.85, 0.28, easeOut((t - rt - 0.6) / 0.6))) * (1 - out));
+          const pt = f.p.getPointAtLength(f.len * kd); f.dot.setAttribute("cx", pt.x); f.dot.setAttribute("cy", pt.y);
+          f.dot.style.opacity = String(t > rt && kd < 1 ? 1 : 0);
+        }
+        if (foot) rise(foot, t, S + 1.0 + rows.length * 0.38 + 0.6, E, L.recX + PADX, L.recY + TOP + rows.length * ROW.h + pick(22, 20), { dy: 12 });
+      },
+    };
+  },
+
+  terminal(act, i, S, E) {
+    const few = act.lines.length <= 6;
+    const TW = Math.min(pick(1280, 952), W - 2 * M);
+    // Largest mono size (about 0.6em per character) that keeps the longest line unwrapped.
+    const longest = Math.max(...act.lines.map((l) => (l.cmd !== undefined ? l.cmd.length + 2 : (l.out ?? "").length)));
+    const fs = Math.max(16, Math.min(few ? pick(36, 28, 26) : pick(27, 22, 22), Math.floor((TW - 2 * pick(34, 28, 30) - 8) / (longest * 0.6)))), lh = Math.round(fs * 1.55), barH = pick(64, 56, 60), PAD = pick(34, 28, 30);
+    const term = el("a term"); term.style.width = `${TW}px`;
+    const bar = el("", term); bar.style.cssText = `height:${barH}px;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:1.5px solid var(--rule);color:var(--muted);font-size:${pick(20, 18)}px;font-weight:500`;
+    bar.innerHTML = `<i style="width:13px;height:13px;border-radius:50%;background:var(--rule-strong)"></i><i style="width:13px;height:13px;border-radius:50%;background:var(--rule-strong)"></i><i style="width:13px;height:13px;border-radius:50%;background:var(--rule-strong)"></i><span style="margin-left:12px">${esc(act.title ?? "Terminal")}</span>`;
+    const view = el("", term); view.style.cssText = `position:relative;overflow:hidden;margin:${PAD}px`;
+    const inner = el("mono", view); inner.style.cssText = `position:absolute;left:0;right:0;top:0;font-size:${fs}px;line-height:${lh}px`;
+    const toneColor = { plain: "var(--foreground)", muted: "var(--muted)", ok: "var(--ok)", accent: "var(--primary)" };
+    let c = S + 0.7;
+    const lines = act.lines.map((line) => {
+      const node = el("ln", inner);
+      node.style.color = line.cmd !== undefined ? "var(--foreground)" : toneColor[line.tone ?? "plain"];
+      node.style.whiteSpace = "pre-wrap"; node.style.wordBreak = "break-word";
+      const t0 = c, dur = line.cmd !== undefined ? 0.3 + line.cmd.length * 0.026 : 0;
+      c += line.cmd !== undefined ? dur + 0.3 : 0.11;
+      return { line, node, t0, dur };
+    });
+    let maxLines = 12, viewH = 0, offs = [];
+    return {
+      layout(top, bottom) {
+        // Fill with the full text once to measure wrapped heights, then clear.
+        lines.forEach((l) => { l.node.textContent = l.line.cmd !== undefined ? `$ ${l.line.cmd}` : l.line.out ?? ""; });
+        offs = lines.map((l) => [l.node.offsetTop, l.node.offsetHeight]);
+        const contentH = inner.offsetHeight;
+        viewH = Math.min(contentH, bottom - top - barH - 2 * PAD - 4);
+        view.style.height = `${viewH}px`;
+        term.style.height = `${barH + 2 * PAD + viewH}px`;
+        this.y = top + (bottom - top - term.offsetHeight) / 2;
+        maxLines = viewH;
+      },
+      draw(t) {
+        rise(term, t, S + 0.3, E, (W - TW) / 2, this.y, { dy: 36, s0: 0.98 });
+        let lastBottom = 0;
+        lines.forEach((l, j) => {
+          const on = t >= l.t0;
+          if (!on) { l.node.style.visibility = "hidden"; return; }
+          l.node.style.visibility = "visible";
+          if (l.line.cmd !== undefined) {
+            const n = Math.round(clamp((t - l.t0) / Math.max(0.01, l.dur)) * l.line.cmd.length);
+            const typing = t < l.t0 + l.dur + 0.25 && lines.findLastIndex((x) => t >= x.t0) === j;
+            l.node.innerHTML = `<span style="color:var(--primary)">$ </span>${esc(l.line.cmd.slice(0, n))}${typing ? '<span style="display:inline-block;width:.55em;height:1.05em;vertical-align:-.18em;background:var(--foreground)"></span>' : ""}`;
+          } else {
+            l.node.textContent = l.line.out ?? "";
+            l.node.style.opacity = clamp((t - l.t0) / 0.12).toFixed(3);
+          }
+          lastBottom = offs[j][0] + offs[j][1];
+        });
+        const scroll = Math.max(0, lastBottom - maxLines);
+        inner.style.transform = `translateY(${(-scroll).toFixed(2)}px)`;
+      },
+    };
+  },
+
+  stats(act, i, S, E) {
+    const n = act.items.length, cols = FMT === "wide" ? n : Math.min(2, n), CW2 = (W - 2 * M) / cols;
+    const items = act.items.map((item) => {
+      const node = el("a stat"); node.style.width = `${CW2 - 40}px`; node.style.whiteSpace = "normal";
+      node.innerHTML = `<div class="v" style="font-size:${pick(132, 104, 100)}px"></div><div class="muted" style="font-size:${pick(27, 25, 28)}px;margin-top:18px;line-height:1.25">${esc(item.label)}</div>`;
+      const m = /^([^\d]*)(\d[\d,]*(?:\.\d+)?)(.*)$/u.exec(item.value);
+      return { item, node, v: node.querySelector(".v"), num: m ? { pre: m[1], n: Number(m[2].replace(/,/gu, "")), dec: (m[2].split(".")[1] ?? "").length, comma: m[2].includes(","), post: m[3] } : null };
+    });
+    const note = act.note ? el("a muted") : null;
+    if (note) { note.textContent = act.note; note.style.cssText += `;font-size:${pick(22, 20)}px;width:${W - 2 * M}px;text-align:center;white-space:normal`; }
+    const fmt = (x, d, comma) => { const s = x.toFixed(d); return comma ? Number(s).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }) : s; };
+    let L = [];
+    return {
+      layout(top, bottom) {
+        let size = pick(132, 104, 100);
+        for (; size > 40; size -= 2) { items.forEach((it) => { it.v.style.fontSize = `${size}px`; it.v.textContent = it.item.value; }); if (items.every((it) => it.v.scrollWidth <= CW2 - 60)) break; }
+        const rows = Math.ceil(n / cols), h = Math.max(...items.map((it) => it.node.offsetHeight)), gap = 70;
+        const total = rows * h + (rows - 1) * gap + (note ? 90 : 0), y0 = top + (bottom - top - total) / 2;
+        L = items.map((_, j) => [M + (j % cols) * CW2 + 20, y0 + Math.floor(j / cols) * (h + gap)]);
+        this.noteY = y0 + rows * h + (rows - 1) * gap + 50;
+      },
+      draw(t) {
+        items.forEach((it, j) => {
+          const tm = S + 0.5 + j * 0.2;
+          rise(it.node, t, tm, E, L[j][0], L[j][1], { dy: 28 });
+          if (it.num) { const k = clamp((t - tm) / 0.9) ** 0.6; it.v.textContent = `${it.num.pre}${fmt(it.num.n * k, it.num.dec, it.num.comma)}${it.num.post}`; }
+          else it.v.textContent = it.item.value;
+        });
+        if (note) rise(note, t, S + 0.8 + n * 0.2, E, M, this.noteY, { dy: 12 });
+      },
+    };
+  },
+
+  cards(act, i, S, E) {
+    const n = act.items.length, cols = FMT === "wide" ? Math.min(3, n) : FMT === "square" ? Math.min(2, n) : 1, gap = 28;
+    const CW2 = (Math.min(W - 2 * M, FMT === "wide" ? 1680 : W) - (cols - 1) * gap) / cols;
+    const items = act.items.map((item) => {
+      const node = el("a card"); node.style.width = `${CW2}px`; node.style.padding = pick("38px 40px", "30px 32px"); node.style.whiteSpace = "normal";
+      node.innerHTML = `${item.tag ? `<div class="chip" style="font-size:${pick(20, 18, 20)}px;padding:6px 16px;color:var(--primary);border-color:color-mix(in srgb,var(--primary) 34%,transparent);background:var(--primary-soft)">${esc(item.tag)}</div>` : ""}<div style="font-size:${pick(38, 30, 34)}px;font-weight:550;letter-spacing:-.02em;line-height:1.15;margin-top:${item.tag ? 18 : 0}px">${esc(item.title)}</div>${item.body ? `<div style="font-size:${pick(23, 21, 24)}px;color:var(--ink70);line-height:1.35;margin-top:10px">${esc(item.body)}</div>` : ""}`;
+      return node;
+    });
+    let L = [];
+    return {
+      layout(top, bottom) {
+        const rows = Math.ceil(n / cols), hs = items.map((it) => it.offsetHeight);
+        const rowH = Array.from({ length: rows }, (_, r) => Math.max(...hs.slice(r * cols, r * cols + cols)));
+        items.forEach((it, j) => { it.style.height = `${rowH[Math.floor(j / cols)]}px`; });
+        const total = rowH.reduce((a, b) => a + b, 0) + (rows - 1) * gap, x0 = (W - (cols * CW2 + (cols - 1) * gap)) / 2;
+        let y = top + Math.max(0, (bottom - top - total) / 2);
+        const lastStart = (rows - 1) * cols, shift = (cols - (n - lastStart)) * (CW2 + gap) / 2;
+        L = items.map((_, j) => { const r = Math.floor(j / cols), yy = y + rowH.slice(0, r).reduce((a, b) => a + b, 0) + r * gap; return [x0 + (j % cols) * (CW2 + gap) + (j >= lastStart ? shift : 0), yy]; });
+      },
+      draw(t) { items.forEach((it, j) => rise(it, t, S + 0.5 + j * 0.28, E, L[j][0], L[j][1], { dy: 30, s0: 0.98 })); },
+    };
+  },
+
+  gallery(act, i, S, E) {
+    const n = act.items.length, cols = FMT === "wide" ? Math.min(3, n) : FMT === "square" ? Math.min(2, n) : 1, gap = pick(32, 24, 28);
+    const IW = Math.floor((W - 2 * M - (cols - 1) * gap) / cols);
+    const items = act.items.map((item) => {
+      const node = el("a"); node.style.cssText += `;width:${IW}px;white-space:normal`;
+      node.innerHTML = `<div class="frame" style="overflow:hidden;border-radius:20px;border:1.5px solid var(--rule-strong);box-shadow:0 30px 60px -24px rgba(0,0,0,.65);background:var(--surface)"><img src="${FMT === "portrait" && item.portraitImage ? item.portraitImage : item.image}" style="display:block;width:100%;height:auto;will-change:transform"></div>${item.caption ? `<div class="muted" style="margin-top:14px;font-size:${pick(21, 19, 22)}px;line-height:1.3">${esc(item.caption)}</div>` : ""}`;
+      return { node, img: node.querySelector("img") };
+    });
+    let L = [];
+    return {
+      layout(top, bottom) {
+        const rows = Math.ceil(n / cols), avail = bottom - top - (rows - 1) * gap;
+        // Shrink the frames until every row fits under the headline.
+        let w = IW;
+        const hOf = () => Math.max(...items.map((it) => it.node.offsetHeight));
+        while (rows * hOf() > avail && w > 200) { w -= 20; items.forEach((it) => { it.node.style.width = `${w}px`; }); }
+        const h = hOf(), x0 = (W - (cols * w + (cols - 1) * gap)) / 2, y0 = top + Math.max(0, (bottom - top - (rows * h + (rows - 1) * gap)) / 2);
+        // Centre an incomplete last row.
+        const lastStart = (rows - 1) * cols, lastCount = n - lastStart, shift = (cols - lastCount) * (w + gap) / 2;
+        L = items.map((_, j) => [x0 + (j % cols) * (w + gap) + (j >= lastStart ? shift : 0), y0 + Math.floor(j / cols) * (h + gap)]);
+      },
+      draw(t) {
+        items.forEach((it, j) => {
+          const t0 = S + 0.5 + j * 0.35;
+          rise(it.node, t, t0, E, L[j][0], L[j][1], { dy: 40, s0: 0.96 });
+          it.img.style.transform = `scale(${(1.06 - 0.06 * easeOut((t - t0) / (E - t0))).toFixed(4)})`;
+        });
+      },
+    };
+  },
+
+  "before-after"(act, i, S, E) {
+    const CW2 = Math.min(pick(760, 720), W - 2 * M);
+    const bubbles = act.before.items.map((text, j) => {
+      const you = j % 2 === 1;
+      const node = el("a"); node.style.cssText += `;max-width:${Math.min(560, W - 2 * M - 40)}px;padding:${pick("20px 26px", "18px 22px")};border-radius:${you ? "26px 26px 8px 26px" : "26px 26px 26px 8px"};background:${you ? "var(--primary-soft)" : "var(--surface-raised)"};border:1.5px solid ${you ? "color-mix(in srgb,var(--primary) 26%,transparent)" : "var(--rule-strong)"};white-space:normal;font-size:${pick(27, 25, 28)}px;line-height:1.3`;
+      node.innerHTML = act.before.redact ? `<div style="height:${pick(18, 16)}px;border-radius:9px;width:${[340, 240, 400][j % 3]}px;max-width:100%;background:color-mix(in srgb,var(--foreground) 30%,transparent)"></div>` : esc(text);
+      return { node, you };
+    });
+    const label = act.before.label ? el("a muted") : null; if (label) { label.textContent = act.before.label; label.style.fontSize = pick("22px", "20px"); }
+    const card = el("a card"); card.style.width = `${CW2}px`; card.style.padding = pick("30px 36px", "28px 30px"); card.style.whiteSpace = "normal";
+    card.innerHTML = `${act.after.label ? `<div class="muted" style="font-size:${pick(20, 18)}px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">${esc(act.after.label)}</div>` : ""}<div style="font-size:${pick(36, 32)}px;font-weight:550;letter-spacing:-.025em;margin-top:${act.after.label ? 12 : 0}px">${esc(act.after.title)}</div><div style="display:flex;flex-wrap:wrap;gap:${pick(48, 32)}px;margin-top:22px">${act.after.rows.map((r) => `<div><div class="muted" style="font-size:${pick(21, 19)}px">${esc(r.label)}</div><div style="font-size:${pick(46, 40)}px;font-weight:550;letter-spacing:-.03em;margin-top:6px">${esc(r.value)}</div></div>`).join("")}</div>${act.after.note ? `<div class="muted" style="margin-top:22px;font-size:${pick(22, 20)}px">${esc(act.after.note)}</div>` : ""}`;
+    const frame = act.frame ? el("a") : null, frameLabel = act.frame ? el("a") : null;
+    if (frame) { frame.style.cssText += ";border:1.5px dashed var(--rule-strong);border-radius:34px"; frameLabel.style.cssText += `;font-size:${pick(22, 20)}px;color:var(--ink70);font-weight:500;background:var(--background);padding:0 16px`; frameLabel.textContent = act.frame; }
+    let L = null;
+    return {
+      layout(top, bottom) {
+        const ch = card.offsetHeight, pad = pick(56, 50), mid = (top + bottom) / 2;
+        const cy = mid - ch / 2 + (frame ? 10 : 0);
+        let by = mid - (bubbles.reduce((a, b) => a + b.node.offsetHeight + 16, 0) + (label ? 40 : 0)) / 2;
+        const colW = Math.min(680, W - 2 * M), colX = (W - colW) / 2;
+        const bp = bubbles.map((b) => { const p = [b.you ? colX + colW - b.node.offsetWidth : colX, by + (label ? 40 : 0)]; by += b.node.offsetHeight + 16; return p; });
+        L = { cx: (W - CW2) / 2, cy, ch, pad, bp, labelY: bp[0][1] - 44, colX };
+        if (frame) { frame.style.width = `${CW2 + 2 * pad}px`; frame.style.height = `${ch + 2 * pad}px`; }
+      },
+      draw(t) {
+        const dis = (j) => clamp((t - (S + 1.9 + j * 0.1)) / 0.55);
+        bubbles.forEach((b, j) => { const ts = S + 0.4 + j * 0.22, k = springPop(t - ts), d = dis(j); place(b.node, L.bp[j][0], L.bp[j][1] + (1 - k) * 18 - easeIn(d) * 26, clamp((t - ts) / 0.2) * (1 - easeIn(d)), lerp(0.92, 1, k) * lerp(1, 1.04, d), 0, easeIn(d) * 16); });
+        if (label) place(label, L.colX, L.labelY, clamp((t - (S + 0.3)) / 0.3) * (1 - easeIn(dis(0))));
+        rise(card, t, S + 2.3, E, L.cx, L.cy, { dy: 26, s0: 0.97 });
+        if (frame) { rise(frame, t, S + 2.95, E, L.cx - L.pad, L.cy - L.pad, { dy: 0, s0: 1.03, blur: 4 }); rise(frameLabel, t, S + 3.15, E, L.cx - L.pad + 34, L.cy - L.pad - frameLabel.offsetHeight / 2, { dy: 8 }); }
+      },
+    };
+  },
+};
+function wordsIn(text) { return text.split(/\s+/u).filter(Boolean).length; }
+const nameColors = new Map();
+F.acts.forEach((a) => [...(a.cards ?? []), ...(a.sources ?? [])].forEach((c) => nameColors.set(c.app, c.color)));
+function colorForName(name) { return nameColors.get(name) ?? "var(--primary)"; }
+
+// ---------- end card ----------
+const endLock = lockup(pick(126, 110, 130), pick(112, 96, 110), chrome);
+const endLead = F.end.lead ? el("a", chrome) : null;
+if (endLead) { endLead.style.cssText += `;font-size:${pick(30, 28, 32)}px;color:var(--muted);font-weight:500`; endLead.textContent = F.end.lead; }
+const PB = { w: Math.min(pick(1060, 952), W - 2 * M), h: pick(108, 100, 96) };
+const promptBox = el("a", chrome);
+promptBox.style.cssText += `;width:${PB.w}px;height:${PB.h}px;border-radius:${PB.h / 2}px;background:var(--surface);border:1.5px solid var(--rule-strong);box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 30px 70px -24px rgba(0,0,0,.7)`;
+const promptText = el("", promptBox);
+const promptFs = (() => { const len = (F.end.prompt ?? F.end.action ?? "").length; return Math.min(pick(38, 34, 34), Math.floor((PB.w - 180) / (len * 0.5))); })();
+promptText.style.cssText = `position:absolute;left:${pick(46, 38)}px;top:0;bottom:0;display:flex;align-items:center;font-size:${promptFs}px;font-weight:500;letter-spacing:-.02em;white-space:nowrap`;
+const SB = PB.h - 24, send = el("", promptBox);
+send.style.cssText = `position:absolute;right:12px;top:12px;width:${SB}px;height:${SB}px;border-radius:50%;display:flex;align-items:center;justify-content:center`;
+send.innerHTML = `<svg width="34" height="34" viewBox="0 0 34 34" style="position:static"><path d="${F.end.prompt ? "M17 26V9M9.5 16.5L17 9l7.5 7.5" : "M9 17h16M18.5 10.5L25 17l-6.5 6.5"}" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const terms = F.end.terms ? el("a", chrome) : null; if (terms) { terms.style.cssText += `;font-size:${pick(26, 24, 26)}px;color:var(--muted)`; terms.textContent = F.end.terms; }
+const endUrl = el("a", chrome); endUrl.style.cssText += `;font-size:${pick(30, 28, 32)}px;font-weight:550;color:var(--primary)`; endUrl.textContent = F.end.url;
+const fine = F.end.finePrint ? el("a", chrome) : null; if (fine) { fine.style.cssText += `;font-size:${pick(19, 18, 20)}px;color:var(--muted)`; fine.textContent = F.end.finePrint; }
+function drawEnd(t) {
+  const t0 = F.endStart + 0.1, k = spring(t - t0), o = easeOut((t - t0) / 0.55), sc = lerp(0.86, 1, k);
+  const ew = endLock.node.offsetWidth, eh = endLock.node.offsetHeight;
+  const blockH = eh + (endLead ? 96 + 58 : 70) + PB.h + 60 + (terms ? 50 : 0) + 40;
+  const lockY = (H - blockH) / 2 - pick(10, 0, 40);
+  endLock.node.style.transformOrigin = "0 0";
+  place(endLock.node, (W - ew * sc) / 2, lockY + (1 - k) * 20, o, sc, 0, (1 - o) * 14);
+  endLock.m.style.filter = `drop-shadow(0 0 22px color-mix(in srgb, var(--primary) ${Math.round(24 * o)}%, transparent))`;
+  let y = lockY + eh + (endLead ? 96 : 70);
+  if (endLead) { rise(endLead, t, t0 + 0.55, 999, (W - endLead.offsetWidth) / 2, y, { dy: 14 }); y += 58; }
+  rise(promptBox, t, t0 + 0.7, 999, (W - PB.w) / 2, y, { dy: 26, s0: 0.97 });
+  const text = F.end.prompt ?? F.end.action;
+  const typeT0 = t0 + 1.15, typeD = F.end.prompt ? Math.min(1.8, 0.4 + text.length * 0.03) : 0.01;
+  const n = Math.round(clamp((t - typeT0) / typeD) * text.length);
+  const blink = t > typeT0 + typeD + 0.1 ? Math.floor((t - typeT0) * 1.8) % 2 === 0 : true;
+  promptText.innerHTML = `${esc(F.end.prompt ? text.slice(0, n) : text)}${F.end.prompt ? `<span style="display:inline-block;width:3px;height:1.1em;margin-left:3px;border-radius:2px;background:var(--primary);opacity:${blink || n < text.length ? 1 : 0}"></span>` : ""}`;
+  const ready = clamp((t - (typeT0 + typeD)) / 0.25);
+  send.style.background = `color-mix(in srgb, var(--primary) ${Math.round(lerp(14, 100, ready))}%, var(--surface-raised))`;
+  send.style.color = ready > 0.5 ? "var(--primary-foreground)" : "var(--muted)";
+  send.style.transform = `scale(${(t > typeT0 + typeD ? lerp(0.86, 1, springPop(t - (typeT0 + typeD + 0.05))) : 1).toFixed(4)})`;
+  y += PB.h + 60;
+  if (terms) { rise(terms, t, typeT0 + typeD + 0.25, 999, (W - terms.offsetWidth) / 2, y, { dy: 12 }); y += 50; }
+  rise(endUrl, t, typeT0 + typeD + 0.4, 999, (W - endUrl.offsetWidth) / 2, y, { dy: 12 });
+  if (fine) rise(fine, t, typeT0 + typeD + 0.55, 999, (W - fine.offsetWidth) / 2, H - pick(78, 70, 120), { dy: 8 });
+}
+
+// ---------- assemble ----------
+const acts = F.acts.map((act, i) => {
+  const S = T[i].start, E = T[i].end;
+  const head = act.kind === "reveal" ? null : headline(act, i);
+  return { act, i, S, E, head, impl: builders[act.kind](act, i, S, E) };
+});
+let measured = false;
+function fitLockup(lk) {
+  const fit = Math.min(1, (W - 2 * M) / lk.node.offsetWidth);
+  if (fit >= 1) return;
+  for (const [node, props] of [[lk.node, ["fontSize", "gap"]], [lk.m, ["width", "height"]]]) for (const p of props) node.style[p] = `${parseFloat(node.style[p]) * fit}px`;
+}
+function measure() {
+  fitLockup(endLock);
+  for (const a of acts) {
+    let top = HL.top + pick(120, 110, 150);
+    if (a.head) top = HL.top + a.head.node.offsetHeight + pick(64, 56, 80);
+    a.impl.layout(top, BOTTOM);
+  }
+  measured = true;
+}
+function frame(t) {
+  if (!measured) measure();
+  foilPosition(t);
+  place(glow, innerWidth / 2 - 700 + 160 * Math.sin(t * 0.21), innerHeight / 2 - 520 + 40 * Math.cos(t * 0.25), 0.9 + 0.1 * Math.sin(t * 0.7));
+  const brandOn = t >= handT + 0.45 && t < F.endStart;
+  place(brand.node, M, BRAND_Y, brandOn ? 1 - easeIn((t - (F.endStart - 0.3)) / 0.3) : 0);
+  place(sample, W - M - sample.offsetWidth, BRAND_Y + 2, Math.max(0, ...sampleSpans.map(([a, b]) => env(t, a + 0.3, b).o)));
+  for (const a of acts) {
+    if (a.head) drawHeadline(a.head, t);
+    // Draw every act on every frame: the renderer resets inline styles between frames.
+    a.impl.draw(t);
+  }
+  drawEnd(t);
+}
+
+// Layout measures text and images, so wait for both before the first frame.
+const fontsReady = Promise.all([
+  document.fonts.load('550 64px "Film Sans"'), document.fonts.load('400 24px "Film Sans"'),
+  document.fonts.load('700 24px "Film Sans"'), document.fonts.load('400 24px "Film Mono"'),
+  ...[...document.images].map((img) => img.decode().catch(() => {})),
+]).then(() => document.fonts.ready);
+if (window.SlopcameraOverlay) {
+  SlopcameraOverlay.ready(fontsReady);
+  SlopcameraOverlay.onFrame(({ timeMs }) => frame(timeMs / 1000));
+} else {
+  const t = Number(new URLSearchParams(location.search).get("t") ?? "0");
+  fontsReady.then(() => { frame(t); document.title = "ready"; });
+}
+</script>
+</body>
+</html>

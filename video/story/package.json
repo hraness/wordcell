@@ -1,0 +1,14 @@
+{
+  "name": "story-film",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build.ts",
+    "still": "bun still.ts",
+    "render": "bun render.ts",
+    "deliver": "bash deliver.sh"
+  },
+  "dependencies": {
+    "playwright-core": "1.58.2"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "copies": [
+    ["wordcell-launch-1080p.mp4", "../../site/public/media/wordcell-launch.mp4"],
+    ["wordcell-launch-1080p.webm", "../../site/public/media/wordcell-launch.webm"],
+    ["wordcell-launch-poster.jpg", "../../site/public/media/wordcell-launch-poster.jpg"],
+    ["wordcell-launch.en.vtt", "../../site/public/media/wordcell-launch.vtt"]
+  ]
+}
