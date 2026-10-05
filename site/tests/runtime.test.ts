@@ -170,8 +170,8 @@ describe("built Wordcell site", () => {
       expect(intro).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
       expect(ohPost).not.toMatch(/<meta name="robots" content="[^"]*noindex/u);
       expect(ohPost).toContain('<link rel="canonical" href="https://wordcell.io/blog/how-wordcell-uses-oh"');
-      expect(ohPost).toContain("reviewed by Codex independent AI editorial review.");
-      expect(ohPost).toContain('data-reviewer-type="ai"');
+      expect(ohPost).toContain("reviewed by Ben Guo, a human editor.");
+      expect(ohPost).toContain('data-reviewer-type="human-editor"');
       expect(feedResponse.headers.get("content-type")).toContain("application/atom+xml");
       expect(feed).toContain("<id>https://wordcell.io/blog/introducing-wordcell</id>");
       expect(feed).toContain("<id>https://wordcell.io/blog/how-wordcell-uses-oh</id>");
