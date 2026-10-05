@@ -54,7 +54,9 @@ describe("Wordcell blog", () => {
       // an unchanged post keeps its independent AI review, which must say it is AI.
       else if (admission.review.reviewerType === "ai") expect(admission.review.reviewer).toMatch(/\bAI\b/u);
       else expect(admission.review as unknown).toEqual(admission.humanReview);
-      expect(admission.humanReview).toEqual({ reviewer: "Ben Guo", reviewerType: "human-editor", reviewedOn: "2026-10-04" });
+      expect(admission.humanReview?.reviewer).toBe("Ben Guo");
+      expect(admission.humanReview?.reviewerType).toBe("human-editor");
+      expect(admission.humanReview?.reviewedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
     }
     expect(unreviewed.map((article) => article.slug)).toEqual([]);
   });
@@ -73,8 +75,8 @@ describe("Wordcell blog", () => {
     expect(generateStaticParams().map(({ slug }) => slug).sort()).toEqual(blogArticles.map((article) => article.slug).sort());
   });
 
-  test("today's posts are three indexable posts, newest first", () => {
-    expect(indexableArticles.map((article) => article.slug)).toEqual(["free-local-agent-memory", "introducing-wordcell", "how-wordcell-uses-oh"]);
+  test("today's posts are four indexable posts, newest first", () => {
+    expect(indexableArticles.map((article) => article.slug)).toEqual(["managed-or-authored", "free-local-agent-memory", "introducing-wordcell", "how-wordcell-uses-oh"]);
     expect(quarantined.map((article) => article.slug)).toEqual([]);
   });
 

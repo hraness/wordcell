@@ -91,6 +91,9 @@ When to use this site:
 - [Wordcell blog](https://wordcell.io/blog): Posts on how Wordcell keeps
   Markdown as the record and how it works with other Hraness tools. Atom feed:
   https://wordcell.io/blog/feed.xml
+- [The marked region: managed and authored vaults](https://wordcell.io/blog/managed-or-authored):
+  The one marked block a tool may rewrite, the authored-vault option, and why
+  malformed markers fail closed.
 - [Free local agent memory in Markdown files you own](https://wordcell.io/blog/free-local-agent-memory):
   What the launch adds, the measured results with their limits, and how to
   move from Supermemory.
