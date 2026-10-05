@@ -71,7 +71,7 @@ export default async function DocPage(
   return (
     <>
       <a className="skip-link" href="#main">Skip to content</a>
-      <main id="main" tabIndex={-1} className="document-page">
+      <main id="main" tabIndex={-1} className="document-page" data-hraness-landscape="page">
         <nav aria-label="Site" className="document-nav">
           <a href="/">Wordcell home</a>
           <a href="/docs">Documentation</a>

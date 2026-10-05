@@ -160,7 +160,7 @@ export default function Developers() {
         trailing={<ThemeMenuButton aria-label="Appearance" />}
       />
 
-      <main id="main" tabIndex={-1}>
+      <main id="main" tabIndex={-1} data-hraness-landscape="page">
         <MarketingPage>
           <div className="hraness-material-wall">
           <ProductHero

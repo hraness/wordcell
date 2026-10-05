@@ -39,7 +39,7 @@ export default function BlogIndex() {
     <>
       <JsonLdScript data={blogSchema()} id="blog-schema" />
       <a className="skip-link" href="#main">Skip to content</a>
-      <main id="main" tabIndex={-1} className="document-page blog-page">
+      <main id="main" tabIndex={-1} className="document-page blog-page" data-hraness-landscape="page">
         <nav aria-label="Site" className="document-nav">
           <a href="/">Wordcell home</a>
           <a href="/docs">Documentation</a>
