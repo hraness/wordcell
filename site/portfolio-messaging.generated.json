@@ -5,7 +5,7 @@
   "portfolio": {
     "contract": "hraness.portfolio-public/v1",
     "url": "https://hraness.com/portfolio.json",
-    "digest": "sha256:ba365e481a8b15c4a19503b1628e1b7ae9399e47055dde02bae124183a3e1447"
+    "digest": "sha256:d3c6e7497c52cbf8feeb67bbf63a004da493edc62c244d03591f0d4324d2f7c5"
   },
   "messaging": {
     "formatVersion": 1,
@@ -283,10 +283,7 @@
       "messaging": {
         "names": {
           "name": "TextButler",
-          "command": "textbutler",
-          "formerly": [
-            "Message Like Me"
-          ]
+          "command": "textbutler"
         },
         "short": "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
         "tagline": "An AI butler in your messaging apps."
@@ -321,14 +318,14 @@
     {
       "id": "soulscrape",
       "name": "Soulscrape",
-      "description": "free agent skill that writes dated dossiers on people, sources cited",
+      "description": "free agent skill that writes dated dossiers on people, companies, and products",
       "canonicalUrl": "https://soulscrape.com",
       "surface": {
         "actionLabel": "open Soulscrape",
         "interfaces": [
           "Agent Skill"
         ],
-        "proof": "a dated person model with cited evidence and open questions"
+        "proof": "a dated subject model with cited evidence and open questions"
       },
       "messaging": {
         "names": {
@@ -338,8 +335,8 @@
             "Ensoul"
           ]
         },
-        "short": "Free agent skill that writes dated dossiers on people, sources cited",
-        "tagline": "See how someone thinks, and where every claim comes from."
+        "short": "Free agent skill that writes dated dossiers on people, companies, and products",
+        "tagline": "Capture the soul of any person, company, or product"
       }
     },
     {
@@ -363,104 +360,6 @@
       }
     },
     {
-      "id": "slopcamera",
-      "name": "SlopCamera",
-      "description": "a multimedia studio for your coding agent",
-      "canonicalUrl": "https://slopcamera.com",
-      "surface": {
-        "actionLabel": "open SlopCamera",
-        "interfaces": [
-          "CLI",
-          "SDK",
-          "MCP",
-          "Agent Skill"
-        ],
-        "proof": "generated media with operation records that identify inputs and outputs"
-      },
-      "messaging": {
-        "names": {
-          "name": "SlopCamera",
-          "command": "slopcamera",
-          "formerly": [
-            "Atet",
-            "Graphics"
-          ]
-        },
-        "short": "A multimedia studio for your coding agent",
-        "tagline": "A multimedia studio for your coding agent."
-      }
-    },
-    {
-      "id": "soundfish",
-      "name": "Soundfish",
-      "description": "album pages with a waveform player and comments pinned to moments",
-      "canonicalUrl": "https://sound.fish",
-      "surface": {
-        "actionLabel": "open the editor",
-        "interfaces": [
-          "web app",
-          "CLI",
-          "Agent Skill"
-        ],
-        "proof": "a MIDI composition encoded in a content-addressed URL"
-      },
-      "messaging": {
-        "names": {
-          "name": "Soundfish",
-          "command": "soundfish"
-        },
-        "short": "Album pages with a waveform player and comments pinned to moments",
-        "tagline": "Give your album a page of its own."
-      }
-    },
-    {
-      "id": "sys1",
-      "name": "Sys1",
-      "description": "saves repository check results and adds scoped code review",
-      "canonicalUrl": "https://sys1.io",
-      "surface": {
-        "actionLabel": "explore Sys1",
-        "interfaces": [
-          "CLI",
-          "SDK"
-        ],
-        "proof": "saved repository checks, scoped code review, and structured model answers through a CLI and SDK"
-      },
-      "messaging": {
-        "names": {
-          "name": "Sys1",
-          "command": "sys1"
-        },
-        "short": "Saves repository check results and adds scoped code review",
-        "tagline": "Saved checks and code review"
-      }
-    },
-    {
-      "id": "sloptrade",
-      "name": "SlopTrade",
-      "description": "build prompt that turns a coding agent into a trading-system designer",
-      "canonicalUrl": "https://sloptrade.com",
-      "surface": {
-        "actionLabel": "explore Sloptrade",
-        "interfaces": [
-          "website",
-          "publication"
-        ],
-        "proof": "a citation-backed architecture dossier with system and research notes"
-      },
-      "messaging": {
-        "names": {
-          "name": "SlopTrade",
-          "command": "sloptrade",
-          "formerly": [
-            "Invest"
-          ]
-        },
-        "short": "Build prompt that turns a coding agent into a trading-system designer",
-        "tagline": "Design an AI trading system that fails closed."
-      }
-    },
-    {
       "id": "hraness",
       "name": "Hraness",
       "description": "software studio making tools for ai agents and for people",
@@ -478,27 +377,6 @@
         },
         "short": "Software studio making tools for AI agents and for people",
         "tagline": "Tools for agents and humans."
-      }
-    },
-    {
-      "id": "sleepyland",
-      "name": "Sleepyland",
-      "description": "free sleep sounds made in your browser, with sourced sleep guides",
-      "canonicalUrl": "https://sleepy.land",
-      "surface": {
-        "actionLabel": "explore Sleepyland",
-        "interfaces": [
-          "web app",
-          "publication"
-        ],
-        "proof": "a browser sound machine beside cited sleep research"
-      },
-      "messaging": {
-        "names": {
-          "name": "Sleepyland"
-        },
-        "short": "Free sleep sounds made in your browser, with sourced sleep guides",
-        "tagline": "Steady sound for sleep, made in your browser."
       }
     },
     {
@@ -566,27 +444,6 @@
       }
     },
     {
-      "id": "act60",
-      "name": "act60.me",
-      "description": "estimate act 60 savings after real costs, with sourced guides and a day tracker",
-      "canonicalUrl": "https://act60.me",
-      "surface": {
-        "actionLabel": "estimate Act 60 savings",
-        "interfaces": [
-          "web app"
-        ],
-        "proof": "an Act 60 savings calculator that shows its assumptions and the date the law was last checked"
-      },
-      "messaging": {
-        "names": {
-          "name": "act60.me",
-          "shortName": "ACT60"
-        },
-        "short": "Estimate Act 60 savings after real costs, with sourced guides and a day tracker",
-        "tagline": "Model the move to Puerto Rico before you make it."
-      }
-    },
-    {
       "id": "direct",
       "name": "Direct",
       "description": "repeatable app states for browser agents, opened by url",
@@ -606,30 +463,6 @@
         },
         "short": "Repeatable app states for browser agents, opened by URL",
         "tagline": "Give each app state you test its own URL."
-      }
-    },
-    {
-      "id": "clankdar",
-      "name": "Clankdar",
-      "description": "fresh puzzles for ai agents, scored exactly, with a signed receipt",
-      "canonicalUrl": "https://clankdar.com",
-      "surface": {
-        "actionLabel": "explore Clankdar",
-        "interfaces": [
-          "website"
-        ],
-        "proof": "reproducible capability checks with verifiable results"
-      },
-      "messaging": {
-        "names": {
-          "name": "Clankdar",
-          "command": "clankdar",
-          "formerly": [
-            "botcaptcha"
-          ]
-        },
-        "short": "Fresh puzzles for AI agents, scored exactly, with a signed receipt",
-        "tagline": "Check what your agent can solve."
       }
     },
     {
@@ -676,6 +509,26 @@
         },
         "short": "Free publication about how companies put AI agents to work",
         "tagline": "How companies put AI agents to work."
+      }
+    },
+    {
+      "id": "textmock",
+      "name": "Textmock",
+      "description": "fictional text message screenshots and animations, made in your browser",
+      "canonicalUrl": "https://textmock.com",
+      "surface": {
+        "actionLabel": "open the studio",
+        "interfaces": [
+          "web app"
+        ],
+        "proof": "fictional iMessage, WhatsApp, Telegram, and Instagram conversations exported as PNG, GIF, or silent MP4 from the browser"
+      },
+      "messaging": {
+        "names": {
+          "name": "Textmock"
+        },
+        "short": "Fictional text message screenshots and animations, made in your browser",
+        "tagline": "Create text message screenshots and animations in your browser."
       }
     },
     {
@@ -836,48 +689,6 @@
       "direction": "forward"
     },
     {
-      "source": "lifedaysleft",
-      "target": "slopcamera",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sleepyland",
-      "target": "ui",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sleepyland",
-      "target": "design-kit",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sleepyland",
-      "target": "posthog-sdk",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sleepyland",
-      "target": "vercel-delivery",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sleepyland",
-      "target": "web-discovery",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
       "source": "roughday",
       "target": "ui",
       "kind": "runtime",
@@ -964,48 +775,6 @@
       "detail": "Hraness proxies the standalone EDS research index under its canonical /eds route."
     },
     {
-      "source": "act60",
-      "target": "ui",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "act60",
-      "target": "design-kit",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "act60",
-      "target": "result",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "act60",
-      "target": "convex-toolkit",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "act60",
-      "target": "suite-accounts",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "act60",
-      "target": "vercel-delivery",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
       "source": "wrench",
       "target": "kb",
       "kind": "runtime",
@@ -1034,7 +803,7 @@
       "kind": "contract",
       "label": "shared bundle format",
       "direction": "shared",
-      "detail": "Both tools implement the versioned message-like-me.local-message-bundle interchange without importing each other's private state."
+      "detail": "Both tools read and write the same versioned TextButler local message bundle format without importing each other's private state."
     },
     {
       "source": "gobstopper",
@@ -1049,6 +818,14 @@
       "kind": "runtime",
       "label": "uses",
       "direction": "forward"
+    },
+    {
+      "source": "gobstopper",
+      "target": "aicharts",
+      "kind": "runtime",
+      "label": "installs",
+      "direction": "forward",
+      "detail": "The Gobstopper installer adds aicharts and turns on its local usage history, which stays on your computer and never uploads."
     },
     {
       "source": "gobstopper",
@@ -1075,10 +852,10 @@
     {
       "source": "xcb",
       "target": "aicharts",
-      "kind": "contract",
-      "label": "exports sessions for",
+      "kind": "runtime",
+      "label": "installs",
       "direction": "forward",
-      "detail": "Excalibur (xcb) measures subscription usage locally and, when you turn on exports, writes session files in the aicharts format. Automatic upload is not available."
+      "detail": "The Excalibur (xcb) installer adds aicharts and turns on its local usage history, which stays on your computer. With exports on, xcb also writes session files in the aicharts format; automatic upload is not available."
     },
     {
       "source": "soulscrape",
@@ -1128,20 +905,6 @@
       "target": "design-kit",
       "kind": "runtime",
       "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "slopcamera",
-      "target": "design-kit",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "slopcamera",
-      "target": "direct",
-      "kind": "development",
-      "label": "develops with",
       "direction": "forward"
     },
     {
@@ -1229,33 +992,27 @@
       "direction": "forward"
     },
     {
+      "source": "textmock",
+      "target": "textmockups",
+      "kind": "runtime",
+      "label": "renders chats with",
+      "direction": "forward",
+      "detail": "Textmock describes each conversation as a JSON scene and draws it with the open-source textmockups React components, the same renderer the package publishes for other sites."
+    },
+    {
+      "source": "textmock",
+      "target": "posthog-sdk",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
       "source": "direct",
       "target": "hraness",
       "kind": "delivery",
       "label": "README-backed /direct",
       "direction": "forward",
       "detail": "Hraness renders the pinned public Direct README and Agent Skill at /direct."
-    },
-    {
-      "source": "soundfish",
-      "target": "ui",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "soundfish",
-      "target": "result",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "soundfish",
-      "target": "direct",
-      "kind": "development",
-      "label": "develops with",
-      "direction": "forward"
     },
     {
       "source": "oh-computer",
@@ -1350,22 +1107,6 @@
       "detail": "Excalibur (xcb) can bind one explicit Wordcell vault through a hash-pinned CLI, giving workers a read-only memory search with citations; saving a note back to the vault is always an explicit step."
     },
     {
-      "source": "clankdar",
-      "target": "algal",
-      "kind": "runtime",
-      "label": "scores puzzles with",
-      "direction": "forward",
-      "detail": "Clankdar's default puzzles are small programs in ALGAL's expression language, and ALGAL's official evaluator, pinned by commit and hash, computes each reference answer, so no judge model decides."
-    },
-    {
-      "source": "slopcamera",
-      "target": "algal",
-      "kind": "runtime",
-      "label": "bakes character behavior with",
-      "direction": "forward",
-      "detail": "SlopCamera's scene behavior bake runs character behavior as ALGAL organisms with no executors or side effects."
-    },
-    {
       "source": "sponge",
       "target": "wrench",
       "kind": "runtime",
@@ -1396,14 +1137,6 @@
       "label": "runs studies with",
       "direction": "forward",
       "detail": "Pattern Language uses ALGAL so its design experiments stay inspectable: content-addressed manifests and records you can replay."
-    },
-    {
-      "source": "system-one-skills",
-      "target": "sys1",
-      "kind": "delivery",
-      "label": "skills guide hosted by",
-      "direction": "forward",
-      "detail": "The System One Skills guide is published at sys1.io/skills on the Sys1 site; the skill pack does not require Sys1 at runtime."
     },
     {
       "source": "ghostget-skills",
@@ -1462,14 +1195,6 @@
       "detail": "ALGAL's xcb executor hands coding tasks to Excalibur (xcb) through its JSON run command, and ALGAL never copies credentials or reimplements account switching."
     },
     {
-      "source": "soundfish",
-      "target": "algal",
-      "kind": "runtime",
-      "label": "evolves loops with",
-      "direction": "forward",
-      "detail": "Soundfish's evolve command turns a loop into an evolving recipe that a bundled ALGAL evaluator, pinned by SHA-256, runs offline."
-    },
-    {
       "source": "aicharts",
       "target": "gobstopper",
       "kind": "runtime",
@@ -1484,6 +1209,86 @@
       "label": "records drawing runs with",
       "direction": "forward",
       "detail": "The icon.place drawing lab runs each experiment as an ALGAL program in the browser and records the proposal, candidates, and selection as receipts it can replay; the live site does not use ALGAL yet."
+    },
+    {
+      "source": "peopleblade",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "kb",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "lifedaysleft",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "sponge",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "algal",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "xcb",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "valhalla",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "gobstopper",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "wrench",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "oh-computer",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
     }
   ]
 }
