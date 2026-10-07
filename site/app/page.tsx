@@ -30,6 +30,7 @@ import { PublishedNotesWindow } from "../wordcell/mockups/surfaces";
 import { ComparisonLinks, SupermemoryMigrationLink } from "../wordcell/comparison-links";
 import { ESSAY_URL } from "../wordcell/launch/facts";
 
+import { FounderNote } from "./founder-note";
 import { productMessaging, productName } from "./messaging";
 
 const releaseVersion = publishedRelease?.version;
@@ -172,6 +173,14 @@ export default function Home() {
             summary={summary}
           />
           </div>
+
+          <FounderNote
+            emoji="🧠"
+            paragraphs={[
+              "Wordcell hands the next agent session what this one learned. Decisions, plans, and sources live as Markdown files beside your code. Tie a note to the paths it explains, and an agent about to change that code gets the note first. Search matches exact words or meaning, with an optional local model, and every index rebuilds from files you can read in any editor.",
+            ]}
+            action={{ label: "Ask your agent to set it up:", href: "https://wordcell.io" }}
+          />
 
           <MarketingSection
             heading={productMessaging.headings["home-scopes"]}

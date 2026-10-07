@@ -328,3 +328,14 @@ test("home and docs install with per-platform tabs: the same Bun command on macO
     expect(tabs.indexOf("linux")).toBeLessThan(tabs.indexOf("windows"));
   }
 });
+
+test("the home page sets the founder note in serif below the hero without a signature", async () => {
+  const html = renderToStaticMarkup(<Home />);
+  expect(html).toContain("founder-note");
+  expect(html).toContain("Wordcell hands the next agent session what this one learned.");
+  expect(html).toContain("Ask your agent to set it up:");
+  expect(html.indexOf("hero-title")).toBeLessThan(html.indexOf("founder-note"));
+  const css = await Bun.file(new URL("../app/globals.css", import.meta.url)).text();
+  expect(css).toContain("Instrument Serif");
+  expect(css).not.toMatch(/Georgia/u);
+});

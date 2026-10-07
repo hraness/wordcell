@@ -339,3 +339,19 @@ a[href] {
   --hraness-landscape-ink: color-mix(in oklch, var(--foreground, CanvasText) 30%, var(--background, Canvas));
 }
 /* Product landscape: end */
+.founder-note {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 1.25rem;
+  max-width: 40rem; margin-block: 0.5rem 3rem;
+  padding-block: 1.75rem; border-block: 1px solid var(--ui-surface-edge, color-mix(in srgb, var(--foreground) 14%, transparent));
+}
+.founder-note__emoji { font-size: 2rem; line-height: 1; padding-block-start: 0.2rem; }
+.founder-note__body { display: grid; gap: 0.9rem; }
+.founder-note__body p {
+  margin: 0; font-family: var(--font-note, "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Palatino, serif);
+  font-size: 1.375rem; line-height: 1.5; text-wrap: pretty; hanging-punctuation: first;
+}
+.founder-note__action { font-weight: 400; }
+@media (max-width: 40rem) {
+  .founder-note { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .founder-note__body p { font-size: 1.25rem; }
+}
