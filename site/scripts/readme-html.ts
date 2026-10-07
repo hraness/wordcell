@@ -231,7 +231,7 @@ export function readmeLanding(source: string): Readonly<{ title: string; lead: s
   const heading = lines[0] ?? "";
   if (!heading.startsWith("# ")) throw new Error("README landing block must start with its H1");
   const rest = lines.slice(1).join("\n").trim();
-  const paragraphs = rest.split(/\n\s*\n/u).filter((paragraph) => !paragraph.startsWith("[![") && !paragraph.startsWith("## "));
+  const paragraphs = rest.split(/\n\s*\n/u).filter((paragraph) => !paragraph.startsWith("[![") && !paragraph.startsWith(">") && !paragraph.startsWith("## "));
   const lead = (paragraphs[0] ?? "").replace(/\s+/gu, " ").trim();
   if (lead === "") throw new Error("README landing block has no lead paragraph");
   return { lead, markdown: rest, title: heading.slice(2).trim() };

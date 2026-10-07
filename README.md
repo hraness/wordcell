@@ -8,8 +8,6 @@
 > every index rebuilds from files you can read in any editor.
 >
 > Ask your agent to set it up: https://wordcell.io
->
-> — Ben Guo
 
 [![Agent Skill](https://raw.githubusercontent.com/hraness/wordcell/main/assets/agent-skill.svg)](https://github.com/hraness/wordcell/tree/main/skills/wordcell)
 
