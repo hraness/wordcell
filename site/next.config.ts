@@ -20,11 +20,14 @@ export const securityHeaders = [
 ] as const;
 
 /** Authenticated API responses (Bearer tokens) refuse cross-origin framing. */
-export const apiSecurityHeaders: { key: string; value: string }[] = securityHeaders.map((header) =>
-  header.key === "Content-Security-Policy"
-    ? { ...header, value: `${header.value}; frame-ancestors 'self'` }
-    : header,
-).concat({ key: "X-Frame-Options", value: "SAMEORIGIN" });
+export const apiSecurityHeaders: { key: string; value: string }[] = [
+  ...securityHeaders.map((header) =>
+    header.key === "Content-Security-Policy"
+      ? { key: header.key, value: `${header.value}; frame-ancestors 'self'` }
+      : { key: header.key, value: header.value },
+  ),
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+];
 
 /** Every route except `/api/*`, which has its own frame-protected rule. */
 export const PUBLIC_SOURCE = "/:path((?!api/).*)";
