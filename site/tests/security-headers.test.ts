@@ -18,7 +18,7 @@ describe("security headers", () => {
     expect(byKey.get("Strict-Transport-Security")).toContain("max-age=");
     expect(byKey.get("Permissions-Policy")).toContain("camera=()");
     const csp = byKey.get("Content-Security-Policy") ?? "";
-    for (const directive of ["base-uri", "object-src 'none'", "frame-ancestors"]) {
+    for (const directive of ["base-uri", "object-src 'none'"]) {
       expect(csp).toContain(directive);
     }
   });

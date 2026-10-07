@@ -15,7 +15,7 @@ export const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value: "base-uri 'self'; object-src 'none'; frame-ancestors 'self'",
+    value: "base-uri 'self'; object-src 'none'",
   },
 ] as const;
 
