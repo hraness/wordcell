@@ -19,13 +19,29 @@ export const securityHeaders = [
   },
 ] as const;
 
+/** Authenticated API responses (Bearer tokens) refuse cross-origin framing. */
+export const apiSecurityHeaders: { key: string; value: string }[] = [
+  ...securityHeaders.map((header) =>
+    header.key === "Content-Security-Policy"
+      ? { key: header.key, value: `${header.value}; frame-ancestors 'self'` }
+      : { key: header.key, value: header.value },
+  ),
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+];
+
+/** Every route except `/api/*`, which has its own frame-protected rule. */
+export const PUBLIC_SOURCE = "/:path((?!api/).*)";
+
 const nextConfig: NextConfig = {
   outputFileTracingRoot: fileURLToPath(new URL(".", import.meta.url)),
   // Published artifacts use directory-relative navigation and reader assets.
   // The proxy preserves /p/ directory URLs; other pages keep slashless URLs.
   skipTrailingSlashRedirect: true,
   async headers() {
-    return [{ source: "/:path*", headers: [...securityHeaders] }];
+    return [
+      { source: PUBLIC_SOURCE, headers: [...securityHeaders] },
+      { source: "/api/:path*", headers: [...apiSecurityHeaders] },
+    ];
   },
 };
 
