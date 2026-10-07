@@ -23,12 +23,14 @@ describe("security headers", () => {
     }
   });
 
-  test("publishes a security.txt that points at private reporting", () => {
+  test("publishes a security.txt that points at private reporting and the email fallback", () => {
     const text = readFileSync(
       new URL("../public/.well-known/security.txt", import.meta.url),
       "utf8",
     );
     expect(text).toContain("Contact: https://github.com/hraness/wordcell/security/advisories/new");
+    expect(text).toContain("Contact: mailto:hraness@pm.me");
+    expect(text).toContain("Canonical: https://wordcell.io/.well-known/security.txt");
     const expires = /^Expires: (.+)$/mu.exec(text)?.[1];
     expect(Date.parse(expires ?? "")).toBeGreaterThan(Date.now());
   });

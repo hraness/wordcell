@@ -1,6 +1,6 @@
 # Security
 
-Report suspected vulnerabilities through [GitHub private vulnerability reporting](https://github.com/hraness/wordcell/security/advisories/new). Do not include sensitive details, credentials, private capture content, or raw HAR files in a public issue.
+Report suspected vulnerabilities through [GitHub private vulnerability reporting](https://github.com/hraness/wordcell/security/advisories/new). If GitHub reporting is unavailable, email [hraness@pm.me](mailto:hraness@pm.me). Do not include sensitive details, credentials, private capture content, or raw HAR files in a public issue.
 
 Security fixes target the latest version tag. Maintainers will coordinate disclosure and publish a new immutable release when a fix is ready.
 
