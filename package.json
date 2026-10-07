@@ -518,7 +518,7 @@
     "defuddle": "0.19.1",
     "yaml": "^2.9.0",
     "zod": "^4.4.3",
-    "effect": "3.22.1",
+    "effect": "4.0.0",
     "@hraness/support-foundation": "git+https://github.com/hraness/support-foundation.git#b32c1c81bb2444f50509ed54388758ecfab1f1c0",
     "@hraness/cli-update": "https://github.com/hraness/cli-update/releases/download/v0.1.0/hraness-cli-update-0.1.0.tgz"
   },
