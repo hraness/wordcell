@@ -1,14 +1,26 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import nextConfig, { securityHeaders } from "../next.config";
+import nextConfig, { PUBLIC_SOURCE, apiSecurityHeaders, securityHeaders } from "../next.config";
 
 describe("security headers", () => {
   test("applies the baseline to every route", async () => {
     const rules = (await nextConfig.headers?.()) ?? [];
-    expect(rules).toHaveLength(1);
-    expect(rules[0]?.source).toBe("/:path*");
+    expect(rules).toHaveLength(2);
+    expect(rules[0]?.source).toBe(PUBLIC_SOURCE);
     const names = rules[0]?.headers.map((header) => header.key) ?? [];
     expect(names).toEqual(securityHeaders.map((header) => header.key));
+  });
+
+  test("public pages stay frameable and the authenticated API refuses cross-origin framing", async () => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    const publicHeaders = rules[0]?.headers ?? [];
+    expect(JSON.stringify(publicHeaders)).not.toContain("frame-ancestors");
+    expect(publicHeaders.some((header) => header.key === "X-Frame-Options")).toBe(false);
+    expect(rules[1]?.source).toBe("/api/:path*");
+    const api = new Map((rules[1]?.headers ?? []).map((h) => [h.key, h.value]));
+    expect(api.get("Content-Security-Policy")).toContain("frame-ancestors 'self'");
+    expect(api.get("X-Frame-Options")).toBe("SAMEORIGIN");
+    expect(apiSecurityHeaders.map((h) => h.key)).toContain("Strict-Transport-Security");
   });
 
   test("sets the required values", () => {
