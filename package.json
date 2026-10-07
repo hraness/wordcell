@@ -531,5 +531,8 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
+  },
+  "overrides": {
+    "simple-git": "^4.0.2"
   }
 }
