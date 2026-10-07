@@ -3,9 +3,9 @@
 
 > 🧠 Wordcell hands the next agent session what this one learned. Decisions,
 > plans, and sources live as Markdown files beside your code. Tie a note to the
-> paths it explains, and an agent about to change that code gets the notes for
-> it. It searches by exact words or by meaning with an optional local model, and
-> every index rebuilds from files you can read in any editor.
+> paths it explains, and an agent about to change that code gets the note
+> first. Search matches exact words or meaning, with an optional local model,
+> and every index rebuilds from files you can read in any editor.
 >
 > Ask your agent to set it up: https://wordcell.io
 
