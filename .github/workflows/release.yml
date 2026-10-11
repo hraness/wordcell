@@ -74,7 +74,7 @@ jobs:
       archive_name: ${{ steps.artifact.outputs.archive_name }}
       artifact_id: ${{ steps.verified_upload.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -487,7 +487,7 @@ jobs:
       VERIFIED_TAG: ${{ needs.verify.outputs.verified_tag }}
       WORKFLOW_SHA: ${{ needs.verify.outputs.workflow_sha }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -1170,7 +1170,7 @@ jobs:
       VERIFIED_TAG: ${{ needs.verify.outputs.verified_tag }}
       WORKFLOW_SHA: ${{ needs.verify.outputs.workflow_sha }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           fetch-tags: false
