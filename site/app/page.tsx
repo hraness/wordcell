@@ -31,6 +31,7 @@ import { ComparisonLinks, SupermemoryMigrationLink } from "../wordcell/compariso
 import { ESSAY_URL } from "../wordcell/launch/facts";
 
 import { FounderNote } from "./founder-note";
+import { Testimonial } from "./testimonial";
 import { productMessaging, productName } from "./messaging";
 
 const releaseVersion = publishedRelease?.version;
@@ -173,6 +174,15 @@ export default function Home() {
             summary={summary}
           />
           </div>
+
+          <Testimonial
+            quote={
+              <>
+                I really like wordcell tbh, gone are the days where i have to send a <code>handoff.md</code> to a colleague to get a <code>handoff.md</code> from them
+              </>
+            }
+            name="Fahad"
+          />
 
           <FounderNote
             emoji="🧠"

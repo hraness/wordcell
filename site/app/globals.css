@@ -339,6 +339,33 @@ a[href] {
   --hraness-landscape-ink: color-mix(in oklch, var(--foreground, CanvasText) 30%, var(--background, Canvas));
 }
 /* Product landscape: end */
+
+/* Customer quote above the founder note: the same family as the note, with a quieter frame. */
+.testimonial {
+  max-width: 40rem; margin: 0.75rem 0 1.25rem; padding-inline-start: 1.35rem;
+  border-inline-start: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.testimonial__quote { margin: 0; }
+.testimonial__quote p {
+  margin: 0; font-size: 1.25rem; line-height: 1.5; font-weight: 500; letter-spacing: -0.01em;
+  text-wrap: pretty; hanging-punctuation: first;
+}
+.testimonial__quote p::before { content: "\201C"; }
+.testimonial__quote p::after { content: "\201D"; }
+.testimonial__quote code {
+  font-family: var(--font-mono); font-size: 0.88em; font-weight: 500;
+  padding: .14em .38em; border-radius: .32rem;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.testimonial__attribution { display: grid; gap: 0.15rem; margin-block-start: 0.85rem; font-size: 0.9375rem; }
+.testimonial__name { font-weight: 600; }
+.testimonial__name::before {
+  content: ""; display: inline-block; inline-size: 1.25rem; block-size: 1px; margin-inline-end: 0.6rem;
+  vertical-align: 0.3em; background: currentColor; opacity: 0.45;
+}
+.testimonial__role { color: var(--muted); padding-inline-start: 1.85rem; }
+@media (max-width: 40rem) { .testimonial__quote p { font-size: 1.125rem; } }
+
 .founder-note {
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 1.25rem;
   max-width: 40rem; margin-block: 0.5rem 3rem;

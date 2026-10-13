@@ -329,6 +329,24 @@ test("home and docs install with per-platform tabs: the same Bun command on macO
   }
 });
 
+test("the home page leads with Fahad's testimonial above the founder note", () => {
+  const html = renderToStaticMarkup(<Home />);
+  expect(html).toContain("Testimonial from Fahad");
+  expect(html).toContain("I really like wordcell tbh, gone are the days where i have to send a ");
+  expect(html).toContain(" to a colleague to get a ");
+  expect(html).toContain(" from them");
+  expect(html.match(/<code>handoff\.md<\/code>/gu)).toHaveLength(2);
+  const codes: string[] = [];
+  new HTMLRewriter()
+    .on(".testimonial__quote code", {
+      text(text) { if (text.text.length > 0) codes.push(text.text); },
+    })
+    .transform(html);
+  expect(codes).toEqual(["handoff.md", "handoff.md"]);
+  expect(html).toContain('class="testimonial__name">Fahad');
+  expect(html.indexOf("testimonial")).toBeLessThan(html.indexOf("founder-note"));
+});
+
 test("the home page sets the founder note in serif below the hero without a signature", async () => {
   const html = renderToStaticMarkup(<Home />);
   expect(html).toContain("founder-note");
