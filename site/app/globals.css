@@ -62,6 +62,72 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+/* Ingot primary action. Shared across the portfolio, 2026-10-13. */
+.hraness-marketing-action[data-emphasis="primary"],
+.ingot {
+  --ingot-ink: var(--foreground, CanvasText);
+  --ingot-paper: var(--background, Canvas);
+  --ingot-metal: color-mix(in oklch, var(--ingot-ink) 88%, var(--ingot-paper));
+  --ingot-metal-light: color-mix(in oklch, var(--ingot-ink) 72%, var(--ingot-paper));
+  --ingot-text: var(--ingot-paper);
+  position: relative;
+  isolation: isolate;
+  border: 1px solid color-mix(in oklch, var(--ingot-ink) 92%, var(--ingot-paper));
+  border-radius: 0.625rem;
+  background-color: var(--ingot-metal);
+  background-image:
+    linear-gradient(180deg, color-mix(in srgb, white 16%, transparent) 0%, transparent 46%, color-mix(in srgb, black 10%, transparent) 100%),
+    linear-gradient(115deg,
+      color-mix(in srgb, var(--hraness-foil-1, oklch(0.89 0.065 337)) 9%, transparent),
+      color-mix(in srgb, var(--hraness-foil-2, oklch(0.875 0.05 277)) 9%, transparent),
+      color-mix(in srgb, var(--hraness-foil-3, oklch(0.92 0.05 170)) 9%, transparent),
+      color-mix(in srgb, var(--hraness-foil-4, oklch(0.95 0.045 96)) 9%, transparent),
+      color-mix(in srgb, var(--hraness-foil-5, oklch(0.9 0.05 55)) 9%, transparent),
+      color-mix(in srgb, var(--hraness-foil-6, oklch(0.875 0.06 305)) 9%, transparent)),
+    linear-gradient(115deg, var(--ingot-metal-light) 0%, var(--ingot-metal) 28%, var(--ingot-metal-light) 52%, var(--ingot-metal) 74%, var(--ingot-metal-light) 100%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, black 18%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ingot-ink) 18%, transparent),
+    0 6px 16px -8px color-mix(in srgb, var(--ingot-ink) 35%, transparent);
+  color: var(--ingot-text);
+  font-weight: 550;
+  letter-spacing: 0.005em;
+  text-shadow: 0 1px 0 color-mix(in srgb, black 22%, transparent);
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+.hraness-marketing-action[data-emphasis="primary"]:hover,
+.ingot:hover { filter: brightness(1.06); }
+.hraness-marketing-action[data-emphasis="primary"]:active,
+.ingot:active { transform: translateY(1px); box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent), inset 0 2px 6px color-mix(in srgb, black 30%, transparent), 0 1px 1px color-mix(in srgb, var(--ingot-ink) 12%, transparent); }
+.hraness-marketing-action[data-emphasis="primary"]:focus-visible,
+.ingot:focus-visible { outline: 2px solid var(--hraness-marketing-accent, var(--primary)); outline-offset: 3px; }
+:where([data-theme="dark"], .dark) .hraness-marketing-action[data-emphasis="primary"],
+:where([data-theme="dark"], .dark) .ingot {
+  /* Silver on dark: the ingot is the pale metal and the text is the page ink. */
+  --ingot-metal: color-mix(in oklch, var(--ingot-ink) 90%, var(--ingot-paper));
+  --ingot-metal-light: color-mix(in oklch, var(--ingot-ink) 76%, var(--ingot-paper));
+  text-shadow: 0 1px 0 color-mix(in srgb, white 30%, transparent);
+}
+@media (forced-colors: active) {
+  .hraness-marketing-action[data-emphasis="primary"], .ingot { background: ButtonFace; color: ButtonText; border-color: ButtonText; box-shadow: none; text-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hraness-marketing-action[data-emphasis="primary"], .ingot { transition: none; }
+  .hraness-marketing-action[data-emphasis="primary"]:active, .ingot:active { transform: none; }
+}
+
+/* Code never widens a phone: every block scrolls inside its own box. */
+pre {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+pre:focus-visible {
+  outline: 2px solid var(--hraness-site-accent);
+  outline-offset: -2px;
+}
+
 
 .hraness-marketing-stats {
   --hraness-marketing-fact-columns: 4;
@@ -342,7 +408,8 @@ a[href] {
 
 /* Customer quote above the founder note: the same family as the note, with a quieter frame. */
 .testimonial {
-  max-width: 40rem; margin: 0.75rem 0 1.25rem; padding-inline-start: 1.35rem;
+  /* The same centred measure as the founder note below it; never flush against the page edge. */
+  box-sizing: border-box; max-width: 40rem; margin: 0.75rem auto 1.25rem; padding-inline-start: 1.35rem;
   border-inline-start: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
 }
 .testimonial__quote { margin: 0; }
@@ -368,7 +435,7 @@ a[href] {
 
 .founder-note {
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 1.25rem;
-  max-width: 40rem; margin-block: 0.5rem 3rem;
+  box-sizing: border-box; max-width: 40rem; margin-block: 0.5rem 3rem; margin-inline: auto;
   padding-block: 1.75rem; border-block: 1px solid var(--ui-surface-edge, color-mix(in srgb, var(--foreground) 14%, transparent));
 }
 .founder-note__emoji { font-size: 2rem; line-height: 1; padding-block-start: 0.2rem; }
@@ -379,6 +446,8 @@ a[href] {
 }
 .founder-note__action { font-weight: 400; }
 @media (max-width: 40rem) {
+  /* The marketing page gives every child `inline-size: min(100%, measure)`; at phone width both size to their margins. */
+  .testimonial, .founder-note { inline-size: auto; margin-inline: 1.25rem; }
   .founder-note { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .founder-note__body p { font-size: 1.25rem; }
 }
