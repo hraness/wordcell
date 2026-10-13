@@ -1,18 +1,15 @@
 import {
-  MarketingCallToAction,
-  MarketingActionLink,
   MarketingInstallPanel,
   MarketingPage,
-  MarketingPrimitives,
   MarketingQuestionList,
   MarketingRelated,
   MarketingSection,
   MarketingSiteHeader,
-  MarketingTrustBoundary,
   PlatformBadges,
   ProductHero,
+  ProviderMark,
 } from "@hraness/design-kit/react/server";
-import { PlatformInstall, ThemeMenuButton } from "@hraness/design-kit/react";
+import { AgentSetupPrompt, PlatformInstall, ThemeMenuButton } from "@hraness/design-kit/react";
 import { portfolioRelatedGroups } from "@hraness/design-kit/portfolio";
 
 import { AskAiAboutThis } from "@hraness/ui";
@@ -23,11 +20,11 @@ import { WordcellIcon, type WordcellIconName } from "../wordcell/icons";
 import { siteDescription } from "./site-description";
 import { site } from "./blog/discovery";
 import { Terminal } from "../wordcell/code-block";
-import { SetupLinks } from "../wordcell/setup-links";
 import { installPlatforms, runsOnPlatforms } from "../wordcell/install-platforms";
-import { SearchShowcase } from "../wordcell/mockups/search-showcase";
-import { PublishedNotesWindow } from "../wordcell/mockups/surfaces";
-import { ComparisonLinks, SupermemoryMigrationLink } from "../wordcell/comparison-links";
+import { AgentCitesNote, PublishedNotesWindow } from "../wordcell/mockups/surfaces";
+import { CardIndexDiagram } from "../wordcell/mockups/card-index";
+import { comparisonLinks } from "../wordcell/comparison-links";
+import { SETUP_PROMPT, setupTargets } from "../wordcell/setup-prompt";
 import { ESSAY_URL } from "../wordcell/launch/facts";
 
 import { FounderNote } from "./founder-note";
@@ -46,26 +43,18 @@ const footnote = releaseVersion === undefined
   ? "Free under the MIT license. Exact search needs no account or model. First Wordcell release in preparation."
   : `Latest release: v${releaseVersion} · Free under the MIT license · Exact search needs no account or model.`;
 
-const primitives = [
-  { icon: "markdown", label: productMessaging.headings["home-primitive-files"], summary: "Notes stay plain Markdown. Read them in any editor, review changes in Git, and rebuild every index from the files." },
-  { icon: "search", label: productMessaging.headings["home-primitive-decisions"], summary: "Search by exact words without a model or account. Add an optional local model to search by meaning, and follow named links between notes." },
-  { icon: "scopes", label: productMessaging.headings["home-primitive-context"], summary: "Tie notes to repository paths. Starting from a file, get the related notes, plans, and AGENTS.md rules before the next edit." },
-  { icon: "capture", label: productMessaging.headings["home-primitive-sources"], summary: "Save a web page or PDF as Markdown with its assets and capture details. Keep the source beside the decision it informed." },
-] as const;
+/** The first save-and-find journey, as the install section's one terminal. */
+const firstDecision = `wordcell init kb
+wordcell note create notes/parser-contract \\
+  --title "Parser contract" --type concept \\
+  --body "Parser retries stop after three attempts." --root kb
+wordcell search "parser retries" --root kb --mode exact`;
 
-const trust = [
-  {
-    label: "Your Markdown is the record",
-    detail: "Your notes stay in plain files you can read, edit, and keep using without Wordcell.",
-  },
-  {
-    label: "What can leave your machine",
-    detail: "Local search needs no account. Your agent’s AI provider and optional hosted search ranking can receive selected note content.",
-  },
-  {
-    label: "Sources stay inspectable",
-    detail: "Open the note, authored link, or commit behind a result.",
-  },
+const primitives = [
+  { icon: "markdown", label: productMessaging.headings["home-primitive-files"], line: "Plain Markdown, reviewed in Git." },
+  { icon: "search", label: productMessaging.headings["home-primitive-decisions"], line: "Exact words, or meaning with a local model." },
+  { icon: "scopes", label: productMessaging.headings["home-primitive-context"], line: "Notes, plans, and rules tied to a path." },
+  { icon: "capture", label: productMessaging.headings["home-primitive-sources"], line: "Web pages and PDFs saved as Markdown." },
 ] as const;
 
 const questions: readonly { question: string; answer: string; after?: React.ReactNode }[] = [
@@ -80,36 +69,34 @@ const questions: readonly { question: string; answer: string; after?: React.Reac
       ? "Yes. Point exact search at your existing directory with --root. You can read and search without initializing or converting the files. Add links and repository scopes as you need them."
       : "Version 0.22.0 adds read-only search of an existing Markdown folder without initialization or an index.md file. The current verified install still needs a Wordcell index.md. Check the release notes before using the new existing-folder workflow.",
   },
-
   {
     question: "Do I need an embedding model or an account?",
     answer: "Not for the quick start. Exact search, backlinks, and publishing need neither. Hybrid and semantic search add an optional local model through QMD. Bun 1.3.14 or newer and Git are required to use the CLI.",
   },
-
   {
     question: "Why is it called Wordcell?",
     answer: "The name nods to roon’s essay A Song of Shapes and Words, which split thinking into wordcels, who think in words, and shape rotators. Coding agents are made of words, so Wordcell gives them a library of your notes.",
     after: <>{" "}Read <a href={ESSAY_URL}>the essay</a>.</>,
   },
-
   {
     question: "Does publishing upload my whole vault?",
     answer: "No. Choose notes, folders, metadata, or linked neighborhoods, inspect a dry run, then build a local static site. You decide where to upload it. Notes marked publish: false stay out, but review selected text and attachments for private content before sharing.",
   },
-
 ] as const;
 
 const navigation = [
   { href: "#memory", label: "Why Wordcell" },
   { href: "/benchmarks", label: "Benchmarks" },
   { href: "/developers", label: "Developers" },
-  { href: "#install", label: "Install" },
   { href: "/docs", label: "Docs" },
   { href: "/blog", label: "Blog" },
   { href: repository, label: "GitHub" },
 ] as const;
 
+const relatedProducts = portfolioRelatedGroups(["wrench", "xcb", "oh-computer"]).flatMap((group) => group.items);
+
 export default function Home() {
+  const setupLinks = setupTargets(SETUP_PROMPT).filter((target) => target.kind === "link");
   const structuredData = [
     websiteJsonLd(site),
     {
@@ -164,12 +151,19 @@ export default function Home() {
             backdrop={false}
             align="start"
             actions={[
-              { href: "/docs/getting-started", label: productMessaging.hero.secondaryAction },
+              { href: "#install", label: productMessaging.hero.primaryAction, emphasis: "primary" },
+              { href: "#example", label: productMessaging.hero.secondaryAction, emphasis: "secondary" },
             ]}
+            boundary={footnote}
             className="wordcell-hero"
+            eyebrow="Markdown memory for coding agents"
+            frame={(
+              <div className="wordcell-hero-proof" id="example">
+                <AgentCitesNote mode="exact" />
+              </div>
+            )}
             heading={heading}
             headingId="hero-title"
-            install={releaseVersion === undefined ? undefined : <PlatformInstall platforms={installPlatforms(releaseVersion)} />}
             name=""
             summary={summary}
           />
@@ -196,34 +190,11 @@ export default function Home() {
             heading={productMessaging.headings["home-scopes"]}
             headingId="memory-title"
             id="memory"
-            label="Memory for your coding agent"
-            summary="Give the next session the reasons behind your code. Wordcell connects decisions to their evidence and the plans that use them, in Markdown your agent can find and update."
+            label="Memory for agents"
+            summary="Tie a note to the paths it explains, and the agent about to change that code gets the note first."
           >
-            <p>Before changing a file, your agent can recover the decisions, active plans, and AGENTS.md rules tied to that path. Local semantic search helps it find a note in different words; Git history shows how the reasoning changed with the code.</p>
-            <p>Keep sources, current understanding, and ongoing work connected. When an assumption changes, revise the decision and leave the evidence for the next session. Use your existing agent and editor through the CLI, local MCP server, or TypeScript SDK.</p>
-            <p className="record-link"><a href="/developers">Explore the developer workflow</a></p>
-          </MarketingSection>
-
-          <MarketingSection
-            heading={productMessaging.headings["home-fit"]}
-            headingId="compare-title"
-            id="compare"
-            label="Choose your tools"
-            summary="Built for coding agents that need lasting decisions, semantic search, and Git context. All in Markdown you control."
-          >
-            <ComparisonLinks />
-            <p className="record-link"><a href="/docs/comparisons">Compare more Markdown and memory tools</a></p>
-          </MarketingSection>
-
-          <MarketingSection
-            className="wordcell-showcase-section"
-            heading={productMessaging.headings["home-preview"]}
-            headingId="showcase-title"
-            id="showcase"
-            label="How it looks"
-            summary="The same note, found three ways. Pick one to see the command and what comes back."
-          >
-            <SearchShowcase />
+            <CardIndexDiagram />
+            <p className="record-link"><a href="/developers">Read how the developer workflow fits together</a></p>
           </MarketingSection>
 
           <MarketingInstallPanel
@@ -235,21 +206,12 @@ export default function Home() {
             <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : <>You need <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git. These steps install Wordcell v{releaseVersion}.</>}</p>
             {releaseVersion !== undefined ? (
               <>
+                <PlatformInstall platforms={installPlatforms(releaseVersion)} />
                 <PlatformBadges platforms={runsOnPlatforms} />
-                <figure className="wordcell-step">
-                  <figcaption><span>1</span>Create a vault and save a note</figcaption>
-                  <Terminal code={`wordcell init kb
-wordcell note create notes/parser-contract \\
-  --title "Parser contract" --type concept \\
-  --body "Parser retries stop after three attempts." --root kb`} />
-                </figure>
-                <figure className="wordcell-step">
-                  <figcaption><span>2</span>Find it again</figcaption>
-                  <Terminal code={`wordcell search "parser retries" --root kb --mode exact`} />
-                </figure>
+                <Terminal code={firstDecision} />
                 <p className="install-note">
                   Next, <a href="/docs/getting-started">follow the first-vault tutorial</a> or{" "}
-                  <a href="/docs/overview#install">search an existing vault or connect a coding agent</a>.
+                  <a href="/docs/overview#install">search an existing vault</a>.
                 </p>
               </>
             ) : (
@@ -265,54 +227,78 @@ wordcell note create notes/parser-contract \\
             heading={productMessaging.headings["home-agent-search"]}
             headingId="agent-memory-title"
             id="agent-memory"
-            label="Agent memory"
-            summary="Connect your coding agent to the vault. Every note it adds is Markdown you can review in Git."
+            label="Connect an agent"
+            summary="Paste one prompt into the coding agent you already use; every note it adds is Markdown you can review in Git."
           >
-            <SetupLinks />
-            <SupermemoryMigrationLink />
+            <div className="wordcell-setup">
+              <AgentSetupPrompt label="Set up Wordcell with your coding agent" prompt={SETUP_PROMPT} targets={setupLinks} />
+              <p className="install-note">Your agent’s AI provider and optional hosted search ranking can receive selected note content.</p>
+            </div>
+            <p className="record-link">
+              <a href="/docs/agent-handoffs">Register the MCP server by hand</a> · <a href="/migrate/supermemory">Move from Supermemory to Wordcell</a>
+            </p>
           </MarketingSection>
 
-          <MarketingPrimitives
-            columns={2}
+          <MarketingSection
             heading={productMessaging.headings["home-primitives"]}
             headingId="model-title"
             id="model"
-            items={primitives.map((primitive) => ({
-              example: <WordcellIcon className="wordcell-topic-icon" name={primitive.icon as WordcellIconName} />,
-              label: primitive.label,
-              summary: primitive.summary,
-            }))}
             label="Capabilities"
-            summary="A vault is a folder of Markdown files. Wordcell adds the structure a database would provide, and the files stay readable in any editor."
-          />
+            summary="A vault is a folder of Markdown files; Wordcell adds the structure a database would, and the files stay readable in any editor."
+          >
+            <ul aria-label="What a vault gives you" className="wordcell-icon-row">
+              {primitives.map((primitive) => (
+                <li key={primitive.icon}>
+                  <WordcellIcon className="wordcell-topic-icon" name={primitive.icon as WordcellIconName} />
+                  <strong>{primitive.label}</strong>
+                  <span>{primitive.line}</span>
+                </li>
+              ))}
+            </ul>
+          </MarketingSection>
+
+          <MarketingSection
+            heading={productMessaging.headings["home-fit"]}
+            headingId="compare-title"
+            id="compare"
+            label="Compare"
+            summary="Built for coding agents that need lasting decisions, semantic search, and Git context, in Markdown you control."
+          >
+            <table className="wordcell-compare-table">
+              <caption className="visually-hidden">Compare Wordcell with other tools</caption>
+              <thead>
+                <tr><th scope="col">Tool</th><th scope="col">What Wordcell adds</th></tr>
+              </thead>
+              <tbody>
+                {comparisonLinks.map((item) => (
+                  <tr key={item.id}>
+                    <th scope="row">
+                      <a href={item.href}>
+                        <ProviderMark mark={item.label} size={28} tone="solid" />
+                        <span>{item.label}</span>
+                      </a>
+                    </th>
+                    <td>{item.detail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="record-link"><a href="/docs/comparisons">Compare more Markdown and memory tools</a></p>
+          </MarketingSection>
 
           <MarketingSection
             heading={productMessaging.headings["home-publish"]}
             headingId="publish-title"
             id="publish"
-            layout="split"
             label="Publish"
-            summary="Turn your Markdown notes into a readable website with navigation, search, and backlinks. Build static files locally, then host them where you choose."
-            headingContent={(
-              <div className="wordcell-publish-actions">
-                {releaseSupports0220 ? (
-                  <Terminal code="wordcell publish --root kb --out site" />
-                ) : <p className="install-note">Static publishing is introduced in v0.22.0. The current verified install above predates this feature; check the release notes before using it.</p>}
-                <MarketingActionLink href="/docs/publish" label="Publish your notes" />
-                <p className="install-note">Review notes and attachments before sharing.</p>
-              </div>
-            )}
+            summary="Turn selected notes into a static website with navigation, search, and backlinks, built on your machine and hosted where you choose."
           >
             <PublishedNotesWindow />
+            <p className="record-link">
+              {releaseSupports0220 ? <><code>wordcell publish --root kb --out site</code> · </> : null}
+              <a href="/docs/publish">Read how publishing works</a>
+            </p>
           </MarketingSection>
-
-          <MarketingTrustBoundary
-            heading={productMessaging.headings["home-trust"]}
-            headingId="boundary-title"
-            id="boundary"
-            items={trust}
-            label="Local by default"
-          />
 
           <MarketingQuestionList
             heading={productMessaging.headings["home-questions"]}
@@ -326,19 +312,11 @@ wordcell note create notes/parser-contract \\
           />
 
           <MarketingRelated
-            groups={portfolioRelatedGroups(["wrench", "xcb", "oh-computer"])}
-            heading="Other tools from our studio"
+            className="wordcell-related"
+            columns={3}
+            heading={productMessaging.headings["home-related"]}
             headingId="related-title"
-          />
-
-          <MarketingCallToAction
-            actions={[
-              { href: "/docs/getting-started", label: productMessaging.hero.secondaryAction },
-            ]}
-            footnote={footnote}
-            heading={productMessaging.headings["home-closing"]}
-            headingId="cta-title"
-            summary="Save one decision beside the code, then let the agent find it."
+            items={relatedProducts}
           />
         </MarketingPage>
       </main>

@@ -1,40 +1,46 @@
 import assert from "node:assert/strict";
 
+/**
+ * The home comparison is one table: four rows, each row's name links to its
+ * comparison page beside a square mark, the table never widens the page, and
+ * rows stack their cells on phones.
+ */
 export async function inspectComparisonLayout(page) {
-  const cards = await page.locator('[aria-label="Compare Wordcell with other tools"] .hraness-marketing-card').evaluateAll(elements => elements.map(card => {
+  const table = page.locator('.wordcell-compare-table');
+  await table.waitFor();
+  const rows = await table.locator('tbody tr').evaluateAll(elements => elements.map(row => {
     const box = element => {
       const { x, y, width, height, right, bottom } = element.getBoundingClientRect();
       return { x, y, width, height, right, bottom };
     };
-    const icon = card.querySelector(':scope > .hraness-marketing-card__icon');
-    const copy = card.querySelector(':scope > .hraness-marketing-card__copy');
-    const title = card.querySelector('.hraness-marketing-card__title');
-    const meta = card.querySelector('.hraness-marketing-card__meta');
+    const link = row.querySelector('th a');
+    const mark = link?.querySelector('svg, img, [data-provider-mark], span:first-child');
+    const name = link?.querySelector(':scope > span:last-child');
+    const detail = row.querySelector('td');
     return {
-      card: box(card), icon: icon && box(icon), copy: copy && box(copy),
-      title: box(title), meta: box(meta), href: card.getAttribute('href'),
-      artwork: card.querySelector('.hraness-marketing-card__art') !== null,
-      clipped: [copy, title, meta].some(element => element && (element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1)),
-      decorative: icon?.getAttribute('aria-hidden'),
+      row: box(row), link: link && box(link), mark: mark && box(mark), name: name && box(name), detail: detail && box(detail),
+      href: link?.getAttribute('href'),
+      text: detail?.textContent?.trim().length ?? 0,
+      clipped: [name, detail].some(element => element && (element.scrollWidth > element.clientWidth + 1)),
     };
   }));
-  assert.equal(cards.length, 4, 'Home: four comparison destinations');
-  for (const item of cards) {
-    assert.ok(item.icon && item.copy, 'Comparison: explicit icon and copy slots');
-    assert.equal(item.decorative, 'true', 'Comparison: adjacent title names the icon');
-    assert.ok(item.href?.startsWith('/compare/'), 'Comparison: whole card links to its comparison');
-    assert.ok(!item.artwork && !item.clipped, 'Comparison: complete text without an artwork well');
-    assert.ok(Math.abs(item.icon.width - item.icon.height) <= 1 && item.icon.width >= 55, 'Comparison: square, readable mark');
-    const beside = item.icon.right <= item.copy.x + 1;
-    const stacked = item.icon.bottom <= item.copy.y + 1 && Math.abs(item.icon.x - item.copy.x) <= 1;
-    assert.ok(beside || stacked, 'Comparison: icon and copy form distinct, aligned rows or columns');
-    if (page.viewportSize().width >= 768) assert.ok(beside, 'Comparison: wide cards keep the icon beside the copy');
-    assert.ok(item.copy.right <= item.card.right + 1 && item.meta.bottom <= item.card.bottom + 1, 'Comparison: content stays in its card');
+  const table_ = await table.evaluate(element => ({ right: element.getBoundingClientRect().right, scrollWidth: element.scrollWidth, clientWidth: element.clientWidth }));
+  assert.equal(rows.length, 4, 'Home: four comparison destinations');
+  assert.ok(table_.right <= page.viewportSize().width + 1 && table_.scrollWidth <= table_.clientWidth + 1, 'Comparison: the table fits the viewport');
+  for (const item of rows) {
+    assert.ok(item.link && item.mark && item.name && item.detail, 'Comparison: mark, name, and detail cells');
+    assert.ok(item.href?.startsWith('/compare/'), 'Comparison: the name links to its comparison');
+    assert.ok(item.text > 0 && !item.clipped, 'Comparison: complete text in the row');
+    assert.ok(Math.abs(item.mark.width - item.mark.height) <= 1 && item.mark.width >= 24, 'Comparison: square, readable mark');
+    assert.ok(item.mark.right <= item.name.x + 1, 'Comparison: the mark sits beside the name');
+    const beside = item.name.right <= item.detail.x + 1;
+    const stacked = item.link.bottom <= item.detail.y + 1;
+    assert.ok(beside || stacked, 'Comparison: name and detail form distinct columns or rows');
+    if (page.viewportSize().width >= 768) assert.ok(beside, 'Comparison: wide rows keep the detail beside the name');
+    if (page.viewportSize().width <= 390) assert.ok(stacked, 'Comparison: phone rows stack the detail under the name');
+    assert.ok(item.detail.right <= item.row.right + 1 && item.detail.bottom <= item.row.bottom + 1, 'Comparison: content stays in its row');
   }
-  const width = page.viewportSize().width;
-  if (width <= 390) assert.equal(new Set(cards.map(item => Math.round(item.card.x))).size, 1, 'Comparison: one column on phones');
-  if (width >= 1440) assert.equal(new Set(cards.map(item => Math.round(item.card.x))).size, 2, 'Comparison: two columns on wide screens');
-  return cards;
+  return rows;
 }
 
 export async function inspectComparisonReflow(page) {
@@ -47,8 +53,7 @@ export async function inspectComparisonReflow(page) {
     }
     await page.setViewportSize({ ...viewport, width: 390 });
     await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
-    const cards = await inspectComparisonLayout(page);
-    assert.ok(cards.every(item => item.icon.bottom <= item.copy.y + 1 && item.copy.width > item.icon.width), 'Comparison: enlarged text moves below the icon with room to read');
+    await inspectComparisonLayout(page);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Comparison: enlarged text keeps page within viewport');
   } finally {
     await page.evaluate(value => { document.documentElement.style.fontSize = value; }, initialSize);

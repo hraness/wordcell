@@ -1,57 +1,40 @@
 import assert from "node:assert/strict";
 
+/**
+ * The home hero shows one coding-agent window below the copy. It must fit its
+ * column at every width, keep the whole exchange readable without scaling or
+ * clipping, and still fit on a phone when the reader doubles the text size.
+ */
 export async function inspectSearchLayout(page, withZoom = false) {
-  const showcase = page.locator('.wordcell-showcase[data-hkm-fit="fill"]');
-  await showcase.locator('.hkm-mode-stage[data-hkm-fitted]').waitFor();
-  const samples = [];
-  async function inspect(surface, mode, phase = 'selected') {
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-    const sample = await showcase.evaluate(figure => {
-      const stage = figure.querySelector('.hkm-mode-stage');
-      const active = stage.querySelector('.hkm-mode-surface[aria-hidden="false"]');
-      const terminal = active.querySelector('[data-hkm-density="presentation"]');
-      const frame = active.querySelector('.hkm-window');
-      const agent = active.querySelector('.hkm-agent-body');
-      const lastTurn = agent?.querySelector('.hkm-agent-turn:last-child');
-      const terminalBounds = terminal?.getBoundingClientRect();
-      return {
-        height: stage.getBoundingClientRect().height,
-        width: stage.getBoundingClientRect().width,
-        frameWidth: frame.getBoundingClientRect().width,
-        frameHeight: frame.getBoundingClientRect().height,
-        scaled: active.querySelector('[data-hkm-scaled]') !== null,
-        terminal: terminal && { size: parseFloat(getComputedStyle(terminal).fontSize),
-          minimum: parseFloat(getComputedStyle(document.documentElement).fontSize),
-          linesVisible: [...terminal.querySelectorAll('.hkm-terminal-line')].every(line => {
-            const bounds = line.getBoundingClientRect();
-            return bounds.top >= terminalBounds.top - 1 && bounds.bottom <= terminalBounds.bottom + 1;
-          }),
-          overflow: terminal.scrollHeight > terminal.clientHeight + 1 || terminal.scrollWidth > terminal.clientWidth + 1 },
-        agent: agent && { overflow: agent.scrollHeight > agent.clientHeight + 1 || agent.scrollWidth > agent.clientWidth + 1,
-          lastTurnVisible: lastTurn && lastTurn.getBoundingClientRect().bottom <= Math.min(agent.getBoundingClientRect().bottom, frame.getBoundingClientRect().bottom) + 1 },
-      };
-    });
-    assert.ok(!sample.scaled, 'Search: readable content is never scaled down');
-    assert.ok(sample.frameWidth > 1 && sample.frameWidth <= sample.width + 1, 'Search: frame fits its column');
-    assert.ok(Math.abs(sample.frameHeight - sample.height) <= 3, 'Search: each frame fills the stable stage');
-    if (surface === 'Terminal') assert.ok(sample.terminal && sample.terminal.size >= sample.terminal.minimum - 0.1 && !sample.terminal.overflow && sample.terminal.linesVisible, `Search: complete terminal content fits at the reader’s text size (${phase})`);
-    if (surface === 'Coding agent') assert.ok(sample.agent && !sample.agent.overflow && sample.agent.lastTurnVisible, 'Search: the complete coding-agent exchange fits inside its frame');
-    samples.push({ surface, mode, phase, ...sample });
-  }
-  // Inspect the first terminal opening before changing any mode or viewport:
-  // later interactions can trigger a refit that hides a first-render failure.
-  await showcase.getByRole('tab', { name: 'Terminal', exact: true }).click();
-  await inspect('Terminal', 'Exact words', 'first-open');
-  for (const surface of ['Coding agent', 'Terminal']) {
-    await showcase.getByRole('tab', { name: surface, exact: true }).click();
-    for (const mode of ['Exact words', 'Meaning', 'File you’re changing']) {
-      await showcase.getByRole('button', { name: mode, exact: true }).click();
-      await inspect(surface, mode);
-    }
-  }
-  assert.ok(Math.max(...samples.map(sample => sample.height)) - Math.min(...samples.map(sample => sample.height)) <= 1, 'Search: all modes and surfaces reserve one stable height');
-  await showcase.getByRole('tab', { name: 'Coding agent', exact: true }).click();
-  await showcase.getByRole('button', { name: 'Exact words', exact: true }).click();
+  const proof = page.locator('.wordcell-hero-proof');
+  await proof.locator('.hkm-window').waitFor();
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const sample = await proof.evaluate(figure => {
+    const frame = figure.querySelector('.hkm-window');
+    const agent = figure.querySelector('.hkm-agent-body');
+    const turns = [...figure.querySelectorAll('.hkm-agent-turn')];
+    const lastTurn = turns.at(-1);
+    const box = element => element.getBoundingClientRect();
+    return {
+      width: box(figure).width,
+      frameWidth: box(frame).width,
+      frameHeight: box(frame).height,
+      turns: turns.length,
+      scaled: figure.querySelector('[data-hkm-scaled]') !== null,
+      agentOverflow: agent !== null && (agent.scrollWidth > agent.clientWidth + 1),
+      lastTurnVisible: lastTurn !== undefined && box(lastTurn).bottom <= box(frame).bottom + 1,
+      size: agent === null ? 0 : parseFloat(getComputedStyle(agent).fontSize),
+      minimum: parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.75,
+      pageOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+    };
+  });
+  assert.ok(sample.turns >= 2, 'Hero: the agent window shows the exchange');
+  assert.ok(!sample.scaled, 'Hero: readable content is never scaled down');
+  assert.ok(sample.frameWidth > 1 && sample.frameWidth <= sample.width + 1, 'Hero: the agent window fits its column');
+  assert.ok(!sample.agentOverflow, 'Hero: the exchange never scrolls sideways');
+  assert.ok(sample.lastTurnVisible, 'Hero: the complete exchange fits inside its frame');
+  assert.ok(sample.size >= sample.minimum - 0.1, 'Hero: the exchange keeps a readable text size');
+  assert.ok(!sample.pageOverflow, 'Hero: the agent window keeps the page within the viewport');
   if (withZoom) {
     const viewport = page.viewportSize();
     const fontSize = await page.evaluate(() => document.documentElement.style.fontSize);
@@ -64,5 +47,5 @@ export async function inspectSearchLayout(page, withZoom = false) {
       await page.setViewportSize(viewport);
     }
   }
-  return samples;
+  return [sample];
 }

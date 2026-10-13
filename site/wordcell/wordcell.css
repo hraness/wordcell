@@ -430,3 +430,238 @@ pre {
   font-size: .85rem;
   line-height: 1.55;
 }
+
+/* ---------------------------------------------------------------------------
+ * Design pass 2026-10-13: one object per section.
+ * ------------------------------------------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Hero proof: the agent window sits under the copy at the hero's full width. */
+.wordcell-hero-proof {
+  min-inline-size: 0;
+  max-inline-size: 60rem;
+  margin-block-start: .5rem;
+  scroll-margin-block-start: 4rem;
+}
+.wordcell-hero-proof .hraness-agent-session,
+.wordcell-hero-proof > * {
+  max-inline-size: 100%;
+}
+
+/* The card index: a source file, one command, three cards tied to the path. */
+.wordcell-index {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.6fr);
+  align-items: center;
+  gap: 1.25rem;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--wordcell-hairline);
+  border-radius: var(--hraness-marketing-radius, 0);
+  background: var(--surface, var(--background));
+}
+.wordcell-index__file {
+  display: grid;
+  gap: .55rem;
+  min-inline-size: 0;
+  padding: 1rem 1.1rem 1.2rem;
+  border: 1px solid var(--wordcell-hairline);
+  border-radius: var(--hraness-marketing-radius, 0);
+  background: var(--background);
+}
+.wordcell-index__path {
+  overflow: hidden;
+  margin-block-end: .3rem;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wordcell-index__code {
+  display: block;
+  block-size: .45rem;
+  inline-size: 82%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+.wordcell-index__code--short { inline-size: 54%; }
+.wordcell-index__command {
+  display: grid;
+  justify-items: center;
+  gap: .4rem;
+  min-inline-size: 0;
+}
+.wordcell-index__command > code {
+  padding: .3rem .6rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  white-space: nowrap;
+}
+.wordcell-index__arrow {
+  display: block;
+  inline-size: 3rem;
+  block-size: 2px;
+  background: var(--primary);
+  position: relative;
+}
+.wordcell-index__arrow::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: -1px;
+  inset-block-start: -4px;
+  inline-size: 8px;
+  block-size: 8px;
+  border-block-start: 2px solid var(--primary);
+  border-inline-end: 2px solid var(--primary);
+  transform: rotate(45deg);
+}
+.wordcell-index__cards {
+  display: grid;
+  gap: .7rem;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  list-style: none;
+}
+.wordcell-index__card {
+  display: grid;
+  gap: .3rem;
+  min-inline-size: 0;
+  padding: .8rem 1rem .8rem 1.15rem;
+  border: 1px solid var(--wordcell-hairline);
+  border-inline-start: 3px solid var(--primary);
+  border-radius: var(--hraness-marketing-radius, 0);
+  background: var(--background);
+  box-shadow: 0 1px 0 var(--wordcell-hairline);
+}
+.wordcell-index__card[data-kind="plan"] { border-inline-start-color: color-mix(in srgb, var(--primary) 60%, var(--foreground)); }
+.wordcell-index__card[data-kind="guide"] { border-inline-start-color: color-mix(in srgb, var(--primary) 35%, var(--foreground)); }
+.wordcell-index__card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  min-inline-size: 0;
+}
+.wordcell-index__card-head > strong {
+  overflow: hidden;
+  font-size: .95rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wordcell-index__kind {
+  flex: none;
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.wordcell-index__card-line {
+  color: var(--foreground);
+  font-size: .9rem;
+  line-height: 1.45;
+}
+.wordcell-index__card-path {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 48rem) {
+  .wordcell-index {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1.1rem;
+  }
+  .wordcell-index__command { grid-auto-flow: column; align-items: center; justify-content: start; }
+  .wordcell-index__arrow { inline-size: 2rem; transform: rotate(90deg); margin-inline: .5rem; }
+}
+
+/* Capabilities: four icons in a row, one line each. */
+.wordcell-icon-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wordcell-icon-row > li {
+  display: grid;
+  align-content: start;
+  gap: .25rem;
+  min-inline-size: 0;
+}
+.wordcell-icon-row .wordcell-topic-icon { margin-block-end: .6rem; }
+.wordcell-icon-row strong { font-size: 1rem; font-weight: 600; }
+.wordcell-icon-row span { color: var(--muted); font-size: .92rem; line-height: 1.5; }
+@media (max-width: 48rem) {
+  .wordcell-icon-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 1.25rem; }
+}
+
+/* Compare: one compact table instead of four cards. */
+.wordcell-compare-table {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  border-collapse: collapse;
+  border-block-start: 1px solid var(--wordcell-hairline);
+  font-size: .95rem;
+}
+.wordcell-compare-table th,
+.wordcell-compare-table td {
+  padding: .85rem 1rem .85rem 0;
+  border-block-end: 1px solid var(--wordcell-hairline);
+  text-align: start;
+  vertical-align: middle;
+}
+.wordcell-compare-table thead th {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.wordcell-compare-table tbody th {
+  inline-size: 14rem;
+  font-weight: 600;
+}
+.wordcell-compare-table tbody th > a {
+  display: inline-flex;
+  align-items: center;
+  gap: .75rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.wordcell-compare-table tbody th > a:hover > span { text-decoration: underline; }
+.wordcell-compare-table td { color: var(--muted); }
+@media (max-width: 40rem) {
+  .wordcell-compare-table thead { display: none; }
+  .wordcell-compare-table tr { display: grid; gap: .35rem; padding-block: .85rem; border-block-end: 1px solid var(--wordcell-hairline); }
+  .wordcell-compare-table th,
+  .wordcell-compare-table td { padding: 0; border: 0; inline-size: auto; }
+}
+
+/* Related: a compact row of the studio's other tools. */
+.wordcell-related .hraness-marketing-related__card { padding-block: .9rem; }
