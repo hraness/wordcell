@@ -203,7 +203,7 @@ export default function Home() {
             headingId="install-title"
             id="install"
           >
-            <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : <>You need <a href="https://bun.sh/docs/installation">Bun 1.3.14 or newer</a> and Git. These steps install Wordcell v{releaseVersion}.</>}</p>
+            <p className="install-note">{releaseVersion === undefined ? "First Wordcell release in preparation" : <>Installs Wordcell v{releaseVersion}. <a href="https://bun.sh/docs/installation">Get Bun</a> first.</>}</p>
             {releaseVersion !== undefined ? (
               <>
                 <PlatformInstall platforms={installPlatforms(releaseVersion)} />
@@ -228,7 +228,7 @@ export default function Home() {
             headingId="agent-memory-title"
             id="agent-memory"
             label="Connect an agent"
-            summary="Paste one prompt into the coding agent you already use; every note it adds is Markdown you can review in Git."
+            summary="Paste one prompt into your coding agent; its notes are Markdown you review in Git."
           >
             <div className="wordcell-setup">
               <AgentSetupPrompt label="Set up Wordcell with your coding agent" prompt={SETUP_PROMPT} targets={setupLinks} />
