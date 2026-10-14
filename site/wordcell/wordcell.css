@@ -458,6 +458,10 @@ pre {
 .wordcell-hero-proof > * {
   max-inline-size: 100%;
 }
+/* The kit sets the agent text in px; rem keeps 13.5px by default and grows with the reader's text size. */
+.wordcell-hero-proof .hkm-root .hkm-window[data-hkm-agent] .hkm-agent-body {
+  font-size: .84375rem;
+}
 
 /* The card index: a source file, one command, three cards tied to the path. */
 .wordcell-index {
@@ -658,6 +662,13 @@ pre {
 .wordcell-compare-table td { color: var(--muted); }
 @media (max-width: 40rem) {
   .wordcell-compare-table thead { display: none; }
+  /* Block layout so enlarged text wraps inside the column instead of widening the table. */
+  .wordcell-compare-table,
+  .wordcell-compare-table tbody { display: block; }
+  .wordcell-compare-table th,
+  .wordcell-compare-table td { min-inline-size: 0; overflow-wrap: anywhere; }
+  .wordcell-compare-table tbody th { inline-size: auto; }
+  .wordcell-compare-table tbody th > a { display: flex; flex-wrap: wrap; }
   .wordcell-compare-table tr { display: grid; gap: .35rem; padding-block: .85rem; border-block-end: 1px solid var(--wordcell-hairline); }
   .wordcell-compare-table th,
   .wordcell-compare-table td { padding: 0; border: 0; inline-size: auto; }
