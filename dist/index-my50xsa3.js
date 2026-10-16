@@ -1470,7 +1470,7 @@ function pdfMarkdownFilename(slug) {
 
 // src/pdf/markdown.ts
 function escapeInline(value) {
-  return sanitizeTerminalText(value).replace(/\\/gu, "\\\\").replace(/([`*_[\]{}<>#])/gu, "\\$1").replace(/\s+/gu, " ").trim();
+  return sanitizeTerminalText(value).replace(/\\/gu, "\\\\").replace(/([`*_[\]{}<>#|])/gu, "\\$1").replace(/\s+/gu, " ").trim();
 }
 function metadataLine(metadata) {
   if (metadata === null)
@@ -1522,7 +1522,7 @@ function markdownContent(blocks, images) {
     }
     if (block.kind === "table") {
       textBlockCount += 1;
-      const rows = block.rows.map((row) => `| ${row.map((cell) => escapeInline(cell).replace(/\|/gu, "\\|")).join(" | ")} |`);
+      const rows = block.rows.map((row) => `| ${row.map((cell) => escapeInline(cell)).join(" | ")} |`);
       if (rows.length > 0)
         lines.push(rows[0], `| ${block.rows[0].map(() => "---").join(" | ")} |`, ...rows.slice(1), "");
       continue;

@@ -6,7 +6,7 @@ import {
 } from "./index-b40e2dkx.js";
 import {
   main as main2
-} from "./index-vk6es4nx.js";
+} from "./index-my50xsa3.js";
 import {
   MAX_AUTHORIZED_VAULTS,
   auditKnowledgePortfolio,

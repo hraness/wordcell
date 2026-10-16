@@ -24,7 +24,7 @@ export type ResolvedPdfImage = {
 function escapeInline(value: string): string {
   return sanitizeTerminalText(value)
     .replace(/\\/gu, "\\\\")
-    .replace(/([`*_[\]{}<>#])/gu, "\\$1")
+    .replace(/([`*_[\]{}<>#|])/gu, "\\$1")
     .replace(/\s+/gu, " ")
     .trim();
 }
@@ -83,7 +83,7 @@ function markdownContent(
     }
     if (block.kind === "table") {
       textBlockCount += 1;
-      const rows = block.rows.map(row => `| ${row.map(cell => escapeInline(cell).replace(/\|/gu, "\\|")).join(" | ")} |`);
+      const rows = block.rows.map(row => `| ${row.map(cell => escapeInline(cell)).join(" | ")} |`);
       if (rows.length > 0) lines.push(rows[0]!, `| ${block.rows[0]!.map(() => "---").join(" | ")} |`, ...rows.slice(1), "");
       continue;
     }
