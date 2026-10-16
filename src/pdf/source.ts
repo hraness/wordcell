@@ -1,3 +1,4 @@
+import { PdfCaptureError } from "./errors.js";
 import {
   chmodSync,
   mkdtempSync,
@@ -37,13 +38,13 @@ function parseRemoteUrl(input: string): URL | null {
   try {
     url = new URL(input);
   } catch {
-    throw new Error("PDF URL is invalid");
+    throw new PdfCaptureError("invalid-input", "PDF URL is invalid");
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("PDF URL must use HTTP or HTTPS");
+    throw new PdfCaptureError("invalid-input", "PDF URL must use HTTP or HTTPS");
   }
   if (url.username !== "" || url.password !== "") {
-    throw new Error("PDF URL must not contain embedded credentials");
+    throw new PdfCaptureError("invalid-input", "PDF URL must not contain embedded credentials");
   }
   return url;
 }
@@ -69,7 +70,7 @@ function assertPdfSignature(bytes: Uint8Array): void {
     bytes.byteLength < 5
     || new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-"
   ) {
-    throw new Error("remote PDF input does not have a valid PDF signature");
+    throw new PdfCaptureError("invalid-input", "remote PDF input does not have a valid PDF signature");
   }
 }
 

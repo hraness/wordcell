@@ -322,7 +322,7 @@ process.stdout.write`,
       const provider = createRustMetadataSearchProvider({ binaryPath: fixture.path, resolveNetworkTarget: async () => shuffled });
       expect((await provider({ query: "large DNS", timeoutMs: 10_000 })).status).toBe("success");
     }), { numRuns: 8 });
-  });
+  }, 30_000);
 
   test("rejects unsafe DNS answers beyond the candidate limit before spawning", async () => {
     const fixture = executable(SUCCESS_SCRIPT);

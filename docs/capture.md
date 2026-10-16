@@ -235,3 +235,22 @@ This operation discloses each eligible source URL as an exact search query to th
 Only a result with the same conservative URL identity can supply the selected title or description. A timestamped Archive.today result must embed that same source identity before it can be recorded. Provider failures, partial engine coverage, throttling, and absence remain explicit in the sidecar. A zero-result record is `not-found` only after complete attempted coverage; any failed engine or archive lookup keeps the top-level result `partial`.
 
 The command skips compatible sidecars by default. Use `--refresh` to query them again, `--no-archive` to omit Archive.today discovery, or `--delay-ms` to change the default one-second interval between outbound requests. It reads Markdown and sidecars through validated no-follow descriptors, carries the source Markdown and article-directory identities through provider work, and revalidates them under an inode-bound kernel advisory lock immediately before atomic installation. A live writer's lock cannot be stolen. The kernel releases a crashed writer's lock, and the next run safely reuses its verified lock file while UUID-scoped temporary names prevent an orphan from blocking progress. Malformed, linked, mismatched, replaced, or concurrently changed sources, locks, and sidecars fail closed.
+
+## Observed article metadata
+
+New captures include an optional `metadata` envelope in `capture.json`. Schema 1
+keeps each observed value, its normalized value, source and locator, the selection
+rule, and whether that claim was selected. Conflicting claims remain available.
+The parser reads HTML title, language, standard meta and link tags, and bounded
+JSON-LD from the captured document. It does not fetch remote JSON-LD contexts.
+
+Specific article metadata takes precedence over generic webpage metadata.
+Multiple authors and alternate links can remain selected. A date without an
+explicit timezone stays local; a calendar date is not converted into an instant.
+Metadata URLs omit query strings, fragments and credentials. They are descriptive
+evidence and must not replace the original acquisition URL. Parser limits and
+malformed JSON-LD appear in the envelope's warnings. Older bundles can omit the
+envelope.
+
+`@hraness/wordcell/capture` exports `extractArticleMetadata` and
+`parseArticleMetadata`; the bundle reader returns this evidence when present.

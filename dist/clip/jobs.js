@@ -1,7 +1,8 @@
 // @bun
 import {
   redactSensitiveText
-} from "../index-mxxxytys.js";
+} from "../index-g63d3937.js";
+import"../index-e2wstc7t.js";
 import {
   sanitizeTerminalLine,
   sanitizeTerminalText

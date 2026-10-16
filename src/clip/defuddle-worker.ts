@@ -1,3 +1,4 @@
+import { extractArticleMetadata } from "./metadata.js";
 import { Defuddle } from "defuddle/node";
 import { embeddedArticleHtml } from "./embedded-article.js";
 
@@ -125,7 +126,7 @@ workerGlobal.onmessage = async (event: MessageEvent<unknown>): Promise<void> => 
       removeImages: false,
     });
     const enriched = typeof value === "object" && value !== null && !Array.isArray(value)
-      ? { ...value, captureVideoPosters: videoPosters }
+      ? { ...value, captureVideoPosters: videoPosters, metadata: await extractArticleMetadata(request.html, request.url, value) }
       : value;
     workerGlobal.postMessage({ ok: true, value: enriched });
   } catch {

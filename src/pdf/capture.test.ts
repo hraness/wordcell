@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -10,6 +11,7 @@ import { basename, dirname, join } from "node:path";
 
 import { afterEach, describe, expect, test } from "bun:test";
 
+import { verifyPdfCaptureBundle } from "./bundle-reader.js";
 import { runPdfCapture } from "./capture.js";
 import type {
   PdfCaptureDependencies,
@@ -54,6 +56,7 @@ function fakeDependencies(
   options: {
     readonly failOnTesseract?: boolean;
     readonly imageCount?: number;
+    readonly uncertainMath?: boolean;
   } = {},
 ): PdfCaptureDependencies {
   return {
@@ -92,7 +95,7 @@ function fakeDependencies(
 <fontspec id="0" size="24" family="Helvetica" color="#000000"/>
 <fontspec id="1" size="12" family="Helvetica" color="#000000"/>
 <text top="70" left="60" width="500" height="30" font="0"><b>Fixture PDF</b></text>
-<text top="130" left="60" width="500" height="16" font="1">A useful paragraph.</text>
+<text top="130" left="60" width="500" height="16" font="1">${options.uncertainMath ? "∫ f(x)" : "A useful paragraph."}</text>
 ${images.join("\n")}
 </page>
 </pdf2xml>`);
@@ -227,4 +230,16 @@ describe("PDF capture", () => {
     expect(outcome.imageCount).toBe(1);
     expect(outcome.warnings.join(" ")).toContain("configured asset byte limit was reached");
   });
+});
+
+
+test("capture returns the exact persisted Markdown digest and partial quality", async () => {
+  const fixture = sourceFixture();
+  const outcome = await runPdfCapture({ inputPath: fixture.sourcePath, outputBase: fixture.outputBase }, fakeDependencies({ uncertainMath: true }));
+  expect(outcome.status).toBe("partial");
+  expect(outcome.manifest.quality?.issues).toEqual([{ page: 1, code: "math-structure-uncertain" }]);
+  const bytes = readFileSync(outcome.markdownPath);
+  expect(outcome.manifest.markdown?.sha256).toBe(createHash("sha256").update(bytes).digest("hex"));
+  expect(outcome.manifest.markdown?.bytes).toBe(bytes.length);
+  expect((await verifyPdfCaptureBundle(realpathSync(outcome.outputDirectory))).ok).toBe(true);
 });

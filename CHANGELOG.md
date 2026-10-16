@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.27.0
+
+Saved articles retain the evidence behind their metadata. PDF capture improves reading order and reports uncertain layout.
+
+- Keep observed titles, authors, dates, descriptions, standard page tags and bounded JSON-LD claims with their sources and selection rules. Dates without a timezone remain explicitly uncertain.
+- Read separated PDF columns in order, preserve simple aligned tables and basic superscripts, and report layout losses as partial captures. Keep the original PDF for reference.
+- Add public PDF bundle inspection and verification for source, Markdown, page references and image hashes, with bounded reads and typed capture errors.
+
 ## 0.26.3
 
 SDK consumers can augment Node environment types without breaking isolated subprocesses.

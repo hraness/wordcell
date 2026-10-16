@@ -1,3 +1,4 @@
+import { PdfCaptureError } from "./errors.js";
 import { createHash } from "node:crypto";
 import {
   chmodSync,
@@ -43,7 +44,7 @@ export const pdfCaptureDefaults = {
 function positiveBound(value: number | undefined, fallback: number, maximum: number, label: string): number {
   const selected = value ?? fallback;
   if (!Number.isSafeInteger(selected) || selected < 1 || selected > maximum) {
-    throw new Error(`${label} must be an integer from 1 through ${maximum}`);
+    throw new PdfCaptureError("invalid-input", `${label} must be an integer from 1 through ${maximum}`);
   }
   return selected;
 }
@@ -61,10 +62,10 @@ function prepareWorkspace(path: string): string {
   if (existsSync(absolute)) {
     const stats = lstatSync(absolute);
     if (!stats.isDirectory() || stats.isSymbolicLink()) {
-      throw new Error("PDF inspection workspace must be a real directory");
+      throw new PdfCaptureError("invalid-input", "PDF inspection workspace must be a real directory");
     }
     if (readdirSync(absolute).length !== 0) {
-      throw new Error("PDF inspection workspace must be empty");
+      throw new PdfCaptureError("invalid-input", "PDF inspection workspace must be empty");
     }
   } else {
     mkdirSync(absolute, { recursive: false, mode: 0o700 });
@@ -81,15 +82,15 @@ function sourceIdentity(path: string, maxPdfBytes: number): {
   const originalFilename = basename(path);
   const canonical = realpathSync(resolve(path));
   const stats = statSync(canonical);
-  if (!stats.isFile()) throw new Error("PDF input must be a regular file");
-  if (stats.size < 5) throw new Error("PDF input is too small to contain a PDF header");
-  if (stats.size > maxPdfBytes) throw new Error(`PDF input exceeds the ${maxPdfBytes}-byte limit`);
+  if (!stats.isFile()) throw new PdfCaptureError("invalid-input", "PDF input must be a regular file");
+  if (stats.size < 5) throw new PdfCaptureError("invalid-input", "PDF input is too small to contain a PDF header");
+  if (stats.size > maxPdfBytes) throw new PdfCaptureError("limit-exceeded", `PDF input exceeds the ${maxPdfBytes}-byte limit`);
   const descriptor = openSync(canonical, "r");
   try {
     const signature = Buffer.alloc(5);
     const count = readSync(descriptor, signature, 0, signature.length, 0);
     if (count !== signature.length || signature.toString("ascii") !== "%PDF-") {
-      throw new Error("PDF input does not have a valid PDF signature");
+      throw new PdfCaptureError("invalid-input", "PDF input does not have a valid PDF signature");
     }
   } finally {
     closeSync(descriptor);
@@ -155,18 +156,18 @@ function safeGeneratedImage(
 function generatedTreeSize(workspace: string, maximumFiles: number, maximumBytes: number): void {
   const entries = readdirSync(workspace, { withFileTypes: true });
   if (entries.length > maximumFiles) {
-    throw new Error(`PDF extraction created more than ${maximumFiles} files`);
+    throw new PdfCaptureError("limit-exceeded", `PDF extraction created more than ${maximumFiles} files`);
   }
   let totalBytes = 0;
   for (const entry of entries) {
     const path = join(workspace, entry.name);
     const stats = lstatSync(path);
     if (!entry.isFile() || stats.isSymbolicLink()) {
-      throw new Error("PDF extraction created an unexpected non-file output");
+      throw new PdfCaptureError("extraction-failed", "PDF extraction created an unexpected non-file output");
     }
     totalBytes += stats.size;
     if (totalBytes > maximumBytes) {
-      throw new Error(`PDF extraction exceeded the ${maximumBytes}-byte workspace limit`);
+      throw new PdfCaptureError("limit-exceeded", `PDF extraction exceeded the ${maximumBytes}-byte workspace limit`);
     }
   }
 }
@@ -208,7 +209,9 @@ export async function inspectPdf(
     cwd: workspaceDirectory,
   });
   if (info.exitCode !== 0) {
-    throw new Error("pdfinfo could not inspect the input PDF");
+    // Poppler runs in the C locale; only its exact password diagnostic establishes encryption.
+    const encrypted = info.stderr.split(/\r?\n/u).some(line => line.trim() === "Command Line Error: Incorrect password");
+    throw new PdfCaptureError(encrypted ? "encrypted" : "extraction-failed", "pdfinfo could not inspect the input PDF");
   }
   const metadata = parsePdfInfo(info.stdout);
   const processedPageLimit = Math.min(metadata.pageCount, maxPages);
@@ -233,7 +236,7 @@ export async function inspectPdf(
     cwd: workspaceDirectory,
   });
   if (extracted.exitCode !== 0) {
-    throw new Error("pdftohtml could not extract the input PDF");
+    throw new PdfCaptureError("extraction-failed", "pdftohtml could not extract the input PDF");
   }
   generatedTreeSize(
     workspaceDirectory,
@@ -245,7 +248,7 @@ export async function inspectPdf(
   );
   const layoutStats = statSync(layoutPath);
   if (!layoutStats.isFile() || layoutStats.size > pdfCaptureDefaults.maxLayoutBytes) {
-    throw new Error(`Poppler layout XML exceeds the ${pdfCaptureDefaults.maxLayoutBytes}-byte limit`);
+    throw new PdfCaptureError("limit-exceeded", `Poppler layout XML exceeds the ${pdfCaptureDefaults.maxLayoutBytes}-byte limit`);
   }
   const parsed = parsePopplerXml(readFileSync(layoutPath, "utf8"), {
     maxPages: processedPageLimit,

@@ -2,7 +2,7 @@
 import {
   countWords,
   sniffImage
-} from "./index-k86wepd8.js";
+} from "./index-h2w7syy2.js";
 import {
   renderFailure,
   sentence,
@@ -10,11 +10,11 @@ import {
   stderrStyle,
   terminalOutput,
   yamlString
-} from "./index-cd75vky9.js";
+} from "./index-jbtyp6q5.js";
 import {
   redactSensitiveText,
   sanitizeArtifactUrl
-} from "./index-mxxxytys.js";
+} from "./index-g63d3937.js";
 import {
   safeFetch
 } from "./index-e5fbsywq.js";
@@ -25,6 +25,16 @@ import {
   sanitizeTerminalLine,
   sanitizeTerminalText
 } from "./index-1xxnjn0d.js";
+
+// src/pdf/errors.ts
+class PdfCaptureError extends Error {
+  code;
+  constructor(code, message, options) {
+    super(message, options);
+    this.code = code;
+    this.name = "PdfCaptureError";
+  }
+}
 
 // src/pdf/args.ts
 var pdfUsage = `wordcell pdf \u2014 save a local or public remote PDF as an auditable Markdown bundle
@@ -521,7 +531,7 @@ function layoutBlocks(pages) {
   const repeatedMargins = repeatedMarginLines(pages, linesByPage);
   const output = [];
   for (const page of pages) {
-    const lines = (linesByPage.get(page.page) ?? []).filter((line) => !repeatedMargins.has(normalizedMarginText(line.text)));
+    const lines = (linesByPage.get(page.page) ?? []).filter((line) => !(line.top <= page.height * 0.06 || line.top + line.height >= page.height * 0.94) || !repeatedMargins.has(normalizedMarginText(line.text)));
     const steps = lines.slice(1).map((line, index) => Math.max(0, line.top - (lines[index]?.top ?? line.top)));
     const normalStep = median(steps.filter((step) => step > 0), Math.max(1, bodySize * 1.4));
     const events = [
@@ -548,7 +558,7 @@ function layoutBlocks(pages) {
       const { line, index } = event;
       const previous = lines[index - 1];
       const gapBefore = previous === undefined ? Number.POSITIVE_INFINITY : line.top - previous.top;
-      const fontHeading = line.fontSize > bodySize * 1.08;
+      const fontHeading = line.fontSize > bodySize * 1.08 && !/[=\u222B\u2211\u221A\u2070\u00B9\u00B2\u00B3\u2074\u2075\u2076\u2077\u2078\u2079]/u.test(line.text);
       const boldHeading = line.boldRatio >= 0.78 && line.text.length <= 180 && gapBefore >= normalStep * 1.45;
       if (line.text.length <= 240 && (fontHeading || boldHeading)) {
         flushParagraph();
@@ -572,7 +582,7 @@ function layoutBlocks(pages) {
     }
     flushParagraph();
   }
-  return output.filter((block) => block.kind === "image" || block.text.trim() !== "");
+  return output.filter((block) => block.kind === "image" || block.kind === "table" || block.text.trim() !== "");
 }
 function parsePdfImageInterpretations(value) {
   if (!Array.isArray(value))
@@ -673,6 +683,160 @@ function parsePdfImageInterpretations(value) {
   }
   return output;
 }
+function analyzePdfLayout(pages) {
+  const issues = [];
+  const blocks = [];
+  const marginLines = new Map(pages.filter((page) => page.text.length <= 4000).map((page) => [page.page, pageLines(page)]));
+  const margins = repeatedMarginLines(pages, marginLines);
+  for (const originalInput of pages) {
+    const original = { ...originalInput, text: originalInput.text.filter((fragment) => !(fragment.top <= originalInput.height * 0.06 || fragment.top + fragment.height >= originalInput.height * 0.94) || !margins.has(normalizedMarginText(fragment.text))) };
+    const warn = (code) => {
+      if (!issues.some((issue) => issue.page === original.page && issue.code === code))
+        issues.push({ page: original.page, code });
+    };
+    if (original.text.length > 4000) {
+      warn("reading-order-uncertain");
+      blocks.push(...layoutBlocks([original]));
+      continue;
+    }
+    if (original.text.some((fragment) => /[\u222B\u2211\u221A]/u.test(fragment.text)))
+      warn("math-structure-uncertain");
+    const text = [...original.text].sort((a, b) => a.top - b.top || a.left - b.left);
+    const consumed = new Set;
+    const replacements = new Map;
+    const superscripts = { "0": "\u2070", "1": "\xB9", "2": "\xB2", "3": "\xB3", "4": "\u2074", "5": "\u2075", "6": "\u2076", "7": "\u2077", "8": "\u2078", "9": "\u2079", "+": "\u207A", "-": "\u207B", "=": "\u207C", "(": "\u207D", ")": "\u207E", n: "\u207F", i: "\u2071" };
+    for (const small of text) {
+      const bases = text.filter((base2) => base2 !== small && base2.fontSize >= small.fontSize * 1.3 && small.top < base2.top && small.top + small.height > base2.top - base2.height * 0.25 && Math.abs(small.left - (base2.left + base2.width)) < base2.fontSize * 0.6);
+      if (bases.length === 0)
+        continue;
+      const base = bases[0];
+      const glyphs = [...small.text.trim()];
+      if (bases.length === 1 && glyphs.length > 0 && glyphs.length <= 8 && glyphs.every((glyph) => superscripts[glyph] !== undefined) && !replacements.has(base)) {
+        replacements.set(base, { ...base, text: base.text + glyphs.map((glyph) => superscripts[glyph]).join(""), width: small.left + small.width - base.left });
+        consumed.add(small);
+      } else
+        warn("math-structure-uncertain");
+    }
+    const fragments = text.filter((fragment) => !consumed.has(fragment)).map((fragment) => replacements.get(fragment) ?? fragment);
+    const page = { ...original, text: fragments };
+    const rows = [];
+    for (const fragment of fragments) {
+      const row = rows.at(-1);
+      if (row === undefined || Math.abs(fragment.top - row[0].top) > Math.max(2, fragment.height * 0.2))
+        rows.push([fragment]);
+      else
+        row.push(fragment);
+    }
+    const cellRows = rows.map((row) => {
+      const groups = [];
+      for (const fragment of [...row].sort((a, b) => a.left - b.left)) {
+        const prior = groups.at(-1), last = prior?.at(-1);
+        if (last === undefined || fragment.left - (last.left + last.width) > Math.max(12, fragment.fontSize * 1.5))
+          groups.push([fragment]);
+        else
+          prior.push(fragment);
+      }
+      return groups;
+    });
+    const tables = [];
+    for (let index = 0;index < cellRows.length; index++) {
+      const first = cellRows[index];
+      if (first.length < 2 || first.length > 12)
+        continue;
+      const group = [first];
+      let next = index + 1;
+      for (;next < cellRows.length; next++) {
+        const candidate = cellRows[next];
+        if (candidate.length !== first.length || candidate.some((cell, column) => Math.abs(cell[0].left - first[column][0].left) > 4))
+          break;
+        if (candidate[0][0].top - group.at(-1)[0][0].top > Math.max(40, candidate[0][0].height * 3))
+          break;
+        group.push(candidate);
+      }
+      const cells = group.map((row) => row.map((cell) => joinFragments(cell)));
+      const header = first.every((cell) => cell.every((fragment) => fragment.bold));
+      const numeric = cells.slice(1).some((row) => row.slice(1).some((cell) => /^[-+\d$\u20AC\u00A3]/u.test(cell.trim())));
+      const compact = cells.every((row) => row.every((cell) => cell.length <= 100));
+      if (group.length >= 3 && compact && header && numeric) {
+        const members = group.flat(2);
+        tables.push({ top: Math.min(...members.map((fragment) => fragment.top)), bottom: Math.max(...members.map((fragment) => fragment.top + fragment.height)), block: { kind: "table", page: page.page, rows: cells }, fragments: members });
+        index = next - 1;
+      } else if (group.length >= 3 && first.length >= 3)
+        warn("table-structure-uncertain");
+    }
+    const tableFragments = new Set(tables.flatMap((table) => table.fragments));
+    const remaining = fragments.filter((fragment) => !tableFragments.has(fragment));
+    const emitBand = (band, images) => {
+      if (band.length === 0 && images.length === 0)
+        return;
+      const candidates = new Set;
+      for (const row of cellRows) {
+        for (let i = 1;i < row.length; i++) {
+          const left = row[i - 1].at(-1), right = row[i][0];
+          const gap = right.left - (left.left + left.width);
+          if (gap >= Math.max(page.width * 0.025, left.fontSize * 1.5))
+            candidates.add(Math.round((left.left + left.width + right.left) / 2));
+        }
+      }
+      const valid = [...candidates].filter((gutter) => {
+        const left = band.filter((fragment) => fragment.left + fragment.width <= gutter);
+        const right = band.filter((fragment) => fragment.left >= gutter);
+        if (left.length + right.length !== band.length || left.length < 3 || right.length < 3)
+          return false;
+        if (left.filter((fragment) => fragment.width > page.width * 0.18).length < 2 || right.filter((fragment) => fragment.width > page.width * 0.18).length < 2)
+          return false;
+        const overlap = Math.min(Math.max(...left.map((fragment) => fragment.top)), Math.max(...right.map((fragment) => fragment.top))) - Math.max(Math.min(...left.map((fragment) => fragment.top)), Math.min(...right.map((fragment) => fragment.top)));
+        return overlap > Math.max(...band.map((fragment) => fragment.height)) * 1.5;
+      });
+      if (valid.length > 0) {
+        const gutter = valid[Math.floor(valid.length / 2)];
+        if (images.some((image) => image.left < gutter && image.left + image.width > gutter)) {
+          warn("reading-order-uncertain");
+          blocks.push(...layoutBlocks([{ ...page, text: band, images }]));
+          return;
+        }
+        for (const left of [true, false])
+          blocks.push(...layoutBlocks([{ ...page, text: band.filter((fragment) => left ? fragment.left + fragment.width <= gutter : fragment.left >= gutter), images: images.filter((image) => left ? image.left + image.width <= gutter : image.left >= gutter) }]));
+      } else {
+        if (band.length >= 6 && cellRows.filter((row) => row.length >= 2 && row.some((cell) => band.includes(cell[0]))).length >= 3)
+          warn("reading-order-uncertain");
+        blocks.push(...layoutBlocks([{ ...page, text: band, images }]));
+      }
+    };
+    const bodyFont = weightedBodyFontSize(pageLines(page));
+    const gutterVotes = new Map;
+    for (const row of cellRows)
+      for (let i = 1;i < row.length; i++) {
+        const left = row[i - 1].at(-1), right = row[i][0];
+        if (right.left - (left.left + left.width) < Math.max(12, left.fontSize * 1.5))
+          continue;
+        const gutter = Math.round((left.left + left.width + right.left) / 20) * 10;
+        gutterVotes.set(gutter, (gutterVotes.get(gutter) ?? 0) + 1);
+      }
+    const repeatedGutters = [...gutterVotes].filter(([, votes]) => votes >= 3).map(([gutter]) => gutter);
+    const spans = remaining.filter((fragment) => fragment.width > page.width * 0.65 || fragment.fontSize > bodyFont * 1.08 && repeatedGutters.some((gutter) => fragment.left < gutter && fragment.left + fragment.width > gutter));
+    const boundaries = [...tables.map((table) => ({ top: table.top, bottom: table.bottom, table, span: null })), ...spans.map((span) => ({ top: span.top, bottom: span.top + span.height, table: null, span }))].sort((a, b) => a.top - b.top);
+    const emitted = new Set, emittedImages = new Set;
+    for (const boundary of boundaries) {
+      const band = remaining.filter((fragment) => !emitted.has(fragment) && fragment !== boundary.span && fragment.top < boundary.top);
+      const images = page.images.filter((image) => !emittedImages.has(image) && image.top < boundary.top);
+      emitBand(band, images);
+      for (const fragment of band)
+        emitted.add(fragment);
+      for (const image of images)
+        emittedImages.add(image);
+      if (boundary.table !== null)
+        blocks.push(boundary.table.block);
+      if (boundary.span !== null) {
+        const span = boundary.span;
+        blocks.push(span.fontSize > bodyFont * 1.08 ? { kind: "heading", page: page.page, level: 2, text: span.text } : { kind: "paragraph", page: page.page, text: span.text });
+        emitted.add(span);
+      }
+    }
+    emitBand(remaining.filter((fragment) => !emitted.has(fragment)), page.images.filter((image) => !emittedImages.has(image)));
+  }
+  return { blocks, issues };
+}
 
 // src/pdf/tools.ts
 import { spawn } from "child_process";
@@ -696,7 +860,7 @@ async function readBoundedStream(stream, maxBytes) {
     else
       throw new Error("PDF tool returned an unsupported output chunk");
     if (!bytes.append(chunk))
-      throw new Error(`PDF tool output exceeded ${maxBytes} bytes`);
+      throw new PdfCaptureError("limit-exceeded", `PDF tool output exceeded ${maxBytes} bytes`);
   }
   return new TextDecoder().decode(bytes.toUint8Array());
 }
@@ -704,7 +868,9 @@ var runPdfToolCommand = async (specification) => {
   const executable = specification.command[0];
   if (executable === undefined)
     throw new Error("PDF tool command is empty");
-  const useProcessGroup = process.platform !== "win32";
+  if (specification.processGroup !== undefined && !["new", "inherit"].includes(specification.processGroup))
+    throw new PdfCaptureError("invalid-input", "Invalid PDF process group policy");
+  const useProcessGroup = process.platform !== "win32" && specification.processGroup !== "inherit";
   const child = spawn(executable, specification.command.slice(1), {
     cwd: specification.cwd,
     detached: useProcessGroup,
@@ -718,7 +884,7 @@ var runPdfToolCommand = async (specification) => {
     windowsHide: true
   });
   const exited = new Promise((resolveExit, rejectExit) => {
-    child.once("error", rejectExit);
+    child.once("error", (error) => rejectExit(error.code === "ENOENT" ? new PdfCaptureError("tool-unavailable", "PDF tool executable is unavailable", { cause: error }) : error));
     child.once("close", (code) => resolveExit(code ?? 1));
   });
   const signalProcessTree = (signal) => {
@@ -742,7 +908,7 @@ var runPdfToolCommand = async (specification) => {
     forceKillTimer = setTimeout(() => signalProcessTree("SIGKILL"), 1000);
   };
   const timer = setTimeout(() => {
-    requestStop(new Error(`PDF tool timed out after ${specification.timeoutMs}ms`));
+    requestStop(new PdfCaptureError("timeout", `PDF tool timed out after ${specification.timeoutMs}ms`));
   }, specification.timeoutMs);
   try {
     const [stdout, stderr, exitCode] = await Promise.all([
@@ -791,10 +957,10 @@ function resolvePdfTools(dependencies = {}) {
   const pdftohtml = dependencies.tools?.pdftohtml ?? discoverExecutable("pdftohtml", dependencies);
   const tesseract = dependencies.tools?.tesseract === undefined ? discoverExecutable("tesseract", dependencies) : dependencies.tools.tesseract;
   if (pdfinfo === null) {
-    throw new Error("pdfinfo is required for PDF ingestion; install the Poppler command-line tools");
+    throw new PdfCaptureError("tool-unavailable", "pdfinfo is required for PDF ingestion; install the Poppler command-line tools");
   }
   if (pdftohtml === null) {
-    throw new Error("pdftohtml is required for PDF ingestion; install the Poppler command-line tools");
+    throw new PdfCaptureError("tool-unavailable", "pdftohtml is required for PDF ingestion; install the Poppler command-line tools");
   }
   return { pdfinfo, pdftohtml, tesseract };
 }
@@ -828,7 +994,7 @@ var pdfCaptureDefaults = {
 function positiveBound(value, fallback, maximum, label) {
   const selected = value ?? fallback;
   if (!Number.isSafeInteger(selected) || selected < 1 || selected > maximum) {
-    throw new Error(`${label} must be an integer from 1 through ${maximum}`);
+    throw new PdfCaptureError("invalid-input", `${label} must be an integer from 1 through ${maximum}`);
   }
   return selected;
 }
@@ -841,10 +1007,10 @@ function prepareWorkspace(path) {
   if (existsSync2(absolute)) {
     const stats = lstatSync(absolute);
     if (!stats.isDirectory() || stats.isSymbolicLink()) {
-      throw new Error("PDF inspection workspace must be a real directory");
+      throw new PdfCaptureError("invalid-input", "PDF inspection workspace must be a real directory");
     }
     if (readdirSync(absolute).length !== 0) {
-      throw new Error("PDF inspection workspace must be empty");
+      throw new PdfCaptureError("invalid-input", "PDF inspection workspace must be empty");
     }
   } else {
     mkdirSync(absolute, { recursive: false, mode: 448 });
@@ -857,17 +1023,17 @@ function sourceIdentity(path, maxPdfBytes) {
   const canonical = realpathSync(resolve(path));
   const stats = statSync(canonical);
   if (!stats.isFile())
-    throw new Error("PDF input must be a regular file");
+    throw new PdfCaptureError("invalid-input", "PDF input must be a regular file");
   if (stats.size < 5)
-    throw new Error("PDF input is too small to contain a PDF header");
+    throw new PdfCaptureError("invalid-input", "PDF input is too small to contain a PDF header");
   if (stats.size > maxPdfBytes)
-    throw new Error(`PDF input exceeds the ${maxPdfBytes}-byte limit`);
+    throw new PdfCaptureError("limit-exceeded", `PDF input exceeds the ${maxPdfBytes}-byte limit`);
   const descriptor = openSync(canonical, "r");
   try {
     const signature = Buffer.alloc(5);
     const count = readSync(descriptor, signature, 0, signature.length, 0);
     if (count !== signature.length || signature.toString("ascii") !== "%PDF-") {
-      throw new Error("PDF input does not have a valid PDF signature");
+      throw new PdfCaptureError("invalid-input", "PDF input does not have a valid PDF signature");
     }
   } finally {
     closeSync(descriptor);
@@ -923,18 +1089,18 @@ function safeGeneratedImage(image, workspace, index, limits) {
 function generatedTreeSize(workspace, maximumFiles, maximumBytes) {
   const entries = readdirSync(workspace, { withFileTypes: true });
   if (entries.length > maximumFiles) {
-    throw new Error(`PDF extraction created more than ${maximumFiles} files`);
+    throw new PdfCaptureError("limit-exceeded", `PDF extraction created more than ${maximumFiles} files`);
   }
   let totalBytes = 0;
   for (const entry of entries) {
     const path = join2(workspace, entry.name);
     const stats = lstatSync(path);
     if (!entry.isFile() || stats.isSymbolicLink()) {
-      throw new Error("PDF extraction created an unexpected non-file output");
+      throw new PdfCaptureError("extraction-failed", "PDF extraction created an unexpected non-file output");
     }
     totalBytes += stats.size;
     if (totalBytes > maximumBytes) {
-      throw new Error(`PDF extraction exceeded the ${maximumBytes}-byte workspace limit`);
+      throw new PdfCaptureError("limit-exceeded", `PDF extraction exceeded the ${maximumBytes}-byte workspace limit`);
     }
   }
 }
@@ -957,7 +1123,8 @@ async function inspectPdf(options, dependencies = {}) {
     cwd: workspaceDirectory
   });
   if (info.exitCode !== 0) {
-    throw new Error("pdfinfo could not inspect the input PDF");
+    const encrypted = info.stderr.split(/\r?\n/u).some((line) => line.trim() === "Command Line Error: Incorrect password");
+    throw new PdfCaptureError(encrypted ? "encrypted" : "extraction-failed", "pdfinfo could not inspect the input PDF");
   }
   const metadata = parsePdfInfo(info.stdout);
   const processedPageLimit = Math.min(metadata.pageCount, maxPages);
@@ -982,12 +1149,12 @@ async function inspectPdf(options, dependencies = {}) {
     cwd: workspaceDirectory
   });
   if (extracted.exitCode !== 0) {
-    throw new Error("pdftohtml could not extract the input PDF");
+    throw new PdfCaptureError("extraction-failed", "pdftohtml could not extract the input PDF");
   }
   generatedTreeSize(workspaceDirectory, 10002, Math.min(Number.MAX_SAFE_INTEGER, 8 * 1024 ** 3 + pdfCaptureDefaults.maxLayoutBytes));
   const layoutStats = statSync(layoutPath);
   if (!layoutStats.isFile() || layoutStats.size > pdfCaptureDefaults.maxLayoutBytes) {
-    throw new Error(`Poppler layout XML exceeds the ${pdfCaptureDefaults.maxLayoutBytes}-byte limit`);
+    throw new PdfCaptureError("limit-exceeded", `Poppler layout XML exceeds the ${pdfCaptureDefaults.maxLayoutBytes}-byte limit`);
   }
   const parsed = parsePopplerXml(readFileSync(layoutPath, "utf8"), {
     maxPages: processedPageLimit,
@@ -1214,8 +1381,14 @@ function persistPdfCapture(input) {
       copyFileSync(image.sourcePath, destination);
       chmodSync2(destination, 420);
     }
-    writeFileSync(join3(stagingDirectory, `${slug}.md`), `${redactSensitiveText(input.markdown).trimEnd()}
-`, { encoding: "utf8", flag: "wx", mode: 420 });
+    const markdownBytes = `${redactSensitiveText(input.markdown).trimEnd()}
+`;
+    const markdownDescriptor = { path: `${slug}.md`, bytes: Buffer.byteLength(markdownBytes), sha256: createHash2("sha256").update(markdownBytes).digest("hex") };
+    if (input.manifest.markdown !== undefined && (input.manifest.markdown.path !== markdownDescriptor.path || input.manifest.markdown.bytes !== markdownDescriptor.bytes || input.manifest.markdown.sha256 !== markdownDescriptor.sha256)) {
+      throw new Error("PDF Markdown does not match its manifest provenance");
+    }
+    const manifest = { ...input.manifest, markdown: markdownDescriptor };
+    writeFileSync(join3(stagingDirectory, `${slug}.md`), markdownBytes, { encoding: "utf8", flag: "wx", mode: 420 });
     if (input.manifest.annotations === null) {
       if (input.annotationsJson !== undefined) {
         throw new Error("PDF annotations were supplied without manifest provenance");
@@ -1239,7 +1412,7 @@ function persistPdfCapture(input) {
       }
       writeFileSync(join3(stagingDirectory, PDF_CAPTURE_ANNOTATIONS_FILENAME), annotationsJson, { encoding: "utf8", flag: "wx", mode: 420 });
     }
-    writeFileSync(join3(stagingDirectory, PDF_CAPTURE_MANIFEST_FILENAME), `${JSON.stringify(input.manifest, null, 2)}
+    writeFileSync(join3(stagingDirectory, PDF_CAPTURE_MANIFEST_FILENAME), `${JSON.stringify(manifest, null, 2)}
 `, { encoding: "utf8", flag: "wx", mode: 420 });
     assertStagingTreeSafe(stagingDirectory);
     if (existsSync3(targetDirectory) !== (expectedIdentity !== null)) {
@@ -1345,6 +1518,13 @@ function markdownContent(blocks, images) {
       if (resolved === undefined)
         continue;
       lines.push(imageMarkdown(resolved), "");
+      continue;
+    }
+    if (block.kind === "table") {
+      textBlockCount += 1;
+      const rows = block.rows.map((row) => `| ${row.map((cell) => escapeInline(cell).replace(/\|/gu, "\\|")).join(" | ")} |`);
+      if (rows.length > 0)
+        lines.push(rows[0], `| ${block.rows[0].map(() => "---").join(" | ")} |`, ...rows.slice(1), "");
       continue;
     }
     if (block.kind === "heading") {
@@ -1662,13 +1842,16 @@ async function runPdfCapture(options, dependencies = {}) {
       });
     }
     const platforms = embeddedPlatforms(resolvedImages);
+    const layout = analyzePdfLayout(inspection.pages);
+    for (const issue of layout.issues)
+      warnings.push(`Page ${issue.page}: ${issue.code}; consult the retained source PDF.`);
     const status = warnings.length > 0 || unclassifiedImages > 0 || ocrWarningCount > 0 ? "partial" : "complete";
     const filenameTitle = inspection.originalFilename.replace(/\.pdf$/iu, "").trim();
     const requestedSlug = options.slug ?? inspection.metadata.title ?? filenameTitle;
     const slug = slugify(sanitizeTerminalText(requestedSlug));
     if (slug === "")
       throw new Error("could not derive a safe PDF capture slug; pass an explicit slug");
-    const blocks = layoutBlocks(inspection.pages);
+    const blocks = layout.blocks;
     const byId = new Map(resolvedImages.map((image) => [image.image.id, image]));
     const capturedAt = (dependencies.now ?? (() => new Date))().toISOString();
     const built = buildPdfMarkdown({
@@ -1701,6 +1884,8 @@ async function runPdfCapture(options, dependencies = {}) {
     const manifest = {
       schemaVersion: PDF_CAPTURE_MANIFEST_SCHEMA_VERSION,
       kind: "pdf",
+      quality: { schemaVersion: 1, issues: layout.issues },
+      markdown: { path: pdfMarkdownFilename(slug), bytes: Buffer.byteLength(built.markdown), sha256: createHash3("sha256").update(built.markdown).digest("hex") },
       capturedAt,
       status,
       source: {
@@ -1785,13 +1970,13 @@ function parseRemoteUrl(input) {
   try {
     url = new URL(input);
   } catch {
-    throw new Error("PDF URL is invalid");
+    throw new PdfCaptureError("invalid-input", "PDF URL is invalid");
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("PDF URL must use HTTP or HTTPS");
+    throw new PdfCaptureError("invalid-input", "PDF URL must use HTTP or HTTPS");
   }
   if (url.username !== "" || url.password !== "") {
-    throw new Error("PDF URL must not contain embedded credentials");
+    throw new PdfCaptureError("invalid-input", "PDF URL must not contain embedded credentials");
   }
   return url;
 }
@@ -1808,7 +1993,7 @@ function remoteFilename(url) {
 }
 function assertPdfSignature(bytes) {
   if (bytes.byteLength < 5 || new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") {
-    throw new Error("remote PDF input does not have a valid PDF signature");
+    throw new PdfCaptureError("invalid-input", "remote PDF input does not have a valid PDF signature");
   }
 }
 async function preparePdfSource(input, options = {}, dependencies = {}) {
@@ -1961,7 +2146,7 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
   } catch (error) {
     const message = safe(error instanceof Error ? error.message : String(error));
     if (arguments_.json)
-      output.stdout(terminalSafeJson({ ok: false, error: message }));
+      output.stdout(terminalSafeJson({ ok: false, error: message, code: error instanceof PdfCaptureError ? error.code : "unknown" }));
     else
       output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
@@ -1972,4 +2157,4 @@ async function main(rawArguments = process.argv.slice(2), environment = process.
 if (false)
   ;
 
-export { pdfUsage, parsePdfArguments, decodePopplerText, parsePopplerXml, parsePdfInfo, layoutBlocks, parsePdfImageInterpretations, runPdfToolCommand, resolvePdfTools, pdfCaptureDefaults, inspectPdf, PDF_CAPTURE_MANIFEST_SCHEMA_VERSION, PDF_CAPTURE_MANIFEST_FILENAME, PDF_CAPTURE_SOURCE_FILENAME, PDF_CAPTURE_ANNOTATIONS_FILENAME, pdfImageAssetPath, persistPdfCapture, pdfMarkdownFilename, buildPdfMarkdown, parseTesseractTsv, ocrPdfImage, runPdfCapture, pdfCaptureSummary, main };
+export { PdfCaptureError, pdfUsage, parsePdfArguments, decodePopplerText, parsePopplerXml, parsePdfInfo, layoutBlocks, parsePdfImageInterpretations, runPdfToolCommand, resolvePdfTools, pdfCaptureDefaults, inspectPdf, PDF_CAPTURE_MANIFEST_SCHEMA_VERSION, PDF_CAPTURE_MANIFEST_FILENAME, PDF_CAPTURE_SOURCE_FILENAME, PDF_CAPTURE_ANNOTATIONS_FILENAME, pdfImageAssetPath, persistPdfCapture, pdfMarkdownFilename, buildPdfMarkdown, parseTesseractTsv, ocrPdfImage, runPdfCapture, pdfCaptureSummary, main };

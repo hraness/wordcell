@@ -1,3 +1,4 @@
+import { parseArticleMetadata, type ArticleMetadata } from "./metadata.js";
 import { createHash } from "node:crypto";
 import { constants as fsConstants, type BigIntStats } from "node:fs";
 import { lstat, open, opendir, realpath, type FileHandle } from "node:fs/promises";
@@ -27,6 +28,7 @@ const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
 export type CaptureBundleIntegrity = "mismatch" | "unavailable" | "verified";
 
 export type CaptureBundleInspection = {
+  readonly metadata?: ArticleMetadata;
   readonly root: string;
   readonly schemaVersion: 1 | 2 | 3 | 4;
   readonly sourceUrl: string;
@@ -556,6 +558,7 @@ export async function readCaptureBundle(
 
     await assertBundleRoot(root);
     return Object.freeze({
+      ...(manifest.metadata === undefined ? {} : { metadata: parseArticleMetadata(manifest.metadata) }),
       root: root.path,
       schemaVersion,
       sourceUrl: manifest.sourceUrl,

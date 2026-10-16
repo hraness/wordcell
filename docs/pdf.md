@@ -110,3 +110,33 @@ Reaching any boundary is recorded and makes the result `partial`.
 5. Inspect low-confidence OCR against its source image.
 6. Keep later summaries and interpretations in maintained notes linked to the
    capture.
+
+## Layout quality and verification
+
+Separated columns are read in sequence before lines are merged. Compact aligned
+tables with an explicit header and numeric cells become Markdown tables. Basic
+raised digits remain superscripts. Complex formulas, ambiguous tables and
+uncertain layout produce page-specific quality issues and a partial capture;
+the original PDF remains the reference. Repeated headers are removed only near
+page margins. These rules do not promise complete layout reconstruction.
+
+New bundles bind the Markdown bytes as well as the original PDF and images.
+Use the public SDK to inspect or verify an existing bundle:
+
+```ts
+import { verifyPdfCaptureBundle } from "@hraness/wordcell/pdf";
+const result = await verifyPdfCaptureBundle("/absolute/path/to/saved-document");
+if (!result.ok) throw new Error("PDF bundle verification failed");
+```
+
+`inspectPdfCaptureBundle` returns the saved text and integrity results.
+`verifyPdfCaptureBundle` checks bounded, confined files and page/asset references.
+Legacy bundles without a Markdown digest report unavailable integrity rather
+than verified content. `PdfCaptureError.code` provides stable failure categories;
+unknown failures remain unknown, and password errors require a recognized tool
+diagnostic.
+
+A host with its own process supervisor can inject `runTool` and call
+`runPdfToolCommand({ ...command, processGroup: "inherit" })`. That host owns
+termination and descendant cleanup for the surrounding group. Standalone
+commands keep the default separate process group.

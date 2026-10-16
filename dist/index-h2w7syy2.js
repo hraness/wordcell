@@ -6,7 +6,10 @@ import {
   resolveRemote,
   rewriteContentWithStatus,
   scanImageSources
-} from "./index-cd75vky9.js";
+} from "./index-jbtyp6q5.js";
+import {
+  parseArticleMetadata
+} from "./index-e2wstc7t.js";
 import {
   FetchFailure,
   safeFetch
@@ -812,6 +815,7 @@ async function extractPage(acquisition, scope, timeoutMs = 30000) {
         article = {
           content: retainDefuddleMedia(restoredContent, response, acquisition.finalUrl),
           title: boundedMetadata(response.title, articleMetadataLimits.title) ?? boundedMetadata(acquisition.browserTitle, articleMetadataLimits.title),
+          ...response.metadata === undefined ? {} : { metadata: parseArticleMetadata(response.metadata) },
           author: boundedMetadata(response.author, articleMetadataLimits.author),
           published: boundedMetadata(response.published, articleMetadataLimits.published),
           description

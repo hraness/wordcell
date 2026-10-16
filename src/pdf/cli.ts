@@ -1,3 +1,4 @@
+import { PdfCaptureError } from "./errors.js";
 import { lstatSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -149,7 +150,7 @@ export async function main(
     return 0;
   } catch (error) {
     const message = safe(error instanceof Error ? error.message : String(error));
-    if (arguments_.json) output.stdout(terminalSafeJson({ ok: false, error: message }));
+    if (arguments_.json) output.stdout(terminalSafeJson({ ok: false, error: message, code: error instanceof PdfCaptureError ? error.code : "unknown" }));
     else output.stderr(renderFailure(message, "wordcell doctor", stderrStyle(environment, output)));
     return 1;
   } finally {

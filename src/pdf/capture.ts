@@ -8,7 +8,7 @@ import { slugify } from "../clip/lib.js";
 import { sanitizeTerminalText } from "../clip/terminal.js";
 import { inspectPdf } from "./extract.js";
 import {
-  layoutBlocks,
+  analyzePdfLayout,
   parsePdfImageInterpretations,
 } from "./layout.js";
 import {
@@ -183,6 +183,8 @@ export async function runPdfCapture(
       });
     }
     const platforms = embeddedPlatforms(resolvedImages);
+    const layout = analyzePdfLayout(inspection.pages);
+    for (const issue of layout.issues) warnings.push(`Page ${issue.page}: ${issue.code}; consult the retained source PDF.`);
     const status = warnings.length > 0 || unclassifiedImages > 0 || ocrWarningCount > 0
       ? "partial"
       : "complete";
@@ -190,7 +192,7 @@ export async function runPdfCapture(
     const requestedSlug = options.slug ?? inspection.metadata.title ?? filenameTitle;
     const slug = slugify(sanitizeTerminalText(requestedSlug));
     if (slug === "") throw new Error("could not derive a safe PDF capture slug; pass an explicit slug");
-    const blocks = layoutBlocks(inspection.pages);
+    const blocks = layout.blocks;
     const byId = new Map(resolvedImages.map((image) => [image.image.id, image]));
     const capturedAt = (dependencies.now ?? (() => new Date()))().toISOString();
     const built = buildPdfMarkdown({
@@ -233,6 +235,8 @@ export async function runPdfCapture(
     const manifest: PdfCaptureManifest = {
       schemaVersion: PDF_CAPTURE_MANIFEST_SCHEMA_VERSION,
       kind: "pdf",
+      quality: { schemaVersion: 1, issues: layout.issues },
+      markdown: { path: pdfMarkdownFilename(slug), bytes: Buffer.byteLength(built.markdown), sha256: createHash("sha256").update(built.markdown).digest("hex") },
       capturedAt,
       status,
       source: {

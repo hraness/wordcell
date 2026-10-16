@@ -2,7 +2,10 @@
 import {
   CAPTURE_MANIFEST_FILENAME,
   CAPTURE_SOURCE_EVIDENCE_PATH
-} from "./index-mxxxytys.js";
+} from "./index-g63d3937.js";
+import {
+  parseArticleMetadata
+} from "./index-e2wstc7t.js";
 
 // src/clip/bundle-reader.ts
 import { createHash } from "crypto";
@@ -384,6 +387,7 @@ async function readCaptureBundle(path, options = {}) {
     }
     await assertBundleRoot(root);
     return Object.freeze({
+      ...manifest.metadata === undefined ? {} : { metadata: parseArticleMetadata(manifest.metadata) },
       root: root.path,
       schemaVersion,
       sourceUrl: manifest.sourceUrl,

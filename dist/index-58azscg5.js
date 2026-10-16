@@ -2,7 +2,7 @@
 import {
   acquireArchiveTodaySnapshot,
   discoverArchiveTodaySnapshot
-} from "./index-hacpnaew.js";
+} from "./index-fd8j527z.js";
 import {
   canonicalizeUrl,
   chooseBestExtraction,
@@ -12,13 +12,13 @@ import {
   localizeAssets,
   scoreExtraction,
   sniffImage
-} from "./index-k86wepd8.js";
+} from "./index-h2w7syy2.js";
 import {
   adapterCapabilities,
   inspectClipEnvironment,
   renderAdapterCapabilities,
   renderDoctorReport
-} from "./index-nd8v7r0z.js";
+} from "./index-sp43012q.js";
 import {
   cloneBrowserProfile
 } from "./index-hnvx7m1j.js";
@@ -34,7 +34,7 @@ import {
   renderCookiePermissionNotice,
   renderCookiePermissionRecovery,
   setCookiePermissionReporter
-} from "./index-ncwzmsge.js";
+} from "./index-nwdzhj1h.js";
 import {
   CONTENT_REWRITE_TRUNCATION_WARNING,
   buildClipMarkdown,
@@ -51,7 +51,7 @@ import {
   stderrStyle,
   terminalOutput,
   writesToTerminal
-} from "./index-cd75vky9.js";
+} from "./index-jbtyp6q5.js";
 import {
   MAX_COOKIE_BYTES,
   filterCookieProviderResult,
@@ -68,7 +68,7 @@ import {
   redactSensitiveTextWithCount,
   sanitizeArtifactUrl,
   writeCaptureBundle
-} from "./index-mxxxytys.js";
+} from "./index-g63d3937.js";
 import {
   startNetworkProxy
 } from "./index-w2zc0vwa.js";
@@ -2285,6 +2285,7 @@ async function runCapture(rawOptions, dependencies = {}) {
       const finalWarnings = finalizedWarnings(combinedWarnings, redactedMarkdown.count);
       const includeSource = options.evidence === "source" || options.evidence === "all";
       const manifestInput = {
+        ...article.metadata === undefined ? {} : { metadata: article.metadata },
         sourceUrl,
         canonicalUrl: best.canonicalUrl.href,
         capturedAt,

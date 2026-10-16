@@ -1,5 +1,8 @@
 // @bun
 import {
+  parseArticleMetadata
+} from "./index-e2wstc7t.js";
+import {
   sanitizeTerminalText
 } from "./index-1xxnjn0d.js";
 
@@ -1070,6 +1073,7 @@ function normalizeManifest(input, hasSourceHtml, document) {
   return {
     schemaVersion: CAPTURE_MANIFEST_SCHEMA_VERSION,
     document,
+    ...input.metadata === undefined ? {} : { metadata: parseArticleMetadata(input.metadata, redactSensitiveText) },
     sourceUrl: sanitizeArtifactUrl(input.sourceUrl),
     canonicalUrl: sanitizeArtifactUrl(input.canonicalUrl),
     capturedAt: new Date(capturedAtTime).toISOString(),

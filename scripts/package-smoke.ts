@@ -12,7 +12,7 @@ import { requiresOhAdoptionPreparerExport } from "./npm-package-identity.js";
 
 const packageName = "@hraness/wordcell";
 const maximumPackageFiles = 306;
-const maximumPackedBytes = 1_450_000;
+const maximumPackedBytes = 1_500_000;
 const importSpecifiers = [
   "@hraness/wordcell",
   "@hraness/wordcell/agent-context",
@@ -77,6 +77,8 @@ const baselineRequiredNamedExports = {
   "@hraness/wordcell/graph-authority": ["openGraphAuthority", "queryGraph", "rebuildGraph", "verifyGraph"],
   "@hraness/wordcell/graph-percolation": ["percolateWithGraph"],
   "@hraness/wordcell/clip/bundle-reader": ["readCaptureBundle", "verifyCaptureBundle"],
+  "@hraness/wordcell/capture": ["extractArticleMetadata", "parseArticleMetadata"],
+  "@hraness/wordcell/pdf": ["inspectPdfCaptureBundle", "verifyPdfCaptureBundle", "PdfCaptureError"],
   "@hraness/wordcell/clip/jobs": ["createCaptureJob", "openCaptureJobStore", "updateCaptureJob"],
   "@hraness/wordcell/clip/refresh": ["diffCaptureBundle"],
   "@hraness/wordcell/portfolio": ["openKnowledgePortfolio", "parsePortfolioRegistry", "parseQualifiedDocumentUri"],

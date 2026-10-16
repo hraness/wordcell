@@ -212,9 +212,15 @@ export function persistPdfCapture(input: PersistPdfCaptureInput): string {
       chmodSync(destination, 0o644);
     }
 
+    const markdownBytes = `${redactSensitiveText(input.markdown).trimEnd()}\n`;
+    const markdownDescriptor = { path: `${slug}.md`, bytes: Buffer.byteLength(markdownBytes), sha256: createHash("sha256").update(markdownBytes).digest("hex") };
+    if (input.manifest.markdown !== undefined && (input.manifest.markdown.path !== markdownDescriptor.path || input.manifest.markdown.bytes !== markdownDescriptor.bytes || input.manifest.markdown.sha256 !== markdownDescriptor.sha256)) {
+      throw new Error("PDF Markdown does not match its manifest provenance");
+    }
+    const manifest = { ...input.manifest, markdown: markdownDescriptor };
     writeFileSync(
       join(stagingDirectory, `${slug}.md`),
-      `${redactSensitiveText(input.markdown).trimEnd()}\n`,
+      markdownBytes,
       { encoding: "utf8", flag: "wx", mode: 0o644 },
     );
     if (input.manifest.annotations === null) {
@@ -253,7 +259,7 @@ export function persistPdfCapture(input: PersistPdfCaptureInput): string {
     }
     writeFileSync(
       join(stagingDirectory, PDF_CAPTURE_MANIFEST_FILENAME),
-      `${JSON.stringify(input.manifest, null, 2)}\n`,
+      `${JSON.stringify(manifest, null, 2)}\n`,
       { encoding: "utf8", flag: "wx", mode: 0o644 },
     );
     assertStagingTreeSafe(stagingDirectory);

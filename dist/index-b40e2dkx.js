@@ -5,10 +5,10 @@ import {
   parseArchiveTodayMementoUrl,
   parseMetadataSearchResponse,
   rankMetadataSearchResults
-} from "./index-hacpnaew.js";
+} from "./index-fd8j527z.js";
 import {
   sanitizeArtifactUrl
-} from "./index-mxxxytys.js";
+} from "./index-g63d3937.js";
 import {
   assertSafeNetworkUrl,
   isPrivateHostname,

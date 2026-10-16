@@ -4,18 +4,18 @@ import { gunzipSync } from "node:zlib";
 
 const blockSize = 512;
 const packagePrefix = "package/";
-const maximumTarBytes = 6_950_000;
+const maximumTarBytes = 7_050_000;
 const ustarSignature = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00, 0x30, 0x30]);
 
-// The Clef provider migration ships src/rerank-clef.ts and dist/rerank-clef.js:
-// measured npm package 6,385,735 unpacked bytes (1,439,073 compressed, 302 files).
-// Preserve the compressed/file bounds and the existing 450 KB tar overhead cap.
-export const maximumUnpackedBytes = 6_500_000;
+// Metadata/PDF SDK0.27.0 ships three public transitive source modules:
+// measured npm package6,492,562 unpacked bytes (1,463,933 compressed,306 files).
+// Reviewed modest headroom preserves the450KB tar overhead cap.
+export const maximumUnpackedBytes = 6_600_000;
 
 const packageBudget = Object.freeze({
   entryCount: { min: 190, max: 420 },
-  fileCount: { min: 190, max: 306 },
-  packedBytes: { min: 950_000, max: 1_450_000 },
+  fileCount: { min: 190, max: 310 },
+  packedBytes: { min: 950_000, max: 1_500_000 },
   unpackedBytes: { min: 4_500_000, max: maximumUnpackedBytes },
 });
 

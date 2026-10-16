@@ -1,3 +1,4 @@
+import { PdfCaptureError } from "./errors.js";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -26,7 +27,7 @@ async function readBoundedStream(stream: NodeJS.ReadableStream, maxBytes: number
     if (typeof value === "string") chunk = new TextEncoder().encode(value);
     else if (value instanceof Uint8Array) chunk = value;
     else throw new Error("PDF tool returned an unsupported output chunk");
-    if (!bytes.append(chunk)) throw new Error(`PDF tool output exceeded ${maxBytes} bytes`);
+    if (!bytes.append(chunk)) throw new PdfCaptureError("limit-exceeded", `PDF tool output exceeded ${maxBytes} bytes`);
   }
   return new TextDecoder().decode(bytes.toUint8Array());
 }
@@ -37,7 +38,8 @@ export const runPdfToolCommand: PdfToolRunner = async (
 ): Promise<PdfToolCommandResult> => {
   const executable = specification.command[0];
   if (executable === undefined) throw new Error("PDF tool command is empty");
-  const useProcessGroup = process.platform !== "win32";
+  if (specification.processGroup !== undefined && !["new", "inherit"].includes(specification.processGroup)) throw new PdfCaptureError("invalid-input", "Invalid PDF process group policy");
+  const useProcessGroup = process.platform !== "win32" && specification.processGroup !== "inherit";
   const child = spawn(executable, specification.command.slice(1), {
     cwd: specification.cwd,
     detached: useProcessGroup,
@@ -51,7 +53,7 @@ export const runPdfToolCommand: PdfToolRunner = async (
     windowsHide: true,
   });
   const exited = new Promise<number>((resolveExit, rejectExit) => {
-    child.once("error", rejectExit);
+    child.once("error", (error: NodeJS.ErrnoException) => rejectExit(error.code === "ENOENT" ? new PdfCaptureError("tool-unavailable", "PDF tool executable is unavailable", { cause: error }) : error));
     child.once("close", (code) => resolveExit(code ?? 1));
   });
   const signalProcessTree = (signal: NodeJS.Signals): void => {
@@ -79,7 +81,7 @@ export const runPdfToolCommand: PdfToolRunner = async (
     forceKillTimer = setTimeout(() => signalProcessTree("SIGKILL"), 1_000);
   };
   const timer = setTimeout(() => {
-    requestStop(new Error(`PDF tool timed out after ${specification.timeoutMs}ms`));
+    requestStop(new PdfCaptureError("timeout", `PDF tool timed out after ${specification.timeoutMs}ms`));
   }, specification.timeoutMs);
 
   try {
@@ -137,10 +139,10 @@ export function resolvePdfTools(dependencies: PdfCaptureDependencies = {}): PdfT
     ? discoverExecutable("tesseract", dependencies)
     : dependencies.tools.tesseract;
   if (pdfinfo === null) {
-    throw new Error("pdfinfo is required for PDF ingestion; install the Poppler command-line tools");
+    throw new PdfCaptureError("tool-unavailable", "pdfinfo is required for PDF ingestion; install the Poppler command-line tools");
   }
   if (pdftohtml === null) {
-    throw new Error("pdftohtml is required for PDF ingestion; install the Poppler command-line tools");
+    throw new PdfCaptureError("tool-unavailable", "pdftohtml is required for PDF ingestion; install the Poppler command-line tools");
   }
   return { pdfinfo, pdftohtml, tesseract };
 }

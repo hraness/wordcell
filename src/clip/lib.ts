@@ -1,7 +1,9 @@
+import { parseArticleMetadata, type ArticleMetadata } from "./metadata.js";
 import { sanitizeTerminalText } from "./terminal.js";
 
 /** Defuddle fields consumed after narrowing its JSON output. */
 export type Article = {
+  metadata?: ArticleMetadata;
   content: string;
   title: string | null;
   author: string | null;
@@ -46,6 +48,7 @@ export function parseArticle(parsed: unknown): Article | null {
   if (content === null) return null;
   return {
     content,
+    ...(parsed.metadata === undefined ? {} : { metadata: parseArticleMetadata(parsed.metadata) }),
     title: nonEmptyString(parsed.title, articleMetadataLimits.title),
     author: nonEmptyString(parsed.author, articleMetadataLimits.author),
     published: nonEmptyString(parsed.published, articleMetadataLimits.published),

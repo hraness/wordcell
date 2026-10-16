@@ -965,6 +965,7 @@ export async function runCapture(
       const finalWarnings = finalizedWarnings(combinedWarnings, redactedMarkdown.count);
       const includeSource = options.evidence === "source" || options.evidence === "all";
       const manifestInput: CaptureManifestInput = {
+        ...(article.metadata === undefined ? {} : { metadata: article.metadata }),
         sourceUrl,
         canonicalUrl: best.canonicalUrl.href,
         capturedAt,

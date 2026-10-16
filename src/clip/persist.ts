@@ -1,3 +1,4 @@
+import { parseArticleMetadata, type ArticleMetadata } from "./metadata.js";
 import {
   chmodSync,
   existsSync,
@@ -48,6 +49,7 @@ export type VideoContextManifestMetadata = {
 };
 
 export type CaptureManifestInput = {
+  readonly metadata?: ArticleMetadata;
   readonly sourceUrl: string;
   readonly canonicalUrl: string;
   readonly capturedAt: string;
@@ -1248,6 +1250,7 @@ function normalizeManifest(
   return {
     schemaVersion: CAPTURE_MANIFEST_SCHEMA_VERSION,
     document,
+    ...(input.metadata === undefined ? {} : { metadata: parseArticleMetadata(input.metadata, redactSensitiveText) }),
     sourceUrl: sanitizeArtifactUrl(input.sourceUrl),
     canonicalUrl: sanitizeArtifactUrl(input.canonicalUrl),
     capturedAt: new Date(capturedAtTime).toISOString(),

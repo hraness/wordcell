@@ -36,6 +36,7 @@ export type ParsedPopplerXml = {
 };
 
 export type PdfLayoutBlock =
+  | { readonly kind: "table"; readonly page: number; readonly rows: readonly (readonly string[])[] }
   | {
       readonly kind: "heading";
       readonly page: number;
@@ -456,7 +457,7 @@ export function layoutBlocks(pages: readonly PdfPageLayout[]): readonly PdfLayou
 
   for (const page of pages) {
     const lines = (linesByPage.get(page.page) ?? []).filter(
-      (line) => !repeatedMargins.has(normalizedMarginText(line.text)),
+      (line) => !(line.top <= page.height * 0.06 || line.top + line.height >= page.height * 0.94) || !repeatedMargins.has(normalizedMarginText(line.text)),
     );
     const steps = lines.slice(1).map((line, index) =>
       Math.max(0, line.top - (lines[index]?.top ?? line.top)));
@@ -491,7 +492,7 @@ export function layoutBlocks(pages: readonly PdfPageLayout[]): readonly PdfLayou
       const { line, index } = event;
       const previous = lines[index - 1];
       const gapBefore = previous === undefined ? Number.POSITIVE_INFINITY : line.top - previous.top;
-      const fontHeading = line.fontSize > bodySize * 1.08;
+      const fontHeading = line.fontSize > bodySize * 1.08 && !/[=∫∑√⁰¹²³⁴⁵⁶⁷⁸⁹]/u.test(line.text);
       const boldHeading = line.boldRatio >= 0.78
         && line.text.length <= 180
         && gapBefore >= normalStep * 1.45;
@@ -516,7 +517,7 @@ export function layoutBlocks(pages: readonly PdfPageLayout[]): readonly PdfLayou
     }
     flushParagraph();
   }
-  return output.filter((block) => block.kind === "image" || block.text.trim() !== "");
+  return output.filter((block) => block.kind === "image" || block.kind === "table" || block.text.trim() !== "");
 }
 
 export function parsePdfImageInterpretations(value: unknown): readonly PdfImageInterpretation[] {
@@ -615,4 +616,136 @@ export function parsePdfImageInterpretations(value: unknown): readonly PdfImageI
     keys.add(entry.id);
   }
   return output;
+}
+
+/** Geometry evidence is deliberately conservative: uncertain structure remains visible in quality. */
+export function analyzePdfLayout(pages: readonly PdfPageLayout[]): { readonly blocks: readonly PdfLayoutBlock[]; readonly issues: readonly import("./model.js").PdfQualityIssue[] } {
+  const issues: import("./model.js").PdfQualityIssue[] = [];
+  const blocks: PdfLayoutBlock[] = [];
+  const marginLines = new Map(pages.filter(page => page.text.length <= 4000).map(page => [page.page, pageLines(page)]));
+  const margins = repeatedMarginLines(pages, marginLines);
+  for (const originalInput of pages) {
+    const original = { ...originalInput, text: originalInput.text.filter(fragment => !(fragment.top <= originalInput.height * 0.06 || fragment.top + fragment.height >= originalInput.height * 0.94) || !margins.has(normalizedMarginText(fragment.text))) };
+    const warn = (code: import("./model.js").PdfQualityIssue["code"]): void => {
+      if (!issues.some(issue => issue.page === original.page && issue.code === code)) issues.push({ page: original.page, code });
+    };
+    // Bound quadratic geometry analysis independently of the parser's byte limit.
+    if (original.text.length > 4000) {
+      warn("reading-order-uncertain"); blocks.push(...layoutBlocks([original])); continue;
+    }
+    if (original.text.some(fragment => /[∫∑√]/u.test(fragment.text))) warn("math-structure-uncertain");
+    const text = [...original.text].sort((a, b) => a.top - b.top || a.left - b.left);
+    const consumed = new Set<PdfTextFragment>();
+    const replacements = new Map<PdfTextFragment, PdfTextFragment>();
+    const superscripts: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "+": "⁺", "-": "⁻", "=": "⁼", "(": "⁽", ")": "⁾", "n": "ⁿ", "i": "ⁱ" };
+    for (const small of text) {
+      const bases = text.filter(base => base !== small && base.fontSize >= small.fontSize * 1.3
+        && small.top < base.top && small.top + small.height > base.top - base.height * 0.25
+        && Math.abs(small.left - (base.left + base.width)) < base.fontSize * 0.6);
+      if (bases.length === 0) continue;
+      const base = bases[0]!;
+      const glyphs = [...small.text.trim()];
+      if (bases.length === 1 && glyphs.length > 0 && glyphs.length <= 8 && glyphs.every(glyph => superscripts[glyph] !== undefined) && !replacements.has(base)) {
+        replacements.set(base, { ...base, text: base.text + glyphs.map(glyph => superscripts[glyph]).join(""), width: small.left + small.width - base.left });
+        consumed.add(small);
+      } else warn("math-structure-uncertain");
+    }
+    const fragments = text.filter(fragment => !consumed.has(fragment)).map(fragment => replacements.get(fragment) ?? fragment);
+    const page: PdfPageLayout = { ...original, text: fragments };
+    const rows: PdfTextFragment[][] = [];
+    for (const fragment of fragments) {
+      const row = rows.at(-1);
+      if (row === undefined || Math.abs(fragment.top - row[0]!.top) > Math.max(2, fragment.height * 0.2)) rows.push([fragment]);
+      else row.push(fragment);
+    }
+    const cellRows = rows.map(row => {
+      const groups: PdfTextFragment[][] = [];
+      for (const fragment of [...row].sort((a, b) => a.left - b.left)) {
+        const prior = groups.at(-1), last = prior?.at(-1);
+        if (last === undefined || fragment.left - (last.left + last.width) > Math.max(12, fragment.fontSize * 1.5)) groups.push([fragment]);
+        else prior!.push(fragment);
+      }
+      return groups;
+    });
+    const tables: Array<{ top: number; bottom: number; block: PdfLayoutBlock; fragments: PdfTextFragment[] }> = [];
+    for (let index = 0; index < cellRows.length; index++) {
+      const first = cellRows[index]!;
+      if (first.length < 2 || first.length > 12) continue;
+      const group = [first];
+      let next = index + 1;
+      for (; next < cellRows.length; next++) {
+        const candidate = cellRows[next]!;
+        if (candidate.length !== first.length || candidate.some((cell, column) => Math.abs(cell[0]!.left - first[column]![0]!.left) > 4)) break;
+        if (candidate[0]![0]!.top - group.at(-1)![0]![0]!.top > Math.max(40, candidate[0]![0]!.height * 3)) break;
+        group.push(candidate);
+      }
+      const cells = group.map(row => row.map(cell => joinFragments(cell)));
+      const header = first.every(cell => cell.every(fragment => fragment.bold));
+      const numeric = cells.slice(1).some(row => row.slice(1).some(cell => /^[-+\d$€£]/u.test(cell.trim())));
+      const compact = cells.every(row => row.every(cell => cell.length <= 100));
+      if (group.length >= 3 && compact && header && numeric) {
+        const members = group.flat(2);
+        tables.push({ top: Math.min(...members.map(fragment => fragment.top)), bottom: Math.max(...members.map(fragment => fragment.top + fragment.height)), block: { kind: "table", page: page.page, rows: cells }, fragments: members });
+        index = next - 1;
+      } else if (group.length >= 3 && first.length >= 3) warn("table-structure-uncertain");
+    }
+    const tableFragments = new Set(tables.flatMap(table => table.fragments));
+    const remaining = fragments.filter(fragment => !tableFragments.has(fragment));
+    const emitBand = (band: readonly PdfTextFragment[], images: readonly PdfImageCandidate[]): void => {
+      if (band.length === 0 && images.length === 0) return;
+      // Repeated gutters are detected before line grouping can join adjacent columns.
+      const candidates = new Set<number>();
+      for (const row of cellRows) {
+        for (let i = 1; i < row.length; i++) {
+          const left = row[i - 1]!.at(-1)!, right = row[i]![0]!;
+          const gap = right.left - (left.left + left.width);
+          if (gap >= Math.max(page.width * 0.025, left.fontSize * 1.5)) candidates.add(Math.round((left.left + left.width + right.left) / 2));
+        }
+      }
+      const valid = [...candidates].filter(gutter => {
+        const left = band.filter(fragment => fragment.left + fragment.width <= gutter);
+        const right = band.filter(fragment => fragment.left >= gutter);
+        if (left.length + right.length !== band.length || left.length < 3 || right.length < 3) return false;
+        if (left.filter(fragment => fragment.width > page.width * 0.18).length < 2 || right.filter(fragment => fragment.width > page.width * 0.18).length < 2) return false;
+        const overlap = Math.min(Math.max(...left.map(fragment => fragment.top)), Math.max(...right.map(fragment => fragment.top))) - Math.max(Math.min(...left.map(fragment => fragment.top)), Math.min(...right.map(fragment => fragment.top)));
+        return overlap > Math.max(...band.map(fragment => fragment.height)) * 1.5;
+      });
+      if (valid.length > 0) {
+        const gutter = valid[Math.floor(valid.length / 2)]!;
+        if (images.some(image => image.left < gutter && image.left + image.width > gutter)) {
+          warn("reading-order-uncertain"); blocks.push(...layoutBlocks([{ ...page, text: band, images }])); return;
+        }
+        for (const left of [true, false]) blocks.push(...layoutBlocks([{ ...page, text: band.filter(fragment => left ? fragment.left + fragment.width <= gutter : fragment.left >= gutter), images: images.filter(image => left ? image.left + image.width <= gutter : image.left >= gutter) }]));
+      } else {
+        if (band.length >= 6 && cellRows.filter(row => row.length >= 2 && row.some(cell => band.includes(cell[0]!))).length >= 3) warn("reading-order-uncertain");
+        blocks.push(...layoutBlocks([{ ...page, text: band, images }]));
+      }
+    };
+    // Spanning headings split vertical regions; tables retain their exact place.
+    const bodyFont = weightedBodyFontSize(pageLines(page));
+    const gutterVotes = new Map<number, number>();
+    for (const row of cellRows) for (let i = 1; i < row.length; i++) {
+      const left = row[i - 1]!.at(-1)!, right = row[i]![0]!;
+      if (right.left - (left.left + left.width) < Math.max(12, left.fontSize * 1.5)) continue;
+      const gutter = Math.round((left.left + left.width + right.left) / 20) * 10;
+      gutterVotes.set(gutter, (gutterVotes.get(gutter) ?? 0) + 1);
+    }
+    const repeatedGutters = [...gutterVotes].filter(([, votes]) => votes >= 3).map(([gutter]) => gutter);
+    const spans = remaining.filter(fragment => fragment.width > page.width * 0.65 || (fragment.fontSize > bodyFont * 1.08 && repeatedGutters.some(gutter => fragment.left < gutter && fragment.left + fragment.width > gutter)));
+    const boundaries = [...tables.map(table => ({ top: table.top, bottom: table.bottom, table, span: null as PdfTextFragment | null })), ...spans.map(span => ({ top: span.top, bottom: span.top + span.height, table: null, span }))].sort((a, b) => a.top - b.top);
+    const emitted = new Set<PdfTextFragment>(), emittedImages = new Set<PdfImageCandidate>();
+    for (const boundary of boundaries) {
+      const band = remaining.filter(fragment => !emitted.has(fragment) && fragment !== boundary.span && fragment.top < boundary.top);
+      const images = page.images.filter(image => !emittedImages.has(image) && image.top < boundary.top);
+      emitBand(band, images); for (const fragment of band) emitted.add(fragment); for (const image of images) emittedImages.add(image);
+      if (boundary.table !== null) blocks.push(boundary.table.block);
+      if (boundary.span !== null) {
+        const span = boundary.span;
+        blocks.push(span.fontSize > bodyFont * 1.08 ? { kind: "heading", page: page.page, level: 2, text: span.text } : { kind: "paragraph", page: page.page, text: span.text });
+        emitted.add(span);
+      }
+    }
+    emitBand(remaining.filter(fragment => !emitted.has(fragment)), page.images.filter(image => !emittedImages.has(image)));
+  }
+  return { blocks, issues };
 }

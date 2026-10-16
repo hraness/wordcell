@@ -90,3 +90,13 @@ export type {
   PdfToolPaths,
   PdfToolRunner,
 } from "./pdf/model.js";
+
+import { inspectPdfCaptureBundle as inspectPdfCaptureBundleImplementation, verifyPdfCaptureBundle as verifyPdfCaptureBundleImplementation } from "./pdf/bundle-reader.js";
+import { PdfCaptureError as PdfCaptureErrorImplementation } from "./pdf/errors.js";
+export const inspectPdfCaptureBundle: typeof inspectPdfCaptureBundleImplementation = (...arguments_) => inspectPdfCaptureBundleImplementation(...arguments_);
+export const verifyPdfCaptureBundle: typeof verifyPdfCaptureBundleImplementation = (...arguments_) => verifyPdfCaptureBundleImplementation(...arguments_);
+export const PdfCaptureError = PdfCaptureErrorImplementation;
+export type PdfCaptureError = InstanceType<typeof PdfCaptureErrorImplementation>;
+export type { PdfCaptureErrorCode } from "./pdf/errors.js";
+export type { PdfBundleInspection, PdfBundleVerification, ReadPdfCaptureBundleOptions, PdfBundleIntegrity } from "./pdf/bundle-reader.js";
+export type { PdfQualityIssue } from "./pdf/model.js";

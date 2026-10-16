@@ -66,3 +66,8 @@ export type {
   MediaMode,
   ParseArgumentsResult,
 };
+
+import { extractArticleMetadata as extractArticleMetadataImplementation, parseArticleMetadata as parseArticleMetadataImplementation } from "./clip/metadata.js";
+export const extractArticleMetadata: typeof extractArticleMetadataImplementation = (...arguments_) => extractArticleMetadataImplementation(...arguments_);
+export const parseArticleMetadata: typeof parseArticleMetadataImplementation = (...arguments_) => parseArticleMetadataImplementation(...arguments_);
+export type { ArticleMetadata, ArticleMetadataClaim, MetadataSource, MetadataValue } from "./clip/metadata.js";

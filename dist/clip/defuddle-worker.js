@@ -1,4 +1,7 @@
 // @bun
+import {
+  extractArticleMetadata
+} from "../index-e2wstc7t.js";
 import"../index-z1w83f81.js";
 
 // src/clip/defuddle-worker.ts
@@ -161,7 +164,7 @@ workerGlobal.onmessage = async (event) => {
       useAsync: false,
       removeImages: false
     });
-    const enriched = typeof value === "object" && value !== null && !Array.isArray(value) ? { ...value, captureVideoPosters: videoPosters } : value;
+    const enriched = typeof value === "object" && value !== null && !Array.isArray(value) ? { ...value, captureVideoPosters: videoPosters, metadata: await extractArticleMetadata(request.html, request.url, value) } : value;
     workerGlobal.postMessage({ ok: true, value: enriched });
   } catch {
     workerGlobal.postMessage({ ok: false, message: "Defuddle could not parse this acquisition." });

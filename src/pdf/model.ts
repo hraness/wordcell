@@ -126,7 +126,14 @@ export type PdfManifestImage = PdfBounds & {
   readonly metadata: PdfImageSemanticMetadata | null;
 };
 
+export type PdfQualityIssue = {
+  readonly code: "reading-order-uncertain" | "table-structure-uncertain" | "math-structure-uncertain" | "ocr-needed";
+  readonly page: number;
+};
+
 export type PdfCaptureManifest = {
+  readonly markdown?: { readonly path: string; readonly bytes: number; readonly sha256: string };
+  readonly quality?: { readonly schemaVersion: 1; readonly issues: readonly PdfQualityIssue[] };
   readonly schemaVersion: typeof PDF_CAPTURE_MANIFEST_SCHEMA_VERSION;
   readonly kind: "pdf";
   readonly capturedAt: string;
@@ -204,6 +211,8 @@ export type PdfCaptureOutcome = {
 };
 
 export type PdfToolCommand = {
+  /** An external supervisor may own the inherited group and its final cleanup. */
+  readonly processGroup?: "new" | "inherit";
   readonly command: readonly string[];
   readonly timeoutMs: number;
   readonly maxOutputBytes: number;

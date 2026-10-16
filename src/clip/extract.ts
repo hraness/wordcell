@@ -1,3 +1,4 @@
+import { parseArticleMetadata } from "./metadata.js";
 import type { CaptureScope } from "./args.js";
 import type { AcquiredPage } from "./acquire.js";
 import {
@@ -719,6 +720,7 @@ export async function extractPage(
           content: retainDefuddleMedia(restoredContent, response, acquisition.finalUrl),
           title: boundedMetadata(response.title, articleMetadataLimits.title)
             ?? boundedMetadata(acquisition.browserTitle, articleMetadataLimits.title),
+          ...(response.metadata === undefined ? {} : { metadata: parseArticleMetadata(response.metadata) }),
           author: boundedMetadata(response.author, articleMetadataLimits.author),
           published: boundedMetadata(response.published, articleMetadataLimits.published),
           description,

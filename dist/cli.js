@@ -6,22 +6,23 @@ import {
   parseArguments,
   runExecutable,
   usage
-} from "./index-878bh2f1.js";
-import"./index-5h5awwh4.js";
-import"./index-m9p2a4mj.js";
+} from "./index-pf763jcq.js";
+import"./index-b40e2dkx.js";
+import"./index-vk6es4nx.js";
 import"./index-3hts6yy9.js";
-import"./index-j4zgmzjr.js";
-import"./index-npg9z1a4.js";
-import"./index-h9vyd03z.js";
-import"./index-hacpnaew.js";
-import"./index-k86wepd8.js";
-import"./index-nd8v7r0z.js";
+import"./index-8djdwjjd.js";
+import"./index-xn5q4kne.js";
+import"./index-58azscg5.js";
+import"./index-fd8j527z.js";
+import"./index-h2w7syy2.js";
+import"./index-sp43012q.js";
 import"./index-hnvx7m1j.js";
 import"./index-t4hjm1kk.js";
-import"./index-ncwzmsge.js";
-import"./index-cd75vky9.js";
+import"./index-nwdzhj1h.js";
+import"./index-jbtyp6q5.js";
 import"./index-2gv8y733.js";
-import"./index-mxxxytys.js";
+import"./index-g63d3937.js";
+import"./index-e2wstc7t.js";
 import"./index-w2zc0vwa.js";
 import"./index-e5fbsywq.js";
 import"./index-gh719d91.js";
@@ -65,7 +66,7 @@ import {
 
 // src/cli.ts
 async function runStandaloneCli(args = process.argv.slice(2)) {
-  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-hd4754m4.js");
+  const { standaloneSupportEnvironment, isUsefulSupportResult, runProductSupportCommand, showProductSupportInvitation } = await import("./support-dfymmqzq.js");
   const env = standaloneSupportEnvironment();
   if (args[0] === "support") {
     return await runProductSupportCommand(args.slice(1), { env });

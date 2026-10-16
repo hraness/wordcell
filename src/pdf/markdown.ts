@@ -81,6 +81,12 @@ function markdownContent(
       lines.push(imageMarkdown(resolved), "");
       continue;
     }
+    if (block.kind === "table") {
+      textBlockCount += 1;
+      const rows = block.rows.map(row => `| ${row.map(cell => escapeInline(cell).replace(/\|/gu, "\\|")).join(" | ")} |`);
+      if (rows.length > 0) lines.push(rows[0]!, `| ${block.rows[0]!.map(() => "---").join(" | ")} |`, ...rows.slice(1), "");
+      continue;
+    }
     if (block.kind === "heading") {
       headingCount += 1;
       lines.push(`${"#".repeat(Math.max(2, Math.min(6, block.level)))} ${escapeInline(block.text)}`, "");
