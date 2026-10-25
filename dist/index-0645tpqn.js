@@ -2,7 +2,7 @@
 import {
   acquireArchiveTodaySnapshot,
   discoverArchiveTodaySnapshot
-} from "./index-fd8j527z.js";
+} from "./index-6m760a2y.js";
 import {
   canonicalizeUrl,
   chooseBestExtraction,
@@ -18,7 +18,7 @@ import {
   inspectClipEnvironment,
   renderAdapterCapabilities,
   renderDoctorReport
-} from "./index-sp43012q.js";
+} from "./index-3q7yfw5x.js";
 import {
   cloneBrowserProfile
 } from "./index-hnvx7m1j.js";
@@ -34,7 +34,7 @@ import {
   renderCookiePermissionNotice,
   renderCookiePermissionRecovery,
   setCookiePermissionReporter
-} from "./index-nwdzhj1h.js";
+} from "./index-qvbh6pdt.js";
 import {
   CONTENT_REWRITE_TRUNCATION_WARNING,
   buildClipMarkdown,
@@ -68,7 +68,7 @@ import {
   redactSensitiveTextWithCount,
   sanitizeArtifactUrl,
   writeCaptureBundle
-} from "./index-g63d3937.js";
+} from "./index-tr8ts8jz.js";
 import {
   startNetworkProxy
 } from "./index-w2zc0vwa.js";

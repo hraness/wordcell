@@ -2,7 +2,7 @@
 import {
   CAPTURE_MANIFEST_FILENAME,
   CAPTURE_SOURCE_EVIDENCE_PATH
-} from "./index-g63d3937.js";
+} from "./index-tr8ts8jz.js";
 import {
   parseArticleMetadata
 } from "./index-e2wstc7t.js";

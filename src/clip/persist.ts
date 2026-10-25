@@ -565,6 +565,8 @@ function credentialValueEnd(projected: ProjectedText, start: number, key: string
   return { start, end: firstUnencodedDelimiter(projected, start, /[\s<>&;,)\]\r\n]/) };
 }
 
+const redactionMarkerPattern = /^\[REDACTED(?:[ _][A-Z_ ]+)?\]/;
+
 function redactProjectedCredentialAssignments(value: string): RedactedText {
   const projected = projectCredentialEntities(value);
   if (projected.limitExceeded) return { text: ENTITY_DENSE_REDACTION, count: 1 };
@@ -580,6 +582,8 @@ function redactProjectedCredentialAssignments(value: string): RedactedText {
     const sourceStart = projectedBoundaryToSource(projected, range.start, "start");
     const sourceEnd = projectedBoundaryToSource(projected, range.end, "end");
     if (sourceEnd <= sourceStart) continue;
+    // A value that is already a redaction marker stays as it is, so redaction is idempotent.
+    if (redactionMarkerPattern.test(value.slice(sourceStart, sourceStart + 64))) continue;
     if (replacements.length >= MAX_CREDENTIAL_REPLACEMENTS) {
       return { text: CREDENTIAL_DENSE_REDACTION, count: 1 };
     }

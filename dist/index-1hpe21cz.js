@@ -3,10 +3,10 @@ import {
   backfillSavedUrlMetadata,
   createRustMetadataSearchProvider,
   savedSourceProblem
-} from "./index-b40e2dkx.js";
+} from "./index-cpnvnkq1.js";
 import {
   main as main2
-} from "./index-my50xsa3.js";
+} from "./index-734r6rap.js";
 import {
   MAX_AUTHORIZED_VAULTS,
   auditKnowledgePortfolio,
@@ -16,13 +16,13 @@ import {
 } from "./index-3hts6yy9.js";
 import {
   diffCaptureBundle
-} from "./index-8djdwjjd.js";
+} from "./index-f9ga82cf.js";
 import {
   verifyCaptureBundle
-} from "./index-xn5q4kne.js";
+} from "./index-z5eb7nfk.js";
 import {
   main
-} from "./index-58azscg5.js";
+} from "./index-0645tpqn.js";
 import {
   advancedHelp,
   closestMatch,
@@ -47,7 +47,7 @@ import {
 import {
   redactSensitiveText,
   sanitizeArtifactUrl
-} from "./index-g63d3937.js";
+} from "./index-tr8ts8jz.js";
 import {
   initVault
 } from "./index-23z4zxgg.js";

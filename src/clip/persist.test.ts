@@ -1,3 +1,4 @@
+import fc from "fast-check";
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   chmodSync,
@@ -32,6 +33,26 @@ import {
 import { hasUnsafeTerminalCharacters } from "./terminal.js";
 
 const temporaryRoots: string[] = [];
+
+test("redaction is idempotent", () => {
+  const pdfText = "f [SacreBLEU signature:\nBLEU+case.mixed+numrefs.1+smooth.exp+tok.intl+version.1.2.20]";
+  const once = redactSensitiveText(pdfText);
+  expect(once).toBe("f [SacreBLEU signature:\n[REDACTED]]");
+  expect(redactSensitiveText(once)).toBe(once);
+  for (const marked of ["token=[REDACTED]", "password: [REDACTED JWT]", "secret=[REDACTED_PEM_CREDENTIAL]"]) {
+    expect(redactSensitiveText(marked)).toBe(marked);
+  }
+  const keys = fc.constantFrom("token", "signature", "password", "api_key", "session", "note");
+  const separators = fc.constantFrom("=", ": ", ":\n", " = ");
+  const values = fc.stringMatching(/^[\w.+\-\[\]()]{1,24}$/);
+  fc.assert(
+    fc.property(fc.array(fc.tuple(fc.string({ maxLength: 12 }), keys, separators, values), { maxLength: 6 }), (parts) => {
+      const text = parts.map(([prefix, key, separator, value]) => `${prefix}${key}${separator}${value}`).join(" ");
+      const once = redactSensitiveText(text);
+      return redactSensitiveText(once) === once;
+    }),
+  );
+});
 
 test("redacts credential contexts without rewriting ordinary Basic or Bearer prose", () => {
   const prose = "Show just the basic features. A bearer carries a message.";

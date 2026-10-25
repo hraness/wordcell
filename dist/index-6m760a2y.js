@@ -1,7 +1,7 @@
 // @bun
 import {
   sanitizeArtifactUrl
-} from "./index-g63d3937.js";
+} from "./index-tr8ts8jz.js";
 import {
   assertSafeNetworkUrl,
   decodeBytes,

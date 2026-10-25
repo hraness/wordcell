@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Credential redaction is idempotent. A PDF whose text contained a credential-like assignment, such as a `signature:` line, no longer fails capture with "PDF Markdown does not match its manifest provenance".
+
 ## 0.27.0
 
 Saved articles retain the evidence behind their metadata. PDF capture improves reading order and reports uncertain layout.

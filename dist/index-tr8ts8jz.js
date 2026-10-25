@@ -387,6 +387,7 @@ function credentialValueEnd(projected, start, key) {
   }
   return { start, end: firstUnencodedDelimiter(projected, start, /[\s<>&;,)\]\r\n]/) };
 }
+var redactionMarkerPattern = /^\[REDACTED(?:[ _][A-Z_ ]+)?\]/;
 function redactProjectedCredentialAssignments(value) {
   const projected = projectCredentialEntities(value);
   if (projected.limitExceeded)
@@ -405,6 +406,8 @@ function redactProjectedCredentialAssignments(value) {
     const sourceStart = projectedBoundaryToSource(projected, range.start, "start");
     const sourceEnd = projectedBoundaryToSource(projected, range.end, "end");
     if (sourceEnd <= sourceStart)
+      continue;
+    if (redactionMarkerPattern.test(value.slice(sourceStart, sourceStart + 64)))
       continue;
     if (replacements.length >= MAX_CREDENTIAL_REPLACEMENTS) {
       return { text: CREDENTIAL_DENSE_REDACTION, count: 1 };

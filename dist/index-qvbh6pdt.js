@@ -10,7 +10,7 @@ import {
 } from "./index-2gv8y733.js";
 import {
   sanitizeArtifactUrl
-} from "./index-g63d3937.js";
+} from "./index-tr8ts8jz.js";
 import {
   startNetworkProxy
 } from "./index-w2zc0vwa.js";
