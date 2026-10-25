@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.27.1
+
+PDFs that contain credential-like text capture again.
 
 - Credential redaction is idempotent. A PDF whose text contained a credential-like assignment, such as a `signature:` line, no longer fails capture with "PDF Markdown does not match its manifest provenance".
 
