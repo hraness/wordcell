@@ -9,13 +9,28 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
 import {
+  FetchFailure,
   safeFetch,
+  type FetchFailureCode,
   type SafeFetchOptions,
   type SafeFetchResult,
 } from "../clip/network.js";
 import { sanitizeArtifactUrl } from "../clip/persist.js";
 import { pdfCaptureDefaults } from "./extract.js";
+import type { PdfCaptureErrorCode } from "./errors.js";
 import type { PdfRemoteSource } from "./model.js";
+
+// A source that cannot be fetched is reported by its kind, never classified from the message.
+const fetchFailureCodes: Record<FetchFailureCode, PdfCaptureErrorCode> = {
+  "invalid-url": "invalid-input",
+  "private-network": "invalid-input",
+  dns: "fetch-failed",
+  timeout: "timeout",
+  http: "fetch-failed",
+  redirect: "fetch-failed",
+  "too-large": "limit-exceeded",
+  network: "fetch-failed",
+};
 
 export type PreparedPdfSource = {
   readonly inputPath: string;
@@ -99,6 +114,11 @@ export async function preparePdfSource(
     accept: "application/pdf,application/octet-stream;q=0.9,*/*;q=0.1",
     retries: 2,
     maxRedirects: 5,
+  }).catch((error: unknown) => {
+    if (error instanceof FetchFailure) {
+      throw new PdfCaptureError(fetchFailureCodes[error.code], error.message, { cause: error });
+    }
+    throw error;
   });
   assertPdfSignature(result.bytes);
 

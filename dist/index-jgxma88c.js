@@ -16,6 +16,7 @@ import {
   sanitizeArtifactUrl
 } from "./index-tr8ts8jz.js";
 import {
+  FetchFailure,
   safeFetch
 } from "./index-e5fbsywq.js";
 import {
@@ -1962,6 +1963,16 @@ import {
 } from "fs";
 import { tmpdir as tmpdir2 } from "os";
 import { basename as basename2, join as join5 } from "path";
+var fetchFailureCodes = {
+  "invalid-url": "invalid-input",
+  "private-network": "invalid-input",
+  dns: "fetch-failed",
+  timeout: "timeout",
+  http: "fetch-failed",
+  redirect: "fetch-failed",
+  "too-large": "limit-exceeded",
+  network: "fetch-failed"
+};
 var remoteUserAgent = "hraness-kb/0.7 PDF capture";
 function parseRemoteUrl(input) {
   if (!/^https?:\/\//iu.test(input))
@@ -2012,6 +2023,11 @@ async function preparePdfSource(input, options = {}, dependencies = {}) {
     accept: "application/pdf,application/octet-stream;q=0.9,*/*;q=0.1",
     retries: 2,
     maxRedirects: 5
+  }).catch((error) => {
+    if (error instanceof FetchFailure) {
+      throw new PdfCaptureError(fetchFailureCodes[error.code], error.message, { cause: error });
+    }
+    throw error;
   });
   assertPdfSignature(result.bytes);
   const makeTemporaryDirectory = dependencies.makeTemporaryDirectory ?? (() => mkdtempSync3(join5(tmpdir2(), "hraness-wordcell-pdf-source-")));

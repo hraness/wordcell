@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.2
+
+PDF capture reports a source it cannot download by what went wrong.
+
+- A PDF URL that times out, refuses the connection, fails DNS or returns an HTTP error now fails with the `timeout`, `fetch-failed`, `limit-exceeded` or `invalid-input` code instead of `unknown`, so callers can retry or report it without reading the message.
+
 ## 0.27.1
 
 PDFs that contain credential-like text capture again.

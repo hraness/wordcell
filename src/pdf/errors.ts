@@ -1,4 +1,4 @@
-export type PdfCaptureErrorCode = "invalid-input" | "encrypted" | "limit-exceeded" | "tool-unavailable" | "extraction-failed" | "timeout" | "cancelled" | "integrity" | "unsupported-schema" | "unknown";
+export type PdfCaptureErrorCode = "invalid-input" | "encrypted" | "limit-exceeded" | "tool-unavailable" | "extraction-failed" | "fetch-failed" | "timeout" | "cancelled" | "integrity" | "unsupported-schema" | "unknown";
 
 /** Codes describe observed failures; unknown errors are never classified from their prose. */
 export class PdfCaptureError extends Error {

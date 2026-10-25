@@ -9,6 +9,8 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, test } from "bun:test";
 
+import { FetchFailure, type FetchFailureCode } from "../clip/network.js";
+import { PdfCaptureError, type PdfCaptureErrorCode } from "./errors.js";
 import { preparePdfSource } from "./source.js";
 
 const roots: string[] = [];
@@ -89,5 +91,36 @@ describe("PDF source preparation", () => {
     expect(error).toBeInstanceOf(Error);
     expect(error instanceof Error ? error.message : "").toContain("valid PDF signature");
     expect(madeDirectory).toBe(false);
+  });
+
+  test("reports each fetch failure by its kind, never as an unknown error", async () => {
+    const expected: Record<FetchFailureCode, PdfCaptureErrorCode> = {
+      "invalid-url": "invalid-input",
+      "private-network": "invalid-input",
+      dns: "fetch-failed",
+      timeout: "timeout",
+      http: "fetch-failed",
+      redirect: "fetch-failed",
+      "too-large": "limit-exceeded",
+      network: "fetch-failed",
+    };
+    for (const [kind, code] of Object.entries(expected) as [FetchFailureCode, PdfCaptureErrorCode][]) {
+      const failure = new FetchFailure(kind, `request failed: ${kind}`);
+      const error = await preparePdfSource("https://example.com/paper.pdf", {}, {
+        fetch: () => Promise.reject(failure),
+      }).catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(PdfCaptureError);
+      expect((error as PdfCaptureError).code).toBe(code);
+      expect((error as PdfCaptureError).message).toBe(failure.message);
+      expect((error as PdfCaptureError).cause).toBe(failure);
+    }
+  });
+
+  test("passes through an error that is not a fetch failure", async () => {
+    const failure = new Error("unexpected");
+    const error = await preparePdfSource("https://example.com/paper.pdf", {}, {
+      fetch: () => Promise.reject(failure),
+    }).catch((caught: unknown) => caught);
+    expect(error).toBe(failure);
   });
 });

@@ -194,7 +194,7 @@ test("the shipped skill resources preserve routing and companion contracts", asy
     "references/url-platforms.md",
     "templates/companion-skill.template.md",
   ]);
-  expect(manifest.version).toBe("0.27.1");
+  expect(manifest.version).toBe("0.27.2");
   const scripts = manifest.scripts as Record<string, string>;
   expect(scripts["kb:search"]).not.toContain("--rerank");
   expect(scripts["kb:search:clef"]).toContain("--rerank clef");
