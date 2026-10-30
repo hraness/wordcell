@@ -57,7 +57,7 @@ jobs:
             || run.repository?.id !== 1308971873 || run.repository?.full_name !== repository || run.repository?.private !== false
             || run.repository?.owner?.id !== 307125679) throw new Error("Recovery active workflow, owner, source, or attempt differs");
           NODE
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           fetch-depth: 1
