@@ -36,7 +36,7 @@ export default async function BlogPostPage(
   const article = findArticle(slug);
   const html = blogHtml[slug];
   if (article === null || html === undefined) notFound();
-  const related = relatedFor("kb");
+  const related = relatedFor("kb").filter((item) => item.productId !== "xcb");
   const isLaunchPost = slug === LAUNCH_POST_SLUG;
   const toc = blogContents[slug] ?? [];
 

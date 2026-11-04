@@ -1,6 +1,7 @@
 import { productMessaging } from "../app/messaging";
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import { product } from "@hraness/design-kit/portfolio";
 
 import Home from "../app/page";
 import Developers from "../app/developers/page";
@@ -43,6 +44,32 @@ async function publicRoutes(): Promise<React.JSX.Element[]> {
     await BlogPostPage({ params: Promise.resolve({ slug: "introducing-wordcell" }) }),
   ];
 }
+
+test("homepage and article cards retain active recommendations without retired destinations", async () => {
+  const pages = [
+    { page: <Home />, active: ["wrench", "oh-computer"] as const },
+    {
+      page: await BlogPostPage({ params: Promise.resolve({ slug: "introducing-wordcell" }) }),
+      active: ["oh-computer", "sponge"] as const,
+    },
+  ];
+  const retiredDomains = ["xcb.sh", "vhalla.com", "textbutler.app", "soulscrape.com"];
+  for (const { page, active } of pages) {
+    const links: string[] = [];
+    new HTMLRewriter().on('section[data-hraness-marketing="related"] a[href]', {
+      element(element) {
+        const href = element.getAttribute("href");
+        if (href !== null) links.push(new URL(href, "https://wordcell.io").href);
+      },
+    }).transform(renderToStaticMarkup(page));
+    expect(links.filter((href) => retiredDomains.some((domain) =>
+      new URL(href).hostname === domain || new URL(href).hostname.endsWith(`.${domain}`)))).toEqual([]);
+    for (const id of active) {
+      expect(links).toContain(new URL(product(id).canonicalUrl).href);
+    }
+  }
+  expect(renderToStaticMarkup(pages[1]!.page)).toContain('href="https://xcb.sh/blog/how-xcb-uses-wordcell"');
+});
 
 test("every public route has the in-flow content footer above the network footer", async () => {
   for (const Page of await publicRoutes()) {
