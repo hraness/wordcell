@@ -1,6 +1,8 @@
 <!-- hraness:wordcell-landing:start -->
 # Wordcell
 
+> **Retired.** Wordcell is no longer maintained, and wordcell.io is discontinued. The source, existing releases, and documentation are preserved. The documentation below describes the archived project.
+
 > 🧠 Wordcell hands the next agent session what this one learned. Decisions,
 > plans, and sources live as Markdown files beside your code. Tie a note to the
 > paths it explains, and an agent about to change that code gets the note

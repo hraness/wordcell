@@ -1,5 +1,7 @@
 # Contributing
 
+> This project is retired. The contribution guide below is preserved for historical reference.
+
 Issues and focused pull requests are welcome in the [hraness/wordcell repository](https://github.com/hraness/wordcell).
 
 Open an issue before starting a broad command-surface, manifest-schema, adapter, or security-boundary change so compatibility and threat-model expectations can be agreed first.
