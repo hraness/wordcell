@@ -93,7 +93,7 @@ const navigation = [
   { href: repository, label: "GitHub" },
 ] as const;
 
-const relatedProducts = portfolioRelatedGroups(["wrench", "xcb", "oh-computer"]).flatMap((group) => group.items);
+const relatedProducts = portfolioRelatedGroups(["wrench", "oh-computer"]).flatMap((group) => group.items);
 
 export default function Home() {
   const setupLinks = setupTargets(SETUP_PROMPT).filter((target) => target.kind === "link");
