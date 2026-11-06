@@ -521,7 +521,7 @@
     "@tobilu/qmd": "https://github.com/hraness/qmd/releases/download/v2.8.3-hraness.1/hraness-qmd-2.8.3-hraness.1.tgz",
     "agent-browser": "0.32.3",
     "defuddle": "0.19.1",
-    "effect": "3.22.1",
+    "effect": "4.0.4",
     "entities": "7.0.1",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"
